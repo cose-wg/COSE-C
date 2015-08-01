@@ -9,15 +9,26 @@ typedef struct {
 	cn_cbor * m_cbor;
 	cn_cbor * m_protectedMap;
 	cn_cbor * m_unprotectMap;
+	cn_cbor * m_dontSendMap;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;
 #endif
 } COSE;
 
+struct _SignerInfo;
+typedef struct _SignerInfo COSE_SignerInfo;
+
 typedef struct {
 	COSE m_message;	    // The message object
+	COSE_SignerInfo * m_signerFirst;
 } COSE_SignMessage;
 
+typedef struct _SignerInfo {
+	COSE m_message;
+	byte * pbKey;
+	size_t cbKey;
+	COSE_SignerInfo * m_signerNext;
+} COSE_SignerInfo;
 
 struct _RecipientInfo;
 typedef struct _RecipientInfo COSE_RecipientInfo;
@@ -29,8 +40,6 @@ typedef struct {
 	size_t cbContent;
 	byte * pbKey;
 	size_t cbKey;
-//	byte * pbIV;
-//	size_t cbIV;
 } COSE_Encrypt;
 
 typedef struct _RecipientInfo {
@@ -38,6 +47,14 @@ typedef struct _RecipientInfo {
 	COSE_RecipientInfo * m_recipientNext;
 } COSE_RecipientInfo;
 
+typedef struct {
+	COSE m_message;			// The message object
+	COSE_RecipientInfo * m_recipientFirst;
+	byte * pbContent;
+	size_t cbContent;
+	byte * pbKey;
+	size_t cbKey;
+} COSE_MacMessage;
 
 #ifdef USE_CBOR_CONTEXT
 /**
@@ -104,10 +121,22 @@ extern bool _COSE_map_put(COSE * cose, int key, cn_cbor * value, int flags, cose
 
 extern HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Encrypt_Release(COSE_Encrypt * p);
-extern bool _COSE_Encrypt_decrypt(COSE_Encrypt * pbody, COSE_RecipientInfo * pRecip, cose_errback * perr);
+extern bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, int cbitKey, byte *pbKeyIn, cose_errback * perr);
 extern void _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 extern COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor *, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Recipient_Free(COSE_RecipientInfo *);
 extern bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pbKey, cose_errback * errp);
 extern byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, size_t cbitKeySize);
+
+
+//  Signed items
+extern HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *, COSE_SignMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
+extern void _COSE_Sign_Release(COSE_SignMessage * p);
+
+//  Mac-ed items
+extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
+extern void _COSE_Mac_Release(COSE_MacMessage * p);
+
+
+#define CHECK_CONDITION(condition, error) { if (!(condition)) { perr->err = error; goto errorReturn;}}
