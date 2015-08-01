@@ -6,9 +6,10 @@ typedef unsigned char byte;
 
 typedef struct _cose * HCOSE;
 typedef struct _cose_sign * HCOSE_SIGN;
+typedef struct _cose_signer * HCOSE_SIGNER;
 typedef struct _cose_encrypt * HCOSE_ENCRYPT;
 typedef struct _cose_recipient * HCOSE_RECIPIENT;
-
+typedef struct _cose_mac * HCOSE_MAC;
 
 /**
 * All of the different kinds of errors
@@ -27,13 +28,15 @@ typedef enum cose_error {
 	/** No usable recipient found */
 	COSE_ERR_NO_RECIPIENT_FOUND,
 	/** Decryption operation failed */
-	COSE_ERR_DECRYPT_FAILED
+	COSE_ERR_DECRYPT_FAILED,
+	/** Cryptographic failure */
+	COSE_ERR_CRYPTO_FAIL
 } cose_error;
 
 /**
 * Errors
 */
-typedef struct cose_errback {
+typedef struct _cose_errback {
 	/** The error, or CN_CBOR_NO_ERROR if none */
 	cose_error err;
 } cose_errback;
@@ -47,23 +50,39 @@ cn_cbor * COSE_get_cbor(HCOSE hmsg);
 
 //  Functions for the signing object
 
-HCOSE_SIGN * COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
-// COSE_SignMessage * COSE_Sign_Init(const cn_cbor * COMMA_CBOR_CONTEXT);
-
+HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Sign_Free(HCOSE_SIGN cose);
 
 HCOSE_ENCRYPT  COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Encrypt_Free(HCOSE_ENCRYPT cose);
 
+HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Mac_Free(HCOSE_MAC cose);
+
 typedef enum {
 	COSE_PROTECT_ONLY = 1,
 	COSE_UNPROTECT_ONLY = 2,
-	COSE_BOTH = 3
+	COSE_DONT_SEND = 4,
+	COSE_BOTH = 7
 } cose_protect_state;
 
 typedef enum {
-	COSE_Algorithm_AES_CCM_64 = 1,
-	COSE_Algorithm_Direct,
-	COSE_Algorithm_ECDH_ES_Direct
+	COSE_Algorithm_HMAC_256_256 = 4,
+
+	COSE_Algorithm_AES_CCM_16_64_128 = 10,
+	COSE_Algoirthm_AES_CCM_16_64_256 = 11,
+	COSE_Algorithm_AES_CCM_64_64_128 = 30,
+	COSE_Algorithm_AES_CCM_64_64_256 = 31,
+	COSE_Algorithm_AES_CCM_16_128_128 = 12,
+	COSE_Algorithm_AES_CCM_16_128_256 = 13,
+	COSE_Algorithm_AES_CCM_64_128_128 = 32,
+	COSE_Algorithm_AES_CCM_64_128_256 = 33,
+
+	COSE_Algorithm_Direct = -6,
+	COSE_Algorithm_ECDH_ES_Direct, 
+	COSE_Algorithm_PS256 = -26,
+	COSE_Algorithm_PS384 = -27,
+	COSE_Algorithm_PS512 = -28,
 } COSE_Algorithms;
 
 typedef enum {
@@ -74,7 +93,9 @@ typedef enum {
 	COSE_Header_IV,
 	COSE_Header_Ciphertext,
 	COSE_Header_Recipients,
-	COSE_Header_Type
+	COSE_Header_Type,
+	COSE_Header_PlainText,
+	COSE_Header_Tag
 } COSE_Header;
 
 
@@ -93,3 +114,20 @@ HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT cose, COSE_Algorith
 
 HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, cose_errback * perr);
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_errback * perr);
+
+//
+//
+
+void COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+
+const cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
+bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
+
+void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+
+HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
+
+HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errback * perr);
+

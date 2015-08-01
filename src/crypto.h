@@ -8,7 +8,7 @@
 * @param[in]   int          Size of authenticated data structure
 * @return                   Did the function succeed?
 */
-bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbAuthData, int cbAuthData);
+bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 
 /**
 * Perform an AES-CCM Encryption operation
@@ -20,7 +20,21 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 * @param[in]   int          Size of authenticated data structure
 * @return                   Did the function succeed?
 */
-bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbAuthData, int cbAuthData);
+bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+
+
+/**
+* Perform an HMAC Creation operation
+*
+* @param[in]	COSE_Encrypt	Pointer to COSE Encryption context object
+* @param[in]	int				Hash function to be used
+* @param[in]	int				Size of Tag value to be created
+* @param[in]	byte *			Pointer to authenticated data structure
+* @param[in]	int				Size of authenticated data structure
+* @param[in]	cose_errback *	Error return location
+* @return						Did the function succeed?
+*/
+bool HMAC_Create(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 
 /**
 *  Generate random bytes in a buffer
