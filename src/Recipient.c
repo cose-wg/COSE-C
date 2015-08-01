@@ -28,6 +28,7 @@ HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, co
 			if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
 			return NULL;
 		}
+		p = p->m_recipientNext;
 	}
 	return (HCOSE_RECIPIENT)p;
 }
@@ -42,6 +43,11 @@ COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor * cbor, CBOR_CONTE
 		return NULL;
 	}
 
+	if (cbor->type != CN_CBOR_MAP) {
+		if (errp != NULL) errp->err = COSE_ERR_INVALID_PARAMETER;
+		COSE_FREE(pRecipient, context);
+		return NULL;
+	}
 	if (_COSE_Encrypt_Init_From_Object(cbor, &pRecipient->m_encrypt, CBOR_CONTEXT_PARAM_COMMA errp) == NULL) {
 		_COSE_Recipient_Free(pRecipient);
 		return NULL;
@@ -59,7 +65,7 @@ void _COSE_Recipient_Free(COSE_RecipientInfo * pRecipient)
 
 bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pbKey, cose_errback * perr)
 {
-	return _COSE_Encrypt_decrypt(&pRecip->m_encrypt, NULL, perr);
+	return _COSE_Encrypt_decrypt(&pRecip->m_encrypt, NULL, cbitKey, pbKey, perr);
 }
 
 
@@ -69,7 +75,7 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, size_t c
 	const cn_cbor * cn_Alg = _COSE_map_get_int(&pRecipient->m_encrypt.m_message, COSE_Header_Algorithm, COSE_BOTH, NULL);
 
 	if (cn_Alg == NULL) return false;
-	if (cn_Alg->type != CN_CBOR_UINT) return false;
+	if ((cn_Alg->type != CN_CBOR_UINT) && (cn_Alg->type != CN_CBOR_INT)) return false;
 	alg = cn_Alg->v.uint;
 
 	switch (alg) {
