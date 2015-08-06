@@ -27,6 +27,7 @@ typedef struct _SignerInfo {
 	COSE m_message;
 	byte * pbKey;
 	size_t cbKey;
+	const cn_cbor * m_pkey;
 	COSE_SignerInfo * m_signerNext;
 } COSE_SignerInfo;
 
@@ -108,6 +109,9 @@ typedef struct {
 #define UNUSED_PARAM(p) ((void)&(p))
 #endif
 
+extern const cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
+
+
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 extern bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
 
@@ -133,6 +137,7 @@ extern byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, s
 //  Signed items
 extern HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *, COSE_SignMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Sign_Release(COSE_SignMessage * p);
+extern bool _COSE_Signer_sign(COSE_SignMessage * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr);
 
 //  Mac-ed items
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);

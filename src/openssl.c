@@ -9,6 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/ecdsa.h>
 #include <openssl/rand.h>
 
 
@@ -183,6 +184,119 @@ bool HMAC_Create(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuth
 	CHECK_CONDITION(cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Tag, cn_cbor_data_create(rgbOut, TSize/8, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 
 	HMAC_cleanup(&ctx);
+	return true;
+}
+
+#define COSE_Key_EC_Curve -1
+#define COSE_Key_EC_X -2
+#define COSE_Key_EC_Y -3
+#define COSE_Key_EC_d -4
+
+EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
+{
+	EC_KEY * pNewKey = EC_KEY_new();
+	byte  rgbKey[512+1];
+	const cn_cbor * p;
+	int nidGroup = -1;
+	EC_POINT * pPoint = NULL;
+
+	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Curve);
+	if (p == NULL) return NULL;
+	switch (p->v.sint) {
+	case 1: // P-256
+		nidGroup = NID_X9_62_prime256v1;
+		break;
+
+	case 2: // P-384
+		nidGroup = NID_secp384r1;
+		break;
+
+	case 3: // P-521
+		nidGroup = NID_secp521r1;
+		break;
+
+	default:
+		return NULL;
+	}
+
+	EC_GROUP * ecgroup = EC_GROUP_new_by_curve_name(nidGroup);
+	EC_KEY_set_group(pNewKey, ecgroup);
+
+	rgbKey[0] = POINT_CONVERSION_UNCOMPRESSED;
+	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_X);
+	if (p == NULL) return NULL;
+	if (p->type != CN_CBOR_BYTES) return NULL;
+	memcpy(rgbKey+1, p->v.str, p->length);
+
+	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Y);
+	if (p == NULL) return NULL;
+	if (p->type != CN_CBOR_BYTES) return NULL;
+	memcpy(rgbKey + p->length+1, p->v.str, p->length);
+
+	pPoint = EC_POINT_new(ecgroup);
+	EC_POINT_oct2point(ecgroup, pPoint, rgbKey, p->length * 2 + 1, NULL);
+	EC_KEY_set_public_key(pNewKey, pPoint);
+
+	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
+	if (p != NULL) {
+		BIGNUM * pbn;
+
+		pbn = BN_bin2bn(p->v.str, p->length, NULL);
+		EC_KEY_set_private_key(pNewKey, pbn);
+	}
+	
+	return pNewKey;
+}
+
+/*
+bool ECDSA_Sign(const cn_cbor * pKey)
+{
+	byte * digest = NULL;
+	int digestLen = 0;
+	ECDSA_SIG * sig;
+
+	EC_KEY * eckey = ECKey_From(pKey);
+
+	sig = ECDSA_do_sign(digest, digestLen, eckey);
+
+	return true;
+}
+*/
+
+bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
+{
+	EC_KEY * eckey = NULL;
+	byte rgbDigest[EVP_MAX_MD_SIZE];
+	size_t cbDigest = sizeof(rgbDigest);
+	ECDSA_SIG * sig;
+	byte  * pbSig = NULL;
+	size_t cbSig;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
+#endif
+	cn_cbor * p = NULL;
+	
+	eckey = ECKey_From(pSigner->m_pkey, perr);
+	if (eckey == NULL) {
+	errorReturn:
+		if (p != NULL) CN_CBOR_FREE(p, context);
+		if (eckey != NULL) EC_KEY_free(eckey);
+		return false;
+	}
+
+	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, EVP_sha256(), NULL);
+
+	cbSig = ECDSA_size(eckey);
+	pbSig = COSE_CALLOC(cbSig, 1, context);
+	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(ECDSA_sign(0, rgbDigest, cbDigest, pbSig, &cbSig, eckey), COSE_ERR_CRYPTO_FAIL);
+
+	p = cn_cbor_data_create(pbSig, cbSig, CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(cn_cbor_mapput_int(pSigner->m_message.m_cbor, COSE_Header_Signature, p, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+	
 	return true;
 }
 

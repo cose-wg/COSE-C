@@ -70,7 +70,7 @@ typedef enum {
 	COSE_Algorithm_HMAC_256_256 = 4,
 
 	COSE_Algorithm_AES_CCM_16_64_128 = 10,
-	COSE_Algoirthm_AES_CCM_16_64_256 = 11,
+	COSE_Algorithm_AES_CCM_16_64_256 = 11,
 	COSE_Algorithm_AES_CCM_64_64_128 = 30,
 	COSE_Algorithm_AES_CCM_64_64_256 = 31,
 	COSE_Algorithm_AES_CCM_16_128_128 = 12,
@@ -83,6 +83,7 @@ typedef enum {
 	COSE_Algorithm_PS256 = -26,
 	COSE_Algorithm_PS384 = -27,
 	COSE_Algorithm_PS512 = -28,
+	COSE_Algorithm_ECDSA_SHA_256 = -7,
 } COSE_Algorithms;
 
 typedef enum {
@@ -95,9 +96,17 @@ typedef enum {
 	COSE_Header_Recipients,
 	COSE_Header_Type,
 	COSE_Header_PlainText,
-	COSE_Header_Tag
+	COSE_Header_Tag,
+	COSE_Header_Signers,
+	COSE_Header_Signature,
 } COSE_Header;
 
+typedef enum {
+	COSE_Key_Type_EC2 = 2,
+	COSE_Key_Type = 1,
+	COSE_Key_ID = 2,
+	COSE_Parameter_KID = 4,
+} COSE_Constants;
 
 void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 void COSE_Encrypt_SetNonce(HCOSE_ENCRYPT cose, byte * rgbIV, size_t cbIV);
@@ -131,3 +140,7 @@ HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC cose, COSE_Algorithms algId
 
 HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errback * perr);
 
+//
+//
+
+HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN cose, const cn_cbor * pkey, int algId, cose_errback * perr);
