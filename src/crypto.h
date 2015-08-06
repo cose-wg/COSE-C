@@ -37,6 +37,17 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 bool HMAC_Create(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 
 /**
+* Perform a signature operation
+*
+* @param[in]	COSE_SignerInfo Pointer to COSE SignerInfo context object
+* @param[in]	byte *			Pointer to text to be signed
+* @param[in]	size_t			size of text to be signed
+* @param[in]	cose_errback *	Error return location
+* @return						Did the function succeed?
+*/
+bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
+
+/**
 *  Generate random bytes in a buffer
 *
 * @param[in]   byte *      Pointer to buffer to be filled

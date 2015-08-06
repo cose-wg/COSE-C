@@ -228,3 +228,36 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 
 	return f;
 }
+
+byte RgbDontUse3[1024];
+
+const cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
+{
+	const cn_cbor * pProtected;
+	int cbProtected;
+	byte * pbProtected = NULL;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pMessage->m_allocContext;
+#endif // USE_CBOR_CONTEXT
+
+	pProtected = cn_cbor_mapget_int(pMessage->m_cbor, COSE_Header_Protected);
+	if (pProtected != NULL) {
+	errorReturn:
+		if (pbProtected != NULL) COSE_FREE(pbProtected, context);
+		return pProtected;
+	}
+
+	cbProtected = cn_cbor_encoder_write(RgbDontUse3, 0, sizeof(RgbDontUse3), pMessage->m_protectedMap);
+	pbProtected = (byte *)COSE_CALLOC(cbProtected, 1, context);
+	CHECK_CONDITION(pbProtected != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected, pMessage->m_protectedMap) == cbProtected, COSE_ERR_CBOR);
+
+	pProtected = cn_cbor_data_create(pbProtected, cbProtected, CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(pProtected != NULL, COSE_ERR_OUT_OF_MEMORY);
+	pbProtected = NULL;
+
+	CHECK_CONDITION(cn_cbor_mapput_int(pMessage->m_cbor, COSE_Header_Protected, pProtected, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+
+	return pProtected;
+}
