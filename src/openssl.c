@@ -181,10 +181,60 @@ bool HMAC_Create(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuth
 	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
+#ifdef USE_ARRAY
+	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cn_cbor_data_create(rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL), INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+#else
 	CHECK_CONDITION(cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Tag, cn_cbor_data_create(rgbOut, TSize/8, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+#endif
 
 	HMAC_cleanup(&ctx);
 	return true;
+}
+
+bool HMAC_Validate(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+{
+	HMAC_CTX ctx;
+	EVP_MD * pmd = NULL;
+	byte * rgbOut = NULL;
+	unsigned int cbOut;
+	bool f = false;
+	int i;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pcose->m_message.m_allocContext;
+#endif
+
+	HMAC_CTX_init(&ctx);
+
+
+	switch (HSize) {
+	case 256: pmd = EVP_sha256(); break;
+	default: CHECK_CONDITION(false, COSE_ERR_INVALID_PARAMETER); break;
+	}
+
+	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
+	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(HMAC_Init(&ctx, pcose->pbKey, pcose->cbKey, pmd), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
+
+#ifdef USE_ARRAY
+	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
+	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
+#else
+#endif
+
+	if (cn->length != cbOut) return false;
+	for (i = 0; i < cbOut; i++) f |= (cn->v.str[i] != rgbOut[i]);
+
+	HMAC_cleanup(&ctx);
+	return !f;
+
+errorReturn:
+	COSE_FREE(rgbOut, context);
+	HMAC_cleanup(&ctx);
+	return false;
+
 }
 
 #define COSE_Key_EC_Curve -1
@@ -295,7 +345,11 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSi
 	p = cn_cbor_data_create(pbSig, cbSig, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
 
+#ifdef USE_ARRAY
+	CHECK_CONDITION(_COSE_array_replace(&pSigner->m_message, p, INDEX_SIGNATURE, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+#else
 	CHECK_CONDITION(cn_cbor_mapput_int(pSigner->m_message.m_cbor, COSE_Header_Signature, p, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+#endif
 	
 	return true;
 }

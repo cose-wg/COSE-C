@@ -2,6 +2,7 @@
 //
 
 #define _CRT_SECURE_NO_WARNINGS
+#define USE_CBOR_CONTEXT 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,13 +12,6 @@
 
 extern int EncryptMessage();
 
-int main(int argc, char * argv[])
-{
-	MacMessage();
-	SignMessage();
-	EncryptMessage();
-	return 0;
-}
 
 int MacMessage()
 {
@@ -26,7 +20,7 @@ int MacMessage()
 	byte rgbSecret[256 / 8] = { 'a', 'b', 'c' };
 	byte  rgbKid[6] = { 'a', 'b', 'c', 'd', 'e', 'f' };
 	int cbKid = 6;
-	ssize_t cb;
+	size_t cb;
 	byte * rgb;
 
 	COSE_Mac_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_HMAC_256_256, NULL, NULL), COSE_PROTECT_ONLY, NULL);
@@ -56,13 +50,34 @@ int MacMessage()
 
 	COSE_Mac_Free(hEncObj);
 
+	/* */
+
+	int typ;
+	hEncObj = (HCOSE_MAC) COSE_Decode(rgb, cb, &typ, NULL, NULL);
+
+	int iRecipient = 0;
+	do {
+		HCOSE_RECIPIENT hRecip;
+
+		hRecip = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
+		if (hRecip == NULL) break;
+
+		COSE_Recipient_SetKey(hRecip, rgbSecret, sizeof(rgbSecret), NULL);
+
+		COSE_Mac_validate(hEncObj, hRecip, NULL);
+
+		iRecipient += 1;
+
+	} while (true);
+
+	return 1;
 }
 
 int SignMessage()
 {
 	HCOSE_SIGN hEncObj = COSE_Sign_Init(NULL, NULL);
 	char * sz = "This is the content to be used";
-	ssize_t cb;
+	size_t cb;
 	byte * rgb;
 
 			byte rgbX[] = { 0x65, 0xed, 0xa5, 0xa1, 0x25, 0x77, 0xc2, 0xba, 0xe8, 0x29, 0x43, 0x7f, 0xe3, 0x38, 0x70, 0x1a, 0x10, 0xaa, 0xa3, 0x75, 0xe1, 0xbb, 0x5b, 0x5d, 0xe1, 0x08, 0xde, 0x43, 0x9c, 0x08, 0x55, 0x1d };
@@ -103,6 +118,7 @@ int SignMessage()
 
 	COSE_Sign_Free(hEncObj);
 
+	return 1;
 }
 
 int EncryptMessage()
@@ -112,7 +128,7 @@ int EncryptMessage()
 	int cbSecret = 128/8;
 	byte  rgbKid[6] = { 'a', 'b', 'c', 'd', 'e', 'f' };
 	int cbKid = 6;
-	ssize_t cb;
+	size_t cb;
 	byte * rgb;
 	char * sz = "This is the content to be used";
 
@@ -166,4 +182,13 @@ int EncryptMessage()
 	} while (true);
 
 	return 1;
+}
+
+
+int main(int argc, char * argv[])
+{
+	MacMessage();
+	SignMessage();
+	EncryptMessage();
+	return 0;
 }

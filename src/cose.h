@@ -1,5 +1,3 @@
-#define USE_CBOR_CONTEXT 1
-
 #include <cn-cbor\cn-cbor.h>
 #include "configure.h"
 typedef unsigned char byte;
@@ -89,16 +87,7 @@ typedef enum {
 typedef enum {
 	COSE_Header_Algorithm = 1,
 	COSE_Header_KID,
-	COSE_Header_Protected,
-	COSE_Header_Unprotected,
 	COSE_Header_IV,
-	COSE_Header_Ciphertext,
-	COSE_Header_Recipients,
-	COSE_Header_Type,
-	COSE_Header_PlainText,
-	COSE_Header_Tag,
-	COSE_Header_Signers,
-	COSE_Header_Signature,
 } COSE_Header;
 
 typedef enum {
@@ -133,6 +122,7 @@ const cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errba
 bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
+bool COSE_Mac_validate(HCOSE_MAC, HCOSE_RECIPIENT, cose_errback * perr);
 
 void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
