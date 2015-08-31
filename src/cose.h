@@ -1,5 +1,3 @@
-#define USE_CBOR_CONTEXT 1
-
 #include <cn-cbor\cn-cbor.h>
 #include "configure.h"
 typedef unsigned char byte;
@@ -89,16 +87,7 @@ typedef enum {
 typedef enum {
 	COSE_Header_Algorithm = 1,
 	COSE_Header_KID,
-	COSE_Header_Protected,
-	COSE_Header_Unprotected,
 	COSE_Header_IV,
-	COSE_Header_Ciphertext,
-	COSE_Header_Recipients,
-	COSE_Header_Type,
-	COSE_Header_PlainText,
-	COSE_Header_Tag,
-	COSE_Header_Signers,
-	COSE_Header_Signature,
 } COSE_Header;
 
 typedef enum {
@@ -111,8 +100,8 @@ typedef enum {
 void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 void COSE_Encrypt_SetNonce(HCOSE_ENCRYPT cose, byte * rgbIV, size_t cbIV);
 
-const cn_cbor * COSE_Encrypt_map_get_string(HCOSE_ENCRYPT cose, const char * key, int flags, cose_errback * errp);
-const cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
+cn_cbor * COSE_Encrypt_map_get_string(HCOSE_ENCRYPT cose, const char * key, int flags, cose_errback * errp);
+cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
 
 bool COSE_Encrypt_map_put(HCOSE_ENCRYPT cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
@@ -129,10 +118,11 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_err
 
 void COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
-const cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
+cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
 bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
+bool COSE_Mac_validate(HCOSE_MAC, HCOSE_RECIPIENT, cose_errback * perr);
 
 void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 

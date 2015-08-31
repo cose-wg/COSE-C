@@ -33,27 +33,32 @@ HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, co
 	return (HCOSE_RECIPIENT)p;
 }
 
-COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * errp)
+COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_RecipientInfo * pRecipient = NULL;
 
 	pRecipient = (COSE_RecipientInfo *)COSE_CALLOC(1, sizeof(COSE_RecipientInfo), context);
-	if (pRecipient == NULL) {
-		if (errp != NULL) errp->err = COSE_ERR_OUT_OF_MEMORY;
-		return NULL;
-	}
+	CHECK_CONDITION(pRecipient != NULL, COSE_ERR_OUT_OF_MEMORY);
 
+#ifdef USE_ARRAY
+	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+#else
 	if (cbor->type != CN_CBOR_MAP) {
 		if (errp != NULL) errp->err = COSE_ERR_INVALID_PARAMETER;
 		COSE_FREE(pRecipient, context);
 		return NULL;
 	}
-	if (_COSE_Encrypt_Init_From_Object(cbor, &pRecipient->m_encrypt, CBOR_CONTEXT_PARAM_COMMA errp) == NULL) {
-		_COSE_Recipient_Free(pRecipient);
-		return NULL;
+#endif
+
+	if (_COSE_Encrypt_Init_From_Object(cbor, &pRecipient->m_encrypt, CBOR_CONTEXT_PARAM_COMMA perr) == NULL) {
+		goto errorReturn;
 	}
 
 	return pRecipient;
+
+errorReturn:
+	_COSE_Recipient_Free(pRecipient);
+	return NULL;
 }
 
 void _COSE_Recipient_Free(COSE_RecipientInfo * pRecipient)

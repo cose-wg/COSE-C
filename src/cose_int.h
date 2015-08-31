@@ -1,3 +1,5 @@
+#include <assert.h>
+
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
 
@@ -115,12 +117,12 @@ extern const cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * pe
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 extern bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
 
-extern bool _COSE_Init(COSE * pcose, CBOR_CONTEXT_COMMA cose_errback * errp);
+extern bool _COSE_Init(COSE * pcose, int msgType, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose_errback * perror);
 extern void _COSE_Release(COSE * pcose);
 
-extern const cn_cbor * _COSE_map_get_string(COSE * cose, const char * key, int flags, cose_errback * errp);
-extern const cn_cbor * _COSE_map_get_int(COSE * cose, int key, int flags, cose_errback * errp);
+extern cn_cbor * _COSE_map_get_string(COSE * cose, const char * key, int flags, cose_errback * errp);
+extern cn_cbor * _COSE_map_get_int(COSE * cose, int key, int flags, cose_errback * errp);
 extern bool _COSE_map_put(COSE * cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 extern HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
@@ -137,11 +139,50 @@ extern byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, s
 //  Signed items
 extern HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *, COSE_SignMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Sign_Release(COSE_SignMessage * p);
-extern bool _COSE_Signer_sign(COSE_SignMessage * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr);
+
+extern bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr);
+extern COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr);
+extern void _COSE_Signer_Free(COSE_SignerInfo * pSigner);
 
 //  Mac-ed items
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Mac_Release(COSE_MacMessage * p);
 
 
-#define CHECK_CONDITION(condition, error) { if (!(condition)) { perr->err = error; goto errorReturn;}}
+#define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}
+#define FAIL_CONDITION(condition, error) { assert(false); perr->err = error; goto errorReturn;}
+
+
+//// Defines on positions
+
+#define INDEX_PROTECTED 0
+#define INDEX_UNPROTECTED 1
+#define INDEX_BODY 2
+#define INDEX_SIGNATURES 3
+#define INDEX_RECIPIENTS 3
+#define INDEX_MAC_TAG 3
+#define INDEX_MAC_RECIPIENTS 4
+#define INDEX_SIGNATURE 2
+
+//// Defines on message types
+
+#define MSG_TYPE_NONE 0
+#define MSG_TYPE_SIGN 1
+#define MSG_TYPE_ENCRYPT 2
+#define MSG_TYPE_MAC 3
+
+#define COSE_Header_Protected 99
+#define COSE_Header_Unprotected 98
+#define COSE_Header_Type 97
+#define COSE_Header_Ciphertext 96
+#define COSE_Header_Recipients 95
+#define COSE_Header_Signature 94
+#define COSE_Header_Signers 93
+
+
+bool _COSE_array_replace(COSE * pMessage, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
+cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index);
+
+///  NEW CBOR FUNCTIONS
+
+bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);

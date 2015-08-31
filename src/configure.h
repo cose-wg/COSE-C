@@ -1,4 +1,4 @@
-#define INCLUDE_AES_CCM_64 1
+#define INCLUDE_AES_CCM 1
 
 
 #define USE_OPEN_SSL 1

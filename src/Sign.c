@@ -19,15 +19,9 @@ HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_message, CBOR_CONTEXT_PARAM_COMMA perror)) {
-	error_setup:
+	if (!_COSE_Init(&pobj->m_message, MSG_TYPE_SIGN, CBOR_CONTEXT_PARAM_COMMA perror)) {
 		COSE_Sign_Free((HCOSE_SIGN)pobj);
 		return NULL;
-	}
-
-	if (!cn_cbor_mapput_int(pobj->m_message.m_cbor, COSE_Header_Type, cn_cbor_int_create(2, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
-		goto error_setup;
 	}
 
 	return (HCOSE_SIGN)pobj;
@@ -102,25 +96,30 @@ void _COSE_Sign_Release(COSE_SignMessage * p)
 bool COSE_Sign_SetContent(HCOSE_SIGN h, const byte * rgb, size_t cb, cose_errback * perr)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context;
+	cn_cbor_context * context = NULL;
 #endif
-	cn_cbor * p;
+	cn_cbor * p = NULL;
 	COSE_SignMessage * pMessage = (COSE_SignMessage *)h;
 
 	if (!IsValidSignHandle(h) || (rgb == NULL)) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-		errorReturn:
+	errorReturn:
+		if (p != NULL) CN_CBOR_FREE(p, context);
 		return false;
 	}
 
 #ifdef USE_CBOR_CONTEXT
-	context = &((COSE_SignMessage *)h)->m_message.m_allocContext;
+	context = &pMessage->m_message.m_allocContext;
 #endif
 
 	p = cn_cbor_data_create(rgb, cb, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(p != NULL, CN_CBOR_ERR_OUT_OF_DATA);
 
+#ifdef USE_ARRAY
+	CHECK_CONDITION(_COSE_array_replace(&pMessage->m_message, p, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
+#else
 	CHECK_CONDITION(cn_cbor_mapput_int(pMessage->m_message.m_cbor, COSE_Header_Ciphertext, p, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
+#endif
 
 	return true;
 }
@@ -161,7 +160,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	pSigner = (COSE_SignerInfo *)COSE_CALLOC(1, sizeof(COSE_SignerInfo), context);
 	CHECK_CONDITION(pSigner != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pSigner->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!_COSE_Init(&pSigner->m_message, MSG_TYPE_NONE, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	cbor = cn_cbor_mapget_int(pkey, COSE_Key_ID);
 	if (cbor != NULL) {
@@ -177,17 +176,28 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	pSigner->m_signerNext = pMessage->m_signerFirst;
 	pMessage->m_signerFirst = pSigner;
 
+#ifdef USE_ARRAY
+	cn_cbor * pSigners = cn_cbor_index(pMessage->m_message.m_cbor, INDEX_SIGNATURES+1);   // M00BUG
+#else
 	cn_cbor * pSigners = (cn_cbor *)cn_cbor_mapget_int(pMessage->m_message.m_cbor, COSE_Header_Signers);
+#endif
 	if (pSigners == NULL) {
 		pSigners = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 		CHECK_CONDITION(pSigners != NULL, COSE_ERR_OUT_OF_MEMORY);
+#ifdef USE_ARRAY
+		if (!_COSE_array_replace(&pMessage->m_message, pSigners, INDEX_SIGNATURES, CBOR_CONTEXT_PARAM_COMMA NULL)) {
+			cn_cbor_free(pSigners, context);
+			CHECK_CONDITION(false, COSE_ERR_CBOR);
+		}
+#else
 		if (!cn_cbor_mapput_int(pMessage->m_message.m_cbor, COSE_Header_Signers, pSigners, CBOR_CONTEXT_PARAM_COMMA NULL)) {
 			cn_cbor_free(pSigners, context);
 			CHECK_CONDITION(false, COSE_ERR_CBOR);
 		}
+#endif
 	}
 
-	CHECK_CONDITION(cn_cbor_array_append(pSigners, pSigner->m_message.m_cbor, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+	CHECK_CONDITION(cn_cbor_array_append(pSigners, pSigner->m_message.m_cbor, NULL), COSE_ERR_CBOR);
 
 	return (HCOSE_SIGNER)pSigner;
 }
@@ -211,9 +221,14 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr)
 	context = &pMessage->m_message.m_allocContext;
 #endif
 
+#ifdef USE_ARRAY
+	pcborBody = _COSE_arrayget_int(&pMessage->m_message, INDEX_BODY);
+	CHECK_CONDITION((pcborBody != NULL) && (pcborBody->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+#else
 	//  From this layer we use the protected fields and the body
 	pcborBody = cn_cbor_mapget_int(pMessage->m_message.m_cbor, COSE_Header_Ciphertext);
 	CHECK_CONDITION(pcborBody != NULL, COSE_ERR_INVALID_PARAMETER);
+#endif
 
 	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
 	if (pcborProtected == NULL) goto errorReturn;
