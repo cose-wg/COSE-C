@@ -121,8 +121,8 @@ extern bool _COSE_Init(COSE * pcose, int msgType, CBOR_CONTEXT_COMMA cose_errbac
 extern bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose_errback * perror);
 extern void _COSE_Release(COSE * pcose);
 
-extern const cn_cbor * _COSE_map_get_string(COSE * cose, const char * key, int flags, cose_errback * errp);
-extern const cn_cbor * _COSE_map_get_int(COSE * cose, int key, int flags, cose_errback * errp);
+extern cn_cbor * _COSE_map_get_string(COSE * cose, const char * key, int flags, cose_errback * errp);
+extern cn_cbor * _COSE_map_get_int(COSE * cose, int key, int flags, cose_errback * errp);
 extern bool _COSE_map_put(COSE * cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 extern HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
@@ -150,6 +150,7 @@ extern void _COSE_Mac_Release(COSE_MacMessage * p);
 
 
 #define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}
+#define FAIL_CONDITION(condition, error) { assert(false); perr->err = error; goto errorReturn;}
 
 
 //// Defines on positions

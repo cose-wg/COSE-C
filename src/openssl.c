@@ -18,7 +18,7 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
 	byte * rgbOut = NULL;
-	int NSize = 15 - LSize;
+	int NSize = 15 - (LSize/8);
 	int outl = 0;
 	byte rgbIV[15] = { 0 };
 	const cn_cbor * pIV = NULL;
@@ -66,7 +66,7 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	}
 	CHECK_CONDITION(EVP_DecryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_DECRYPT_FAILED);
 
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, LSize, 0), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, (LSize/8), 0), COSE_ERR_DECRYPT_FAILED);
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, NSize, 0), COSE_ERR_DECRYPT_FAILED);
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, &pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
 
@@ -97,7 +97,7 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
 	byte * rgbOut = NULL;
-	int NSize = 15 - LSize;
+	int NSize = 15 - (LSize/8);
 	int outl = 0;
 	byte rgbIV[15] = { 0 };
 	const cn_cbor * cbor_iv = NULL;
@@ -125,7 +125,7 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, EVP_aes_128_ccm(), NULL, NULL, NULL), COSE_ERR_CRYPTO_FAIL);
 
 	TSize /= 8; // Comes in in bits not bytes.
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, LSize, 0), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, (LSize/8), 0), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, NSize, 0), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, NULL), COSE_ERR_CRYPTO_FAIL);	// Say we are doing an 8 byte tag
 

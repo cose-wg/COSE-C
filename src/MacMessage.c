@@ -230,7 +230,7 @@ void COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbConte
 }
 
 
-const cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror)
+cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror)
 {
 	if (!IsValidMacHandle(h)) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
@@ -401,7 +401,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	COSE_RecipientInfo * pRecip = (COSE_RecipientInfo *)hRecip;
 	cose_errback error = { 0 };
 
-	if (!IsValidEncryptHandle(h) || (!IsValidRecipientHandle(hRecip))) {
+	if (!IsValidMacHandle(h) || (!IsValidRecipientHandle(hRecip))) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
 		return false;
 	}
@@ -444,7 +444,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 		break;
 
 	default:
-		CHECK_CONDITION(false, COSE_ERR_UNKNOWN_ALGORITHM);
+		FAIL_CONDITION(false, COSE_ERR_UNKNOWN_ALGORITHM);
 		break;
 	}
 
@@ -470,7 +470,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	pbAuthData = NULL;
 	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	ptmp = cn_cbor_data_create(pAuthData->v.str, pAuthData->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(cnProtected->v.bytes, cnProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 
@@ -478,7 +478,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 
-	ptmp = cn_cbor_data_create(cnContent->v.str, cnContent->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(cnContent->v.bytes, cnContent->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 
@@ -493,7 +493,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 		break;
 
 	default:
-		CHECK_CONDITION(false, COSE_ERR_UNKNOWN_ALGORITHM);
+		FAIL_CONDITION(false, COSE_ERR_UNKNOWN_ALGORITHM);
 		break;
 	}
 

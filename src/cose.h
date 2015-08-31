@@ -100,8 +100,8 @@ typedef enum {
 void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 void COSE_Encrypt_SetNonce(HCOSE_ENCRYPT cose, byte * rgbIV, size_t cbIV);
 
-const cn_cbor * COSE_Encrypt_map_get_string(HCOSE_ENCRYPT cose, const char * key, int flags, cose_errback * errp);
-const cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
+cn_cbor * COSE_Encrypt_map_get_string(HCOSE_ENCRYPT cose, const char * key, int flags, cose_errback * errp);
+cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
 
 bool COSE_Encrypt_map_put(HCOSE_ENCRYPT cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
@@ -118,7 +118,7 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_err
 
 void COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
-const cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
+cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
 bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
