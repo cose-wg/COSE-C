@@ -115,7 +115,7 @@ bool COSE_Encrypt_Free(HCOSE_ENCRYPT h)
 
 void _COSE_Encrypt_Release(COSE_Encrypt * p)
 {
-	if (p->pbContent != NULL) COSE_FREE(p->pbContent, &p->m_message.m_allocContext);
+	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent, &p->m_message.m_allocContext);
 	//	if (p->pbIV != NULL) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
 	if (p->pbKey != NULL) COSE_FREE(p ->pbKey, &p->m_message.m_allocContext);
 
@@ -401,7 +401,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	if (cn_Alg == NULL) {
 	error:
 		if (perr != NULL) *perr = error;
-	errorReturn:
+		//errorReturn:
 		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 		if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 		if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
@@ -428,7 +428,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	case COSE_Algorithm_AES_CCM_16_64_256:
 		cbitKey = 256;
 		break;
-#endif INCLUDE_AES_CCM
+#endif // INCLUDE_AES_CCM
 
 	case COSE_Algorithm_Direct:
 		cbitKey = 0;
@@ -550,12 +550,13 @@ void COSE_Encrypt_SetContent(HCOSE_ENCRYPT h, const byte * rgb, size_t cb, cose_
 
 void _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgb, size_t cb, cose_errback * perror)
 {
-	cose->pbContent = (byte *)COSE_CALLOC(cb, 1, &cose->m_message.m_allocContext);
+	byte * pb;
+	cose->pbContent = pb= (byte *)COSE_CALLOC(cb, 1, &cose->m_message.m_allocContext);
 	if (cose->pbContent == NULL) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
 		return;
 	}
-	memcpy(cose->pbContent, rgb, cb);
+	memcpy(pb, rgb, cb);
 	cose->cbContent = cb;
 
 	if (perror != NULL) perror->err = COSE_ERR_NONE;

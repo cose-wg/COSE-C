@@ -4,6 +4,7 @@
 #include "crypto.h"
 
 #include <assert.h>
+#include <memory.h>
 
 #ifdef USE_OPEN_SSL
 
@@ -68,7 +69,7 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, (LSize/8), 0), COSE_ERR_DECRYPT_FAILED);
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, NSize, 0), COSE_ERR_DECRYPT_FAILED);
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, &pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *) &pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
 
 	CHECK_CONDITION(EVP_DecryptInit(&ctx, 0, pbKey, rgbIV), COSE_ERR_DECRYPT_FAILED);
 
@@ -153,7 +154,7 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 bool HMAC_Create(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
-	EVP_MD * pmd = NULL;
+	const EVP_MD * pmd = NULL;
 	byte * rgbOut = NULL;
 	unsigned int cbOut;
 #ifdef USE_CBOR_CONTEXT
@@ -194,7 +195,7 @@ bool HMAC_Create(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuth
 bool HMAC_Validate(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
-	EVP_MD * pmd = NULL;
+	const EVP_MD * pmd = NULL;
 	byte * rgbOut = NULL;
 	unsigned int cbOut;
 	bool f = false;
@@ -242,7 +243,7 @@ errorReturn:
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
+EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * /*perr*/)
 {
 	EC_KEY * pNewKey = EC_KEY_new();
 	byte  rgbKey[512+1];
@@ -291,7 +292,7 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
 	if (p != NULL) {
 		BIGNUM * pbn;
 
-		pbn = BN_bin2bn(p->v.str, p->length, NULL);
+		pbn = BN_bin2bn(p->v.bytes, p->length, NULL);
 		EC_KEY_set_private_key(pNewKey, pbn);
 	}
 	
@@ -317,10 +318,9 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSi
 {
 	EC_KEY * eckey = NULL;
 	byte rgbDigest[EVP_MAX_MD_SIZE];
-	size_t cbDigest = sizeof(rgbDigest);
-	ECDSA_SIG * sig;
+	uint cbDigest = sizeof(rgbDigest);
 	byte  * pbSig = NULL;
-	size_t cbSig;
+	uint cbSig;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
 #endif

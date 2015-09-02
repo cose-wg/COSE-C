@@ -34,3 +34,10 @@
 *~
 Debug
 Release
+
+# CMAKE FILES
+CMakeFiles
+CMakeCache.txt
+Makefile
+*.cmake
+

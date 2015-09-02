@@ -1,4 +1,6 @@
-#include "cn-cbor\cn-cbor.h"
+#include "cn-cbor/cn-cbor.h"
+#include <stdlib.h>
+
 #define INIT_CB(v) \
   if (errp) {errp->err = CN_CBOR_NO_ERROR;} \
   (v) = CN_CALLOC_CONTEXT(); \
