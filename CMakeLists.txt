@@ -67,6 +67,7 @@ endif ()
 
 ## include the parts
 add_subdirectory(src)
+add_subdirectory(test)
 
 ##  try for documentation
 if (build_docs)

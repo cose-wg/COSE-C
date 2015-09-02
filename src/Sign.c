@@ -205,7 +205,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = NULL;
+  // cn_cbor_context * context = NULL;
 #endif
 	COSE_SignMessage * pMessage = (COSE_SignMessage *)h;
 	COSE_SignerInfo * pSigner;
@@ -218,7 +218,7 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr)
 		return false;
 	}
 #ifdef USE_CBOR_CONTEXT
-	context = &pMessage->m_message.m_allocContext;
+	//	context = &pMessage->m_message.m_allocContext;
 #endif
 
 #ifdef USE_ARRAY

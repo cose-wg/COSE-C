@@ -199,7 +199,7 @@ bool HMAC_Validate(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAu
 	byte * rgbOut = NULL;
 	unsigned int cbOut;
 	bool f = false;
-	int i;
+	unsigned int i;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
@@ -225,8 +225,8 @@ bool HMAC_Validate(COSE_Encrypt * pcose, int HSize, int TSize, const byte * pbAu
 #else
 #endif
 
-	if (cn->length != cbOut) return false;
-	for (i = 0; i < cbOut; i++) f |= (cn->v.str[i] != rgbOut[i]);
+	if (cn->length != (int) cbOut) return false;
+	for (i = 0; i < (uint) TSize/8; i++) f |= (cn->v.str[i] != rgbOut[i]);
 
 	HMAC_cleanup(&ctx);
 	return !f;
@@ -243,7 +243,7 @@ errorReturn:
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * /*perr*/)
+EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
 {
 	EC_KEY * pNewKey = EC_KEY_new();
 	byte  rgbKey[512+1];
@@ -252,7 +252,8 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * /*perr*/)
 	EC_POINT * pPoint = NULL;
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Curve);
-	if (p == NULL) return NULL;
+	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
+
 	switch (p->v.sint) {
 	case 1: // P-256
 		nidGroup = NID_X9_62_prime256v1;
@@ -297,6 +298,9 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * /*perr*/)
 	}
 	
 	return pNewKey;
+
+ errorReturn:
+	return NULL;
 }
 
 /*

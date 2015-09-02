@@ -279,7 +279,7 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 #endif // INCLUDE_AES_CCM
 
 	case COSE_Algorithm_Direct:
-		CHECK_CONDITION(pcose->cbKey == cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
+	  	CHECK_CONDITION(pcose->cbKey == (uint) cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
 		break;
 
 	default:
@@ -356,7 +356,7 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 #endif // INCLUDE_AES_CCM
 
 	case COSE_Algorithm_Direct:
-		CHECK_CONDITION((pcose->cbKey == cbitKey / 8),  COSE_ERR_INVALID_PARAMETER);
+	  CHECK_CONDITION((pcose->cbKey == (uint) cbitKey / 8),  COSE_ERR_INVALID_PARAMETER);
 		memcpy(pbKey, pcose->pbKey, pcose->cbKey);
 		break;
 
