@@ -213,7 +213,7 @@ void COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbConte
 		return;
 	}
 
-	ptmp = cn_cbor_data_create(rgbContent, cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(rgbContent, (int) cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(ptmp != NULL, CN_CBOR_ERR_OUT_OF_MEMORY);
 
 #ifdef USE_ARRAY
@@ -357,7 +357,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	ptmp = NULL;
 
-	ptmp = cn_cbor_data_create(pcose->pbContent, pcose->cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(pcose->pbContent, (int) pcose->cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (ptmp == NULL) goto error;
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	ptmp = NULL;

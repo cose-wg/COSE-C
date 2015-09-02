@@ -53,7 +53,7 @@ int MacMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_MAC) COSE_Decode(rgb, cb, &typ, NULL, NULL);
+	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, NULL, NULL);
 
 	int iRecipient = 0;
 	do {
@@ -164,7 +164,7 @@ int EncryptMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, cb, &typ, NULL, NULL);
+	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, NULL, NULL);
 	
 	int iRecipient = 0;
 	do {
@@ -185,7 +185,7 @@ int EncryptMessage()
 }
 
 
-int main(int __attribute__((unused)) argc, __attribute__((unused)) char ** argv)
+int main()
 {
 	MacMessage();
 	SignMessage();
