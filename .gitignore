@@ -3,6 +3,7 @@
 *.ko
 *.obj
 *.elf
+*.cbor
 
 # Precompiled Headers
 *.gch
@@ -41,3 +42,10 @@ CMakeCache.txt
 Makefile
 *.cmake
 
+# Visual Studio files
+*.sdf
+*.sln
+*.suo
+*.vcxproj
+*.vcxproj.filters
+*.opensdf
