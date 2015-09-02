@@ -4,10 +4,10 @@
 // interface, and they were quite confusing in cn-cbor.h
 
 typedef struct {
-	int m_flags;        //  Not sure what goes here yet
-	int m_ownMsg : 1;	//  Do I own the pointer @ m_cbor?
-	int m_ownUnprotectedMap : 1; //  Do I own the pointer @ m_unportectedMap?
-	int m_msgType : 4;	//  What message type is this?
+	int m_flags;		//  Not sure what goes here yet
+	int m_ownMsg;		//  Do I own the pointer @ m_cbor?
+	int m_ownUnprotectedMap; //  Do I own the pointer @ m_unportectedMap?
+	int m_msgType;		//  What message type is this?
 	cn_cbor * m_cbor;
 	cn_cbor * m_protectedMap;
 	cn_cbor * m_unprotectMap;
@@ -25,13 +25,13 @@ typedef struct {
 	COSE_SignerInfo * m_signerFirst;
 } COSE_SignMessage;
 
-typedef struct _SignerInfo {
+struct _SignerInfo {
 	COSE m_message;
 	byte * pbKey;
 	size_t cbKey;
 	const cn_cbor * m_pkey;
 	COSE_SignerInfo * m_signerNext;
-} COSE_SignerInfo;
+};
 
 struct _RecipientInfo;
 typedef struct _RecipientInfo COSE_RecipientInfo;
@@ -39,22 +39,20 @@ typedef struct _RecipientInfo COSE_RecipientInfo;
 typedef struct {
 	COSE m_message;		// The message object
 	COSE_RecipientInfo * m_recipientFirst;
-	byte * pbContent;
+	const byte * pbContent;
 	size_t cbContent;
 	byte * pbKey;
 	size_t cbKey;
 } COSE_Encrypt;
 
-typedef struct _RecipientInfo {
+struct _RecipientInfo {
 	COSE_Encrypt m_encrypt;
 	COSE_RecipientInfo * m_recipientNext;
-} COSE_RecipientInfo;
+};
 
 typedef struct {
 	COSE m_message;			// The message object
 	COSE_RecipientInfo * m_recipientFirst;
-	byte * pbContent;
-	size_t cbContent;
 	byte * pbKey;
 	size_t cbKey;
 } COSE_MacMessage;
@@ -87,7 +85,7 @@ typedef struct {
 * @param  free_func [description]
 * @return           [description]
 */
-#define COSE_FREE(ptr, ctx) (((ctx) && (ctx)->free_func) ? \
+#define COSE_FREE(ptr, ctx) (((ctx)->free_func) ? \
     ((ctx)->free_func((ptr), (ctx)->context)) : \
     free((ptr)))
 
@@ -111,7 +109,7 @@ typedef struct {
 #define UNUSED_PARAM(p) ((void)&(p))
 #endif
 
-extern const cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
+extern cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
 
 
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);

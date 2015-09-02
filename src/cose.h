@@ -1,4 +1,4 @@
-#include <cn-cbor\cn-cbor.h>
+#include <cn-cbor/cn-cbor.h>
 #include "configure.h"
 typedef unsigned char byte;
 

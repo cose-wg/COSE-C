@@ -40,7 +40,7 @@ bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 	pobj->m_cbor = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 #endif
 	if (pobj->m_cbor == NULL) goto error_setup;
-	pobj->m_ownMsg = true;
+	pobj->m_ownMsg = 1;
 
 	if (msgType > 0) {
 		cn_cbor * cn = cn_cbor_int_create(msgType, CBOR_CONTEXT_PARAM_COMMA NULL);
@@ -279,7 +279,7 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 
 byte RgbDontUse3[1024];
 
-const cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
+cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 {
 	cn_cbor * pProtected;
 	int cbProtected;
