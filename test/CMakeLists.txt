@@ -13,5 +13,6 @@ target_link_libraries (cose_test PRIVATE cose-c )
 target_include_directories ( cose_test PRIVATE ../include )
 target_include_directories ( cose_test PRIVATE ../src )
 target_include_directories ( cose_test PUBLIC ../../cose/cn-cbor/include )
+target_include_directories ( cose_test PUBLIC ../../cn-cbor/implement/cn-cbor/include )
 
 add_test ( NAME cose_test COMMAND test )

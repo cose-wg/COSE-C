@@ -20,7 +20,8 @@ endif()
 add_library ( cose-c SHARED ${cose_sources} )
 
 target_include_directories ( cose-c PRIVATE ../src )
-target_include_directories ( cose-c PUBLIC ../../cose/cn-cbor/include )
+target_include_directories ( cose-c PUBLIC ../../cn-cbor/implement/cn-cbor/include )
+target_include_directories ( cose-c PUBLIC ../../../openssl/openssl-1.0.1h/include )
 
 
 install ( TARGETS cose-c
