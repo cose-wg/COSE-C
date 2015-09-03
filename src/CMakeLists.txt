@@ -19,10 +19,9 @@ if (use_context)
 endif()
 add_library ( cose-c SHARED ${cose_sources} )
 
+target_include_directories ( cose-c PRIVATE ${OPENSSL_INCLUDE_DIR} )
+target_include_directories ( cose-c PUBLIC ${dist_dir}/include )
 target_include_directories ( cose-c PRIVATE ../src )
-target_include_directories ( cose-c PUBLIC ../../cn-cbor/implement/cn-cbor/include )
-target_include_directories ( cose-c PUBLIC ../../../openssl/openssl-1.0.1h/include )
-
 
 install ( TARGETS cose-c
 	LIBRARY DESTINATION lib
