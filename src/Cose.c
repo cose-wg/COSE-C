@@ -16,7 +16,7 @@ bool IsValidCOSEHandle(HCOSE h)
 
 bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	cn_cbor_errback errState = { 0 };
+        cn_cbor_errback errState;  // = { 0 };
 
 #ifdef USE_CBOR_CONTEXT
 	if (context != NULL) pobj->m_allocContext = *context;
@@ -60,7 +60,7 @@ bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	const cn_cbor * pmap = NULL;
-	cn_cbor_errback errState = { 0 };
+	cn_cbor_errback errState; // = { 0 };
 	cn_cbor * cbor;
 
 #ifdef USE_CBOR_CONTEXT
