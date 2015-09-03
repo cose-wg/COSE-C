@@ -14,6 +14,7 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 project ("cose-c" VERSION "${COSE_VERSION}")
 
 find_package(Doxygen)
+find_package(OpenSSL 1.0 REQUIRED)
 
 ### setup options
 option (use_context	"Use context pointer for COSE functions" ON)
@@ -65,9 +66,6 @@ if (versbose)
    set (CMAKE_VERBOSE_MAKEFILE ON)
 endif ()
 
-## include the parts
-add_subdirectory(src)
-add_subdirectory(test)
 
 ##  try for documentation
 if (build_docs)
@@ -104,3 +102,8 @@ include_directories ( "${install_dir}/include" )
 add_library (cn-cbor STATIC IMPORTED)
 set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
 add_dependencies(cn-cbor project_cn-cbor)
+
+
+## include the parts
+add_subdirectory(src)
+add_subdirectory(test)
