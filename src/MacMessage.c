@@ -32,6 +32,9 @@ HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 		return NULL;
 	}
 
+	pobj->pbKey = NULL;
+	pobj->cbKey = 0;
+
 	return (HCOSE_MAC)pobj;
 }
 
@@ -261,7 +264,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
 	cn_cbor_context * context;
-	COSE_Encrypt * pcose = (COSE_Encrypt *)h;
+	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	cose_errback error;
 
 	if (!IsValidMacHandle(h)) {
@@ -277,7 +280,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	if (cn_Alg == NULL) {
 	error:
 		if (perr != NULL) *perr = error;
-		// errorReturn:
+		errorReturn:
 		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 		if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 		if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
@@ -328,7 +331,11 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	//  Build protected headers
 
 	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, &error);
-	if (cbProtected == NULL) goto error;
+	CHECK_CONDITION(cbProtected != NULL, COSE_ERR_CBOR);
+
+	//  Get the body
+	const cn_cbor * cbBody = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
+	CHECK_CONDITION(cbBody != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	//  Add Unprotected headers
 #ifdef USE_ARRAY
@@ -357,7 +364,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	ptmp = NULL;
 
-	ptmp = cn_cbor_data_create(pcose->pbContent, (int) pcose->cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(cbBody->v.bytes, cbBody->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (ptmp == NULL) goto error;
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	ptmp = NULL;
@@ -395,7 +402,7 @@ byte RgbDontUseMac[1024];
 
 bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
-	COSE_Encrypt * pcose = (COSE_Encrypt *)h;
+	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	COSE_RecipientInfo * pRecip = (COSE_RecipientInfo *)hRecip;
 	cose_errback error = { 0 };
 
