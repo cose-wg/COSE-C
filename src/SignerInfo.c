@@ -96,13 +96,13 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, perr);
 	if (pcborProtectedSign == NULL) goto errorReturn;
 
-	pcborBody2 = cn_cbor_data_create(pcborBody->v.str, pcborBody->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	pcborBody2 = cn_cbor_data_create(pcborBody->v.bytes, pcborBody->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(pcborBody2 != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	pcborProtected2 = cn_cbor_data_create(pcborProtected->v.str, pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	pcborProtected2 = cn_cbor_data_create(pcborProtected->v.bytes, pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(pcborProtected2 != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	pcborProtectedSign2 = cn_cbor_data_create(pcborProtectedSign->v.str, pcborProtectedSign->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	pcborProtectedSign2 = cn_cbor_data_create(pcborProtectedSign->v.bytes, pcborProtectedSign->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(pcborProtectedSign2 != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(cn_cbor_array_append(pArray, pcborProtected2, NULL), COSE_ERR_CBOR);

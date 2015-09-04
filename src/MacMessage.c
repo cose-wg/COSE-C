@@ -32,6 +32,9 @@ HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 		return NULL;
 	}
 
+	pobj->pbKey = NULL;
+	pobj->cbKey = 0;
+
 	return (HCOSE_MAC)pobj;
 }
 
@@ -116,6 +119,7 @@ HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC hcose, COSE_Algorithms alg,
 	COSE_MacMessage * pcose = (COSE_MacMessage *)hcose;
 	cn_cbor * pRecipients = NULL;
 	cn_cbor * pRecipientsNew = NULL;
+	byte * pbKey = NULL;
 
 	if (!IsValidMacHandle(hcose) || (rgbKey == NULL)) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
@@ -164,10 +168,10 @@ HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC hcose, COSE_Algorithms alg,
 	}
 
 
-	pobj->m_encrypt.pbKey = (byte *)COSE_CALLOC(cbKey, 1, context);
+	pobj->m_encrypt.pbKey = pbKey = (byte *)COSE_CALLOC(cbKey, 1, context);
 	CHECK_CONDITION(pobj->m_encrypt.pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	memcpy(pobj->m_encrypt.pbKey, rgbKey, cbKey);
+	memcpy(pbKey, rgbKey, cbKey);
 	pobj->m_encrypt.cbKey = cbKey;
 
 	pobj->m_recipientNext = pcose->m_recipientFirst;
@@ -212,10 +216,7 @@ void COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbConte
 		return;
 	}
 
-	p->pbContent = rgbContent;
-	p->cbContent = cbContent;
-
-	ptmp = cn_cbor_data_create(rgbContent, cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(rgbContent, (int) cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(ptmp != NULL, CN_CBOR_ERR_OUT_OF_MEMORY);
 
 #ifdef USE_ARRAY
@@ -263,7 +264,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
 	cn_cbor_context * context;
-	COSE_Encrypt * pcose = (COSE_Encrypt *)h;
+	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	cose_errback error;
 
 	if (!IsValidMacHandle(h)) {
@@ -279,7 +280,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	if (cn_Alg == NULL) {
 	error:
 		if (perr != NULL) *perr = error;
-	errorReturn:
+		errorReturn:
 		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 		if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 		if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
@@ -329,8 +330,12 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	//  Build protected headers
 
-	cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, &error);
-	if (cbProtected == NULL) goto error;
+	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, &error);
+	CHECK_CONDITION(cbProtected != NULL, COSE_ERR_CBOR);
+
+	//  Get the body
+	const cn_cbor * cbBody = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
+	CHECK_CONDITION(cbBody != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	//  Add Unprotected headers
 #ifdef USE_ARRAY
@@ -349,7 +354,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	ssize_t cbAuthData = 0;
 	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	ptmp = cn_cbor_data_create(cbProtected->v.str, cbProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(cbProtected->v.bytes, cbProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (ptmp == NULL) goto error;
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	ptmp = NULL;
@@ -359,7 +364,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	ptmp = NULL;
 
-	ptmp = cn_cbor_data_create(pcose->pbContent, pcose->cbContent, CBOR_CONTEXT_PARAM_COMMA NULL);
+	ptmp = cn_cbor_data_create(cbBody->v.bytes, cbBody->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (ptmp == NULL) goto error;
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	ptmp = NULL;
@@ -397,7 +402,7 @@ byte RgbDontUseMac[1024];
 
 bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
-	COSE_Encrypt * pcose = (COSE_Encrypt *)h;
+	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	COSE_RecipientInfo * pRecip = (COSE_RecipientInfo *)hRecip;
 	cose_errback error = { 0 };
 
