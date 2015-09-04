@@ -17,11 +17,15 @@ set ( cose_sources
 if (use_context)
     add_definitions(-DUSE_CBOR_CONTEXT)
 endif()
+
 add_library ( cose-c SHARED ${cose_sources} )
 
 target_include_directories ( cose-c PRIVATE ${OPENSSL_INCLUDE_DIR} )
 target_include_directories ( cose-c PUBLIC ${dist_dir}/include )
 target_include_directories ( cose-c PRIVATE ../src )
+
+target_link_libraries ( cose-c PRIVATE ${OPENSSL_LIBRARIES} )
+target_link_libraries ( cose-c PRIVATE cn-cbor )
 
 install ( TARGETS cose-c
 	LIBRARY DESTINATION lib

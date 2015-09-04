@@ -66,6 +66,7 @@ if (versbose)
    set (CMAKE_VERBOSE_MAKEFILE ON)
 endif ()
 
+include (CTest)
 
 ##  try for documentation
 if (build_docs)
