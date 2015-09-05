@@ -32,7 +32,11 @@
 # Debug files
 *.dSYM/
 
+# emacs files
+*#
 *~
+\#*
+
 Debug
 Release
 
@@ -50,3 +54,10 @@ build
 *.vcxproj
 *.vcxproj.filters
 *.opensdf
+
+# CMake and CTest directories
+project_cn-cbor-prefix
+Testing
+dist
+test/test.cbor
+*.tcl
