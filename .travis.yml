@@ -11,6 +11,6 @@ before_install:
 script:
   - mkdir build
   - cd build && cmake .. && make all test
-after_success:
-  - coveralls --exclude dist --exclude project_cn-cbor-prefix --gcov-options '\-lp'
+  - make coveralls
+
 
