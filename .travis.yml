@@ -10,7 +10,11 @@ before_install:
   - sudo apt-get install libssl-dev
 script:
   - mkdir build
-  - cd build && cmake .. && make all test
+  - cd build && cmake .. && make all
+  - ls
+  - echo $LD_LIBRARY_PATH
+  - ldd ./dist/test/cose_test
+  - make test  
 after_success:
   - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
 
