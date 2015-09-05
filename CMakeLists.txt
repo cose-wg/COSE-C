@@ -22,7 +22,7 @@ option (verbose         "Produce verbose makefile output" OFF)
 option (optimize        "Optimize for size" OFF)
 option (fatal_warnings  "Treat build warnings as error" OFF)
 option (coveralls       "Generate coveralls data" ON)
-option ( coveralls_send "Send data to coveralls site" OFF )
+option ( coveralls_send "Send data to coveralls site" ON )
 option (build_docs      "Create docs using Doxygen" ${DOXYGEN_FOUND} )
 
 set ( dist_dir          ${CMAKE_BINARY_DIR}/dist )
