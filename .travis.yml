@@ -12,5 +12,5 @@ script:
   - mkdir build
   - cd build && cmake .. && make all test
 after_success:
-  - coveralls --exclude lib --exclude tests --exclude project_cn-cbor-prefix --gcov-options '\-lp'
+  - coveralls --exclude dist --exclude CMakeFiles --exclude project_cn-cbor-prefix --gcov-options '\-lp'
 
