@@ -187,8 +187,9 @@ int EncryptMessage()
 
 int main()
 {
-	MacMessage();
-	SignMessage();
-	EncryptMessage();
-	return 0;
+  	MacMessage();
+  	SignMessage();
+  	EncryptMessage();
+  printf("SUCCESS\n");
+  exit(0);
 }

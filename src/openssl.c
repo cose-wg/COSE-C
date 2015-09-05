@@ -146,7 +146,7 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_GET_TAG, TSize, &rgbOut[pcose->cbContent]), COSE_ERR_CRYPTO_FAIL);
 
 #ifdef USE_ARRAY
-	const cn_cbor * cnTmp = cn_cbor_data_create(rgbOut, (int)pcose->cbContent + TSize, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor * cnTmp = cn_cbor_data_create(rgbOut, (int)pcose->cbContent + TSize, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cnTmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 #else

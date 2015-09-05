@@ -34,8 +34,8 @@ install ( TARGETS cose-c
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 if (coveralls)
-    ### include(Coveralls)
-    ## coveralls_turn_on_coverage()
+    include(Coveralls)
+    coveralls_turn_on_coverage()
 
     set(COVERAGE_SRC "")
     foreach (S ${cose_srcs})
@@ -44,10 +44,10 @@ if (coveralls)
     endforeach()
 
     # Create the coveralls target.
-    ## coveralls_setup(
-    ##	"${COVERAGE_SRCS}"
-  ##	${coveralls_send}	# If we should upload
-   ## )
+    coveralls_setup(
+    	"${COVERAGE_SRCS}"
+  	${coveralls_send}	# If we should upload
+    )
 endif()
 
 add_custom_target(size
