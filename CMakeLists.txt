@@ -21,7 +21,7 @@ option (use_context	"Use context pointer for COSE functions" ON)
 option (verbose         "Produce verbose makefile output" OFF)
 option (optimize        "Optimize for size" OFF)
 option (fatal_warnings  "Treat build warnings as error" OFF)
-option (coveralls       "Generate coveralls data" OFF)
+option (coveralls       "Generate coveralls data" ON)
 option (build_docs      "Create docs using Doxygen" ${DOXYGEN_FOUND} )
 
 set ( dist_dir          ${CMAKE_BINARY_DIR}/dist )
