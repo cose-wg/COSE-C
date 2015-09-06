@@ -109,8 +109,7 @@ typedef struct {
 #define UNUSED_PARAM(p) ((void)&(p))
 #endif
 
-extern cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
-
+extern cose_error _MapFromCBOR(cn_cbor_errback err);
 
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 extern bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
@@ -126,12 +125,12 @@ extern bool _COSE_map_put(COSE * cose, int key, cn_cbor * value, int flags, cose
 extern HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Encrypt_Release(COSE_Encrypt * p);
 extern bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, int cbitKey, byte *pbKeyIn, cose_errback * perr);
-extern void _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+extern bool _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 extern COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor *, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Recipient_Free(COSE_RecipientInfo *);
 extern bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pbKey, cose_errback * errp);
-extern byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, size_t cbitKeySize);
+extern byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, size_t cbitKeySize, cose_errback * perr);
 
 
 //  Signed items
@@ -148,7 +147,10 @@ extern void _COSE_Mac_Release(COSE_MacMessage * p);
 
 
 #define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}
-#define FAIL_CONDITION(condition, error) { assert(false); perr->err = error; goto errorReturn;}
+#define FAIL_CONDITION(error) { assert(false); perr->err = error; goto errorReturn;}
+#define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { assert(false); perr->err = _MapFromCBOR(error); goto errorReturn;}}
+
+extern cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
 
 
 //// Defines on positions

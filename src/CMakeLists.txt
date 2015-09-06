@@ -49,10 +49,3 @@ if (coveralls)
   	${coveralls_send}	# If we should upload
     )
 endif()
-
-add_custom_target(size
-  COMMAND echo "${CMAKE_BINARY_DIR}/src/CMakeFiles/cn-cbor.dir/cn-cbor.c.o"
-  COMMAND size "${CMAKE_BINARY_DIR}/src/CMakeFiles/cn-cbor.dir/cn-cbor.c.o"
-  COMMAND size -m "${CMAKE_BINARY_DIR}/src/CMakeFiles/cn-cbor.dir/cn-cbor.c.o"
-  DEPENDS cn-cbor
-COMMENT "Output the size of the parse routine")

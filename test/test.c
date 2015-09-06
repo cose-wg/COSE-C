@@ -11,6 +11,7 @@
 #include <cn-cbor/cn-cbor.h>
 
 extern int EncryptMessage();
+extern int CFails = 0;
 
 
 int MacMessage()
@@ -190,6 +191,9 @@ int main()
   	MacMessage();
   	SignMessage();
   	EncryptMessage();
-  printf("SUCCESS\n");
-  exit(0);
+
+	if (CFails > 0) printf("Failed %d tests\n", CFails);
+	else printf("SUCCESS\n");
+
+	exit(CFails);
 }
