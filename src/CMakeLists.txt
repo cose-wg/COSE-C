@@ -38,7 +38,7 @@ if (coveralls)
     coveralls_turn_on_coverage()
 
     set(COVERAGE_SRC "")
-    foreach (S ${cose_srcs})
+    foreach (S ${cose_sources})
        get_filename_component(S_ABS ${S} ABSOLUTE)
        list (APPEND COVERAGE_SRCS ${S_ABS})
     endforeach()
