@@ -2,12 +2,13 @@ language: c
 compiler:
   - gcc
 before_install:
-  - wget https://www.cmake.org/files/v3.3/cmake-3.3.1-Linux-x86_64.tar.gz -O /tmp/cmake.tar.gz --no-check-certificate
-  - tar xzf /tmp/cmake.tar.gz
-  - export PATH=$PWD/cmake-3.3.1-Linux-x86_64/bin/:$PATH
-  - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
-  - sudo pip install cpp-coveralls
-  - sudo apt-get install libssl-dev
+  - pip install cpp-coveralls
+addons:
+  apt:
+    packages:
+    - cmake
+    - cmake-data
+    - libssl-dev
 script:
   - mkdir build
   - cd build && cmake .. && make all test
