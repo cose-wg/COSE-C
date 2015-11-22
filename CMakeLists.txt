@@ -21,9 +21,10 @@ option (use_context	"Use context pointer for COSE functions" ON)
 option (verbose         "Produce verbose makefile output" OFF)
 option (optimize        "Optimize for size" OFF)
 option (fatal_warnings  "Treat build warnings as error" OFF)
-option (coveralls       "Generate coveralls data" ON)
-option ( coveralls_send "Send data to coveralls site" ON )
+option (coveralls       "Generate coveralls data" OFF)
+option ( coveralls_send "Send data to coveralls site" OFF )
 option (build_docs      "Create docs using Doxygen" ${DOXYGEN_FOUND} )
+option (build_shared_libs "Build Shared Libraries" OFF)
 
 set ( dist_dir          ${CMAKE_BINARY_DIR}/dist )
 set ( prefix            ${CMAKE_INSTALL_PREFIX} )
@@ -61,8 +62,13 @@ elseif (MSVC)
       add_definitions( /WX )
    endif ()
 else ()
-   message ( FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}" )
+    message ( FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}" )
 endif ()
+
+set (LIB_TYPE STATIC)
+if (build_shared_libs)
+   set (LIB_TYPE SHARED)
+endif (build_shared_libs)
 
 if (versbose)
    set (CMAKE_VERBOSE_MAKEFILE ON)
@@ -95,7 +101,7 @@ ExternalProject_Add(
   project_cn-cbor
   GIT_REPOSITORY https://github.com/jimsch/cn-cbor
   GIT_TAG PrettyPrint
-  CMAKE_ARGS -Doptimize=OFF -Duse_context=ON -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF
+  CMAKE_ARGS -Doptimize=OFF -Duse_context=ON -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=$(build_shared_libs)
   INSTALL_DIR "${dist_dir}"
   UPDATE_DISCONNECTED 1
 )
@@ -110,3 +116,5 @@ add_dependencies(cn-cbor project_cn-cbor)
 ## include the parts
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(dumper)
+

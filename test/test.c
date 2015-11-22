@@ -43,9 +43,9 @@ int MacMessage()
 	char * szX;
 	int cbPrint = 0;
 	cn_cbor * cbor = COSE_get_cbor((HCOSE)hEncObj);
-	cbPrint = cn_cbor_printer_write(NULL, 0, cbor, "  ", "\r\n");
+	// cbPrint = cn_cbor_printer_write(NULL, 0, cbor, "  ", "\r\n");
 	szX = malloc(cbPrint);
-	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
+	// cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
 
@@ -111,9 +111,9 @@ int SignMessage()
 	char * szX;
 	int cbPrint = 0;
 	cn_cbor * cbor = COSE_get_cbor((HCOSE)hEncObj);
-	cbPrint = cn_cbor_printer_write(NULL, 0, cbor, "  ", "\r\n");
+	// cbPrint = cn_cbor_printer_write(NULL, 0, cbor, "  ", "\r\n");
 	szX = malloc(cbPrint);
-	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
+	// cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
 
@@ -154,9 +154,9 @@ int EncryptMessage()
 	char * szX;
 	int cbPrint = 0;
 	cn_cbor * cbor = COSE_get_cbor((HCOSE) hEncObj);
-	cbPrint = cn_cbor_printer_write(NULL, 0, cbor, "  ", "\r\n");
+	// cbPrint = cn_cbor_printer_write(NULL, 0, cbor, "  ", "\r\n");
 	szX = malloc(cbPrint);
-	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
+	// cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
 

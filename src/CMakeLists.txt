@@ -18,7 +18,7 @@ if (use_context)
     add_definitions(-DUSE_CBOR_CONTEXT)
 endif()
 
-add_library ( cose-c SHARED ${cose_sources} )
+add_library ( cose-c ${LIB_TYPE} ${cose_sources} )
 
 target_include_directories ( cose-c PRIVATE ${OPENSSL_INCLUDE_DIR} )
 target_include_directories ( cose-c PUBLIC ${dist_dir}/include )

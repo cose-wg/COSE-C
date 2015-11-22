@@ -259,7 +259,7 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		return false;
 	}
 	CHECK_CONDITION((cn->type == CN_CBOR_UINT) || (cn->type == CN_CBOR_INT), CN_CBOR_ERR_INVALID_PARAMETER);
-	alg = cn->v.uint;
+	alg = (int) cn->v.uint;
 
 	switch (alg) {
 #ifdef INCLUDE_AES_CCM
@@ -398,7 +398,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	if (cn_Alg == NULL) goto errorReturn;
 
 	CHECK_CONDITION((cn_Alg->type != CN_CBOR_UINT) && (cn_Alg->type != CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
-	alg = cn_Alg->v.uint;
+	alg = (int) cn_Alg->v.uint;
 
 	//  Get the key size
 
@@ -463,7 +463,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(pAuthData != NULL, cbor_error);
 
-	ptmp = cn_cbor_data_create(cbProtected->v.bytes, cbProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	ptmp = cn_cbor_data_create(cbProtected->v.bytes, (int) cbProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
 	ptmp = NULL;

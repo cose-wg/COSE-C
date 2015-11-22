@@ -59,22 +59,27 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 {
 	const cn_cbor * pmap = NULL;
 	cn_cbor_errback errState; // = { 0 };
+#ifdef TAG_IN_ARRAY
 	cn_cbor * cbor;
+#endif // TAG_IN_ARRAY
 
 #ifdef USE_CBOR_CONTEXT
 	if (context != NULL) pobj->m_allocContext = *context;
 #endif
 	pobj->m_cbor = pcbor;
 
+#ifdef TAG_IN_ARRAY
 	cbor = cn_cbor_index(pobj->m_cbor, 0);
 	CHECK_CONDITION(cbor != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	if (cbor->type == CN_CBOR_UINT) {
-		pobj->m_msgType = cbor->v.uint;
+		pobj->m_msgType = (int) cbor->v.uint;
 	}
+#endif
 
 #ifdef USE_ARRAY
 	pmap = _COSE_arrayget_int(pobj, INDEX_PROTECTED);
+
 	CHECK_CONDITION(pmap != NULL, COSE_ERR_INVALID_PARAMETER);
 #else
 	pmap = cn_cbor_mapget_int(pcbor, COSE_Header_Protected);
@@ -132,6 +137,7 @@ HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, CBOR_CONTEXT_CO
 	cbor = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 	CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
 
+#ifdef TAG_IN_ARRAY
 #ifdef USE_ARRAY
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 #else
@@ -149,8 +155,25 @@ HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, CBOR_CONTEXT_CO
 	pType = cn_cbor_mapget_int(cbor, COSE_Header_Type);
 #endif
 	CHECK_CONDITION(((pType != NULL) && (pType->type == CN_CBOR_UINT)), COSE_ERR_INVALID_PARAMETER);
+    *ptype = pType->v.sint;
+#else // ! TAG_IN_ARRAY
+	if (cbor->type != CN_CBOR_TAG) {
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+    switch (cbor->v.uint) {
+    case 998:
+        *ptype = MSG_TYPE_ENCRYPT;
+        break;
 
-	switch (pType->v.sint) {
+    default:
+        FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+    }
+
+    cbor = cbor->first_child;
+    CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+#endif // TAG_IN_ARRAY
+
+	switch (*ptype) {
 	case MSG_TYPE_ENCRYPT:
 		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
