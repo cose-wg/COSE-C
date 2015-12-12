@@ -20,6 +20,7 @@ typedef struct _FOO {
 } FOO;
 
 FOO Recipients;
+extern FOO Signer[];
 
 FOO AlgorithmMap[32] = {
 	{ "ES512", CN_CBOR_INT, -9 },
@@ -32,14 +33,14 @@ FOO AlgorithmMap[32] = {
 	{"AES-GCM 128", CN_CBOR_UINT, 1},
 	{"AES-GCM 192", CN_CBOR_UINT, 2},
 	{"AES-GCM 256", CN_CBOR_UINT, 3},
-	{"HMAC 256/256", CN_CBOR_UINT, 4},
-	{"HMAC 384/384", CN_CBOR_UINT, 5},
-	{"HMAC 512/512", CN_CBOR_UINT, 6},
+	{"HMAC 256//256", CN_CBOR_UINT, 4},
+	{"HMAC 384//384", CN_CBOR_UINT, 5},
+	{"HMAC 512//512", CN_CBOR_UINT, 6},
 	{"AES-CCM-16-64-128", CN_CBOR_UINT, 10},
 	{"AES-CCM-16-64-256", CN_CBOR_UINT, 11},
 	{"AES-CCM-16-128-128", CN_CBOR_UINT, 12},
 	{"AES-CCM-16-128-256", CN_CBOR_UINT, 13},
-	{"ChaCha20/Poly1305", CN_CBOR_UINT, 24},
+	{"ChaCha20//Poly1305", CN_CBOR_UINT, 24},
 	{"AES-CCM-64-64-128", CN_CBOR_UINT, 30},
 	{"AES-CCM-64-64-256", CN_CBOR_UINT, 31},
 	{"AES-CCM-64-128-128", CN_CBOR_UINT, 32},
@@ -83,7 +84,7 @@ FOO HeaderMap[26] = {
 	{ "kid", CN_CBOR_UINT, 4, NULL},
 	{ "iv", CN_CBOR_UINT, 5, NULL },
 	{ "partial iv", CN_CBOR_UINT, 6, NULL },
-	{ "countersign", CN_CBOR_UINT, 7, NULL },
+	{ "countersign", CN_CBOR_UINT, 7, Signer, 5 },
 	{ "ephemeral", CN_CBOR_INT, -1, KeyMap, _countof(KeyMap), 50},
 {"salt", CN_CBOR_INT, -20, NULL, 0, 50 },
 { "U identity", CN_CBOR_INT, -21, NULL, 0, 50 },
@@ -371,7 +372,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, FOO *pFOO, int depth, int fField
 
 	case CN_CBOR_INT:
 		WrapPrintF(out, "%d", cbor->v.sint);
-		if (fValue) {
+		if (fValue && pFOO != NULL) {
 			for (i = 0, pFoo2 = pFOO->children; i < pFOO->count; i++, pFoo2++) {
 				if ((pFoo2->type == CN_CBOR_INT) && (pFoo2->value == cbor->v.sint)) {
 					if (pFoo2->fieldName != NULL) {
@@ -524,7 +525,7 @@ int main(int argc, char ** argv)
 
 	if (forXML) {
 		fprintf(out, "<t>Size of binary file is %d bytes</t>\n\n", cb);
-		fprintf(out, "<figure><artwork type='CBORDiag'><![CDATA[\n");
+		fprintf(out, "<figure><artwork type='CBORdiag'><![CDATA[\n");
 	}
 
 	DumpTree(cbor, out, root, 0, true, true, false);    
