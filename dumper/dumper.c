@@ -13,6 +13,10 @@
 #define _countof(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
+#ifndef _MSC_VER
+#define strcat_s(a, b, c) strcat(a, c)
+#endif
+
 typedef struct _FOO {
     char *      fieldName;
     int         type;
