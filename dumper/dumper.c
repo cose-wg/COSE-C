@@ -9,6 +9,10 @@
 #include <string.h>
 #include <stdarg.h>
 
+#ifndef _countof
+#define _countf(x) (sizeof(x)/sizeof(x[0]))
+#endif
+
 typedef struct _FOO {
     char *      fieldName;
     int         type;
