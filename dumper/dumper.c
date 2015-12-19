@@ -61,10 +61,10 @@ FOO AlgorithmMap[32] = {
 };
 
 FOO KeyMap[9] = {
-	{"kty", CN_CBOR_UINT, 1 },
-	{"kid", CN_CBOR_UINT, 2 },
-	{"alg", CN_CBOR_UINT, 3, AlgorithmMap, _countof(AlgorithmMap) },
-	{"key_ops", CN_CBOR_UINT, 4},
+	{"kty", CN_CBOR_UINT, 1, NULL, 0, 0 },
+	{"kid", CN_CBOR_UINT, 2, NULL, 0, 0 },
+	{"alg", CN_CBOR_UINT, 3, AlgorithmMap, _countof(AlgorithmMap), 0 },
+	{"key_ops", CN_CBOR_UINT, 4, NULL, 0, 0 },
 	{"crv", CN_CBOR_INT, -1, NULL, 0, 2},
 	{"x", CN_CBOR_INT, -2, NULL, 0, 2},
 	{"y", CN_CBOR_INT, -3, NULL, 0, 2},
@@ -73,21 +73,21 @@ FOO KeyMap[9] = {
 };
 
 FOO Key = {
-	NULL, CN_CBOR_MAP, 0, KeyMap, _countof(KeyMap)
+	NULL, CN_CBOR_MAP, 0, KeyMap, _countof(KeyMap), 0
 };
 
 FOO KeySet = {
-	NULL, CN_CBOR_ARRAY, 0, &Key, 1
+	NULL, CN_CBOR_ARRAY, 0, &Key, 1, 0
 };
 
 FOO HeaderMap[26] = {
-	{ "alg", CN_CBOR_UINT, 1, AlgorithmMap, _countof(AlgorithmMap) },
-	{ "crit", CN_CBOR_UINT, 2, NULL },
-	{ "content type", CN_CBOR_UINT, 3, NULL},
-	{ "kid", CN_CBOR_UINT, 4, NULL},
-	{ "iv", CN_CBOR_UINT, 5, NULL },
-	{ "partial iv", CN_CBOR_UINT, 6, NULL },
-	{ "countersign", CN_CBOR_UINT, 7, Signer, 5 },
+	{ "alg", CN_CBOR_UINT, 1, AlgorithmMap, _countof(AlgorithmMap), 0 },
+	{ "crit", CN_CBOR_UINT, 2, NULL, 0, 0 },
+	{ "content type", CN_CBOR_UINT, 3, NULL, 0, 0},
+	{ "kid", CN_CBOR_UINT, 4, NULL, 0, 0},
+	{ "iv", CN_CBOR_UINT, 5, NULL, 0, 0 },
+	{ "partial iv", CN_CBOR_UINT, 6, NULL, 0, 0 },
+	{ "countersign", CN_CBOR_UINT, 7, Signer, 5, 0 },
 	{ "ephemeral", CN_CBOR_INT, -1, KeyMap, _countof(KeyMap), 50},
 {"salt", CN_CBOR_INT, -20, NULL, 0, 50 },
 { "U identity", CN_CBOR_INT, -21, NULL, 0, 50 },
@@ -110,41 +110,41 @@ FOO HeaderMap[26] = {
 };
 
 FOO RecurseHeaderMap = {
-	NULL, CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap)
+	NULL, CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0
 };
 
 FOO EncryptedBody[4] = {
-    { "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1 },
-    { "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap) },
-    { "ciphertext", CN_CBOR_BYTES, 0, NULL },
-    { "recipients", CN_CBOR_ARRAY, 0, &Recipients, 1 }
+    { "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
+    { "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
+    { "ciphertext", CN_CBOR_BYTES, 0, NULL, 0, 0 },
+    { "recipients", CN_CBOR_ARRAY, 0, &Recipients, 1, 0 }
 };
 
 FOO Recipients = {
-    NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody)
+    NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0
 };
 
 FOO MacBody[5] = {
-	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1 },
-	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap) },
-	{ "payload", CN_CBOR_BYTES, 0, NULL },
-	{ "tag", CN_CBOR_BYTES, 0, NULL },
-	{ "recipients", CN_CBOR_ARRAY, 0, &Recipients, 1 }
+	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
+	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
+	{ "payload", CN_CBOR_BYTES, 0, NULL, 0, 0 },
+	{ "tag", CN_CBOR_BYTES, 0, NULL, 0, 0 },
+	{ "recipients", CN_CBOR_ARRAY, 0, &Recipients, 1, 0 }
 };
 
 FOO Signer[5] = {
-	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1 },
-	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap) },
-	{ "signature", CN_CBOR_BYTES, 0, NULL },
+	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
+	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
+	{ "signature", CN_CBOR_BYTES, 0, NULL, 0, 0 },
 };
 
 FOO Signers = {
-	NULL, CN_CBOR_ARRAY, 0, Signer, _countof(Signer)
+	NULL, CN_CBOR_ARRAY, 0, Signer, _countof(Signer), 0
 };
 
 FOO SignBody[5] = {
-	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1 },
-	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap) },
+	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
+	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
 	{ "payload", CN_CBOR_BYTES, 0, NULL },
 	{ "signatures", CN_CBOR_ARRAY, 0, &Signers, 1 }
 };
@@ -483,7 +483,7 @@ int main(int argc, char ** argv)
         in = stdin;
         _setmode(_fileno(stdin), _O_BINARY);
 #else
-        in = fdreopen(_fileno(stdin), NULL, O_RDONLY | OPEN_O_BINARY);
+		in = stdin; //  fdreopen(_fileno(stdin), NULL, O_RDONLY | OPEN_O_BINARY);
 #endif
     }
     if (out == NULL) out = stdout;
