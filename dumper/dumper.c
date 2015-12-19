@@ -4,7 +4,6 @@
 #include <cose.h>
 #include <sys/stat.h>
 #include <cn-cbor/cn-cbor.h>
-#include <io.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
