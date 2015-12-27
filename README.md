@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/cose-wg/COSE-C.svg?branch=master)](https://travis-ci.org/cose-wg/COSE-C)
+[![Coverage Status](https://coveralls.io/repos/cose-wg/COSE-C/badge.svg?branch=master&service=github)](https://coveralls.io/github/cose-wg/COSE-C?branch=master)
+
+
 # COSE-C Implementation
 
 This project is a C implementation of the IETF CBOR Encoded Mesage Syntax (COSE).
@@ -11,10 +15,13 @@ The project is using OpenSSL for the cryptographic primatives.
 
 ## Contributing
 
+Go ahead, file issues, make pull requests.
+
 ## Building
 
-The project currently is using Visual Studio for it's build environment.
-The intention is to move to cmake in the future.
+The project is setup to build using *CMake.*  The way that the CMake files are setup, itrequires that version 3.0 or higher is used.
+
+The project requires the use of cn-cbor(https://github.com/cabo/cn-cbor) in order to build.  The CMake configuration files will automatically pull down the correct version when run.
 
 ## Memory Model
 

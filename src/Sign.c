@@ -19,7 +19,7 @@ HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_message, MSG_TYPE_SIGN, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
 		COSE_Sign_Free((HCOSE_SIGN)pobj);
 		return NULL;
 	}
@@ -160,7 +160,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	pSigner = (COSE_SignerInfo *)COSE_CALLOC(1, sizeof(COSE_SignerInfo), context);
 	CHECK_CONDITION(pSigner != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pSigner->m_message, MSG_TYPE_NONE, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!_COSE_Init(&pSigner->m_message, COSE_unknown_object, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	cbor = cn_cbor_mapget_int(pkey, COSE_Key_ID);
 	if (cbor != NULL) {

@@ -39,9 +39,19 @@ typedef struct _cose_errback {
 	cose_error err;
 } cose_errback;
 
+typedef enum {
+	COSE_unknown_object = 0,
+	COSE_sign_object = 991,
+	COSE_sign1_object = 997,
+	COSE_enveloped_object = 992,
+	COSE_encrypted_object = 993,
+	COSE_mac_object = 994,
+	COSE_mac0_object = 996
+} COSE_object_type;
+
 //  Generic functions for the COSE library
 
-HCOSE COSE_Decode(const byte * rgbData, int cbData, int * type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
+HCOSE COSE_Decode(const byte * rgbData, int cbData, int * type, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
 size_t COSE_Encode(HCOSE msg, byte * rgb, int ib, size_t cb);
 
 cn_cbor * COSE_get_cbor(HCOSE hmsg);
@@ -97,8 +107,8 @@ typedef enum {
 	COSE_Parameter_KID = 4,
 } COSE_Constants;
 
-void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
-void COSE_Encrypt_SetNonce(HCOSE_ENCRYPT cose, byte * rgbIV, size_t cbIV);
+bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Encrypt_SetNonce(HCOSE_ENCRYPT cose, byte * rgbIV, size_t cbIV);
 
 cn_cbor * COSE_Encrypt_map_get_string(HCOSE_ENCRYPT cose, const char * key, int flags, cose_errback * errp);
 cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
@@ -116,7 +126,7 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_err
 //
 //
 
-void COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
 bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
@@ -124,7 +134,7 @@ bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_
 bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
 bool COSE_Mac_validate(HCOSE_MAC, HCOSE_RECIPIENT, cose_errback * perr);
 
-void COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
 

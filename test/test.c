@@ -11,6 +11,7 @@
 #include <cn-cbor/cn-cbor.h>
 
 extern int EncryptMessage();
+extern int CFails = 0;
 
 
 int MacMessage()
@@ -39,6 +40,7 @@ int MacMessage()
 	fwrite(rgb, cb, 1, fp);
 	fclose(fp);
 
+#if 0
 	char * szX;
 	int cbPrint = 0;
 	cn_cbor * cbor = COSE_get_cbor((HCOSE)hEncObj);
@@ -47,13 +49,14 @@ int MacMessage()
 	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
+#endif
 
 	COSE_Mac_Free(hEncObj);
 
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, NULL, NULL);
+	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, COSE_mac_object, NULL, NULL);
 
 	int iRecipient = 0;
 	do {
@@ -107,6 +110,7 @@ int SignMessage()
 	fwrite(rgb, cb, 1, fp);
 	fclose(fp);
 
+#if 0
 	char * szX;
 	int cbPrint = 0;
 	cn_cbor * cbor = COSE_get_cbor((HCOSE)hEncObj);
@@ -115,6 +119,31 @@ int SignMessage()
 	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
+#endif
+
+	COSE_Sign_Free(hEncObj);
+
+	/* */
+
+	int typ;
+	hEncObj = (HCOSE_SIGN)COSE_Decode(rgb, (int)cb, &typ, COSE_sign_object, NULL, NULL);
+
+#if 0
+	int iRecipient = 0;
+	do {
+		HCOSE_RECIPIENT hRecip;
+
+		hRecip = COSE_Encrypt_GetRecipient(hEncObj, iRecipient, NULL);
+		if (hRecip == NULL) break;
+
+		COSE_Recipient_SetKey(hRecip, rgbSecret, cbSecret, NULL);
+
+		COSE_Encrypt_decrypt(hEncObj, hRecip, NULL);
+
+		iRecipient += 1;
+
+	} while (true);
+#endif
 
 	COSE_Sign_Free(hEncObj);
 
@@ -150,6 +179,7 @@ int EncryptMessage()
 	fwrite(rgb, cb, 1, fp);
 	fclose(fp);
 
+#if 0
 	char * szX;
 	int cbPrint = 0;
 	cn_cbor * cbor = COSE_get_cbor((HCOSE) hEncObj);
@@ -158,13 +188,14 @@ int EncryptMessage()
 	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
+#endif
 
 	COSE_Encrypt_Free(hEncObj);
 
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, NULL, NULL);
+	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, NULL, NULL);
 	
 	int iRecipient = 0;
 	do {
@@ -190,6 +221,9 @@ int main()
   	MacMessage();
   	SignMessage();
   	EncryptMessage();
-  printf("SUCCESS\n");
-  exit(0);
+
+	if (CFails > 0) printf("Failed %d tests\n", CFails);
+	else printf("SUCCESS\n");
+
+	exit(CFails);
 }

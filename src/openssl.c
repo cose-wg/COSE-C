@@ -62,7 +62,7 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 		break;
 
 	default:
-		FAIL_CONDITION(false, COSE_ERR_INVALID_PARAMETER);
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 		break;
 	}
 	CHECK_CONDITION(EVP_DecryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_DECRYPT_FAILED);
@@ -178,7 +178,7 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbA
 
 	switch (HSize) {
 	case 256: pmd = EVP_sha256(); break;
-	default: FAIL_CONDITION(false, COSE_ERR_INVALID_PARAMETER); break;
+	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
 	}
 
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
@@ -215,7 +215,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 
 	switch (HSize) {
 	case 256: pmd = EVP_sha256(); break;
-	default: FAIL_CONDITION(false, COSE_ERR_INVALID_PARAMETER); break;
+	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
 	}
 
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
@@ -232,7 +232,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 #endif
 
 	if (cn->length != (int) cbOut) return false;
-	for (i = 0; i < (unsigned int) TSize/8; i++) f |= (cn->v.str[i] != rgbOut[i]);
+	for (i = 0; i < (unsigned int) TSize/8; i++) f |= (cn->v.bytes[i] != rgbOut[i]);
 
 	HMAC_cleanup(&ctx);
 	return !f;
