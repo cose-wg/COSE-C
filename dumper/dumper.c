@@ -561,7 +561,7 @@ int main(int argc, char ** argv)
 	}
 
 	if (forXML) {
-		fprintf(out, "<t>Size of binary file is %d bytes</t>\n\n", cb);
+		fprintf(out, "<t>Size of binary file is %lu bytes</t>\n\n", (unsigned long) cb);
 		fprintf(out, "<figure><artwork type='CBORdiag'><![CDATA[\n");
 	}
 

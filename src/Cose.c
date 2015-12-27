@@ -28,11 +28,7 @@ bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 	pobj->m_dontSendMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, errState);
 
-#ifdef USE_ARRAY
 	pobj->m_cbor = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &errState);
-#else
-	pobj->m_cbor = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &errState);
-#endif
 	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
 	pobj->m_ownMsg = 1;
 
@@ -81,13 +77,9 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 	}
 #endif
 
-#ifdef USE_ARRAY
 	pmap = _COSE_arrayget_int(pobj, INDEX_PROTECTED);
 
 	CHECK_CONDITION(pmap != NULL, COSE_ERR_INVALID_PARAMETER);
-#else
-	pmap = cn_cbor_mapget_int(pcbor, COSE_Header_Protected);
-#endif
 	if (pmap != NULL) {
 		CHECK_CONDITION(pmap->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
@@ -101,11 +93,7 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 		}
 	}
 
-#ifdef USE_ARRAY
 	pobj->m_unprotectMap = _COSE_arrayget_int(pobj, INDEX_UNPROTECTED);
-#else
-	pobj->m_unprotectMap = cn_cbor_mapget_int(pcbor, COSE_Header_Unprotected);
-#endif
 	CHECK_CONDITION((pobj->m_unprotectMap != NULL) && (pobj->m_unprotectMap->type == CN_CBOR_MAP), COSE_ERR_INVALID_PARAMETER);
 	pobj->m_ownUnprotectedMap = false;
 
@@ -132,7 +120,9 @@ void _COSE_Release(COSE * pobj)
 HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * cbor = NULL;
+#ifdef TAG_IN_ARRAY
 	const cn_cbor * pType = NULL;
+#endif
 	cn_cbor_errback cbor_err;
 	HCOSE h;
 
@@ -142,22 +132,9 @@ HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, COSE_object_typ
 	CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
 
 #ifdef TAG_IN_ARRAY
-#ifdef USE_ARRAY
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
-#else
-	if (cbor->type != CN_CBOR_MAP) {
-	error:
-		COSE_FREE(cbor, context);
-		if (errp != NULL) errp->err = COSE_ERR_INVALID_PARAMETER;
-		return NULL;
-	}
-#endif
 
-#ifdef USE_ARRAY
 	pType = cn_cbor_index(cbor, 0);
-#else
-	pType = cn_cbor_mapget_int(cbor, COSE_Header_Type);
-#endif
 	CHECK_CONDITION(((pType != NULL) && (pType->type == CN_CBOR_UINT)), COSE_ERR_INVALID_PARAMETER);
     *ptype = pType->v.sint;
 #else // ! TAG_IN_ARRAY
@@ -316,14 +293,10 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 	cn_cbor_context * context = &pMessage->m_allocContext;
 #endif // USE_CBOR_CONTEXT
 
-#ifdef USE_ARRAY
 #ifdef TAG_IN_ARRAY
 	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED + (pMessage->m_msgType == 0 ? 0 : 1));
 #else
 	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED);
-#endif
-#else
-	pProtected = cn_cbor_mapget_int(pMessage->m_cbor, COSE_Header_Protected);
 #endif
 	if ((pProtected != NULL) &&(pProtected->type != CN_CBOR_INVALID)) {
 	errorReturn:
@@ -346,11 +319,7 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 	CHECK_CONDITION(pProtected != NULL, COSE_ERR_OUT_OF_MEMORY);
 	pbProtected = NULL;
 
-#ifdef USE_ARRAY
 	CHECK_CONDITION(_COSE_array_replace(pMessage, pProtected, INDEX_PROTECTED, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#else
-	CHECK_CONDITION(cn_cbor_mapput_int(pMessage->m_cbor, COSE_Header_Protected, pProtected, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#endif
 
 	return pProtected;
 }
