@@ -166,11 +166,6 @@ extern cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
 
 //// Defines on message types
 
-#define MSG_TYPE_NONE 0
-#define MSG_TYPE_SIGN 1
-#define MSG_TYPE_ENCRYPT 2
-#define MSG_TYPE_MAC 3
-
 #define COSE_Header_Protected 99
 #define COSE_Header_Unprotected 98
 #define COSE_Header_Type 97

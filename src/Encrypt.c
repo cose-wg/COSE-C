@@ -33,7 +33,7 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_message, MSG_TYPE_ENCRYPT, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(&pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
 		COSE_Encrypt_Free((HCOSE_ENCRYPT)pobj);
 		return NULL;
 	}
@@ -158,7 +158,7 @@ HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT hcose, COSE_Algorit
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_encrypt.m_message, MSG_TYPE_NONE, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(&pobj->m_encrypt.m_message, COSE_unknown_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
 		goto error;
 	}
 
@@ -397,7 +397,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	cn_Alg = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) goto errorReturn;
 
-	CHECK_CONDITION((cn_Alg->type != CN_CBOR_UINT) && (cn_Alg->type != CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION((cn_Alg->type == CN_CBOR_UINT) || (cn_Alg->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 	alg = (int) cn_Alg->v.uint;
 
 	//  Get the key size

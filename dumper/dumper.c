@@ -84,7 +84,7 @@ FOO KeySet = {
 	NULL, CN_CBOR_ARRAY, 0, &Key, 1, 0
 };
 
-FOO HeaderMap[26] = {
+FOO HeaderMap[27] = {
 	{ "alg", CN_CBOR_UINT, 1, AlgorithmMap, _countof(AlgorithmMap), 0 },
 	{ "crit", CN_CBOR_UINT, 2, NULL, 0, 0 },
 	{ "content type", CN_CBOR_UINT, 3, NULL, 0, 0},
@@ -92,6 +92,7 @@ FOO HeaderMap[26] = {
 	{ "iv", CN_CBOR_UINT, 5, NULL, 0, 0 },
 	{ "partial iv", CN_CBOR_UINT, 6, NULL, 0, 0 },
 	{ "countersign", CN_CBOR_UINT, 7, Signer, 5, 0 },
+	{ "op time", CN_CBOR_INT, 8, NULL, 0, 0 },
 	{ "ephemeral", CN_CBOR_INT, -1, KeyMap, _countof(KeyMap), 50},
 {"salt", CN_CBOR_INT, -20, NULL, 0, 50 },
 { "U identity", CN_CBOR_INT, -21, NULL, 0, 50 },
@@ -149,38 +150,53 @@ FOO Signers = {
 FOO SignBody[5] = {
 	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
 	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
-	{ "payload", CN_CBOR_BYTES, 0, NULL },
-	{ "signatures", CN_CBOR_ARRAY, 0, &Signers, 1 }
+	{ "payload", CN_CBOR_BYTES, 0, NULL, 0, 0 },
+	{ "signatures", CN_CBOR_ARRAY, 0, &Signers, 1, 0 }
 };
 
 FOO EnvelopedMessage = {
-	NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody)
+	NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0
 };
 FOO SignedMessage = {
-	NULL, CN_CBOR_ARRAY, 0, SignBody, _countof(SignBody)
+	NULL, CN_CBOR_ARRAY, 0, SignBody, _countof(SignBody), 0
 };
 FOO MacMessage = {
-	NULL, CN_CBOR_ARRAY, 0, MacBody, _countof(MacBody)
+	NULL, CN_CBOR_ARRAY, 0, MacBody, _countof(MacBody), 0
 };
 
 FOO EncryptedMessage = {
-    NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody)-1
+    NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody)-1, 0
 };
 
 FOO EncryptedMessageWithTag = {
-    NULL, CN_CBOR_TAG, 997, &EncryptedMessage, 1
+    NULL, CN_CBOR_TAG, 997, &EncryptedMessage, 1, 0
 };
 
 FOO EnvelopedMessageWithTag = {
-	NULL, CN_CBOR_TAG, 998, &EnvelopedMessage, 1
+	NULL, CN_CBOR_TAG, 998, &EnvelopedMessage, 1, 0
 };
 
 FOO SignedMessageWithTag = {
-	NULL, CN_CBOR_TAG, 999, &SignedMessage, 1
+	NULL, CN_CBOR_TAG, 999, &SignedMessage, 1, 0
 };
 
 FOO MacMessageWithTag = {
-	NULL, CN_CBOR_TAG, 996, &MacMessage, 1
+	NULL, CN_CBOR_TAG, 996, &MacMessage, 1, 0
+};
+
+FOO Mac0Body[4] = {
+	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
+	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
+	{ "payload", CN_CBOR_BYTES, 0, NULL, 0, 0 },
+	{ "tag", CN_CBOR_BYTES, 0, NULL, 0, 0 }
+};
+
+FOO Mac0Message = {
+	NULL, CN_CBOR_ARRAY, 0, Mac0Body, _countof(Mac0Body), 0
+};
+
+FOO Mac0MessageWithTag = {
+	NULL, CN_CBOR_TAG, 995, &Mac0Message, 1, 0
 };
 
 int WrapLineAt = 0;
@@ -195,26 +211,26 @@ void WrapPrintF(FILE * fp, char * format, ...)
 	va_start(args, format);
 	vsprintf(buffer, format, args);
 	if (WrapLineAt == 0) {
-		fprintf(fp, buffer);
+		fprintf(fp, "%s", buffer);
 		return;
 	}
 
 	strcat_s(OutputBuffer, sizeof(OutputBuffer), buffer);
 
-	while (iRet = strchr(OutputBuffer, '\n')) {
+	while ((iRet = strchr(OutputBuffer, '\n'))) {
 		char * t = OutputBuffer;
 		*iRet = 0;
 
 		while (strlen(t) > WrapLineAt) {
 			char x = t[WrapLineAt];
 			t[WrapLineAt] = 0;
-			fprintf(fp, t);
+			fprintf(fp, "%s", t);
 			fprintf(fp, "\n");
 			t[WrapLineAt] = x;
 			t += WrapLineAt;
 		}
 
-		fprintf(fp, t);
+		fprintf(fp, "%s", t);
 		fprintf(fp, "\n");
 		strcpy(OutputBuffer, iRet + 1);
 	}
@@ -260,7 +276,7 @@ void DumpBytes(FILE * fp, const cn_cbor* cbor, int depth)
 	}
 }
 
-void DumpTree(const cn_cbor * cbor, FILE * out, FOO *pFOO, int depth, int fField, int fValue, int fInComment)
+void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int fField, int fValue, int fInComment)
 {
 	int i;
 	int i2;
@@ -409,8 +425,21 @@ void DumpTree(const cn_cbor * cbor, FILE * out, FOO *pFOO, int depth, int fField
 
 	case CN_CBOR_TEXT:
 		WrapPrintF(out, "\"");
-		for (i = 0; i < cbor->length; i++) WrapPrintF(out, "%c", cbor->v.str[i]);
+		for (i = 0; i < cbor->length; i++) {
+			if (fInComment && (cbor->v.str[i] == '/')) {
+				WrapPrintF(out, "%c", cbor->v.str[i]);
+			}
+			WrapPrintF(out, "%c", cbor->v.str[i]);
+		}
 		WrapPrintF(out, "\"");
+		break;
+
+	case CN_CBOR_TRUE:
+		WrapPrintF(out, "true");
+		break;
+
+	case CN_CBOR_FALSE:
+		WrapPrintF(out, "false");
 		break;
 
 	default:
@@ -429,7 +458,6 @@ int main(int argc, char ** argv)
     size_t      cb = 0;
     byte        rgb[2048];
     size_t      cbIn;
-	int			msg_type;
 	int			forXML = false;
 	FOO *		root = NULL;
 
@@ -449,6 +477,7 @@ int main(int argc, char ** argv)
 				else if (strcmp(&argv[i][1], "type=envelope") == 0) root = &EnvelopedMessage;
 				else if (strcmp(&argv[i][1], "type=signed") == 0) root = &SignedMessage;
 				else if (strcmp(&argv[i][1], "type=mac") == 0) root = &MacMessage;
+				else if (strcmp(&argv[i][1], "type=mac0") == 0) root = &Mac0Message;
 				else if (strcmp(&argv[i][1], "type=keyset") == 0) root = &KeySet;
 				else if (strcmp(&argv[i][1], "type=key") == 0) root = &Key;
 				else PrintUsage();
@@ -526,6 +555,7 @@ int main(int argc, char ** argv)
 			case 992: root = &EnvelopedMessageWithTag; break;
 			case 993: root = &EncryptedMessageWithTag; break;
 			case 994: root = &MacMessageWithTag; break;
+			case 997: root = &Mac0MessageWithTag; break;
 			}
 		}
 	}

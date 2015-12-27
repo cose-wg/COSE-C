@@ -36,12 +36,16 @@ bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
 	pobj->m_ownMsg = 1;
 
+#ifdef TAG_IN_ARRAY
 	if (msgType > 0) {
 		cn_cbor * cn = cn_cbor_int_create(msgType, CBOR_CONTEXT_PARAM_COMMA &errState);
 		CHECK_CONDITION_CBOR(cn != NULL, errState);
 		CHECK_CONDITION_CBOR(cn_cbor_array_append(pobj->m_cbor, cn, &errState), errState);
 		pobj->m_msgType = msgType;
 	}
+#else
+	pobj->m_msgType = msgType;
+#endif
 
 	pobj->m_unprotectMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_unprotectMap != NULL, errState);
@@ -125,7 +129,7 @@ void _COSE_Release(COSE * pobj)
 }
 
 
-HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, CBOR_CONTEXT_COMMA cose_errback * perr)
+HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * cbor = NULL;
 	const cn_cbor * pType = NULL;
@@ -157,38 +161,40 @@ HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, CBOR_CONTEXT_CO
 	CHECK_CONDITION(((pType != NULL) && (pType->type == CN_CBOR_UINT)), COSE_ERR_INVALID_PARAMETER);
     *ptype = pType->v.sint;
 #else // ! TAG_IN_ARRAY
-	if (cbor->type != CN_CBOR_TAG) {
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+
+	if (cbor->type == CN_CBOR_TAG) {
+		if (struct_type != 0) {
+			CHECK_CONDITION(struct_type == cbor->v.uint, COSE_ERR_INVALID_PARAMETER);
+		}
+		else struct_type = cbor->v.uint;
+
+		*ptype = struct_type;
+
+		cbor = cbor->first_child;
 	}
-    switch (cbor->v.uint) {
-    case 998:
-        *ptype = MSG_TYPE_ENCRYPT;
-        break;
+	else {
+		*ptype = struct_type;
+	}
 
-    default:
-        FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-    }
-
-    cbor = cbor->first_child;
-    CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 #endif // TAG_IN_ARRAY
 
 	switch (*ptype) {
-	case MSG_TYPE_ENCRYPT:
+	case COSE_enveloped_object:
 		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
 
-	case MSG_TYPE_SIGN:
+	case COSE_sign_object:
 		h = (HCOSE)_COSE_Sign_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
 
-	case MSG_TYPE_MAC:
+	case COSE_mac_object:
 		h = (HCOSE)_COSE_Mac_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
@@ -311,7 +317,11 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 #endif // USE_CBOR_CONTEXT
 
 #ifdef USE_ARRAY
+#ifdef TAG_IN_ARRAY
 	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED + (pMessage->m_msgType == 0 ? 0 : 1));
+#else
+	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED);
+#endif
 #else
 	pProtected = cn_cbor_mapget_int(pMessage->m_cbor, COSE_Header_Protected);
 #endif
@@ -347,13 +357,17 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 
 bool _COSE_array_replace(COSE * pMessage, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback * errp)
 {
+#ifdef TAG_IN_ARRAY
 	if (pMessage->m_msgType != 0) index += 1;
+#endif
 	return cn_cbor_array_replace(pMessage->m_cbor, cb_value, index, CBOR_CONTEXT_PARAM_COMMA errp);
 }
 
 cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index)
 {
+#ifdef TAG_IN_ARRAY
 	if (pMessage->m_msgType != 0) index += 1;
+#endif
 	return cn_cbor_index(pMessage->m_cbor, index);
 }
 

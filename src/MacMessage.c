@@ -24,7 +24,7 @@ HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 	COSE_MacMessage * pobj = (COSE_MacMessage *)COSE_CALLOC(1, sizeof(COSE_MacMessage), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pobj->m_message, MSG_TYPE_MAC, CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_Init(&pobj->m_message, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 
@@ -137,7 +137,7 @@ HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC hcose, COSE_Algorithms alg,
 	pobj = (COSE_RecipientInfo *)COSE_CALLOC(1, sizeof(COSE_RecipientInfo), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pobj->m_encrypt.m_message, MSG_TYPE_NONE, CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_Init(&pobj->m_encrypt.m_message, COSE_unknown_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 

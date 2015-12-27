@@ -39,9 +39,19 @@ typedef struct _cose_errback {
 	cose_error err;
 } cose_errback;
 
+typedef enum {
+	COSE_unknown_object = 0,
+	COSE_sign_object = 991,
+	COSE_sign1_object = 997,
+	COSE_enveloped_object = 992,
+	COSE_encrypted_object = 993,
+	COSE_mac_object = 994,
+	COSE_mac0_object = 996
+} COSE_object_type;
+
 //  Generic functions for the COSE library
 
-HCOSE COSE_Decode(const byte * rgbData, int cbData, int * type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
+HCOSE COSE_Decode(const byte * rgbData, int cbData, int * type, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
 size_t COSE_Encode(HCOSE msg, byte * rgb, int ib, size_t cb);
 
 cn_cbor * COSE_get_cbor(HCOSE hmsg);
