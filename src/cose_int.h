@@ -99,7 +99,7 @@ typedef struct {
 #define CBOR_CONTEXT_PARAM
 #define CBOR_CONTEXT_PARAM_COMMA
 #define CN_CALLOC_CONTEXT() CN_CALLOC
-#define COSE_CALLOC(ctx, count, size) calloc(count, size)
+#define COSE_CALLOC(count, size, ctx) calloc(count, size)
 #define CN_CBOR_FREE(p, context) cn_cbor_free(p)
 
 

@@ -310,7 +310,7 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 
 	if (pMessage->m_protectedMap->length > 0) {
 		cbProtected = cn_cbor_encoder_write(RgbDontUse3, 0, sizeof(RgbDontUse3), pMessage->m_protectedMap);
-		pbProtected = (byte *)COSE_CALLOC(context, cbProtected, 1);
+		pbProtected = (byte *)COSE_CALLOC(cbProtected, 1, context);
 		CHECK_CONDITION(pbProtected != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 		CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected, pMessage->m_protectedMap) == cbProtected, COSE_ERR_CBOR);
