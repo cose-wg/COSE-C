@@ -82,7 +82,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	byte * pbToSign = NULL;
 	bool f;
 
-	pArray = cn_cbor_array_create(COSE_CONTEXT_PARAM_COMMA NULL);
+	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (pArray == NULL) {
 		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
