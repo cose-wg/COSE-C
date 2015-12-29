@@ -10,9 +10,89 @@
 #include <cose.h>
 #include <cn-cbor/cn-cbor.h>
 
-extern int EncryptMessage();
-extern int CFails = 0;
+#include "json.h"
 
+extern int EncryptMessage();
+int CFails = 0;
+
+#ifdef USE_CBOR_CONTEXT
+#define CBOR_CONTEXT , NULL
+#else
+#define CBOR_CONTEXT
+#endif
+
+byte fromHex(char c)
+{
+	if (('0' <= c) && (c <= '9')) return c - '0';
+	if (('A' <= c) && (c <= 'F')) return c - 'A' + 10;
+	fprintf(stderr, "Invalid hex");
+	exit(1);
+}
+
+byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
+{
+	const cn_cbor * pOutputs = cn_cbor_mapget_string(pControl, "output");
+	const cn_cbor * pCBOR;
+	byte * pb = NULL;
+	byte * pb2;
+	int i;
+
+	if ((pOutputs == NULL) || (pOutputs->type != CN_CBOR_MAP)) {
+		fprintf(stderr, "Invalid output\n");
+		exit(1);
+	}
+
+	pCBOR = cn_cbor_mapget_string(pOutputs, "cbor");
+	if ((pCBOR == NULL) || (pCBOR->type != CN_CBOR_TEXT)) {
+		fprintf(stderr, "Invalid cbor object");
+		exit(1);
+	}
+
+	pb = malloc(pCBOR->length / 2);
+	pb2 = pCBOR->v.bytes;
+
+	for (i = 0; i < pCBOR->length; i += 2) {
+		pb[i / 2] = fromHex(pb2[i]) * 16 + fromHex(pb2[i + 1]);
+	}
+
+	*pcbEncoded = pCBOR->length / 2;
+	return pb;
+}
+
+HCOSE_RECIPIENT BuildRecipient(const cn_cbor * pRecipient)
+{
+	HCOSE_RECIPIENT h = NULL;
+
+
+	return h;
+}
+
+int ValidateMAC(const cn_cbor * pControl)
+{
+	int cbEncoded;
+	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
+	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+	const cn_cbor * pRecipients;
+	HCOSE_MAC hMAC;
+	int type;
+	int iRecipient;
+
+	hMAC = COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, NULL, NULL);
+	if (hMAC == NULL) exit(1);
+
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
+	pRecipients = cn_cbor_mapget_string(pInput, "recipients");
+	if ((pRecipients == NULL) || (pRecipients != CN_CBOR_ARRAY)) exit(1);
+
+	pRecipients = pRecipients->first_child;
+	for (iRecipient = 0; pRecipients != NULL; iRecipient++,pRecipients=pRecipients->next) {
+		HCOSE_RECIPIENT hRecip = BuildRecipient(pRecipients);
+
+		if (!COSE_Mac_validate(hMAC, hRecip, NULL)) CFails += 1;
+	}
+
+	return 0;
+}
 
 int MacMessage()
 {
@@ -24,7 +104,7 @@ int MacMessage()
 	size_t cb;
 	byte * rgb;
 
-	COSE_Mac_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_HMAC_256_256, NULL, NULL), COSE_PROTECT_ONLY, NULL);
+	COSE_Mac_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_HMAC_256_256, NULL CBOR_CONTEXT), COSE_PROTECT_ONLY CBOR_CONTEXT);
 	COSE_Mac_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
 
 	COSE_Mac_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, sizeof(rgbSecret), rgbKid, cbKid, NULL);
@@ -88,18 +168,18 @@ int SignMessage()
 		byte kid[] = { 0x6d, 0x65, 0x72, 0x69, 0x61, 0x64, 0x6f, 0x63, 0x2e, 0x62, 0x72, 0x61, 0x6e, 0x64, 0x79, 0x62, 0x75, 0x63, 0x6, 0xb4, 0x06, 0x27, 0x56, 0x36, 0xb6, 0xc6, 0x16, 0xe6, 0x42, 0xe6, 0x57, 0x86, 0x16, 0xd7, 0x06, 0x65};
 		byte rgbD[] = {0xaf, 0xf9, 0x07, 0xc9, 0x9f, 0x9a, 0xd3, 0xaa, 0xe6, 0xc4, 0xcd, 0xf2, 0x11, 0x22, 0xbc, 0xe2, 0xbd, 0x68, 0xb5, 0x28, 0x3e, 0x69, 0x07, 0x15, 0x4a, 0xd9, 0x11, 0x84, 0x0f, 0xa2, 0x08, 0xcf};
 			
-			cn_cbor * pkey = cn_cbor_map_create(NULL, NULL);
-	cn_cbor_mapput_int(pkey, COSE_Key_Type, cn_cbor_int_create(COSE_Key_Type_EC2, NULL, NULL), NULL, NULL);
-	cn_cbor_mapput_int(pkey, -1, cn_cbor_int_create(1, NULL, NULL), NULL, NULL);
-	cn_cbor_mapput_int(pkey, -2, cn_cbor_data_create(rgbX, sizeof(rgbX), NULL, NULL), NULL, NULL);
-	cn_cbor_mapput_int(pkey, -3, cn_cbor_data_create(rgbY, sizeof(rgbY), NULL, NULL), NULL, NULL);
-	cn_cbor_mapput_int(pkey, COSE_Key_ID, cn_cbor_data_create(kid, sizeof(kid), NULL, NULL), NULL, NULL);
-	cn_cbor_mapput_int(pkey, -4, cn_cbor_data_create(rgbD, sizeof(rgbD), NULL, NULL), NULL, NULL);
+			cn_cbor * pkey = cn_cbor_map_create(NULL CBOR_CONTEXT);
+	cn_cbor_mapput_int(pkey, COSE_Key_Type, cn_cbor_int_create(COSE_Key_Type_EC2, NULL CBOR_CONTEXT), NULL CBOR_CONTEXT);
+	cn_cbor_mapput_int(pkey, -1, cn_cbor_int_create(1, NULL CBOR_CONTEXT), NULL CBOR_CONTEXT);
+	cn_cbor_mapput_int(pkey, -2, cn_cbor_data_create(rgbX, sizeof(rgbX), NULL CBOR_CONTEXT), NULL CBOR_CONTEXT);
+	cn_cbor_mapput_int(pkey, -3, cn_cbor_data_create(rgbY, sizeof(rgbY), NULL CBOR_CONTEXT), NULL CBOR_CONTEXT);
+	cn_cbor_mapput_int(pkey, COSE_Key_ID, cn_cbor_data_create(kid, sizeof(kid), NULL CBOR_CONTEXT), NULL CBOR_CONTEXT);
+	cn_cbor_mapput_int(pkey, -4, cn_cbor_data_create(rgbD, sizeof(rgbD), NULL CBOR_CONTEXT), NULL CBOR_CONTEXT);
 
-	COSE_Sign_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
-	COSE_Sign_add_signer(hEncObj, pkey, COSE_Algorithm_ECDSA_SHA_256, NULL);
+	COSE_Sign_SetContent(hEncObj, (byte *) sz, strlen(sz) CBOR_CONTEXT);
+	COSE_Sign_add_signer(hEncObj, pkey, COSE_Algorithm_ECDSA_SHA_256 CBOR_CONTEXT);
 
-	COSE_Sign_Sign(hEncObj, NULL);
+	COSE_Sign_Sign(hEncObj CBOR_CONTEXT);
 
 	cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
 	rgb = (byte *)malloc(cb);
@@ -126,19 +206,19 @@ int SignMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_SIGN)COSE_Decode(rgb, (int)cb, &typ, COSE_sign_object, NULL, NULL);
+	hEncObj = (HCOSE_SIGN)COSE_Decode(rgb, (int)cb, &typ, COSE_sign_object, NULL CBOR_CONTEXT);
 
 #if 0
 	int iRecipient = 0;
 	do {
 		HCOSE_RECIPIENT hRecip;
 
-		hRecip = COSE_Encrypt_GetRecipient(hEncObj, iRecipient, NULL);
+		hRecip = COSE_Encrypt_GetRecipient(hEncObj, iRecipient CBOR_CONTEXT);
 		if (hRecip == NULL) break;
 
-		COSE_Recipient_SetKey(hRecip, rgbSecret, cbSecret, NULL);
+		COSE_Recipient_SetKey(hRecip, rgbSecret, cbSecret CBOR_CONTEXT);
 
-		COSE_Encrypt_decrypt(hEncObj, hRecip, NULL);
+		COSE_Encrypt_decrypt(hEncObj, hRecip CBOR_CONTEXT);
 
 		iRecipient += 1;
 
@@ -152,7 +232,7 @@ int SignMessage()
 
 int EncryptMessage()
 {
-	HCOSE_ENCRYPT hEncObj = COSE_Encrypt_Init(NULL, NULL);
+	HCOSE_ENCRYPT hEncObj = COSE_Encrypt_Init(NULL CBOR_CONTEXT);
 	byte rgbSecret[128 / 8] = { 'a', 'b', 'c' };
 	int cbSecret = 128/8;
 	byte  rgbKid[6] = { 'a', 'b', 'c', 'd', 'e', 'f' };
@@ -162,13 +242,13 @@ int EncryptMessage()
 	char * sz = "This is the content to be used";
 
 
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, NULL, NULL), COSE_PROTECT_ONLY, NULL);
-	COSE_Encrypt_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, cbKid, NULL, NULL), COSE_UNPROTECT_ONLY, NULL);
+	COSE_Encrypt_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, NULL CBOR_CONTEXT), COSE_PROTECT_ONLY CBOR_CONTEXT);
+	COSE_Encrypt_SetContent(hEncObj, (byte *) sz, strlen(sz) CBOR_CONTEXT);
+	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, cbKid, NULL CBOR_CONTEXT), COSE_UNPROTECT_ONLY CBOR_CONTEXT);
 
-	COSE_Encrypt_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid, NULL);
+	COSE_Encrypt_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid CBOR_CONTEXT);
 
-	COSE_Encrypt_encrypt(hEncObj, NULL);
+	COSE_Encrypt_encrypt(hEncObj CBOR_CONTEXT);
 
 	cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) +1;
 	rgb = (byte *)malloc(cb);
@@ -195,18 +275,18 @@ int EncryptMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, NULL, NULL);
+	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, NULL CBOR_CONTEXT);
 	
 	int iRecipient = 0;
 	do {
 		HCOSE_RECIPIENT hRecip;
 
-		hRecip = COSE_Encrypt_GetRecipient(hEncObj, iRecipient, NULL);
+		hRecip = COSE_Encrypt_GetRecipient(hEncObj, iRecipient CBOR_CONTEXT);
 		if (hRecip == NULL) break;
 
-		COSE_Recipient_SetKey(hRecip, rgbSecret, cbSecret, NULL);
+		COSE_Recipient_SetKey(hRecip, rgbSecret, cbSecret CBOR_CONTEXT);
 
-		COSE_Encrypt_decrypt(hEncObj, hRecip, NULL);
+		COSE_Encrypt_decrypt(hEncObj, hRecip CBOR_CONTEXT);
 
 		iRecipient += 1;
 
@@ -216,11 +296,43 @@ int EncryptMessage()
 }
 
 
-int main()
+int main(int argc, char ** argv)
 {
-  	MacMessage();
-  	SignMessage();
-  	EncryptMessage();
+	int i;
+	const cn_cbor * pControl = NULL;
+
+	for (i = 1; i < argc; i++) {
+		if (argv[0] == '-') {
+
+		}
+		else {
+			pControl = ParseJson(argv[i]);
+		}
+	}
+
+	//
+	//  If we are given a file name, then process the file name
+	//
+
+	if (pControl != NULL) {
+		//  To find out what we are doing we need to get the correct item
+
+		const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+		const cn_cbor * p;
+		if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
+			fprintf(stderr, "No or bad input section");
+			exit(1);
+		}
+
+		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+			ValidateMAC(pControl);
+		}
+	}
+	else {
+		MacMessage();
+		SignMessage();
+		EncryptMessage();
+	}
 
 	if (CFails > 0) printf("Failed %d tests\n", CFails);
 	else printf("SUCCESS\n");
