@@ -19,7 +19,7 @@ addons:
     - cmake-data
 script:
   - mkdir build
-  - cd build && cmake -Duse_context=$(USE_CONTEXT) -Dcoveralls_send=ON .. && make all test
+  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON .. && make all test
   - make coveralls
 
 
