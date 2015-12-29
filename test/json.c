@@ -88,7 +88,7 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 	return root;
 }
 
-const cn_cbor * ParseJson(char * fileName)
+const cn_cbor * ParseJson(const char * fileName)
 {
 	int     cch;
 	char	rgch[8 * 1024];
