@@ -5,6 +5,7 @@ compiler:
 sudo: false
 before_install:
   - pip install cpp-coveralls --user
+  - export LD_LIBRARY_PATH=$PWD/build/dist/lib;$LD_LIBRARY_PATH
 addons:
   apt:
     sources:
