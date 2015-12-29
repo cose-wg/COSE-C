@@ -1,17 +1,19 @@
 language: c
 compiler:
+  - clang
   - gcc
+sudo: false
 before_install:
   - pip install cpp-coveralls --user
-  - wget https://www.cmake.org/files/v3.3/cmake-3.3.1-Linux-x86_64.tar.gz -O /tmp/cmake.tar.gz --no-check-certificate
-  - tar xzf /tmp/cmake.tar.gz
-  - export PATH=$PWD/cmake-3.3.1-Linux-x86_64/bin/:$PATH
   - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
-
 addons:
   apt:
+    sources:
+      - george-edison55-precise-backports
     packages:
     - libssl-dev
+    - cmake
+    - cmake-data
 script:
   - mkdir build
   - cd build && cmake -D coveralls_send=ON .. && make all test
