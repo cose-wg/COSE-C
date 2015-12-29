@@ -258,7 +258,7 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		}
 		return false;
 	}
-	CHECK_CONDITION((cn->type == CN_CBOR_UINT) || (cn->type == CN_CBOR_INT), CN_CBOR_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION((cn->type == CN_CBOR_UINT) || (cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 	alg = (int) cn->v.uint;
 
 	switch (alg) {

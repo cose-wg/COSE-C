@@ -277,7 +277,7 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 		break;
 	}
 
-	CHECK_CONDITION(f, error.err);
+	CHECK_CONDITION(f, _MapFromCBOR(error));
 
 	return f;
 }
