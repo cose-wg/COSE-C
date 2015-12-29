@@ -202,7 +202,9 @@ errorReturn:
 bool COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * perr)
 {
 	COSE_MacMessage * p = (COSE_MacMessage *)cose;
+#ifdef USE_CBOR_CONTEXT        
 	cn_cbor_context * context = &p->m_message.m_allocContext;
+#endif
 	cn_cbor * ptmp = NULL;
 	cn_cbor_errback cbor_error;
 
@@ -260,7 +262,9 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	cn_cbor * pAuthData = NULL;
 	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
+#ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
+#endif
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	cn_cbor_errback cbor_error;
 
@@ -407,7 +411,9 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	const cn_cbor * cn = NULL;
 
 	byte * pbKey = pbKeyIn;
+#ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
+#endif
 	ssize_t cbAuthData;
 	cn_cbor * pAuthData = NULL;
 	cn_cbor * ptmp = NULL;
