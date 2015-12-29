@@ -186,12 +186,12 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 		CHECK_CONDITION(pSigners != NULL, COSE_ERR_OUT_OF_MEMORY);
 #ifdef USE_ARRAY
 		if (!_COSE_array_replace(&pMessage->m_message, pSigners, INDEX_SIGNATURES, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			cn_cbor_free(pSigners, context);
+			CN_CBOR_FREE(pSigners, context);
 			CHECK_CONDITION(false, COSE_ERR_CBOR);
 		}
 #else
 		if (!cn_cbor_mapput_int(pMessage->m_message.m_cbor, COSE_Header_Signers, pSigners, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			cn_cbor_free(pSigners, context);
+			CN_CBOR_FREE(pSigners, context);
 			CHECK_CONDITION(false, COSE_ERR_CBOR);
 		}
 #endif
