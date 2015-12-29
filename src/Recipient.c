@@ -120,3 +120,17 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const byte * pbKey, int cbKey, cos
 
 	return true;
 }
+
+bool COSE_Recipient_SetKey_EC(HCOSE_RECIPIENT h, const char* szCurve, const byte * pbX, int cbX, const byte * pbY, int cbY, cose_errback * perror)
+{
+	COSE_RecipientInfo * p;
+
+	if (!IsValidRecipientHandle(h) || (szCurve == NULL) || (pbX == NULL) || (pbY == NULL)) {
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	p = (COSE_RecipientInfo *)h;
+
+	return true;
+}

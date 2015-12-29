@@ -30,7 +30,7 @@ FOO Recipients;
 extern FOO Signer[];
 
 #ifdef USE_CBOR_CONTEXT
-#define CBOR_CONTEXT , NULL
+#define CBOR_CONTEXT_PARAM , NULL
 #else
 #define COBR_CONTEXT
 #endif
@@ -390,7 +390,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 	case CN_CBOR_BYTES:
 		DumpBytes(out, cbor, depth);
 		if ((pFOO != NULL) && (pFOO->children != NULL)) {
-			const cn_cbor * cbor3 = cn_cbor_decode(cbor->v.bytes, cbor->length, NULL CBOR_CONTEXT);
+			const cn_cbor * cbor3 = cn_cbor_decode(cbor->v.bytes, cbor->length, NULL CBOR_CONTEXT_PARAM);
 			if (cbor3 != NULL) {
 				WrapPrintF(out, fInComment ? " \\ " : " / ");
 				DumpTree(cbor3, out, pFOO->children, depth+1, true, true, true);
@@ -548,7 +548,7 @@ int main(int argc, char ** argv)
 
     //  Parse it
 
-    cn_cbor * cbor = cn_cbor_decode(pb, cb, NULL CBOR_CONTEXT);
+    cn_cbor * cbor = cn_cbor_decode(pb, cb, NULL CBOR_CONTEXT_PARAM);
 	if (cbor == NULL) {
 		fprintf(stderr, "Error parsing CBOR");
 		exit(1);

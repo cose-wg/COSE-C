@@ -122,6 +122,7 @@ HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT cose, COSE_Algorith
 
 HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, cose_errback * perr);
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_errback * perr);
+bool COSE_Recipient_SetKey_EC(HCOSE_RECIPIENT h, const char* szCurve, const byte * pbX, int cbX, const byte * pbY, int cbY, cose_errback * perror);
 
 //
 //
