@@ -32,7 +32,7 @@ extern FOO Signer[];
 #ifdef USE_CBOR_CONTEXT
 #define CBOR_CONTEXT_PARAM , NULL
 #else
-#define COBR_CONTEXT_PARAM
+#define CBOR_CONTEXT_PARAM
 #endif
 
 FOO AlgorithmMap[32] = {
