@@ -5,6 +5,16 @@
 
 #include "json.h"
 
+#ifdef USE_CBOR_CONTEXT
+extern cn_cbor_context * allocator;
+#define CBOR_CONTEXT_PARAM , allocator
+#define CBOR_CONTEXT_PARAM_COMMA allocator,
+#else
+#define CBOR_CONTEXT_PARAM
+#define CBOR_CONTEXT_PARAM_COMMA
+#endif
+
+
 const cn_cbor * ParseString(char * rgch, int ib, int cch)
 {
 	char ch;
@@ -18,7 +28,7 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 		ch = rgch[ib];
 		switch (ch) {
 		case '{':
-			node = cn_cbor_map_create(NULL, NULL);
+			node = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case '}':
@@ -26,7 +36,7 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 			break;
 
 		case '[':
-			node = cn_cbor_array_create(NULL, NULL);
+			node = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case ']':
@@ -43,7 +53,7 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 		case '"':
 			for (ib2 = ib + 1; ib2 < cch; ib2++) if (rgch[ib2] == '"') break;
 			rgch[ib2] = 0;
-			node = cn_cbor_string_create(&rgch[ib+1], NULL, NULL);
+			node = cn_cbor_string_create(&rgch[ib+1], CBOR_CONTEXT_PARAM_COMMA NULL);
 			rgch[ib2] = '"';
 			ib = ib2;
 			break;
