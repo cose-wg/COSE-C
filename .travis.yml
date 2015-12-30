@@ -9,6 +9,10 @@ before_install:
 env:
   - USE_CONTEXT=ON
   - USE_CONTEXT=OFF
+matrix:
+  exclude:
+    - gcc
+      USE_CONTEXT=OFF
 addons:
   apt:
     sources:
