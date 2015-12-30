@@ -58,7 +58,7 @@ if ( CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
       add_definitions( -Werror )
    endif ()
    if (optimize) 
-p      add_definitions( -Os )
+      add_definitions( -Os )
    endif ()
 elseif (MSVC)
    add_definitions ( /W4 )
