@@ -113,7 +113,7 @@ bool COSE_Sign_SetContent(HCOSE_SIGN h, const byte * rgb, size_t cb, cose_errbac
 #endif
 
 	p = cn_cbor_data_create(rgb, cb, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(p != NULL, CN_CBOR_ERR_OUT_OF_DATA);
+	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 #ifdef USE_ARRAY
 	CHECK_CONDITION(_COSE_array_replace(&pMessage->m_message, p, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
@@ -164,7 +164,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 
 	cbor = cn_cbor_mapget_int(pkey, COSE_Key_ID);
 	if (cbor != NULL) {
-		CHECK_CONDITION(cbor->type == CN_CBOR_BYTES, CN_CBOR_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(cbor->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		cbor2 = cn_cbor_data_create(cbor->v.bytes, cbor->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 		CHECK_CONDITION(cbor2 != NULL, COSE_ERR_CBOR);
 		CHECK_CONDITION(cn_cbor_mapput_int(pSigner->m_message.m_unprotectMap, COSE_Parameter_KID, cbor2, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
@@ -186,12 +186,12 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 		CHECK_CONDITION(pSigners != NULL, COSE_ERR_OUT_OF_MEMORY);
 #ifdef USE_ARRAY
 		if (!_COSE_array_replace(&pMessage->m_message, pSigners, INDEX_SIGNATURES, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			cn_cbor_free(pSigners, context);
+			CN_CBOR_FREE(pSigners, context);
 			CHECK_CONDITION(false, COSE_ERR_CBOR);
 		}
 #else
 		if (!cn_cbor_mapput_int(pMessage->m_message.m_cbor, COSE_Header_Signers, pSigners, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			cn_cbor_free(pSigners, context);
+			CN_CBOR_FREE(pSigners, context);
 			CHECK_CONDITION(false, COSE_ERR_CBOR);
 		}
 #endif

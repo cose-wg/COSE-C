@@ -78,7 +78,7 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 
 	cbOut = (int)  pcose->cbContent - TSize;
 	rgbOut = (byte *)COSE_CALLOC(cbOut, 1, context);
-	CHECK_CONDITION(rgbOut != NULL, CN_CBOR_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &outl, pbAuthData, cbAuthData), COSE_ERR_DECRYPT_FAILED);
 

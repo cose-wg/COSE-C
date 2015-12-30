@@ -29,6 +29,12 @@ typedef struct _FOO {
 FOO Recipients;
 extern FOO Signer[];
 
+#ifdef USE_CBOR_CONTEXT
+#define CBOR_CONTEXT_PARAM , NULL
+#else
+#define CBOR_CONTEXT_PARAM
+#endif
+
 FOO AlgorithmMap[32] = {
 	{ "ES512", CN_CBOR_INT, -9, NULL, 0, 0 },
 	{ "ES384", CN_CBOR_INT, -8, NULL, 0, 0 },
@@ -384,7 +390,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 	case CN_CBOR_BYTES:
 		DumpBytes(out, cbor, depth);
 		if ((pFOO != NULL) && (pFOO->children != NULL)) {
-			const cn_cbor * cbor3 = cn_cbor_decode(cbor->v.bytes, cbor->length, NULL, NULL);
+			const cn_cbor * cbor3 = cn_cbor_decode(cbor->v.bytes, cbor->length CBOR_CONTEXT_PARAM, NULL);
 			if (cbor3 != NULL) {
 				WrapPrintF(out, fInComment ? " \\ " : " / ");
 				DumpTree(cbor3, out, pFOO->children, depth+1, true, true, true);
@@ -542,7 +548,7 @@ int main(int argc, char ** argv)
 
     //  Parse it
 
-    cn_cbor * cbor = cn_cbor_decode(pb, cb, NULL, NULL);
+    cn_cbor * cbor = cn_cbor_decode(pb, cb CBOR_CONTEXT_PARAM, NULL);
 	if (cbor == NULL) {
 		fprintf(stderr, "Error parsing CBOR");
 		exit(1);

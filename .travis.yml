@@ -6,6 +6,13 @@ sudo: false
 before_install:
   - pip install cpp-coveralls --user
   - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
+env:
+  - USE_CONTEXT=ON
+  - USE_CONTEXT=OFF
+matrix:
+  exclude:
+    - compiler: gcc
+      env: USE_CONTEXT=OFF
 addons:
   apt:
     sources:
@@ -16,7 +23,7 @@ addons:
     - cmake-data
 script:
   - mkdir build
-  - cd build && cmake -D coveralls_send=ON .. && make all test
+  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON .. && make all test
   - make coveralls
 
 

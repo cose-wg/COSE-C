@@ -193,12 +193,12 @@ HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT hcose, COSE_Algorit
 		if (pRecipients == NULL) goto error;
 #ifdef USE_ARRAY
 		if (!_COSE_array_replace(&pcose->m_message, pRecipients, INDEX_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			cn_cbor_free(pRecipients, context);
+			CN_CBOR_FREE(pRecipients, context);
 			goto error;
 		}
 #else
 		if (!cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Recipients, pRecipients, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			cn_cbor_free(pRecipients, context);
+			CN_CBOR_FREE(pRecipients, context);
 			goto error;
 		}
 #endif
@@ -233,7 +233,9 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 	const cn_cbor * cn = NULL;
 
 	byte * pbKey = pbKeyIn;
+#ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context;
+#endif
 	byte * pbAuthData = NULL;
 	ssize_t cbAuthData;
 	cn_cbor * pAuthData = NULL;
@@ -258,7 +260,7 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		}
 		return false;
 	}
-	CHECK_CONDITION((cn->type == CN_CBOR_UINT) || (cn->type == CN_CBOR_INT), CN_CBOR_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION((cn->type == CN_CBOR_UINT) || (cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 	alg = (int) cn->v.uint;
 
 	switch (alg) {
@@ -384,7 +386,9 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	cn_cbor * pAuthData = NULL;
 	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
+#ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
+#endif
 	COSE_Encrypt * pcose = (COSE_Encrypt *) h;
 	cn_cbor_errback cbor_error;
 

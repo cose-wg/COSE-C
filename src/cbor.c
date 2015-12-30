@@ -6,6 +6,7 @@
   (v) = CN_CALLOC_CONTEXT(); \
   if (!(v)) { if (errp) {errp->err = CN_CBOR_ERR_OUT_OF_MEMORY;} return false; }
 
+#ifdef USE_CBOR_CONTEXT
 #define CBOR_CONTEXT_PARAM , context
 
 #define CN_CALLOC(ctx) ((ctx) && (ctx)->calloc_func) ? \
@@ -13,6 +14,11 @@
     calloc(1, sizeof(cn_cbor));
 
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
+#else
+#define CBOR_CONTEXT_PARAM
+#define CN_CALLOC(ctx) calloc(1, sizeof(cn_cbor));
+#define CN_CALLOC_CONTEXT() CN_CALLOC(context)
+#endif
 
 
 /***

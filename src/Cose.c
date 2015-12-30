@@ -88,7 +88,7 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 			CHECK_CONDITION(pobj->m_protectedMap, COSE_ERR_OUT_OF_MEMORY);
 		}
 		else {
-			pobj->m_protectedMap = cn_cbor_decode((const byte *)pmap->v.str, pmap->length, context, &errState);
+			pobj->m_protectedMap = cn_cbor_decode((const byte *)pmap->v.str, pmap->length, CBOR_CONTEXT_PARAM_COMMA &errState);
 			CHECK_CONDITION(pobj->m_protectedMap != NULL, COSE_ERR_INVALID_PARAMETER);
 		}
 	}
@@ -108,7 +108,9 @@ errorReturn:
 
 void _COSE_Release(COSE * pobj)
 {
+#ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pobj->m_allocContext;
+#endif
 
 	if (pobj->m_protectedMap != NULL) CN_CBOR_FREE(pobj->m_protectedMap, context);
 	if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL)) CN_CBOR_FREE(pobj->m_unprotectMap, context);
@@ -243,7 +245,9 @@ cn_cbor * _COSE_map_get_str(COSE * pcose, const char * key, int flags, cose_errb
 
 bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errback * perr)
 {
+#ifdef USE_CBOR_CONTEXT    
 	cn_cbor_context * context = &pCose->m_allocContext;
+#endif
 	cn_cbor_errback error;
 	bool f;
 
@@ -277,7 +281,7 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 		break;
 	}
 
-	CHECK_CONDITION(f, error.err);
+	CHECK_CONDITION(f, _MapFromCBOR(error));
 
 	return f;
 }

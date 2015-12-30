@@ -105,7 +105,7 @@ ExternalProject_Add(
   project_cn-cbor
   GIT_REPOSITORY https://github.com/jimsch/cn-cbor
   GIT_TAG PrettyPrint
-  CMAKE_ARGS -Doptimize=OFF -Duse_context=ON -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=${COVERALLS} -Dbuild_shared_libs=$(build_shared_libs)
+  CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF
   INSTALL_DIR "${dist_dir}"
   UPDATE_DISCONNECTED 1
 )
