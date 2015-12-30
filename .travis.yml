@@ -11,7 +11,7 @@ env:
   - USE_CONTEXT=OFF
 matrix:
   exclude:
-    - gcc
+    - compiler: gcc
       USE_CONTEXT=OFF
 addons:
   apt:
