@@ -25,6 +25,8 @@ addons:
 script:
   - mkdir build
   - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON .. && make all test
+  - ls
+  - ls Examples
   - make coveralls
 
 
