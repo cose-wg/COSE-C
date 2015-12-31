@@ -190,7 +190,6 @@ bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const 
 	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
 
-	if (cn->length != (int)cbOut) return false;
 	for (i = 0; i < (unsigned int)TagSize / 8; i++) f |= (cn->v.bytes[i] != rgbOut[i]);
 
 	COSE_FREE(rgbOut, context);
