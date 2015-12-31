@@ -24,6 +24,26 @@ cn_cbor_context * allocator;
 #define CBOR_CONTEXT_PARAM_COMMA
 #endif
 
+cn_cbor * cn_cbor_clone(const cn_cbor * pIn)
+{
+	cn_cbor * pOut = NULL;
+	char * sz;
+
+	switch (pIn->type) {
+	case CN_CBOR_TEXT:
+		sz = malloc(pIn->length + 1);
+		memcpy(sz, pIn->v.str, pIn->length);
+		sz[pIn->length] = 0;
+		pOut = cn_cbor_string_create(sz, CBOR_CONTEXT_PARAM_COMMA NULL);
+		break;
+
+	default:
+		break;
+	}
+
+	return pOut;
+}
+
 byte fromHex(char c)
 {
 	if (('0' <= c) && (c <= '9')) return c - '0';
@@ -58,16 +78,81 @@ byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 		pb[i / 2] = fromHex(pb2[i]) * 16 + fromHex(pb2[i + 1]);
 	}
 
-	*pcbEncoded = pCBOR->length / 2;
+	*pcbEncoded = (int) (pCBOR->length / 2);
 	return pb;
 }
 
-HCOSE_RECIPIENT BuildRecipient(const cn_cbor * pRecipient)
+#define OPERATION_NONE 0
+#define OPERATION_BASE64 1
+#define OPERATION_IGNORE 2
+
+struct {
+	char * szKey;
+	int kty;
+	int operation;
+	int keyNew;
+} RgStringKeys[7] = {
+	{ "kty", 0, OPERATION_IGNORE, 0},
+	{ "kid", 0, OPERATION_NONE, 1},
+	{ "crv", 2, OPERATION_NONE, -1},
+	{ "x", 2, OPERATION_BASE64, -2},
+	{ "y", 2, OPERATION_BASE64, -3},
+	{ "d", 2, OPERATION_BASE64, -4},
+	{ "k", 4, OPERATION_BASE64, -1}
+};
+
+cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 {
-	HCOSE_RECIPIENT h = NULL;
+	cn_cbor * pKeyOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor * pKty = cn_cbor_mapget_string(pKeyIn, "kty");
+	cn_cbor * p;
+	cn_cbor * pKey;
+	cn_cbor * pValue;
+	int i;
+	int kty;
+	unsigned char * pb;
+	size_t cb;
 
+	if ((pKty == NULL) || (pKty->type != CN_CBOR_TEXT)) return NULL;
+	if (pKty->length == 2) {
+		if (strncmp(pKty->v.str, "EC", 2) == 0) kty = 2;
+		else return NULL;
+	}
+	else if (pKty->length == 3) {
+		if (strncmp(pKty->v.str, "oct", 3) == 0) kty = 4;
+		else return NULL;
+	}
+	else return NULL;
 
-	return h;
+	p = cn_cbor_int_create(kty, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (p == NULL) return NULL;
+	if (!cn_cbor_mapput_int(pKeyOut, 1, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
+
+	for (pKey = pKeyIn->first_child; pKey != NULL; pKey = pKey->next->next) {
+		pValue = pKey->next;
+
+		if (pKey->type == CN_CBOR_TEXT) {
+			for (i = 0; i < 7; i++) {
+				if ((pKey->length == strlen(RgStringKeys[i].szKey)) &&
+					(strncmp(pKey->v.str, RgStringKeys[i].szKey, strlen(RgStringKeys[i].szKey)) == 0) &&
+					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
+					switch (RgStringKeys[i].operation) {
+					case OPERATION_NONE:
+						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_clone(pValue), CBOR_CONTEXT_PARAM_COMMA NULL);
+						break;
+
+					case OPERATION_BASE64:
+						pb = base64_decode(pValue->v.str, pValue->length, &cb);
+						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_data_create(pb, (int) cb, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
+						break;
+					}
+					i = 99;
+				}
+			}
+		}
+	}
+
+	return pKeyOut;
 }
 
 int ValidateMAC(const cn_cbor * pControl)
@@ -75,6 +160,7 @@ int ValidateMAC(const cn_cbor * pControl)
 	int cbEncoded;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+	const cn_cbor * pMac;
 	const cn_cbor * pRecipients;
 	HCOSE_MAC hMAC;
 	int type;
@@ -84,13 +170,18 @@ int ValidateMAC(const cn_cbor * pControl)
 	if (hMAC == NULL) exit(1);
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
-	pRecipients = cn_cbor_mapget_string(pInput, "recipients");
+	pMac = cn_cbor_mapget_string(pInput, "mac");
+	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) exit(1);
+
+	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++,pRecipients=pRecipients->next) {
-		HCOSE_RECIPIENT hRecip = BuildRecipient(pRecipients);
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
 
+		HCOSE_RECIPIENT hRecip = COSE_Mac_GetRecipient(hMAC, iRecipient, NULL);
+		COSE_Recipient_SetKey(hRecip, pkey, NULL);
 		if (!COSE_Mac_validate(hMAC, hRecip, NULL)) CFails += 1;
 	}
 
@@ -148,7 +239,7 @@ int MacMessage()
 		hRecip = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
 		if (hRecip == NULL) break;
 
-		COSE_Recipient_SetKey(hRecip, rgbSecret, sizeof(rgbSecret), NULL);
+		COSE_Recipient_SetKey_secret(hRecip, rgbSecret, sizeof(rgbSecret), NULL);
 
 		COSE_Mac_validate(hEncObj, hRecip, NULL);
 
@@ -287,7 +378,7 @@ int EncryptMessage()
 		hRecip = COSE_Encrypt_GetRecipient(hEncObj, iRecipient, NULL);
 		if (hRecip == NULL) break;
 
-		COSE_Recipient_SetKey(hRecip, rgbSecret, cbSecret, NULL);
+		COSE_Recipient_SetKey_secret(hRecip, rgbSecret, cbSecret, NULL);
 
 		COSE_Encrypt_decrypt(hEncObj, hRecip, NULL);
 
@@ -321,7 +412,7 @@ int main(int argc, char ** argv)
 		//  To find out what we are doing we need to get the correct item
 
 		const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
-		const cn_cbor * p;
+
 		if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
 			fprintf(stderr, "No or bad input section");
 			exit(1);

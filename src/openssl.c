@@ -9,6 +9,7 @@
 #ifdef USE_OPEN_SSL
 
 #include <openssl/evp.h>
+#include <openssl/cmac.h>
 #include <openssl/hmac.h>
 #include <openssl/ecdsa.h>
 #include <openssl/rand.h>
@@ -157,6 +158,54 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	return true;
 }
 
+
+bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+{
+	CMAC_CTX * pctx = NULL;
+	const EVP_CIPHER * pcipher = NULL;
+	byte * rgbOut = NULL;
+	size_t cbOut;
+	bool f = false;
+	unsigned int i;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pcose->m_message.m_allocContext;
+#endif
+
+	pctx = CMAC_CTX_new();
+
+
+	switch (KeySize) {
+	case 128: pcipher = EVP_aes_128_cbc(); break;
+	case 256: pcipher = EVP_aes_256_cbc(); break;
+	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
+	}
+
+	rgbOut = COSE_CALLOC(128/8, 1, context);
+	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(CMAC_Init(pctx, pcose->pbKey, pcose->cbKey, pcipher, NULL /*impl*/) == 1, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(CMAC_Update(pctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(CMAC_Final(pctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
+
+	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
+	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
+
+	if (cn->length != (int)cbOut) return false;
+	for (i = 0; i < (unsigned int)TagSize / 8; i++) f |= (cn->v.bytes[i] != rgbOut[i]);
+
+	COSE_FREE(rgbOut, context);
+	CMAC_CTX_cleanup(pctx);
+	CMAC_CTX_free(pctx);
+	return !f;
+
+errorReturn:
+	COSE_FREE(rgbOut, context);
+	CMAC_CTX_cleanup(pctx);
+	CMAC_CTX_free(pctx);
+	return false;
+
+}
+
 bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
@@ -299,7 +348,7 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
 	if (p != NULL) {
 		BIGNUM * pbn;
 
-		pbn = BN_bin2bn(p->v.bytes, p->length, NULL);
+		pbn = BN_bin2bn(p->v.bytes, (int) p->length, NULL);
 		EC_KEY_set_private_key(pNewKey, pbn);
 	}
 	

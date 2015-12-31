@@ -86,8 +86,19 @@ typedef enum {
 	COSE_Algorithm_AES_CCM_64_128_128 = 32,
 	COSE_Algorithm_AES_CCM_64_128_256 = 33,
 
+	COSE_Algorithm_ECDH_ES_HKDF_256 = 50,
+	COSE_Algorithm_ECDH_ES_HKDF_512 = 51,
+	COSE_Algorithm_ECDH_SS_HKDF_256 = 52,
+	COSE_Algorithm_ECDH_SS_HKDF_512 = 53,
+
+	COSE_Algorithm_ECDH_ES_A128KW = 54,
+	COSE_Algorithm_ECDH_ES_A192KW = 55,
+	COSE_Algorithm_ECDH_ES_A256KW = 56,
+	COSE_Algorithm_ECDH_SS_A128KW = 57,
+	COSE_Algorithm_ECDH_SS_A192KW = 58,
+	COSE_Algorithm_ECDH_SS_A256KW = 59,
+
 	COSE_Algorithm_Direct = -6,
-	COSE_Algorithm_ECDH_ES_Direct, 
 	COSE_Algorithm_PS256 = -26,
 	COSE_Algorithm_PS384 = -27,
 	COSE_Algorithm_PS512 = -28,
@@ -121,8 +132,8 @@ bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT, HCOSE_RECIPIENT, cose_errback * perr);
 HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
 
 HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, cose_errback * perr);
-bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_errback * perr);
-bool COSE_Recipient_SetKey_EC(HCOSE_RECIPIENT h, const char* szCurve, const byte * pbX, int cbX, const byte * pbY, int cbY, cose_errback * perror);
+bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_errback * perr);
+bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback * perror);
 
 //
 //
