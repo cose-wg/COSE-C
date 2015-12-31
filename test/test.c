@@ -428,8 +428,8 @@ int main(int argc, char ** argv)
 		EncryptMessage();
 	}
 
-	if (CFails > 0) printf("Failed %d tests\n", CFails);
-	else printf("SUCCESS\n");
+	if (CFails > 0) fprintf(stderr, "Failed %d tests\n", CFails);
+	else fprintf(stderr, "SUCCESS\n");
 
 	exit(CFails);
 }
