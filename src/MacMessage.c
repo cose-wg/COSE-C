@@ -429,10 +429,10 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	if (cn == NULL) goto errorReturn;
 
 	if (cn->type == CN_CBOR_TEXT) {
-		if (cn->length == 15) {
-			if (strncmp(cn->v.str, "AES-CMAC-256/64", 15) == 0) {
+		if (cn->length == 14) {
+			if (strncmp(cn->v.str, "AES-MAC-256/64", 14) == 0) {
 				cbitKey = 256;
-				alg = COSE_Int_Alg_AES_CMAC_256_64;
+				alg = COSE_Int_Alg_AES_CBC_MAC_256_64;
 			}
 			else {
 				FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
@@ -452,7 +452,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 			cbitKey = 256;
 			break;
 
-		case COSE_Int_Alg_AES_CMAC_256_64:
+		case COSE_Int_Alg_AES_CBC_MAC_256_64:
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 			break;
@@ -514,8 +514,8 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 		if (!HMAC_Validate(pcose, 256, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
-	case COSE_Int_Alg_AES_CMAC_256_64:
-		if (!AES_CMAC_Validate(pcose, 256, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
+	case COSE_Int_Alg_AES_CBC_MAC_256_64:
+		if (!AES_CBC_MAC_Validate(pcose, 256, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	default:

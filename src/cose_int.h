@@ -188,5 +188,5 @@ bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CB
 
 
 enum {
-	COSE_Int_Alg_AES_CMAC_256_64 = -22
+	COSE_Int_Alg_AES_CBC_MAC_256_64 = -22
 };
