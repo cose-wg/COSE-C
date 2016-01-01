@@ -22,14 +22,9 @@ addons:
     - cmake
     - cmake-data
 script:
-  - pwd
   - git clone git://github.com/cose-wg/Examples Examples
-  - ls
   - mkdir build
   - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON .. && make all test
-  - ls
-  - ls /home/travis
-  - ls Examples
   - make coveralls
 
 
