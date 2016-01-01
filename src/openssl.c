@@ -313,7 +313,6 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 
 	HMAC_CTX_init(&ctx);
 
-
 	switch (HSize) {
 	case 256: pmd = EVP_sha256(); break;
 	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
@@ -344,6 +343,7 @@ errorReturn:
 	return false;
 
 }
+
 
 #define COSE_Key_EC_Curve -1
 #define COSE_Key_EC_X -2
