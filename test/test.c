@@ -24,6 +24,28 @@ cn_cbor_context * allocator;
 #define CBOR_CONTEXT_PARAM_COMMA
 #endif
 
+struct {
+	char * sz;
+	int    i;
+} RgAlgorithmNames[5] = {
+	{"HS256", COSE_Algorithm_HMAC_256_256},
+	{"HS256/64", COSE_Algorithm_HMAC_256_64},
+	{"HS384", COSE_Algorithm_HMAC_384_384},
+	{"HS512", COSE_Algorithm_HMAC_512_512},
+	{"direct", COSE_Algorithm_Direct}
+};
+
+int MapAlgorithmName(const cn_cbor * p)
+{
+	int i;
+
+	for (i = 0; i < _countof(RgAlgorithmNames); i++) {
+		if (strcmp(RgAlgorithmNames[i].sz, p->v.str) == 0) return RgAlgorithmNames[i].i;
+	}
+
+	return 0;
+}
+
 cn_cbor * cn_cbor_clone(const cn_cbor * pIn)
 {
 	cn_cbor * pOut = NULL;
@@ -100,6 +122,58 @@ struct {
 	{ "d", 2, OPERATION_BASE64, -4},
 	{ "k", 4, OPERATION_BASE64, -1}
 };
+
+enum {
+	Attributes_MAC_protected=1,
+	Attributes_MAC_unprotected,
+	Attributes_Recipient_protected,
+	Attributes_Recipient_unprotected,
+} whichSet;
+
+bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
+{
+	const cn_cbor * pKey;
+	const cn_cbor * pValue;
+	int keyNew;
+	cn_cbor * pValueNew;
+
+	if (pAttributes == NULL) return true;
+	if (pAttributes->type != CN_CBOR_MAP) return false;
+
+	for (pKey = pAttributes->first_child; pKey != NULL; pKey = pKey->next->next) {
+		pValue = pKey->next;
+
+		if (pKey->type != CN_CBOR_TEXT) return false;
+
+		if (strcmp(pKey->v.str, "alg") == 0) {
+			keyNew = COSE_Header_Algorithm;
+			pValueNew = cn_cbor_int_create(MapAlgorithmName(pValue), CBOR_CONTEXT_PARAM_COMMA NULL);
+		}
+		else {
+			continue;
+		}
+
+		switch (which) {
+		case Attributes_MAC_protected:
+			COSE_Mac_map_put((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_MAC_unprotected:
+			COSE_Mac_map_put((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Recipient_protected:
+			COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Recipient_unprotected:
+			COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+		}
+	}
+
+	return true;
+}
 
 cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 {
@@ -219,6 +293,63 @@ int ValidateMAC(const cn_cbor * pControl)
 
 	if (fFail) CFails += 1;
 	return 0;
+}
+
+
+int BuildMacMessage(const cn_cbor * pControl)
+{
+	int iRecipient;
+
+	//
+	//  We don't run this for all control sequences - skip those marked fail.
+	//
+
+	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
+
+	HCOSE_MAC hMacObj = COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
+	if (pInputs == NULL) exit(1);
+	const cn_cbor * pMac = cn_cbor_mapget_string(pInputs, "mac");
+	if (pMac == NULL) exit(1);
+
+	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
+	if (!COSE_Mac_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
+
+	if (!SetAttributes((HCOSE) hMacObj, cn_cbor_mapget_string(pMac, "protected"), Attributes_MAC_protected)) goto returnError;
+	if (!SetAttributes((HCOSE) hMacObj, cn_cbor_mapget_string(pMac, "unprotected"), Attributes_MAC_unprotected)) goto returnError;
+
+	const cn_cbor * pRecipients = cn_cbor_mapget_string(pMac, "recipients");
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+
+	pRecipients = pRecipients->first_child;
+	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+		if (pkey == NULL) exit(1);
+
+		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+		if (hRecip == NULL) exit(1);
+
+		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "protected"), Attributes_Recipient_protected)) goto returnError;
+		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "unprotected"), Attributes_Recipient_unprotected)) goto returnError;
+
+		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) exit(1);
+
+		if (!COSE_Mac_AddRecipient(hMacObj, hRecip, NULL)) exit(1);
+	}
+
+	COSE_Mac_encrypt(hMacObj, NULL);
+
+	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
+	byte * rgb = (byte *)malloc(cb);
+	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
+
+	return 0;
+
+returnError:
+	CFails += 1;
+	return 1;
 }
 
 int MacMessage()
@@ -453,6 +584,7 @@ int main(int argc, char ** argv)
 
 		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 			ValidateMAC(pControl);
+			BuildMacMessage(pControl);
 		}
 	}
 	else {

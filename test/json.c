@@ -56,7 +56,7 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 			for (ib2 = ib + 1; ib2 < cch; ib2++) if (rgch[ib2] == '"') break;
 			rgch[ib2] = 0;
 			node = cn_cbor_string_create(&rgch[ib+1], CBOR_CONTEXT_PARAM_COMMA NULL);
-			rgch[ib2] = '"';
+			// rgch[ib2] = '"';
 			ib = ib2;
 			break;
 
@@ -219,7 +219,7 @@ void build_decoding_table() {
 	decoding_table = malloc(256);
 
 	for (int i = 0; i < 64; i++)
-		decoding_table[(unsigned char)encoding_table[i]] = i;
+		decoding_table[encoding_table[i]] = (char) i;
 }
 
 

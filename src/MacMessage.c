@@ -564,6 +564,24 @@ errorReturn:
 	return false;
 }
 
+bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr)
+{
+	COSE_RecipientInfo * pRecip;
+	COSE_MacMessage * pMac;
+
+	CHECK_CONDITION(IsValidMacHandle(hMac), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
+
+	pMac = (COSE_MacMessage *)hMac;
+	pRecip = (COSE_RecipientInfo *)hRecip;
+
+	pRecip->m_recipientNext = pMac->m_recipientFirst;
+	pMac->m_recipientFirst = pRecip;
+	return true;
+
+errorReturn:
+	return false;
+}
 
 
 HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errback * perr)

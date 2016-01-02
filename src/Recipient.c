@@ -12,6 +12,34 @@ bool IsValidRecipientHandle(HCOSE_RECIPIENT h)
 	return true;
 }
 
+HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+{
+	COSE_RecipientInfo * pobj = (COSE_RecipientInfo *)COSE_CALLOC(1, sizeof(COSE_RecipientInfo), context);
+	if (pobj == NULL) {
+		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
+		return NULL;
+	}
+
+	if (!_COSE_Init(&pobj->m_encrypt.m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+		COSE_Recipient_Free((HCOSE_RECIPIENT)pobj);
+		return NULL;
+	}
+
+	return (HCOSE_RECIPIENT)pobj;
+}
+
+bool COSE_Recipient_Free(HCOSE_RECIPIENT hRecipient)
+{
+	if (IsValidRecipientHandle(hRecipient)) {
+
+		_COSE_Recipient_Free((COSE_RecipientInfo *)hRecipient);
+		return true;
+	}
+
+	return false;
+}
+
+
 HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, cose_errback * perr)
 {
 	int i;
@@ -161,17 +189,28 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, size_t c
 	int alg;
 	const cn_cbor * cn_Alg = _COSE_map_get_int(&pRecipient->m_encrypt.m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 
-	if (cn_Alg == NULL) return false;
-	if ((cn_Alg->type != CN_CBOR_UINT) && (cn_Alg->type != CN_CBOR_INT)) return false;
+	CHECK_CONDITION(cn_Alg != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION((cn_Alg->type == CN_CBOR_UINT) || (cn_Alg->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 	alg = (int)cn_Alg->v.uint;
 
 	switch (alg) {
 	case COSE_Algorithm_Direct:
 	{
-		if (pRecipient->m_encrypt.cbKey != cbitKeySize / 8) return NULL;
-		byte * pb = (byte *)malloc(cbitKeySize / 8);
-		if (pb == NULL) return NULL;
-		memcpy(pb, pRecipient->m_encrypt.pbKey, cbitKeySize / 8);
+		byte * pb;
+		if (pRecipient->m_pkey != NULL) {
+			const cn_cbor * pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
+			CHECK_CONDITION((pK != NULL) && (pK->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+			CHECK_CONDITION(pK->length == cbitKeySize / 8, COSE_ERR_INVALID_PARAMETER);
+			pb = COSE_CALLOC(cbitKeySize / 8, 1, &pRecipient->m_encrypt.m_message.m_allocContext);
+			CHECK_CONDITION(pb != NULL, COSE_ERR_OUT_OF_MEMORY);
+			memcpy(pb, pK->v.bytes, cbitKeySize / 8);
+		}
+		else {
+			if (pRecipient->m_encrypt.cbKey != cbitKeySize / 8) return NULL;
+			pb = (byte *)malloc(cbitKeySize / 8);
+			if (pb == NULL) return NULL;
+			memcpy(pb, pRecipient->m_encrypt.pbKey, cbitKeySize / 8);
+		}
 		return pb;
 	}
 	break;
@@ -185,6 +224,9 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, size_t c
 	default:
 		return NULL;
 	}
+
+errorReturn:
+	return NULL;
 }
 
 bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h, const byte * pbKey, int cbKey, cose_errback * perror)
@@ -219,8 +261,42 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback
 		return false;
 	}
 
+
+
 	p = (COSE_RecipientInfo *)h;
 	p->m_pkey = pKey;
 
 	return true;
 }
+
+bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror)
+{
+	if (!IsValidRecipientHandle(h) || (value == NULL)) {
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	if (!_COSE_map_put(&((COSE_RecipientInfo *)h)->m_encrypt.m_message, key, value, flags, perror)) return false;
+
+	if (key == COSE_Header_Algorithm) {
+		if (value->type == CN_CBOR_INT) {
+			switch (value->v.uint) {
+			case COSE_Algorithm_Direct:
+			case COSE_Algorithm_ECDH_ES_HKDF_256:
+			case COSE_Algorithm_ECDH_ES_HKDF_512:
+				((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags |= 1;
+				break;
+
+			default:
+				((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags &= ~1;
+				break;
+			}
+		}
+		else {
+			((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags &= ~1;
+		}
+	}
+
+	return true;
+}
+

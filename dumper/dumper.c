@@ -343,7 +343,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 		group = 0;
 		for (i = 0; i < cbor->length; i+=2, cbor2 = cbor2->next->next) {
 			if ((cbor2->type == CN_CBOR_UINT) && (cbor2->v.uint == 1)) {
-				group = cbor2->next->v.uint;
+				group = (int) cbor2->next->v.uint;
 				break;
 			}
 		}
