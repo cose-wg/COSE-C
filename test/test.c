@@ -31,12 +31,16 @@ cn_cbor_context * allocator;
 struct {
 	char * sz;
 	int    i;
-} RgAlgorithmNames[5] = {
+} RgAlgorithmNames[10] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
 	{"HS512", COSE_Algorithm_HMAC_512_512},
-	{"direct", COSE_Algorithm_Direct}
+	{"direct", COSE_Algorithm_Direct},
+	{"AES-MAC-128/64", COSE_Algorithm_CBC_MAC_128_64},
+	{"AES-MAC-256/64", COSE_Algorithm_CBC_MAC_256_64},
+	{"AES-MAC-128/128", COSE_Algorithm_CBC_MAC_128_128},
+	{"AES_MAC_256/128", COSE_Algorithm_CBC_MAC_256_128},
 };
 
 int MapAlgorithmName(const cn_cbor * p)

@@ -158,6 +158,68 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	return true;
 }
 
+bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int KeySize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+{
+	const EVP_CIPHER * pcipher = NULL;
+	EVP_CIPHER_CTX ctx;
+	int cbOut;
+	byte rgbIV[16] = { 0 };
+	byte * rgbOut = NULL;
+	bool f = false;
+	unsigned int i;
+	cn_cbor * cn = NULL;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pcose->m_message.m_allocContext;
+#endif
+
+	rgbOut = COSE_CALLOC(16, 1, context);
+	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	switch (KeySize) {
+	case 128:
+		pcipher = EVP_aes_128_cbc();
+		break;
+
+	case 256:
+		pcipher = EVP_aes_256_cbc();
+		break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+
+	//  Setup and run the OpenSSL code
+
+	EVP_CIPHER_CTX_init(&ctx);
+	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pcose->pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
+
+	TSize /= 8;
+
+	for (i = 0; i < (unsigned int)cbAuthData / 16; i++) {
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, pbAuthData + (i * 16), 16), COSE_ERR_CRYPTO_FAIL);
+	}
+	if (cbAuthData % 16 != 0) {
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, pbAuthData + (i * 16), cbAuthData % 16), COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, rgbIV, 16 - (cbAuthData % 16)), COSE_ERR_CRYPTO_FAIL);
+	}
+
+	cn = cn_cbor_data_create(rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(cn != NULL, COSE_ERR_OUT_OF_MEMORY);
+	rgbOut = NULL;
+
+	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cn, INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+	cn = NULL;
+
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return !f;
+
+errorReturn:
+	if (rgbOut != NULL) COSE_FREE(rgbOut, context);
+	if (cn != NULL) CN_CBOR_FREE(cn, context);
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return false;
+}
+
 bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;

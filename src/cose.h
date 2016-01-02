@@ -81,6 +81,11 @@ typedef enum {
 	COSE_Algorithm_HMAC_512_512 = 6,
 	COSE_Algorithm_HMAC_256_64 = 7,
 
+	COSE_Algorithm_CBC_MAC_128_64 = 14,
+	COSE_Algorithm_CBC_MAC_256_64 = 15,
+	COSE_Algorithm_CBC_MAC_128_128 = 25,
+	COSE_Algorithm_CBC_MAC_256_128 = 26,
+
 	COSE_Algorithm_AES_CCM_16_64_128 = 10,
 	COSE_Algorithm_AES_CCM_16_64_256 = 11,
 	COSE_Algorithm_AES_CCM_64_64_128 = 30,
