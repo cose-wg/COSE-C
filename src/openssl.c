@@ -193,7 +193,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const
 	}
 	if (cbAuthData % 16 != 0) {
 		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, pbAuthData + (i * 16), cbAuthData % 16), COSE_ERR_CRYPTO_FAIL);
-		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, rgbIV, 15 - (cbAuthData % 16)), COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, rgbIV, 16 - (cbAuthData % 16)), COSE_ERR_CRYPTO_FAIL);
 	}
 
 	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
