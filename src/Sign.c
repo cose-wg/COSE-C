@@ -146,7 +146,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	case COSE_Algorithm_ECDSA_SHA_256:
 		cbor = cn_cbor_mapget_int(pkey, COSE_Key_Type);
 		CHECK_CONDITION(cbor != NULL, COSE_ERR_INVALID_PARAMETER);
-		CHECK_CONDITION((cbor->type == CN_CBOR_UINT) && (cbor->v.uint == COSE_Key_Type_EC2), CN_CBOR_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION((cbor->type == CN_CBOR_UINT) && (cbor->v.uint == COSE_Key_Type_EC2), COSE_ERR_INVALID_PARAMETER);
 		break;
 
 	default:

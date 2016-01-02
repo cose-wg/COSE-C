@@ -202,7 +202,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const
 	for (i = 0; i < (unsigned int)TSize; i++) f |= (cn->v.bytes[i] != rgbTag[i]);
 
 	EVP_CIPHER_CTX_cleanup(&ctx);
-	return true;
+	return !f;
 
 errorReturn:
 	EVP_CIPHER_CTX_cleanup(&ctx);
