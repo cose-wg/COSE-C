@@ -219,7 +219,7 @@ void build_decoding_table() {
 	decoding_table = malloc(256);
 
 	for (int i = 0; i < 64; i++)
-		decoding_table[encoding_table[i]] = (char) i;
+		decoding_table[(int) encoding_table[i]] = (char) i;
 }
 
 

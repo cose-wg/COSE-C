@@ -41,7 +41,7 @@ struct {
 
 int MapAlgorithmName(const cn_cbor * p)
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < _countof(RgAlgorithmNames); i++) {
 		if (strcmp(RgAlgorithmNames[i].sz, p->v.str) == 0) return RgAlgorithmNames[i].i;
