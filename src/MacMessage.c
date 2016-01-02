@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "cose.h"
 #include "cose_int.h"
@@ -426,18 +427,36 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 
 	cn = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn == NULL) goto errorReturn;
-	CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 
-	alg = (int) cn->v.uint;
+	if (cn->type == CN_CBOR_TEXT) {
+		if (cn->length == 14) {
+			if (strncmp(cn->v.str, "AES-MAC-256/64", 14) == 0) {
+				cbitKey = 256;
+				alg = COSE_Int_Alg_AES_CBC_MAC_256_64;
+			}
+			else {
+				FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
+			}
+		}
+		else {
+			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
+		}
+	}
+	else {
+		CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 
-	switch (alg) {
-	case COSE_Algorithm_HMAC_256_256:
-		cbitKey = 256;
-		break;
+		alg = (int)cn->v.uint;
 
-	default:
-		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
-		break;
+		switch (alg) {
+		case COSE_Algorithm_HMAC_256_256:
+			cbitKey = 256;
+			break;
+
+		case COSE_Int_Alg_AES_CBC_MAC_256_64:
+		default:
+			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
+			break;
+		}
 	}
 
 	//  Allocate the key if we have not already done so
@@ -469,6 +488,10 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(pAuthData != NULL, cbor_error);
 
+	ptmp = cn_cbor_string_create("MAC", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+
 	ptmp = cn_cbor_data_create(cnProtected->v.bytes, (int) cnProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
@@ -484,11 +507,15 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	cbAuthData = cn_cbor_encoder_write(RgbDontUseMac, 0, sizeof(RgbDontUseMac), pAuthData);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION((cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData), COSE_ERR_CBOR);
+	CHECK_CONDITION((cn_cbor_encoder_write(pbAuthData, 0, cbAuthData+1, pAuthData) == cbAuthData), COSE_ERR_CBOR); // M00HACK
 
 	switch (alg) {
 	case COSE_Algorithm_HMAC_256_256:
 		if (!HMAC_Validate(pcose, 256, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
+	case COSE_Int_Alg_AES_CBC_MAC_256_64:
+		if (!AES_CBC_MAC_Validate(pcose, 256, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	default:

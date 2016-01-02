@@ -48,6 +48,7 @@ typedef struct {
 struct _RecipientInfo {
 	COSE_Encrypt m_encrypt;
 	COSE_RecipientInfo * m_recipientNext;
+	const cn_cbor * m_pkey;
 };
 
 typedef struct {
@@ -184,3 +185,8 @@ cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index);
 ///  NEW CBOR FUNCTIONS
 
 bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
+
+
+enum {
+	COSE_Int_Alg_AES_CBC_MAC_256_64 = -22
+};

@@ -13,13 +13,18 @@ add_executable ( cose_dumper dumper.c )
 target_link_libraries (cose_dumper PRIVATE cose-c )
 
 ## OpenSSL
-message ( "LIBS: *** ${OPENSSL_LIBRARIES}")
-message ( "INC: *** ${OPENSSL_INCLUDE_DIR}")
 
 target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
 #target_link_libraries( cose_dumper PRIVATE event_openssl)
 target_link_libraries( cose_dumper PRIVATE ${OPENSSL_LIBRARIES} )
 target_link_libraries( cose_dumper PRIVATE cn-cbor )
+
+if ( MSVC )
+   message ( "test: ${build_shared_libs}")
+   message ( "verbose: ${verbose}")
+
+target_link_libraries( cose_dumper PRIVATE ws2_32 )
+endif ()
 
 target_include_directories ( cose_dumper PRIVATE ../include )
 target_include_directories ( cose_dumper PRIVATE ../src )

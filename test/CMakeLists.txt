@@ -13,13 +13,13 @@ add_executable ( cose_test test.c json.c )
 target_link_libraries (cose_test PRIVATE cose-c )
 
 ## OpenSSL
-message ( "LIBS: *** ${OPENSSL_LIBRARIES}")
-message ( "INC: *** ${OPENSSL_INCLUDE_DIR}")
 
 target_include_directories(cose_test PRIVATE ${OPENSSL_INCLUDE_DIR})
-#target_link_libraries( cose_test PRIVATE event_openssl)
 target_link_libraries( cose_test PRIVATE ${OPENSSL_LIBRARIES} )
 target_link_libraries( cose_test PRIVATE cn-cbor )
+if ( MSVC )
+    target_link_libraries( cose_test PRIVATE ws2_32 )
+endif ()
 
 target_include_directories ( cose_test PRIVATE ../include )
 target_include_directories ( cose_test PRIVATE ../src )
@@ -27,5 +27,10 @@ target_include_directories ( cose_test PUBLIC ../../cose/cn-cbor/include )
 target_include_directories ( cose_test PUBLIC ../../cn-cbor/implement/cn-cbor/include )
 
 enable_testing()
+
 add_test ( NAME cose_test COMMAND cose_test )
+add_test ( NAME mac-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Mac-04.json )
+
+add_test ( NAME hmac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-01.json )
+
 

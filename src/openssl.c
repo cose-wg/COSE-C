@@ -9,6 +9,7 @@
 #ifdef USE_OPEN_SSL
 
 #include <openssl/evp.h>
+#include <openssl/cmac.h>
 #include <openssl/hmac.h>
 #include <openssl/ecdsa.h>
 #include <openssl/rand.h>
@@ -157,6 +158,106 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	return true;
 }
 
+bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+{
+	const EVP_CIPHER * pcipher = NULL;
+	EVP_CIPHER_CTX ctx;
+	int cbOut;
+	byte rgbIV[16] = { 0 };
+	byte rgbTag[16] = { 0 };
+	bool f = false;
+	unsigned int i;
+
+	switch (KeySize) {
+	case 128:
+		pcipher = EVP_aes_128_cbc();
+		break;
+
+	case 256:
+		pcipher = EVP_aes_256_cbc();
+		break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+
+	//  Setup and run the OpenSSL code
+
+	EVP_CIPHER_CTX_init(&ctx);
+	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pcose->pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
+
+	TSize /= 8;
+
+	for (i = 0; i < (unsigned int) cbAuthData / 16; i++) {
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, pbAuthData+(i*16), 16), COSE_ERR_CRYPTO_FAIL);
+	}
+	if (cbAuthData % 16 != 0) {
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, pbAuthData + (i * 16), cbAuthData % 16), COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, rgbIV, 16 - (cbAuthData % 16)), COSE_ERR_CRYPTO_FAIL);
+	}
+
+	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
+	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
+
+	for (i = 0; i < (unsigned int)TSize; i++) f |= (cn->v.bytes[i] != rgbTag[i]);
+
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return !f;
+
+errorReturn:
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return false;
+}
+
+#if 0
+//  We are doing CBC-MAC not CMAC at this time
+bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+{
+	CMAC_CTX * pctx = NULL;
+	const EVP_CIPHER * pcipher = NULL;
+	byte * rgbOut = NULL;
+	size_t cbOut;
+	bool f = false;
+	unsigned int i;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pcose->m_message.m_allocContext;
+#endif
+
+	pctx = CMAC_CTX_new();
+
+
+	switch (KeySize) {
+	case 128: pcipher = EVP_aes_128_cbc(); break;
+	case 256: pcipher = EVP_aes_256_cbc(); break;
+	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
+	}
+
+	rgbOut = COSE_CALLOC(128/8, 1, context);
+	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(CMAC_Init(pctx, pcose->pbKey, pcose->cbKey, pcipher, NULL /*impl*/) == 1, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(CMAC_Update(pctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(CMAC_Final(pctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
+
+	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
+	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
+
+	for (i = 0; i < (unsigned int)TagSize / 8; i++) f |= (cn->v.bytes[i] != rgbOut[i]);
+
+	COSE_FREE(rgbOut, context);
+	CMAC_CTX_cleanup(pctx);
+	CMAC_CTX_free(pctx);
+	return !f;
+
+errorReturn:
+	COSE_FREE(rgbOut, context);
+	CMAC_CTX_cleanup(pctx);
+	CMAC_CTX_free(pctx);
+	return false;
+
+}
+#endif
+
 bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
@@ -212,7 +313,6 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 
 	HMAC_CTX_init(&ctx);
 
-
 	switch (HSize) {
 	case 256: pmd = EVP_sha256(); break;
 	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
@@ -243,6 +343,7 @@ errorReturn:
 	return false;
 
 }
+
 
 #define COSE_Key_EC_Curve -1
 #define COSE_Key_EC_X -2
@@ -299,7 +400,7 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
 	if (p != NULL) {
 		BIGNUM * pbn;
 
-		pbn = BN_bin2bn(p->v.bytes, p->length, NULL);
+		pbn = BN_bin2bn(p->v.bytes, (int) p->length, NULL);
 		EC_KEY_set_private_key(pNewKey, pbn);
 	}
 	
