@@ -12,6 +12,10 @@
 
 #include "json.h"
 
+#ifndef _countof
+#define _countof(x) (sizeof(x)/sizeof(x[0]))
+#endif
+
 extern int EncryptMessage();
 int CFails = 0;
 
