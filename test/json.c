@@ -62,14 +62,14 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 
 		case't':
 			if (strncmp(&rgch[ib], "true", 4) != 0) goto error;
-			node = cn_cbor_data_create(NULL, 0, NULL, NULL);
+			node = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 			node->type = CN_CBOR_TRUE;
 			ib += 3;
 			break;
 
 		case'f':
 			if (strncmp(&rgch[ib], "false", 5) != 0) goto error;
-			node = cn_cbor_data_create(NULL, 0, NULL, NULL);
+			node = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 			node->type = CN_CBOR_FALSE;
 			ib += 4;
 			break;
@@ -192,7 +192,7 @@ unsigned char *base64_decode(const char *data,
 	unsigned char *decoded_data = malloc(*output_length);
 	if (decoded_data == NULL) return NULL;
 
-	for (int i = 0, j = 0; i < input_length;) {
+	for (unsigned int i = 0, j = 0; i < input_length;) {
 
 		uint32_t sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[(int) data[i++]];
 		uint32_t sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[(int) data[i++]];
