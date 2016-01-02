@@ -343,7 +343,7 @@ int BuildMacMessage(const cn_cbor * pControl)
 		if (!COSE_Mac_AddRecipient(hMacObj, hRecip, NULL)) exit(1);
 	}
 
-	COSE_Mac_encrypt(hMacObj, NULL);
+	if (!COSE_Mac_encrypt(hMacObj, NULL)) exit(1);
 
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);

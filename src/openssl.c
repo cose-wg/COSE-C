@@ -279,6 +279,8 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbA
 
 	switch (HSize) {
 	case 256: pmd = EVP_sha256(); break;
+	case 384: pmd = EVP_sha384(); break;
+	case 512: pmd = EVP_sha512(); break;
 	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
 	}
 

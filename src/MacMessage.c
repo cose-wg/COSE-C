@@ -284,8 +284,17 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	//  Get the key size
 
 	switch (alg) {
+	case COSE_Algorithm_HMAC_256_64:
 	case COSE_Algorithm_HMAC_256_256:
 		cbitKey = 256;
+		break;
+
+	case COSE_Algorithm_HMAC_384_384:
+		cbitKey = 384;
+		break;
+
+	case COSE_Algorithm_HMAC_512_512:
+		cbitKey = 512;
 		break;
 
 	default:
@@ -369,11 +378,24 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
 
 	switch (alg) {
+	case COSE_Algorithm_HMAC_256_64:
+		if (!HMAC_Create(pcose, 256, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
 	case COSE_Algorithm_HMAC_256_256:
 		if (!HMAC_Create(pcose, 256, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
+	case COSE_Algorithm_HMAC_384_384:
+		if (!HMAC_Create(pcose, 384, 384, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_HMAC_512_512:
+		if (!HMAC_Create(pcose, 512, 512, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
 	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 		return false;
 	}
 
