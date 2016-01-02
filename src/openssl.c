@@ -315,6 +315,8 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 
 	switch (HSize) {
 	case 256: pmd = EVP_sha256(); break;
+	case 384: pmd = EVP_sha384(); break;
+	case 512: pmd = EVP_sha512(); break;
 	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
 	}
 
@@ -331,7 +333,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 #else
 #endif
 
-	if (cn->length != (int) cbOut) return false;
+	if (cn->length > (int) cbOut) return false;
 	for (i = 0; i < (unsigned int) TSize/8; i++) f |= (cn->v.bytes[i] != rgbOut[i]);
 
 	HMAC_cleanup(&ctx);

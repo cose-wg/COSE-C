@@ -160,11 +160,19 @@ int ValidateMAC(const cn_cbor * pControl)
 	int cbEncoded;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+	const cn_cbor * pFail;
 	const cn_cbor * pMac;
 	const cn_cbor * pRecipients;
 	HCOSE_MAC hMAC;
 	int type;
 	int iRecipient;
+	bool fFail = false;
+	bool fFailBody = false;
+
+	pFail = cn_cbor_mapget_string(pControl, "fail");
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
+		fFailBody = true;
+	}
 
 	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, NULL, NULL);
 	if (hMAC == NULL) exit(1);
@@ -179,12 +187,37 @@ int ValidateMAC(const cn_cbor * pControl)
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++,pRecipients=pRecipients->next) {
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+		if (pkey == NULL) {
+			fFail = true;
+			continue;
+		}
 
 		HCOSE_RECIPIENT hRecip = COSE_Mac_GetRecipient(hMAC, iRecipient, NULL);
-		COSE_Recipient_SetKey(hRecip, pkey, NULL);
-		if (!COSE_Mac_validate(hMAC, hRecip, NULL)) CFails += 1;
+		if (hRecip == NULL) {
+			fFail = true;
+			continue;
+		}
+
+		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
+			fFail = true;
+			continue;
+		}
+
+		pFail = cn_cbor_mapget_string(pRecipients, "fail");
+		if (COSE_Mac_validate(hMAC, hRecip, NULL)) {
+			if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+		}
+		else {
+			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+		}
 	}
 
+	if (fFailBody) {
+		if (!fFail) fFail = true;
+		else fFail = false;
+	}
+
+	if (fFail) CFails += 1;
 	return 0;
 }
 

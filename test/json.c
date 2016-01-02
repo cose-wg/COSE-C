@@ -60,7 +60,22 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 			ib = ib2;
 			break;
 
+		case't':
+			if (strncmp(&rgch[ib], "true", 4) != 0) goto error;
+			node = cn_cbor_data_create(NULL, 0, NULL, NULL);
+			node->type = CN_CBOR_TRUE;
+			ib += 3;
+			break;
+
+		case'f':
+			if (strncmp(&rgch[ib], "false", 5) != 0) goto error;
+			node = cn_cbor_data_create(NULL, 0, NULL, NULL);
+			node->type = CN_CBOR_FALSE;
+			ib += 4;
+			break;
+
 		default:
+			error:
 			fprintf(stderr, "Parse failure @ '%s'\n", &rgch[ib]);
 			break;
 		}

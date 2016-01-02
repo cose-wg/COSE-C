@@ -448,8 +448,17 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 		alg = (int)cn->v.uint;
 
 		switch (alg) {
+		case COSE_Algorithm_HMAC_256_64:
 		case COSE_Algorithm_HMAC_256_256:
 			cbitKey = 256;
+			break;
+
+		case COSE_Algorithm_HMAC_384_384:
+			cbitKey = 384;
+			break;
+
+		case COSE_Algorithm_HMAC_512_512:
+			cbitKey = 512;
 			break;
 
 		case COSE_Int_Alg_AES_CBC_MAC_256_64:
@@ -512,6 +521,18 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	switch (alg) {
 	case COSE_Algorithm_HMAC_256_256:
 		if (!HMAC_Validate(pcose, 256, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_HMAC_256_64:
+		if (!HMAC_Validate(pcose, 256, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_HMAC_384_384:
+		if (!HMAC_Validate(pcose, 384, 384, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_HMAC_512_512:
+		if (!HMAC_Validate(pcose, 512, 512, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Int_Alg_AES_CBC_MAC_256_64:
