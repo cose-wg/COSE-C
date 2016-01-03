@@ -76,6 +76,10 @@ typedef enum {
 } cose_protect_state;
 
 typedef enum {
+	COSE_Algorithm_AES_GCM_128 = 1,
+	COSE_Algorithm_AES_GCM_192 = 2,
+	COSE_Algorithm_AES_GCM_256 = 3,
+
 	COSE_Algorithm_HMAC_256_256 = 4,
 	COSE_Algorithm_HMAC_384_384 = 5,
 	COSE_Algorithm_HMAC_512_512 = 6,
@@ -116,8 +120,8 @@ typedef enum {
 
 typedef enum {
 	COSE_Header_Algorithm = 1,
-	COSE_Header_KID,
-	COSE_Header_IV,
+	COSE_Header_KID = 4,
+	COSE_Header_IV = 5,
 } COSE_Header;
 
 typedef enum {

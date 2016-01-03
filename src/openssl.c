@@ -44,8 +44,8 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 		return false;
 	}
 
-	CHECK_CONDITION(pIV->length <= NSize, COSE_ERR_INVALID_PARAMETER);
-	memcpy(&rgbIV[NSize - pIV->length], pIV->v.str, pIV->length);
+	CHECK_CONDITION(pIV->length == NSize, COSE_ERR_INVALID_PARAMETER);
+	memcpy(rgbIV, pIV->v.str, pIV->length);
 
 	//  Setup and run the OpenSSL code
 
@@ -68,6 +68,7 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	}
 	CHECK_CONDITION(EVP_DecryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_DECRYPT_FAILED);
 
+	TSize /= 8; // Comes in in bits not bytes.
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, (LSize/8), 0), COSE_ERR_DECRYPT_FAILED);
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, NSize, 0), COSE_ERR_DECRYPT_FAILED);
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *) &pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
@@ -155,6 +156,96 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 #endif
 
 	EVP_CIPHER_CTX_cleanup(&ctx);
+	return true;
+}
+
+bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+{
+	EVP_CIPHER_CTX ctx;
+	int cbOut;
+	byte * rgbOut = NULL;
+	int outl = 0;
+	byte rgbIV[15] = { 0 };
+	const cn_cbor * pIV = NULL;
+	const EVP_CIPHER * cipher;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pcose->m_message.m_allocContext;
+#endif
+	int TSize = 128 / 8;
+
+	assert(perr != NULL);
+	EVP_CIPHER_CTX_init(&ctx);
+
+	//  Setup the IV/Nonce and put it into the message
+
+	pIV = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, NULL);
+	if ((pIV == NULL) || (pIV->type != CN_CBOR_BYTES)) {
+		perr->err = COSE_ERR_INVALID_PARAMETER;
+
+	errorReturn:
+		if (rgbOut != NULL) COSE_FREE(rgbOut, context);
+		EVP_CIPHER_CTX_cleanup(&ctx);
+		return false;
+	}
+
+	CHECK_CONDITION(pIV->length == 96/8, COSE_ERR_INVALID_PARAMETER);
+	memcpy(rgbIV, pIV->v.str, pIV->length);
+
+	//  Setup and run the OpenSSL code
+
+	switch (cbKey) {
+	case 128 / 8:
+		cipher = EVP_aes_128_gcm();
+		break;
+
+	case 192 / 8:
+		cipher = EVP_aes_192_gcm();
+		break;
+
+	case 256 / 8:
+		cipher = EVP_aes_256_gcm();
+		break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		break;
+	}
+
+	//  Do the setup for OpenSSL
+
+	CHECK_CONDITION(EVP_DecryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_DECRYPT_FAILED);
+
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *)&pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
+
+	CHECK_CONDITION(EVP_DecryptInit(&ctx, 0, pbKey, rgbIV), COSE_ERR_DECRYPT_FAILED);
+	
+	//  Pus in the AAD
+
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &outl, pbAuthData, cbAuthData), COSE_ERR_DECRYPT_FAILED);
+
+	//  
+
+	cbOut = (int)pcose->cbContent - TSize;
+	rgbOut = (byte *)COSE_CALLOC(cbOut, 1, context);
+	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	//  Process content
+
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pcose->pbContent, (int)pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+
+	//  Process Tag
+
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, TSize, pcose->pbContent + pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+
+	//  Check the result
+
+	CHECK_CONDITION(EVP_DecryptFinal(&ctx, rgbOut + cbOut, &cbOut), COSE_ERR_DECRYPT_FAILED);
+
+	EVP_CIPHER_CTX_cleanup(&ctx);
+
+	pcose->pbContent = rgbOut;
+	pcose->cbContent = cbOut;
+
 	return true;
 }
 
