@@ -10,6 +10,7 @@
 #include <cn-cbor/cn-cbor.h>
 
 #include "json.h"
+#include "test.h"
 
 
 int ValidateEnveloped(const cn_cbor * pControl)
@@ -70,7 +71,7 @@ int ValidateEnveloped(const cn_cbor * pControl)
 			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 		}
 
-		COSE_Encrypt_Free(hEnc);
+		// COSE_Encrypt_Free(hEnc);
 	}
 
 	if (fFailBody) {

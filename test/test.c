@@ -12,21 +12,12 @@
 
 #include "json.h"
 
-#ifndef _countof
-#define _countof(x) (sizeof(x)/sizeof(x[0]))
-#endif
+#include "test.h"
+
 
 extern int EncryptMessage();
 int CFails = 0;
 
-#ifdef USE_CBOR_CONTEXT
-cn_cbor_context * allocator;
-#define CBOR_CONTEXT_PARAM , allocator
-#define CBOR_CONTEXT_PARAM_COMMA allocator,
-#else
-#define CBOR_CONTEXT_PARAM
-#define CBOR_CONTEXT_PARAM_COMMA
-#endif
 
 struct {
 	char * sz;

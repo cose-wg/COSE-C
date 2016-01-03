@@ -24,6 +24,8 @@ enum {
 	Attributes_Recipient_unprotected,
 } whichSet;
 
+extern int CFails;
+
 int MapAlgorithmName(const cn_cbor * p);
 cn_cbor * cn_cbor_clone(const cn_cbor * pIn);
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded);
