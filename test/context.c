@@ -5,7 +5,7 @@
 
 #include <cn-cbor/cn-cbor.h>
 
-#ifdef USE_CONTEXT
+#ifdef USE_CBOR_CONTEXT
 #include "context.h"
 
 typedef unsigned char byte;
@@ -115,4 +115,4 @@ void FreeContext(cn_cbor_context* pContext)
 	return;
 }
 
-#endif // USE_CONTEXT
+#endif // USE_CBOR_CONTEXT
