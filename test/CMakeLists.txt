@@ -8,7 +8,7 @@ endif()
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test )
 
-add_executable ( cose_test test.c json.c encrypt.c )
+add_executable ( cose_test test.c json.c encrypt.c context.c )
 
 target_link_libraries (cose_test PRIVATE cose-c )
 

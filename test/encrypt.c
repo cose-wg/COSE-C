@@ -11,6 +11,7 @@
 
 #include "json.h"
 #include "test.h"
+#include "context.h"
 
 
 int ValidateEnveloped(const cn_cbor * pControl)
@@ -26,6 +27,8 @@ int ValidateEnveloped(const cn_cbor * pControl)
 	int iRecipient;
 	bool fFail = false;
 	bool fFailBody = false;
+
+        allocator = CreateContext();
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -78,6 +81,9 @@ int ValidateEnveloped(const cn_cbor * pControl)
 		if (!fFail) fFail = true;
 		else fFail = false;
 	}
+
+        FreeContext(allocator);
+        allocator = NULL;
 
 	if (fFail) CFails += 1;
 	return 0;
