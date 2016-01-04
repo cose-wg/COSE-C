@@ -280,6 +280,18 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		break;
 #endif // INCLUDE_AES_CCM
 
+	case COSE_Algorithm_AES_GCM_128:
+		cbitKey = 128;
+		break;
+
+	case COSE_Algorithm_AES_GCM_192:
+		cbitKey = 192;
+		break;
+
+	case COSE_Algorithm_AES_GCM_256:
+		cbitKey = 256;
+		break;
+
 	case COSE_Algorithm_Direct:
 	  	CHECK_CONDITION(pcose->cbKey == (unsigned int) cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
 		break;
@@ -304,12 +316,12 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 
 	//  Build protected headers
 
+	CHECK_CONDITION(pcose->m_message.m_protectedMap != NULL, COSE_ERR_INVALID_PARAMETER);
 	if ((pcose->m_message.m_protectedMap != NULL) && (pcose->m_message.m_protectedMap->first_child != NULL)) {
 		cbProtected = cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), pcose->m_message.m_protectedMap);
 		pbProtected = (byte *)COSE_CALLOC(cbProtected, 1, context);
 		if (pbProtected == NULL) goto error;
 		if (cn_cbor_encoder_write(pbProtected, 0, cbProtected, pcose->m_message.m_protectedMap) != cbProtected) goto error;
-		if (!cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Protected, cn_cbor_data_create(pbProtected, cbProtected, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL)) goto error;
 	}
 	else {
 		pbProtected = NULL;
@@ -320,10 +332,16 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 	pbAuthData = NULL;
 	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 
+	ptmp = cn_cbor_string_create("Enveloped", CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
+	cn_cbor_array_append(pAuthData, ptmp, NULL);
+	ptmp = NULL;
+
 	ptmp = cn_cbor_data_create(pbProtected, cbProtected, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
 	cn_cbor_array_append(pAuthData, ptmp, NULL);
 	pbProtected = NULL;
+	ptmp = NULL;
 
 	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
@@ -356,6 +374,12 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		if (!AES_CCM_Decrypt(pcose, 128, 64, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 #endif // INCLUDE_AES_CCM
+
+	case COSE_Algorithm_AES_GCM_128:
+	case COSE_Algorithm_AES_GCM_192:
+	case COSE_Algorithm_AES_GCM_256:
+		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
+		break;
 
 	case COSE_Algorithm_Direct:
 	  CHECK_CONDITION((pcose->cbKey == (unsigned int) cbitKey / 8),  COSE_ERR_INVALID_PARAMETER);

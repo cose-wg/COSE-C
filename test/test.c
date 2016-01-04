@@ -1,4 +1,4 @@
-// test.cpp : Defines the entry point for the console application.
+// test.c : Defines the entry point for the console application.
 //
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -12,26 +12,17 @@
 
 #include "json.h"
 
-#ifndef _countof
-#define _countof(x) (sizeof(x)/sizeof(x[0]))
-#endif
+#include "test.h"
+
 
 extern int EncryptMessage();
 int CFails = 0;
 
-#ifdef USE_CBOR_CONTEXT
-cn_cbor_context * allocator;
-#define CBOR_CONTEXT_PARAM , allocator
-#define CBOR_CONTEXT_PARAM_COMMA allocator,
-#else
-#define CBOR_CONTEXT_PARAM
-#define CBOR_CONTEXT_PARAM_COMMA
-#endif
 
 struct {
 	char * sz;
 	int    i;
-} RgAlgorithmNames[10] = {
+} RgAlgorithmNames[9] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -40,7 +31,7 @@ struct {
 	{"AES-MAC-128/64", COSE_Algorithm_CBC_MAC_128_64},
 	{"AES-MAC-256/64", COSE_Algorithm_CBC_MAC_256_64},
 	{"AES-MAC-128/128", COSE_Algorithm_CBC_MAC_128_128},
-	{"AES_MAC_256/128", COSE_Algorithm_CBC_MAC_256_128},
+	{"AES-MAC-256/128", COSE_Algorithm_CBC_MAC_256_128},
 };
 
 int MapAlgorithmName(const cn_cbor * p)
@@ -130,13 +121,6 @@ struct {
 	{ "d", 2, OPERATION_BASE64, -4},
 	{ "k", 4, OPERATION_BASE64, -1}
 };
-
-enum {
-	Attributes_MAC_protected=1,
-	Attributes_MAC_unprotected,
-	Attributes_Recipient_protected,
-	Attributes_Recipient_unprotected,
-} whichSet;
 
 bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 {
@@ -496,70 +480,6 @@ int SignMessage()
 	return 1;
 }
 
-int EncryptMessage()
-{
-	HCOSE_ENCRYPT hEncObj = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-	byte rgbSecret[128 / 8] = { 'a', 'b', 'c' };
-	int cbSecret = 128/8;
-	byte  rgbKid[6] = { 'a', 'b', 'c', 'd', 'e', 'f' };
-	int cbKid = 6;
-	size_t cb;
-	byte * rgb;
-	char * sz = "This is the content to be used";
-
-
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, NULL, NULL), COSE_PROTECT_ONLY, NULL);
-	COSE_Encrypt_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, cbKid, NULL, NULL), COSE_UNPROTECT_ONLY, NULL);
-
-	COSE_Encrypt_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid, NULL);
-
-	COSE_Encrypt_encrypt(hEncObj, NULL);
-
-	cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) +1;
-	rgb = (byte *)malloc(cb);
-	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
-
-
-	FILE * fp = fopen("test.cbor", "wb");
-	fwrite(rgb, cb, 1, fp);
-	fclose(fp);
-
-#if 0
-	char * szX;
-	int cbPrint = 0;
-	cn_cbor * cbor = COSE_get_cbor((HCOSE) hEncObj);
-	cbPrint = cn_cbor_printer_write(NULL, 0, cbor, "  ", "\r\n");
-	szX = malloc(cbPrint);
-	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
-	fprintf(stdout, "%s", szX);
-	fprintf(stdout, "\r\n");
-#endif
-
-	COSE_Encrypt_Free(hEncObj);
-
-	/* */
-
-	int typ;
-	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, NULL, NULL);
-	
-	int iRecipient = 0;
-	do {
-		HCOSE_RECIPIENT hRecip;
-
-		hRecip = COSE_Encrypt_GetRecipient(hEncObj, iRecipient, NULL);
-		if (hRecip == NULL) break;
-
-		COSE_Recipient_SetKey_secret(hRecip, rgbSecret, cbSecret, NULL);
-
-		COSE_Encrypt_decrypt(hEncObj, hRecip, NULL);
-
-		iRecipient += 1;
-
-	} while (true);
-
-	return 1;
-}
 
 
 int main(int argc, char ** argv)
@@ -593,6 +513,9 @@ int main(int argc, char ** argv)
 		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 			ValidateMAC(pControl);
 			BuildMacMessage(pControl);
+		}
+		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+			ValidateEnveloped(pControl);
 		}
 	}
 	else {
