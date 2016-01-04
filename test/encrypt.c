@@ -28,7 +28,9 @@ int ValidateEnveloped(const cn_cbor * pControl)
 	bool fFail = false;
 	bool fFailBody = false;
 
+#ifdef USE_CBOR_CONTEXT
         allocator = CreateContext();
+#endif 
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -82,8 +84,10 @@ int ValidateEnveloped(const cn_cbor * pControl)
 		else fFail = false;
 	}
 
+#ifdef USE_CBOR_CONTEXT
         FreeContext(allocator);
         allocator = NULL;
+#endif
 
 	if (fFail) CFails += 1;
 	return 0;
