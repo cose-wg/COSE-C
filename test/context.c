@@ -3,7 +3,7 @@
 #include <memory.h>
 #include <assert.h>
 
-#include <cn-cbor\cn-cbor.h>
+#include <cn-cbor/cn-cbor.h>
 
 #include "context.h"
 

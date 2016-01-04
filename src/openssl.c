@@ -235,7 +235,7 @@ bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const 
 
 	//  Process Tag
 
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, TSize, pcose->pbContent + pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, TSize, (byte *) pcose->pbContent + pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
 
 	//  Check the result
 
