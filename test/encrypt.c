@@ -46,7 +46,7 @@ int ValidateEnveloped(const cn_cbor * pControl)
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
 
-		hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CN_CBOR_CONTEXT_COMMA NULL);
+		hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hEnc == NULL) exit(1);
 
 
@@ -104,9 +104,9 @@ int EncryptMessage()
 	char * sz = "This is the content to be used";
 
 
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, CN_CBOR_CONTEXT_COMMA NULL), COSE_PROTECT_ONLY, NULL);
+	COSE_Encrypt_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL);
 	COSE_Encrypt_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, cbKid, CN_CBOR_CONTEXT_COMMA NULL), COSE_UNPROTECT_ONLY, NULL);
+	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_UNPROTECT_ONLY, NULL);
 
 	COSE_Encrypt_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid, NULL);
 
@@ -137,7 +137,7 @@ int EncryptMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, CN_CBOR_CONTEXT_COMMA NULL);
+	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	
 	int iRecipient = 0;
 	do {
