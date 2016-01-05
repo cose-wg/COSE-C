@@ -255,11 +255,12 @@ bool AES_GCM_Encrypt(COSE_Encrypt * pcose, int KeySize, const byte * pbAuthData,
 	byte rgbIV[16] = { 0 };
 	byte * pbIV = NULL;
 	const cn_cbor * cbor_iv = NULL;
-	const cn_cbor * cbor_iv_t = NULL;
+	cn_cbor * cbor_iv_t = NULL;
 	const EVP_CIPHER * cipher;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
+	cn_cbor_errback cbor_error;
 
 	//  Setup the IV/Nonce and put it into the message
 
@@ -269,7 +270,8 @@ bool AES_GCM_Encrypt(COSE_Encrypt * pcose, int KeySize, const byte * pbAuthData,
 		CHECK_CONDITION(pbIV != NULL, COSE_ERR_OUT_OF_MEMORY);
 		rand_bytes(pbIV, 96 / 8);
 		memcpy(rgbIV, pbIV, 96 / 8);
-		cbor_iv_t = cn_cbor_data_create(pbIV, 96 / 8, CBOR_CONTEXT_PARAM_COMMA perr);
+		cbor_iv_t = cn_cbor_data_create(pbIV, 96 / 8, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(cbor_iv_t != NULL, cbor_error);
 		pbIV = NULL;
 
 		if (!_COSE_map_put(&pcose->m_message, COSE_Header_IV, cbor_iv_t, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;

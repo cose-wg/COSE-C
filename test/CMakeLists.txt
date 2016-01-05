@@ -48,4 +48,6 @@ add_test ( NAME aes-gcm-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_te
 add_test ( NAME aes-gcm-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-03.json )
 add_test ( NAME aes-gcm-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-04.json )
 
+add_test ( NAME aes-ccm-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-01.json )
+
 
