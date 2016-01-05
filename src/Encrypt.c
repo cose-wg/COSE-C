@@ -419,10 +419,6 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 		break;
 #endif // INCLUDE_AES_CCM
 
-	case COSE_Algorithm_Direct:
-		cbitKey = 0;
-		break;
-
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
@@ -500,12 +496,6 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 		if (!AES_CCM_Encrypt(pcose, 128, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 #endif
-
-	case COSE_Algorithm_Direct:
-		ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(_COSE_array_replace(&pcose->m_message, ptmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
-		break;
 
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
