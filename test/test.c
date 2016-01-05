@@ -38,7 +38,7 @@ struct {
 	{"A256KW", COSE_Algorithm_AES_KW_256},
 	{"A128GCM", COSE_Algorithm_AES_GCM_128},
 	{"A192GCM", COSE_Algorithm_AES_GCM_192},
-	{"A192GCM", COSE_Algorithm_AES_GCM_256}
+	{"A256GCM", COSE_Algorithm_AES_GCM_256}
 };
 
 int MapAlgorithmName(const cn_cbor * p)
