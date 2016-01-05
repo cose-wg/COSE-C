@@ -419,6 +419,10 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 		break;
 #endif // INCLUDE_AES_CCM
 
+	case COSE_Algorithm_AES_GCM_128: cbitKey = 128; break;
+	case COSE_Algorithm_AES_GCM_192: cbitKey = 192; break;
+	case COSE_Algorithm_AES_GCM_256: cbitKey = 256; break;
+
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
@@ -497,6 +501,18 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 		break;
 #endif
 
+	case COSE_Algorithm_AES_GCM_128:
+		if (!AES_GCM_Encrypt(pcose, 128, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_AES_GCM_192:
+		if (!AES_GCM_Encrypt(pcose, 192, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_AES_GCM_256:
+		if (!AES_GCM_Encrypt(pcose, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
@@ -562,4 +578,23 @@ bool COSE_Encrypt_map_put(HCOSE_ENCRYPT h, int key, cn_cbor * value, int flags, 
 	}
 
 	return _COSE_map_put(&((COSE_Encrypt *)h)->m_message, key, value, flags, perror);
+}
+
+bool COSE_Encrypt_AddRecipient(HCOSE_ENCRYPT hEnc, HCOSE_RECIPIENT hRecip, cose_errback * perr)
+{
+	COSE_RecipientInfo * pRecip;
+	COSE_Encrypt * pEncrypt;
+
+	CHECK_CONDITION(IsValidEncryptHandle(hEnc), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
+
+	pEncrypt = (COSE_Encrypt *)hEnc;
+	pRecip = (COSE_RecipientInfo *)hRecip;
+
+	pRecip->m_recipientNext = pEncrypt->m_recipientFirst;
+	pEncrypt->m_recipientFirst = pRecip;
+	return true;
+
+errorReturn:
+	return false;
 }

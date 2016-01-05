@@ -148,6 +148,7 @@ bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT, HCOSE_RECIPIENT, cose_errback * perr);
 
 HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
 
+extern bool COSE_Encrypt_AddRecipient(HCOSE_ENCRYPT hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
 HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, cose_errback * perr);
 
 HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror);

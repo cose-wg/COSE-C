@@ -202,7 +202,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 
 byte RgbDontUse9[8 * 1024];
 
-bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbContent, int cbContent, cose_errback * perr)
+bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbContent, size_t cbContent, cose_errback * perr)
 {
 	int alg;
 	int t;
@@ -318,10 +318,10 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		if (pRecipient->m_pkey != NULL) {
 			cn_cbor * pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
 			CHECK_CONDITION(pK != NULL, COSE_ERR_INVALID_PARAMETER);
-			if (!AES_KW_Encrypt(pRecipient, pK->v.bytes, pK->length*8, pbContent, cbContent, perr)) goto errorReturn;
+			if (!AES_KW_Encrypt(pRecipient, pK->v.bytes, (int) pK->length*8, pbContent, (int) cbContent, perr)) goto errorReturn;
 		}
 		else {
-			if (!AES_KW_Encrypt(pRecipient, NULL, 0, pbContent, cbContent, perr)) goto errorReturn;
+			if (!AES_KW_Encrypt(pRecipient, NULL, 0, pbContent, (int) cbContent, perr)) goto errorReturn;
 		}
 		break;
 

@@ -23,6 +23,7 @@ bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, 
 * @return                   Did the function succeed?
 */
 bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool AES_GCM_Encrypt(COSE_Encrypt * pcose, int KeySize,const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr);
 
 
