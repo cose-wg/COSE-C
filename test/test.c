@@ -9,6 +9,7 @@
 #include <string.h>
 #include <cose.h>
 #include <cn-cbor/cn-cbor.h>
+#include <assert.h>
 
 #include "json.h"
 
@@ -22,7 +23,7 @@ int CFails = 0;
 struct {
 	char * sz;
 	int    i;
-} RgAlgorithmNames[9] = {
+} RgAlgorithmNames[12] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -32,6 +33,9 @@ struct {
 	{"AES-MAC-256/64", COSE_Algorithm_CBC_MAC_256_64},
 	{"AES-MAC-128/128", COSE_Algorithm_CBC_MAC_128_128},
 	{"AES-MAC-256/128", COSE_Algorithm_CBC_MAC_256_128},
+	{"A128KW", COSE_Algorithm_AES_KW_128},
+	{"A192KW", COSE_Algorithm_AES_KW_192},
+	{"A256KW", COSE_Algorithm_AES_KW_256}
 };
 
 int MapAlgorithmName(const cn_cbor * p)
@@ -41,6 +45,8 @@ int MapAlgorithmName(const cn_cbor * p)
 	for (i = 0; i < _countof(RgAlgorithmNames); i++) {
 		if (strcmp(RgAlgorithmNames[i].sz, p->v.str) == 0) return RgAlgorithmNames[i].i;
 	}
+
+	assert(false);
 
 	return 0;
 }
