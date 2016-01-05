@@ -111,6 +111,10 @@ typedef enum {
 	COSE_Algorithm_ECDH_SS_A192KW = 58,
 	COSE_Algorithm_ECDH_SS_A256KW = 59,
 
+	COSE_Algorithm_AES_KW_128 = -3,
+	COSE_Algorithm_AES_KW_192 = -4,
+	COSE_Algorithm_AES_KW_256 = -5,
+
 	COSE_Algorithm_Direct = -6,
 	COSE_Algorithm_PS256 = -26,
 	COSE_Algorithm_PS384 = -27,

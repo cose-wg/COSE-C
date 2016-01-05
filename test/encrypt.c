@@ -1,7 +1,6 @@
 //  encrypt.c
 
 #define _CRT_SECURE_NO_WARNINGS
-#define USE_CBOR_CONTEXT 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +10,7 @@
 
 #include "json.h"
 #include "test.h"
+#include "context.h"
 
 
 int ValidateEnveloped(const cn_cbor * pControl)
@@ -27,6 +27,10 @@ int ValidateEnveloped(const cn_cbor * pControl)
 	bool fFail = false;
 	bool fFailBody = false;
 
+#ifdef USE_CBOR_CONTEXT
+        allocator = CreateContext();
+#endif 
+
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
@@ -42,7 +46,7 @@ int ValidateEnveloped(const cn_cbor * pControl)
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
 
-		hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, NULL, NULL);
+		hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hEnc == NULL) exit(1);
 
 
@@ -79,6 +83,11 @@ int ValidateEnveloped(const cn_cbor * pControl)
 		else fFail = false;
 	}
 
+#ifdef USE_CBOR_CONTEXT
+        FreeContext(allocator);
+        allocator = NULL;
+#endif
+
 	if (fFail) CFails += 1;
 	return 0;
 }
@@ -95,9 +104,9 @@ int EncryptMessage()
 	char * sz = "This is the content to be used";
 
 
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, NULL, NULL), COSE_PROTECT_ONLY, NULL);
+	COSE_Encrypt_map_put(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL);
 	COSE_Encrypt_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
-	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, cbKid, NULL, NULL), COSE_UNPROTECT_ONLY, NULL);
+	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_UNPROTECT_ONLY, NULL);
 
 	COSE_Encrypt_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid, NULL);
 
@@ -128,7 +137,7 @@ int EncryptMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, NULL, NULL);
+	hEncObj = (HCOSE_ENCRYPT) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	
 	int iRecipient = 0;
 	do {

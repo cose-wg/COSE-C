@@ -56,11 +56,7 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor * cbor, COSE_MacMessage * pIn, CBOR
 		goto errorReturn;
 	}
 
-#ifdef USE_ARRAY
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_MAC_RECIPIENTS);
-#else
-	pRecipients = (cn_cbor *)cn_cbor_mapget_int(cbor, COSE_Header_Recipients);
-#endif
 	if (pRecipients != NULL) {
 		CHECK_CONDITION(pRecipients->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
@@ -168,24 +164,13 @@ HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC hcose, COSE_Algorithms alg,
 	pobj->m_recipientNext = pcose->m_recipientFirst;
 	pcose->m_recipientFirst = pobj;
 
-#ifdef USE_ARRAY
 	pRecipients = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_RECIPIENTS);
-#else
-	cn_cbor * pRecipients = (cn_cbor *)cn_cbor_mapget_int(pcose->m_message.m_cbor, COSE_Header_Recipients);
-#endif
 	if (pRecipients == NULL) {
 		pRecipients = pRecipientsNew = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(pRecipients != NULL, cbor_error);
 		pRecipientsNew = NULL;
 
-#ifdef USE_ARRAY
 		CHECK_CONDITION_CBOR(_COSE_array_replace(&pcose->m_message, pRecipients, INDEX_MAC_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
-#else
-		if (!cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Recipients, pRecipients, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			cn_cbor_free(pRecipients, context);
-			goto error;
-		}
-#endif
 	}
 
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients, pobj->m_encrypt.m_message.m_cbor, &cbor_error), cbor_error);
@@ -214,15 +199,9 @@ bool COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbConte
 	ptmp = cn_cbor_data_create(rgbContent, (int) cbContent, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
 
-#ifdef USE_ARRAY
 	CHECK_CONDITION_CBOR(_COSE_array_replace(&p->m_message, ptmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA &cbor_error),  cbor_error);
 	ptmp = NULL;
-#else
-	if (!cn_cbor_mapput_int(p->m_message.m_cbor, COSE_Header_PlainText, cn_cbor_data_create (rgbContent, cbContent, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL)) {
-		if (errp != NULL) errp->err = COSE_ERR_CBOR;
-		return;
-	}
-#endif
+
 	return true;
 
 errorReturn:
@@ -344,15 +323,6 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	const cn_cbor * cbBody = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
 	CHECK_CONDITION(cbBody != NULL, COSE_ERR_INVALID_PARAMETER);
 
-#ifndef USE_ARRAY
-	//  Add Unprotected headers
-
-	if (pcose->m_message.m_unprotectMap->first_child != NULL) {
-		if (!cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Unprotected, pcose->m_message.m_unprotectMap, CBOR_CONTEXT_PARAM_COMMA NULL)) goto error;
-		pcose->m_message.m_ownUnprotectedMap = false;
-	}
-#endif
-
 	//  Build authenticated data
 	//  Protected headers
 	//  external data
@@ -422,9 +392,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	}
 
 	for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
-		if (!_COSE_Encrypt_SetContent(&pri->m_encrypt, pcose->pbKey, pcose->cbKey, perr)) goto errorReturn;
-
-		if (!COSE_Encrypt_encrypt((HCOSE_ENCRYPT)&pri->m_encrypt, perr)) goto errorReturn;
+		if (!_COSE_Recipient_encrypt(pri, pcose->pbKey, pcose->cbKey, perr)) goto errorReturn;
 	}
 
 	//  Figure out the clean up

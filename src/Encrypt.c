@@ -61,22 +61,14 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn,
 		goto errorReturn;
 	}
 
-#ifdef USE_ARRAY
 	tmp = _COSE_arrayget_int(&pobj->m_message, INDEX_BODY);
-#else
-	tmp = cn_cbor_mapget_int(cbor, COSE_Header_Ciphertext);
-#endif
 	if (tmp != NULL) {
 		CHECK_CONDITION(tmp->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		pobj->cbContent = tmp->length;
 		pobj->pbContent = (byte *) tmp->v.str;
 	}
 
-#ifdef USE_ARRAY
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_RECIPIENTS);
-#else
-	pRecipients = cn_cbor_mapget_int(cbor, COSE_Header_Recipients);
-#endif
 	if (pRecipients != NULL) {
 		CHECK_CONDITION(pRecipients->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
@@ -183,25 +175,14 @@ HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT hcose, COSE_Algorit
 	pobj->m_recipientNext = pcose->m_recipientFirst;
 	pcose->m_recipientFirst = pobj;
 
-#ifdef USE_ARRAY
 	cn_cbor * pRecipients = _COSE_arrayget_int(&pcose->m_message, INDEX_RECIPIENTS);
-#else
-	cn_cbor * pRecipients = cn_cbor_mapget_int(pcose->m_message.m_cbor, COSE_Header_Recipients);
-#endif
 	if (pRecipients == NULL) {
 		pRecipients = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pRecipients == NULL) goto error;
-#ifdef USE_ARRAY
 		if (!_COSE_array_replace(&pcose->m_message, pRecipients, INDEX_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA NULL)) {
 			CN_CBOR_FREE(pRecipients, context);
 			goto error;
 		}
-#else
-		if (!cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Recipients, pRecipients, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			CN_CBOR_FREE(pRecipients, context);
-			goto error;
-		}
-#endif
 	}
 
 	cn_cbor_array_append(pRecipients, pobj->m_encrypt.m_message.m_cbor, NULL);
@@ -292,10 +273,6 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		cbitKey = 256;
 		break;
 
-	case COSE_Algorithm_Direct:
-	  	CHECK_CONDITION(pcose->cbKey == (unsigned int) cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
-		break;
-
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 		break;
@@ -381,11 +358,6 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 
-	case COSE_Algorithm_Direct:
-	  CHECK_CONDITION((pcose->cbKey == (unsigned int) cbitKey / 8),  COSE_ERR_INVALID_PARAMETER);
-		memcpy(pbKey, pcose->pbKey, pcose->cbKey);
-		break;
-
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 		break;
@@ -446,10 +418,6 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 		cbitKey = 256;
 		break;
 #endif // INCLUDE_AES_CCM
-
-	case COSE_Algorithm_Direct:
-		cbitKey = 0;
-		break;
 
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
@@ -529,20 +497,12 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 		break;
 #endif
 
-	case COSE_Algorithm_Direct:
-		ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(_COSE_array_replace(&pcose->m_message, ptmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
-		break;
-
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
 	for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
-		if (!_COSE_Encrypt_SetContent(&pri->m_encrypt, pcose->pbKey, pcose->cbKey, perr)) goto errorReturn;
-
-		if (!COSE_Encrypt_encrypt((HCOSE_ENCRYPT) &pri->m_encrypt, perr)) goto errorReturn;
+		if (!_COSE_Recipient_encrypt(pri, pcose->pbKey, (int) pcose->cbKey, perr)) goto errorReturn;
 	}
 
 	//  Figure out the clean up

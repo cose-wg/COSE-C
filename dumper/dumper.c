@@ -35,7 +35,7 @@ extern FOO Signer[];
 #define CBOR_CONTEXT_PARAM
 #endif
 
-FOO AlgorithmMap[32] = {
+FOO AlgorithmMap[36] = {
 	{ "ES512", CN_CBOR_INT, -9, NULL, 0, 0 },
 	{ "ES384", CN_CBOR_INT, -8, NULL, 0, 0 },
 	{"ES256", CN_CBOR_INT, -7, NULL, 0, 0 },
@@ -53,7 +53,11 @@ FOO AlgorithmMap[32] = {
 	{"AES-CCM-16-64-256", CN_CBOR_UINT, 11, NULL, 0, 0 },
 	{"AES-CCM-16-128-128", CN_CBOR_UINT, 12, NULL, 0, 0 },
 	{"AES-CCM-16-128-256", CN_CBOR_UINT, 13, NULL, 0, 0 },
+	{"AES-CBC-MAC-128/64", CN_CBOR_UINT, 14, NULL, 0, 0},
+	{"AES-CBC-MAC-256/64", CN_CBOR_UINT, 15, NULL, 0, 0},
 	{"ChaCha20//Poly1305", CN_CBOR_UINT, 24, NULL, 0, 0 },
+	{"AES-CBC-MAC-128/128", CN_CBOR_UINT, 25, NULL, 0, 0},
+	{"AES-CBC-MAC-256/128", CN_CBOR_UINT, 26, NULL, 0, 0},
 	{"AES-CCM-64-64-128", CN_CBOR_UINT, 30, NULL, 0, 0 },
 	{"AES-CCM-64-64-256", CN_CBOR_UINT, 31, NULL, 0, 0 },
 	{"AES-CCM-64-128-128", CN_CBOR_UINT, 32, NULL, 0, 0 },
@@ -205,7 +209,7 @@ FOO Mac0MessageWithTag = {
 	NULL, CN_CBOR_TAG, 995, &Mac0Message, 1, 0
 };
 
-int WrapLineAt = 0;
+size_t WrapLineAt = 0;
 char OutputBuffer[4096];
 
 void WrapPrintF(FILE * fp, char * format, ...)
@@ -359,12 +363,16 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 					switch (cbor2->type) {
 					case CN_CBOR_UINT:
 						if ((group != 0) && (pFoo2->group != 0) && (pFoo2->group != group)) continue;
-						if (pFoo2->value == cbor2->v.uint) i2 = pFOO->count + 1;
+						if (pFoo2->value == (int) cbor2->v.uint) i2 = pFOO->count + 1;
 						break;
 
 					case CN_CBOR_INT:
 						if ((group != 0) && (pFoo2->group != 0) && (pFoo2->group != group)) continue;
 						if (pFoo2->value == cbor2->v.sint) i2 = pFOO->count + 1;
+						break;
+
+					default:
+						//  Should assert here?
 						break;
 					}
 
@@ -418,7 +426,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 		WrapPrintF(out, "%u", cbor->v.uint);
 		if (fValue && (pFOO != NULL)) {
 			for (i = 0, pFoo2 = pFOO->children; i < pFOO->count; i++, pFoo2++) {
-				if ((pFoo2->type == CN_CBOR_UINT) && (pFoo2->value == cbor->v.uint)) {
+				if ((pFoo2->type == CN_CBOR_UINT) && (pFoo2->value == (int) cbor->v.uint)) {
 					if (pFoo2->fieldName != NULL) {
 						if (fInComment) WrapPrintF(out, " \\ %s \\", pFoo2->fieldName);
 						else WrapPrintF(out, " / %s /", pFoo2->fieldName);

@@ -143,7 +143,7 @@ HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, COSE_object_typ
 
 	if (cbor->type == CN_CBOR_TAG) {
 		if (struct_type != 0) {
-			CHECK_CONDITION(struct_type == cbor->v.uint, COSE_ERR_INVALID_PARAMETER);
+                    CHECK_CONDITION(struct_type == (COSE_object_type) cbor->v.sint, COSE_ERR_INVALID_PARAMETER);
 		}
 		else struct_type = cbor->v.uint;
 
