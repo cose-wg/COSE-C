@@ -273,10 +273,6 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 		cbitKey = 256;
 		break;
 
-	case COSE_Algorithm_Direct:
-	  	CHECK_CONDITION(pcose->cbKey == (unsigned int) cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
-		break;
-
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 		break;
@@ -360,11 +356,6 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 	case COSE_Algorithm_AES_GCM_192:
 	case COSE_Algorithm_AES_GCM_256:
 		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
-		break;
-
-	case COSE_Algorithm_Direct:
-	  CHECK_CONDITION((pcose->cbKey == (unsigned int) cbitKey / 8),  COSE_ERR_INVALID_PARAMETER);
-		memcpy(pbKey, pcose->pbKey, pcose->cbKey);
 		break;
 
 	default:
@@ -521,9 +512,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	}
 
 	for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
-		if (!_COSE_Encrypt_SetContent(&pri->m_encrypt, pcose->pbKey, pcose->cbKey, perr)) goto errorReturn;
-
-		if (!COSE_Encrypt_encrypt((HCOSE_ENCRYPT) &pri->m_encrypt, perr)) goto errorReturn;
+		if (!_COSE_Recipient_encrypt(pri, pcose->pbKey, (int) pcose->cbKey, perr)) goto errorReturn;
 	}
 
 	//  Figure out the clean up

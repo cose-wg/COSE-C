@@ -61,3 +61,6 @@ Testing
 dist
 test/test.cbor
 *.tcl
+
+# Coverity
+cov-int
