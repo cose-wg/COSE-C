@@ -61,22 +61,14 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn,
 		goto errorReturn;
 	}
 
-#ifdef USE_ARRAY
 	tmp = _COSE_arrayget_int(&pobj->m_message, INDEX_BODY);
-#else
-	tmp = cn_cbor_mapget_int(cbor, COSE_Header_Ciphertext);
-#endif
 	if (tmp != NULL) {
 		CHECK_CONDITION(tmp->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		pobj->cbContent = tmp->length;
 		pobj->pbContent = (byte *) tmp->v.str;
 	}
 
-#ifdef USE_ARRAY
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_RECIPIENTS);
-#else
-	pRecipients = cn_cbor_mapget_int(cbor, COSE_Header_Recipients);
-#endif
 	if (pRecipients != NULL) {
 		CHECK_CONDITION(pRecipients->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
@@ -183,25 +175,14 @@ HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT hcose, COSE_Algorit
 	pobj->m_recipientNext = pcose->m_recipientFirst;
 	pcose->m_recipientFirst = pobj;
 
-#ifdef USE_ARRAY
 	cn_cbor * pRecipients = _COSE_arrayget_int(&pcose->m_message, INDEX_RECIPIENTS);
-#else
-	cn_cbor * pRecipients = cn_cbor_mapget_int(pcose->m_message.m_cbor, COSE_Header_Recipients);
-#endif
 	if (pRecipients == NULL) {
 		pRecipients = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pRecipients == NULL) goto error;
-#ifdef USE_ARRAY
 		if (!_COSE_array_replace(&pcose->m_message, pRecipients, INDEX_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA NULL)) {
 			CN_CBOR_FREE(pRecipients, context);
 			goto error;
 		}
-#else
-		if (!cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Recipients, pRecipients, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			CN_CBOR_FREE(pRecipients, context);
-			goto error;
-		}
-#endif
 	}
 
 	cn_cbor_array_append(pRecipients, pobj->m_encrypt.m_message.m_cbor, NULL);

@@ -29,6 +29,7 @@ target_include_directories ( cose_test PUBLIC ../../cn-cbor/implement/cn-cbor/in
 enable_testing()
 
 add_test ( NAME cose_test COMMAND cose_test )
+add_test ( NAME mac-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Mac-02.json )
 add_test ( NAME mac-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Mac-04.json )
 
 add_test ( NAME hmac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-01.json )

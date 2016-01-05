@@ -9,6 +9,7 @@
 #ifdef USE_OPEN_SSL
 
 #include <openssl/evp.h>
+#include <openssl/aes.h>
 #include <openssl/cmac.h>
 #include <openssl/hmac.h>
 #include <openssl/ecdsa.h>
@@ -147,13 +148,9 @@ bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_GET_TAG, TSize, &rgbOut[pcose->cbContent]), COSE_ERR_CRYPTO_FAIL);
 
-#ifdef USE_ARRAY
 	cn_cbor * cnTmp = cn_cbor_data_create(rgbOut, (int)pcose->cbContent + TSize, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cnTmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#else
-	CHECK_CONDITION(cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Ciphertext, cn_cbor_data_create(rgbOut,  (int) pcose->cbContent + TSize, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#endif
 
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	return true;
@@ -444,11 +441,7 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbA
 	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
-#ifdef USE_ARRAY
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cn_cbor_data_create(rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL), INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#else
-	CHECK_CONDITION(cn_cbor_mapput_int(pcose->m_message.m_cbor, COSE_Header_Tag, cn_cbor_data_create(rgbOut, TSize/8, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#endif
 
 	HMAC_cleanup(&ctx);
 	return true;
@@ -482,11 +475,8 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
-#ifdef USE_ARRAY
 	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
-#else
-#endif
 
 	if (cn->length > (int) cbOut) return false;
 	for (i = 0; i < (unsigned int) TSize/8; i++) f |= (cn->v.bytes[i] != rgbOut[i]);
@@ -613,13 +603,52 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSi
 	p = cn_cbor_data_create(pbSig, cbSig, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-#ifdef USE_ARRAY
 	CHECK_CONDITION(_COSE_array_replace(&pSigner->m_message, p, INDEX_SIGNATURE, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#else
-	CHECK_CONDITION(cn_cbor_mapput_int(pSigner->m_message.m_cbor, COSE_Header_Signature, p, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-#endif
 	
 	return true;
+}
+
+
+bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
+{
+	byte rgbOut[256 / 8];
+	AES_KEY key;
+
+	CHECK_CONDITION(AES_set_decrypt_key(pbKeyIn, (int)cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
+
+	CHECK_CONDITION(AES_unwrap_key(&key, NULL, rgbOut, pcose->pbContent, (unsigned int) pcose->cbContent), COSE_ERR_CRYPTO_FAIL);
+
+	memcpy(pbKeyOut, rgbOut, pcose->cbContent - 8);
+	*pcbKeyOut = (int) (pcose->cbContent - 8);
+
+	return true;
+errorReturn:
+	return false;
+}
+
+bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr)
+{
+	byte rgbOut[256 / 8];
+	AES_KEY key;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pcose->m_encrypt.m_message.m_allocContext;
+#endif
+	cn_cbor * cnTmp = NULL;
+
+	CHECK_CONDITION(AES_set_encrypt_key(pbKeyIn, cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
+
+	CHECK_CONDITION(AES_wrap_key(&key, NULL, rgbOut, pbContent, cbContent), COSE_ERR_CRYPTO_FAIL);
+
+	cnTmp = cn_cbor_data_create(rgbOut, (int)cbContent + 8, CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
+	CHECK_CONDITION(_COSE_array_replace(&pcose->m_encrypt.m_message, cnTmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+	cnTmp = NULL;
+
+	return true;
+
+errorReturn:
+	COSE_FREE(cnTmp, context);
+	return false;
 }
 
 
