@@ -48,4 +48,13 @@ add_test ( NAME aes-gcm-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_te
 add_test ( NAME aes-gcm-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-03.json )
 add_test ( NAME aes-gcm-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-04.json )
 
+add_test ( NAME aes-ccm-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-01.json )
+add_test ( NAME aes-ccm-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-02.json )
+add_test ( NAME aes-ccm-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-03.json )
+add_test ( NAME aes-ccm-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-04.json )
+add_test ( NAME aes-ccm-05 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-05.json )
+add_test ( NAME aes-ccm-06 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-06.json )
+add_test ( NAME aes-ccm-07 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-07.json )
+add_test ( NAME aes-ccm-08 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-08.json )
+
 

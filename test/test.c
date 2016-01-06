@@ -23,7 +23,7 @@ int CFails = 0;
 struct {
 	char * sz;
 	int    i;
-} RgAlgorithmNames[12] = {
+} RgAlgorithmNames[23] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -35,7 +35,18 @@ struct {
 	{"AES-MAC-256/128", COSE_Algorithm_CBC_MAC_256_128},
 	{"A128KW", COSE_Algorithm_AES_KW_128},
 	{"A192KW", COSE_Algorithm_AES_KW_192},
-	{"A256KW", COSE_Algorithm_AES_KW_256}
+	{"A256KW", COSE_Algorithm_AES_KW_256},
+	{"A128GCM", COSE_Algorithm_AES_GCM_128},
+	{"A192GCM", COSE_Algorithm_AES_GCM_192},
+	{"A256GCM", COSE_Algorithm_AES_GCM_256},
+	{"AES-CCM-16-128/64", COSE_Algorithm_AES_CCM_16_64_128},
+	{"AES-CCM-16-256/64", COSE_Algorithm_AES_CCM_16_64_256},
+	{"AES-CCM-16-128/128", COSE_Algorithm_AES_CCM_16_128_128},
+	{"AES-CCM-16-256/128", COSE_Algorithm_AES_CCM_16_128_256},
+	{"AES-CCM-64-128/64", COSE_Algorithm_AES_CCM_64_64_128},
+	{"AES-CCM-64-256/64", COSE_Algorithm_AES_CCM_64_64_256},
+	{"AES-CCM-64-128/128", COSE_Algorithm_AES_CCM_64_128_128},
+	{"AES-CCM-64-256/128", COSE_Algorithm_AES_CCM_64_128_256}
 };
 
 int MapAlgorithmName(const cn_cbor * p)
@@ -166,6 +177,22 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 
 		case Attributes_Recipient_unprotected:
 			COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Recipient_unsent:
+			COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
+		case Attributes_Enveloped_protected:
+			COSE_Encrypt_map_put((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Enveloped_unprotected:
+			COSE_Encrypt_map_put((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Enveloped_unsent:
+			COSE_Encrypt_map_put((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
 			break;
 		}
 	}
@@ -488,6 +515,33 @@ int SignMessage()
 	return 1;
 }
 
+bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
+
+bool Test_cn_cbor_array_replace()
+{
+	cn_cbor * pRoot;
+	cn_cbor * pItem;
+
+	//  Cases that are not currently covered
+	//  1.  Pass in invalid arguements
+
+	cn_cbor_array_replace(NULL, NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	//  2.  Insert 0 item with no items currently in the list
+	pRoot = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
+	pItem = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor_array_replace(pRoot, pItem, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	//  3. Insert 0 item w/ exactly one item in the list
+	pItem = cn_cbor_int_create(6, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor_array_replace(pRoot, pItem, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	//  4.  The last item in the array
+	pItem = cn_cbor_int_create(7, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	return true;
+}
 
 
 int main(int argc, char ** argv)
@@ -524,6 +578,7 @@ int main(int argc, char ** argv)
 		}
 		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
 			ValidateEnveloped(pControl);
+			BuildEncryptMessage(pControl);
 		}
 	}
 	else {
@@ -531,6 +586,8 @@ int main(int argc, char ** argv)
 		SignMessage();
 		EncryptMessage();
 	}
+
+	Test_cn_cbor_array_replace();
 
 	if (CFails > 0) fprintf(stderr, "Failed %d tests\n", CFails);
 	else fprintf(stderr, "SUCCESS\n");

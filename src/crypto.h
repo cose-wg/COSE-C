@@ -8,7 +8,7 @@
 * @param[in]   int          Size of authenticated data structure
 * @return                   Did the function succeed?
 */
-bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr);
 
@@ -22,7 +22,8 @@ bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, 
 * @param[in]   int          Size of authenticated data structure
 * @return                   Did the function succeed?
 */
-bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool AES_GCM_Encrypt(COSE_Encrypt * pcose, int KeySize,const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr);
 
 

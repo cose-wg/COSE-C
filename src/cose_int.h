@@ -134,7 +134,7 @@ extern bool _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgbConten
 extern COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor *, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Recipient_Free(COSE_RecipientInfo *);
 extern bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pbKey, cose_errback * errp);
-extern bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbContent, int cbContent, cose_errback * perr);
+extern bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbContent, size_t cbContent, cose_errback * perr);
 extern byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, size_t cbitKeySize, cose_errback * perr);
 
 

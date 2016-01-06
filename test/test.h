@@ -15,6 +15,8 @@ cn_cbor_context * allocator;
 
 int ValidateEnveloped(const cn_cbor * pControl);
 int EncryptMessage();
+int BuildEncryptMessage(const cn_cbor * pControl);
+
 
 //  test.c
 enum {
@@ -22,6 +24,10 @@ enum {
 	Attributes_MAC_unprotected,
 	Attributes_Recipient_protected,
 	Attributes_Recipient_unprotected,
+	Attributes_Recipient_unsent,
+	Attributes_Enveloped_protected,
+	Attributes_Enveloped_unprotected,
+	Attributes_Enveloped_unsent,
 } whichSet;
 
 extern int CFails;
