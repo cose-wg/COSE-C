@@ -46,7 +46,7 @@ struct {
 	{"AES-CCM-64-128/64", COSE_Algorithm_AES_CCM_64_64_128},
 	{"AES-CCM-64-256/64", COSE_Algorithm_AES_CCM_64_64_256},
 	{"AES-CCM-64-128/128", COSE_Algorithm_AES_CCM_64_128_128},
-	{"AES-CCM-64_256/128", COSE_Algorithm_AES_CCM_64_128_256}
+	{"AES-CCM-64-256/128", COSE_Algorithm_AES_CCM_64_128_256}
 };
 
 int MapAlgorithmName(const cn_cbor * p)
