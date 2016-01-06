@@ -481,23 +481,35 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, cose_errback * perr)
 	switch (alg) {
 #ifdef INCLUDE_AES_CCM
 	case COSE_Algorithm_AES_CCM_16_64_128:
+		if (!AES_CCM_Encrypt(pcose, 64, 16, 128, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
 	case COSE_Algorithm_AES_CCM_16_64_256:
-		if (!AES_CCM_Encrypt(pcose, 64, 16, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CCM_Encrypt(pcose, 64, 16, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_16_128_128:
+		if (!AES_CCM_Encrypt(pcose, 128, 16, 128, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
 	case COSE_Algorithm_AES_CCM_16_128_256:
-		if (!AES_CCM_Encrypt(pcose, 128, 16, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CCM_Encrypt(pcose, 128, 16, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_64_128:
+		if (!AES_CCM_Encrypt(pcose, 64, 64, 128, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
 	case COSE_Algorithm_AES_CCM_64_64_256:
-		if (!AES_CCM_Encrypt(pcose, 64, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CCM_Encrypt(pcose, 64, 64, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_128_128:
+		if (!AES_CCM_Encrypt(pcose, 128, 64, 128, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+
 	case COSE_Algorithm_AES_CCM_64_128_256:
-		if (!AES_CCM_Encrypt(pcose, 128, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CCM_Encrypt(pcose, 128, 64, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 #endif
 

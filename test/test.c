@@ -23,7 +23,7 @@ int CFails = 0;
 struct {
 	char * sz;
 	int    i;
-} RgAlgorithmNames[15] = {
+} RgAlgorithmNames[23] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -38,7 +38,15 @@ struct {
 	{"A256KW", COSE_Algorithm_AES_KW_256},
 	{"A128GCM", COSE_Algorithm_AES_GCM_128},
 	{"A192GCM", COSE_Algorithm_AES_GCM_192},
-	{"A256GCM", COSE_Algorithm_AES_GCM_256}
+	{"A256GCM", COSE_Algorithm_AES_GCM_256},
+	{"AES-CCM-16-128/64", COSE_Algorithm_AES_CCM_16_64_128},
+	{"AES-CCM-16-256/64", COSE_Algorithm_AES_CCM_16_64_256},
+	{"AES-CCM-16-128/128", COSE_Algorithm_AES_CCM_16_128_128},
+	{"AES-CCM-16-256/128", COSE_Algorithm_AES_CCM_16_128_256},
+	{"AES-CCM-64-128/64", COSE_Algorithm_AES_CCM_64_64_128},
+	{"AES-CCM-64-256/64", COSE_Algorithm_AES_CCM_64_64_256},
+	{"AES-CCM-64-128/128", COSE_Algorithm_AES_CCM_64_128_128},
+	{"AES-CCM-64_256/128", COSE_Algorithm_AES_CCM_64_128_256}
 };
 
 int MapAlgorithmName(const cn_cbor * p)
