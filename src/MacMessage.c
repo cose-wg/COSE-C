@@ -332,6 +332,11 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(pAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
 
+	ptmp = cn_cbor_string_create("MAC", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+	ptmp = NULL;
+
 	ptmp = cn_cbor_data_create(cbProtected->v.bytes, (int) cbProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
 
