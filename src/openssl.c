@@ -411,8 +411,6 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int KeySize, int TSize, const b
 	EVP_CIPHER_CTX_init(&ctx);
 	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pcose->pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
 
-	TSize /= 8;
-
 	for (i = 0; i < (unsigned int)cbAuthData / 16; i++) {
 		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, pbAuthData + (i * 16), 16), COSE_ERR_CRYPTO_FAIL);
 	}
