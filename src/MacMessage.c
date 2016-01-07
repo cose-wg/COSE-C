@@ -592,6 +592,12 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback 
 {
 	COSE_RecipientInfo * pRecip;
 	COSE_MacMessage * pMac;
+	cn_cbor * pRecipients = NULL;
+	cn_cbor * pRecipientsT = NULL;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context;
+#endif
+	cn_cbor_errback cbor_error;
 
 	CHECK_CONDITION(IsValidMacHandle(hMac), COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
@@ -601,9 +607,28 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback 
 
 	pRecip->m_recipientNext = pMac->m_recipientFirst;
 	pMac->m_recipientFirst = pRecip;
+#ifdef USE_CBOR_CONTEXT
+	context = &pMac->m_message.m_allocContext;
+#endif // USE_CBOR_CONTEXT
+
+
+	pRecipients = _COSE_arrayget_int(&pMac->m_message, INDEX_MAC_RECIPIENTS);
+	if (pRecipients == NULL) {
+		pRecipientsT = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(pRecipientsT != NULL, cbor_error);
+
+		CHECK_CONDITION_CBOR(_COSE_array_replace(&pMac->m_message, pRecipientsT, INDEX_MAC_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
+		pRecipients = pRecipientsT;
+		pRecipientsT = NULL;
+	}
+
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients, pRecip->m_encrypt.m_message.m_cbor, &cbor_error), cbor_error);
+
+
 	return true;
 
 errorReturn:
+	if (pRecipientsT == NULL) CN_CBOR_FREE(pRecipientsT, context);
 	return false;
 }
 

@@ -13,10 +13,8 @@
 #include "context.h"
 
 
-int ValidateEnveloped(const cn_cbor * pControl)
+int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, int cbEncoded)
 {
-	int cbEncoded;
-	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
 	const cn_cbor * pEnveloped;
@@ -92,6 +90,14 @@ int ValidateEnveloped(const cn_cbor * pControl)
 	return 0;
 }
 
+int ValidateEnveloped(const cn_cbor * pControl)
+{
+	int cbEncoded;
+	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
+
+	return _ValidateEnveloped(pControl, pbEncoded, cbEncoded);
+}
+
 int BuildEncryptMessage(const cn_cbor * pControl)
 {
 	int iRecipient;
@@ -145,7 +151,9 @@ int BuildEncryptMessage(const cn_cbor * pControl)
 	byte * rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
 
-	return 0;
+	int f = _ValidateEnveloped(pControl, rgb, cb);
+	free(rgb);
+	return f;
 
 returnError:
 	CFails += 1;

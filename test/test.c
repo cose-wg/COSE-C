@@ -254,10 +254,8 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 	return pKeyOut;
 }
 
-int ValidateMAC(const cn_cbor * pControl)
+int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, int cbEncoded)
 {
-	int cbEncoded;
-	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
 	const cn_cbor * pMac;
@@ -320,6 +318,13 @@ int ValidateMAC(const cn_cbor * pControl)
 	return 0;
 }
 
+int ValidateMAC(const cn_cbor * pControl)
+{
+	int cbEncoded;
+	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
+
+	return _ValidateMAC(pControl, pbEncoded, cbEncoded);
+}
 
 int BuildMacMessage(const cn_cbor * pControl)
 {
@@ -372,7 +377,10 @@ int BuildMacMessage(const cn_cbor * pControl)
 	byte * rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
 
-	return 0;
+	int f = _ValidateMAC(pControl, rgb, cb);
+
+	free(rgb);
+	return f;
 
 returnError:
 	CFails += 1;
