@@ -601,6 +601,11 @@ bool COSE_Encrypt_AddRecipient(HCOSE_ENCRYPT hEnc, HCOSE_RECIPIENT hRecip, cose_
 {
 	COSE_RecipientInfo * pRecip;
 	COSE_Encrypt * pEncrypt;
+	cn_cbor * pRecipients  = NULL;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context;
+#endif
+	cn_cbor_errback cbor_error;
 
 	CHECK_CONDITION(IsValidEncryptHandle(hEnc), COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
@@ -608,8 +613,27 @@ bool COSE_Encrypt_AddRecipient(HCOSE_ENCRYPT hEnc, HCOSE_RECIPIENT hRecip, cose_
 	pEncrypt = (COSE_Encrypt *)hEnc;
 	pRecip = (COSE_RecipientInfo *)hRecip;
 
+#ifdef USE_CBOR_CONTEXT
+	context = &pEncrypt->m_message.m_allocContext;
+#endif // USE_CBOR_CONTEXT
+
 	pRecip->m_recipientNext = pEncrypt->m_recipientFirst;
 	pEncrypt->m_recipientFirst = pRecip;
+
+	pRecipients = _COSE_arrayget_int(&pEncrypt->m_message, INDEX_RECIPIENTS);
+	if (pRecipients == NULL) {
+		pRecipients = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(pRecipients != NULL, cbor_error);
+
+		if (!_COSE_array_replace(&pEncrypt->m_message, pRecipients, INDEX_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA &cbor_error)) {
+			CN_CBOR_FREE(pRecipients, context);
+			if (perr != NULL) perr->err = _MapFromCBOR(cbor_error);
+			goto errorReturn;
+		}
+	}
+
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients, pRecip->m_encrypt.m_message.m_cbor, &cbor_error), cbor_error);
+
 	return true;
 
 errorReturn:
