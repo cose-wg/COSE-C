@@ -756,19 +756,22 @@ errorReturn:
 
 bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr)
 {
-	byte rgbOut[256 / 8];
+	byte  *pbOut = NULL;
 	AES_KEY key;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pcose->m_encrypt.m_message.m_allocContext;
 #endif
 	cn_cbor * cnTmp = NULL;
 
+	pbOut = COSE_CALLOC(cbContent + 8, 1, context);
+
 	CHECK_CONDITION(AES_set_encrypt_key(pbKeyIn, cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
 
-	CHECK_CONDITION(AES_wrap_key(&key, NULL, rgbOut, pbContent, cbContent), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(AES_wrap_key(&key, NULL, pbOut, pbContent, cbContent), COSE_ERR_CRYPTO_FAIL);
 
-	cnTmp = cn_cbor_data_create(rgbOut, (int)cbContent + 8, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cnTmp = cn_cbor_data_create(pbOut, (int)cbContent + 8, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
+	pbOut = NULL;
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_encrypt.m_message, cnTmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 	cnTmp = NULL;
 
@@ -776,6 +779,7 @@ bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKe
 
 errorReturn:
 	COSE_FREE(cnTmp, context);
+	if (pbOut != NULL) COSE_FREE(pbOut, context);
 	return false;
 }
 
