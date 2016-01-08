@@ -58,7 +58,7 @@ NameMap RgCurveNames[3] = {
 	{"P-512", 3}
 };
 
-int MapName(const cn_cbor * p, NameMap * rgMap, int cMap)
+int MapName(const cn_cbor * p, NameMap * rgMap, unsigned int cMap)
 {
 	unsigned int i;
 
@@ -273,7 +273,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 	return pKeyOut;
 }
 
-int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, int cbEncoded)
+int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;

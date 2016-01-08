@@ -13,7 +13,7 @@
 #include "context.h"
 
 
-int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, int cbEncoded)
+int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;

@@ -9,6 +9,10 @@
 #include <string.h>
 #include <stdarg.h>
 
+#ifdef _MSC_VER
+#include <io.h>
+#endif
+
 #ifndef _countof
 #define _countof(x) (sizeof(x)/sizeof(x[0]))
 #endif
@@ -53,8 +57,8 @@ FOO AlgorithmMap[36] = {
 	{"AES-CCM-16-64-256", CN_CBOR_UINT, 11, NULL, 0, 0 },
 	{"AES-CCM-16-128-128", CN_CBOR_UINT, 12, NULL, 0, 0 },
 	{"AES-CCM-16-128-256", CN_CBOR_UINT, 13, NULL, 0, 0 },
-	{"AES-CBC-MAC-128/64", CN_CBOR_UINT, 14, NULL, 0, 0},
-	{"AES-CBC-MAC-256/64", CN_CBOR_UINT, 15, NULL, 0, 0},
+	{"AES-CBC-MAC-128//64", CN_CBOR_UINT, 14, NULL, 0, 0},
+	{"AES-CBC-MAC-256//64", CN_CBOR_UINT, 15, NULL, 0, 0},
 	{"ChaCha20//Poly1305", CN_CBOR_UINT, 24, NULL, 0, 0 },
 	{"AES-CBC-MAC-128/128", CN_CBOR_UINT, 25, NULL, 0, 0},
 	{"AES-CBC-MAC-256/128", CN_CBOR_UINT, 26, NULL, 0, 0},

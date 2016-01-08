@@ -52,8 +52,8 @@ typedef enum {
 
 //  Generic functions for the COSE library
 
-HCOSE COSE_Decode(const byte * rgbData, int cbData, int * type, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
-size_t COSE_Encode(HCOSE msg, byte * rgb, int ib, size_t cb);
+HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * type, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
+size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb);
 
 cn_cbor * COSE_get_cbor(HCOSE hmsg);
 
@@ -119,7 +119,10 @@ typedef enum {
 	COSE_Algorithm_PS256 = -26,
 	COSE_Algorithm_PS384 = -27,
 	COSE_Algorithm_PS512 = -28,
+
 	COSE_Algorithm_ECDSA_SHA_256 = -7,
+	COSE_Algorithm_ECDSA_SHA_384 = -8,
+	COSE_Algorithm_ECDSA_SHA_512 = -9,
 } COSE_Algorithms;
 
 typedef enum {

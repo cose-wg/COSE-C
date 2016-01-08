@@ -56,7 +56,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 * @return						Did the function succeed?
 */
 bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
-bool ECDSA_Verify(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSign, const byte * rgbSig, size_t cbSig, cose_errback * perr);
+bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, const byte * rgbSig, size_t cbSig, cose_errback * perr);
 
 /**
 *  Generate random bytes in a buffer

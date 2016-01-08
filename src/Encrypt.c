@@ -19,7 +19,7 @@ bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 }
 
 
-size_t COSE_Encode(HCOSE msg, byte * rgb, int ib, size_t cb)
+size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb)
 {
 	if (rgb == NULL) return cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), ((COSE *)msg)->m_cbor) + ib;
 	return cn_cbor_encoder_write(rgb, ib, cb, ((COSE*)msg)->m_cbor);

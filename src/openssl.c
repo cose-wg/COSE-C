@@ -736,34 +736,44 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSi
 	return true;
 }
 
-bool ECDSA_Verify(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSign, const byte * rgbSignature, size_t cbSignature, cose_errback * perr)
+bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSign, size_t cbToSign, const byte * rgbSignature, size_t cbSignature, cose_errback * perr)
 {
 	EC_KEY * eckey = NULL;
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	unsigned int cbDigest = sizeof(rgbDigest);
+	const EVP_MD * digest;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
 #endif
 	cn_cbor * p = NULL;
+	ECDSA_SIG sig = { NULL, NULL };
 
 	eckey = ECKey_From(pSigner->m_pkey, perr);
 	if (eckey == NULL) {
 	errorReturn:
+		if (sig.r != NULL) BN_free(sig.r);
+		if (sig.s != NULL) BN_free(sig.s);
 		if (p != NULL) CN_CBOR_FREE(p, context);
 		if (eckey != NULL) EC_KEY_free(eckey);
 		return false;
 	}
 
-	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, EVP_sha256(), NULL);
+	switch (cbitDigest) {
+	case 256: digest = EVP_sha256(); break;
+	case 512: digest = EVP_sha512(); break;
+	case 384: digest = EVP_sha384(); break;
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, digest, NULL);
 
-	ECDSA_SIG sig;
 	sig.r = BN_bin2bn(rgbSignature,(int) cbSignature/2, NULL);
 	sig.s = BN_bin2bn(rgbSignature+cbSignature/2, (int) cbSignature/2, NULL);
 
 	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, &sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL);
 
-	//BN_FREE(sig.r);
-	//BN_FREE(sig.s);
+	BN_free(sig.r);
+	BN_free(sig.s);
 
 	return true;
 }

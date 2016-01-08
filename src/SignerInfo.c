@@ -213,7 +213,15 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 
 	switch (alg) {
 	case COSE_Algorithm_ECDSA_SHA_256:
-		if (!ECDSA_Verify(pSigner, pbAuthData, cbAuthData, cnSignature->v.bytes, cnSignature->length, perr)) goto errorReturn;
+		if (!ECDSA_Verify(pSigner, 256, pbAuthData, cbAuthData, cnSignature->v.bytes, cnSignature->length, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_ECDSA_SHA_384:
+		if (!ECDSA_Verify(pSigner, 384, pbAuthData, cbAuthData, cnSignature->v.bytes, cnSignature->length, perr)) goto errorReturn;
+		break;
+
+	case COSE_Algorithm_ECDSA_SHA_512:
+		if (!ECDSA_Verify(pSigner, 512, pbAuthData, cbAuthData, cnSignature->v.bytes, cnSignature->length, perr)) goto errorReturn;
 		break;
 
 	default:

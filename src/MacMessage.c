@@ -595,10 +595,9 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback 
 	cn_cbor * pRecipients = NULL;
 	cn_cbor * pRecipientsT = NULL;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context;
+	cn_cbor_context * context = NULL;
 #endif
 	cn_cbor_errback cbor_error;
-
 
 	CHECK_CONDITION(IsValidMacHandle(hMac), COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
