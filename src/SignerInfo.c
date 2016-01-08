@@ -14,6 +14,34 @@ bool IsValidSignerHandle(HCOSE_SIGNER h)
 	return true;
 }
 
+
+HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+{
+	COSE_SignerInfo * pobj = (COSE_SignerInfo *)COSE_CALLOC(1, sizeof(COSE_SignerInfo), context);
+	if (pobj == NULL) {
+		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
+		return NULL;
+	}
+
+	if (!_COSE_Init(&pobj->m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+		COSE_Signer_Free((HCOSE_SIGNER)pobj);
+		return NULL;
+	}
+
+	return (HCOSE_SIGNER)pobj;
+}
+
+bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
+{
+	if (IsValidSignerHandle(hSigner)) {
+
+		_COSE_Signer_Free((COSE_SignerInfo *)hSigner);
+		return true;
+	}
+
+	return false;
+}
+
 void _COSE_Signer_Free(COSE_SignerInfo * pSigner)
 {
 	COSE_FREE(pSigner, &pSigner->m_message.m_allocContext);
@@ -74,16 +102,19 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	cn_cbor * pcborBody2 = NULL;
 	cn_cbor * pcborProtected2 = NULL;
 	cn_cbor * pcborProtectedSign = NULL;
-	cn_cbor * pcborProtectedSign2 = NULL;
 	cn_cbor * pArray = NULL;
+	cn_cbor * cn = NULL;
+	cn_cbor_errback cbor_error;
 	size_t cbToSign;
 	byte * pbToSign = NULL;
 	bool f;
+	int alg;
 
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (pArray == NULL) {
 		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
+		if (cn != NULL) CN_CBOR_FREE(cn, context);
 		if (pcborBody2 != NULL) CN_CBOR_FREE(pcborBody2, context);
 		if (pcborProtected2 != NULL) CN_CBOR_FREE(pcborProtected2, context);
 		if (pArray != NULL) COSE_FREE(pArray, context);
@@ -91,22 +122,50 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 		return false;
 	}
 
+	cn = _COSE_map_get_int(&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
+	if (cn == NULL) goto errorReturn;
+
+	if (cn->type == CN_CBOR_TEXT) {
+		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
+	}
+	else {
+		CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
+
+		alg = (int)cn->v.uint;
+	}
+
+
+	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
+
+	cn = cn_cbor_string_create("Signature", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
+	cn = NULL;
+
+	cn = cn_cbor_data_create(pcborProtected->v.bytes, (int) pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
+	cn = NULL;
+
 	pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, perr);
 	if (pcborProtectedSign == NULL) goto errorReturn;
 
-	pcborBody2 = cn_cbor_data_create(pcborBody->v.bytes, (int) pcborBody->length, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(pcborBody2 != NULL, COSE_ERR_OUT_OF_MEMORY);
+	cn = cn_cbor_data_create(pcborProtectedSign->v.bytes, (int) pcborProtectedSign->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
+	cn = NULL;
 
-	pcborProtected2 = cn_cbor_data_create(pcborProtected->v.bytes, (int) pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(pcborProtected2 != NULL, COSE_ERR_OUT_OF_MEMORY);
+	cn = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
+	cn = NULL;
 
-	pcborProtectedSign2 = cn_cbor_data_create(pcborProtectedSign->v.bytes, (int) pcborProtectedSign->length, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(pcborProtectedSign2 != NULL, COSE_ERR_OUT_OF_MEMORY);
+	cn = cn_cbor_data_create(pcborBody->v.bytes, (int)pcborBody->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
+	cn = NULL;
 
-	CHECK_CONDITION(cn_cbor_array_append(pArray, pcborProtected2, NULL), COSE_ERR_CBOR);
-	CHECK_CONDITION(cn_cbor_array_append(pArray, pcborProtectedSign2, NULL), COSE_ERR_CBOR);
-	CHECK_CONDITION(cn_cbor_array_append(pArray, cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL), NULL), COSE_ERR_CBOR);
-	CHECK_CONDITION(cn_cbor_array_append(pArray, pcborBody2, NULL), COSE_ERR_CBOR);
 
 	cbToSign = cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), pArray);
 	CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
@@ -114,7 +173,22 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);
 	CHECK_CONDITION(cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray), COSE_ERR_CBOR);
 
-	f = ECDSA_Sign(pSigner, pbToSign, cbToSign, perr);
+	switch (alg) {
+	case COSE_Algorithm_ECDSA_SHA_256:
+		f = ECDSA_Sign(pSigner, 256, pbToSign, cbToSign, perr);
+		break;
+
+	case COSE_Algorithm_ECDSA_SHA_384:
+		f = ECDSA_Sign(pSigner, 384, pbToSign, cbToSign, perr);
+		break;
+
+	case COSE_Algorithm_ECDSA_SHA_512:
+		f = ECDSA_Sign(pSigner, 512, pbToSign, cbToSign, perr);
+		break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
 
 	COSE_FREE(pbToSign, context);
 	CN_CBOR_FREE(pArray, context);
@@ -247,4 +321,14 @@ errorReturn:
 	}
 
 	return false;
+}
+
+bool COSE_Signer_map_put(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perror)
+{
+	if (!IsValidSignerHandle(h) || (value == NULL)) {
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	return _COSE_map_put(&((COSE_SignerInfo *)h)->m_message, key, value, flags, perror);
 }

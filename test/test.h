@@ -34,6 +34,12 @@ enum {
 	Attributes_Enveloped_protected,
 	Attributes_Enveloped_unprotected,
 	Attributes_Enveloped_unsent,
+	Attributes_Sign_protected,
+	Attributes_Sign_unprotected,
+	Attributes_Sign_unsent,
+	Attributes_Signer_protected,
+	Attributes_Signer_unprotected,
+	Attributes_Signer_unsent,
 } whichSet;
 
 extern int CFails;

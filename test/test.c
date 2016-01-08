@@ -25,7 +25,7 @@ typedef struct _NameMap {
 	int    i;
 } NameMap;
 
-NameMap RgAlgorithmNames[23] = {
+NameMap RgAlgorithmNames[26] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -48,7 +48,10 @@ NameMap RgAlgorithmNames[23] = {
 	{"AES-CCM-64-128/64", COSE_Algorithm_AES_CCM_64_64_128},
 	{"AES-CCM-64-256/64", COSE_Algorithm_AES_CCM_64_64_256},
 	{"AES-CCM-64-128/128", COSE_Algorithm_AES_CCM_64_128_128},
-	{"AES-CCM-64-256/128", COSE_Algorithm_AES_CCM_64_128_256}
+	{"AES-CCM-64-256/128", COSE_Algorithm_AES_CCM_64_128_256},
+	{"ES256", COSE_Algorithm_ECDSA_SHA_256},
+	{"ES384", COSE_Algorithm_ECDSA_SHA_384},
+	{"ES512", COSE_Algorithm_ECDSA_SHA_512},
 };
 
 
@@ -208,6 +211,30 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 
 		case Attributes_Enveloped_unsent:
 			COSE_Encrypt_map_put((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
+		case Attributes_Sign_protected:
+			COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Sign_unprotected:
+			COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Sign_unsent:
+			COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
+		case Attributes_Signer_protected:
+			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Signer_unprotected:
+			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Signer_unsent:
+			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
 			break;
 		}
 	}
@@ -537,6 +564,7 @@ int main(int argc, char ** argv)
 		}
 		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 			ValidateSigned(pControl);
+			BuildSignedMessage(pControl);
 		}
 	}
 	else {

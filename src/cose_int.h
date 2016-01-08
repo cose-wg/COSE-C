@@ -165,7 +165,7 @@ extern cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
 #define INDEX_PROTECTED 0
 #define INDEX_UNPROTECTED 1
 #define INDEX_BODY 2
-#define INDEX_SIGNATURES 3
+#define INDEX_SIGNERS 3
 #define INDEX_RECIPIENTS 3
 #define INDEX_MAC_TAG 3
 #define INDEX_MAC_RECIPIENTS 4

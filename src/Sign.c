@@ -47,7 +47,7 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor * cbor, COSE_SignMessage * pIn, C
 		goto errorReturn;
 	}
 
-	pSigners = _COSE_arrayget_int(&pobj->m_message, INDEX_SIGNATURES);
+	pSigners = _COSE_arrayget_int(&pobj->m_message, INDEX_SIGNERS);
 	CHECK_CONDITION(pSigners != NULL, COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(pSigners->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
@@ -116,11 +116,7 @@ bool COSE_Sign_SetContent(HCOSE_SIGN h, const byte * rgb, size_t cb, cose_errbac
 	p = cn_cbor_data_create(rgb, (int) cb, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-#ifdef USE_ARRAY
 	CHECK_CONDITION(_COSE_array_replace(&pMessage->m_message, p, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
-#else
-	CHECK_CONDITION(cn_cbor_mapput_int(pMessage->m_message.m_cbor, COSE_Header_Ciphertext, p, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
-#endif
 
 	return true;
 }
@@ -177,25 +173,15 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	pSigner->m_signerNext = pMessage->m_signerFirst;
 	pMessage->m_signerFirst = pSigner;
 
-#ifdef USE_ARRAY
-	cn_cbor * pSigners = cn_cbor_index(pMessage->m_message.m_cbor, INDEX_SIGNATURES+1);   // M00BUG
-#else
-	cn_cbor * pSigners = (cn_cbor *)cn_cbor_mapget_int(pMessage->m_message.m_cbor, COSE_Header_Signers);
-#endif
+	cn_cbor * pSigners = cn_cbor_index(pMessage->m_message.m_cbor, INDEX_SIGNERS);   // M00BUG
+
 	if (pSigners == NULL) {
 		pSigners = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 		CHECK_CONDITION(pSigners != NULL, COSE_ERR_OUT_OF_MEMORY);
-#ifdef USE_ARRAY
-		if (!_COSE_array_replace(&pMessage->m_message, pSigners, INDEX_SIGNATURES, CBOR_CONTEXT_PARAM_COMMA NULL)) {
+		if (!_COSE_array_replace(&pMessage->m_message, pSigners, INDEX_SIGNERS, CBOR_CONTEXT_PARAM_COMMA NULL)) {
 			CN_CBOR_FREE(pSigners, context);
 			CHECK_CONDITION(false, COSE_ERR_CBOR);
 		}
-#else
-		if (!cn_cbor_mapput_int(pMessage->m_message.m_cbor, COSE_Header_Signers, pSigners, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			CN_CBOR_FREE(pSigners, context);
-			CHECK_CONDITION(false, COSE_ERR_CBOR);
-		}
-#endif
 	}
 
 	CHECK_CONDITION(cn_cbor_array_append(pSigners, pSigner->m_message.m_cbor, NULL), COSE_ERR_CBOR);
@@ -222,14 +208,8 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr)
 	//	context = &pMessage->m_message.m_allocContext;
 #endif
 
-#ifdef USE_ARRAY
 	pcborBody = _COSE_arrayget_int(&pMessage->m_message, INDEX_BODY);
 	CHECK_CONDITION((pcborBody != NULL) && (pcborBody->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-#else
-	//  From this layer we use the protected fields and the body
-	pcborBody = cn_cbor_mapget_int(pMessage->m_message.m_cbor, COSE_Header_Ciphertext);
-	CHECK_CONDITION(pcborBody != NULL, COSE_ERR_INVALID_PARAMETER);
-#endif
 
 	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
 	if (pcborProtected == NULL) goto errorReturn;
@@ -268,3 +248,69 @@ bool COSE_Sign_validate(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * p
 errorReturn:
 	return false;
 }
+
+
+bool COSE_Sign_AddSigner(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * perr)
+{
+	COSE_SignerInfo * pSigner;
+	COSE_SignMessage * pSign;
+	cn_cbor * pSigners = NULL;
+	cn_cbor * pSignersT = NULL;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = NULL;
+#endif
+	cn_cbor_errback cbor_error;
+
+	CHECK_CONDITION(IsValidSignHandle(hSign), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidSignerHandle(hSigner), COSE_ERR_INVALID_PARAMETER);
+
+	pSign = (COSE_SignMessage *)hSign;
+	pSigner = (COSE_SignerInfo *)hSigner;
+
+	pSigner->m_signerNext = pSign->m_signerFirst;
+	pSign->m_signerFirst = pSigner;
+
+#ifdef USE_CBOR_CONTEXT
+	context = &pSign->m_message.m_allocContext;
+#endif // USE_CBOR_CONTEXT
+
+	pSigners = _COSE_arrayget_int(&pSign->m_message, INDEX_SIGNERS);
+	if (pSigners == NULL) {
+		pSignersT = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(pSignersT != NULL, cbor_error);
+
+		CHECK_CONDITION_CBOR(_COSE_array_replace(&pSign->m_message, pSignersT, INDEX_SIGNERS, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
+		pSigners = pSignersT;
+		pSignersT = NULL;
+	}
+
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pSigners, pSigner->m_message.m_cbor, &cbor_error), cbor_error);
+
+
+	return true;
+
+errorReturn:
+	if (pSignersT == NULL) CN_CBOR_FREE(pSignersT, context);
+	return false;
+}
+
+cn_cbor * COSE_Sign_map_get_int(HCOSE_SIGN h, int key, int flags, cose_errback * perror)
+{
+	if (!IsValidSignHandle(h)) {
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		return NULL;
+	}
+
+	return _COSE_map_get_int(&((COSE_SignMessage *)h)->m_message, key, flags, perror);
+}
+
+bool COSE_Sign_map_put(HCOSE_SIGN h, int key, cn_cbor * value, int flags, cose_errback * perror)
+{
+	if (!IsValidSignHandle(h) || (value == NULL)) {
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	return _COSE_map_put(&((COSE_SignMessage *)h)->m_message, key, value, flags, perror);
+}
+
