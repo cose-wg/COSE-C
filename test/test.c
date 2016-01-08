@@ -55,7 +55,7 @@ NameMap RgAlgorithmNames[23] = {
 NameMap RgCurveNames[3] = {
 	{"P-256", 1},
 	{"P-384", 2},
-	{"P-512", 3}
+	{"P-521", 3}
 };
 
 int MapName(const cn_cbor * p, NameMap * rgMap, unsigned int cMap)
@@ -300,8 +300,9 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
 
+	iRecipient = (int) pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
-	for (iRecipient = 0; pRecipients != NULL; iRecipient++,pRecipients=pRecipients->next) {
+	for (; pRecipients != NULL; iRecipient--, pRecipients=pRecipients->next) {
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
 		if (pkey == NULL) {
 			fFail = true;

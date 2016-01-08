@@ -40,8 +40,9 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, int cbEnco
 	pSigners = cn_cbor_mapget_string(pSign, "signers");
 	if ((pSigners == NULL) || (pSigners->type != CN_CBOR_ARRAY)) exit(1);
 
+	iSigner = pSigners->length - 1;
 	pSigners = pSigners->first_child;
-	for (iSigner = 0; pSigners != NULL; iSigner++, pSigners = pSigners->next) {
+	for (; pSigners != NULL; iSigner--, pSigners = pSigners->next) {
 
 		hSig = (HCOSE_SIGN)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hSig == NULL) exit(1);
