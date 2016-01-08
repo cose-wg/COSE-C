@@ -709,7 +709,6 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSig
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	unsigned int cbDigest = sizeof(rgbDigest);
 	byte  * pbSig = NULL;
-	unsigned int cbSig;
 	const EVP_MD * digest;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_message.m_allocContext;

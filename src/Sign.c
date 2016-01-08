@@ -130,63 +130,44 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	COSE_SignerInfo * pSigner = NULL;
 	const cn_cbor * cbor;
 	cn_cbor * cbor2 = NULL;
+	HCOSE_SIGNER hSigner = NULL;
+	cn_cbor_errback cbor_error;
 
 	if (!IsValidSignHandle(hSign) || (pkey == NULL)) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
 	errorReturn:
 		if (cbor2 != NULL) CN_CBOR_FREE((void *) cbor2, context);
-		if (pSigner != NULL) _COSE_Signer_Free(pSigner);
+		if (hSigner != NULL) COSE_Signer_Free(hSigner);
 		return NULL;
-	}
-
-	switch (algId) {
-	case COSE_Algorithm_ECDSA_SHA_256:
-		cbor = cn_cbor_mapget_int(pkey, COSE_Key_Type);
-		CHECK_CONDITION(cbor != NULL, COSE_ERR_INVALID_PARAMETER);
-		CHECK_CONDITION((cbor->type == CN_CBOR_UINT) && (cbor->v.uint == COSE_Key_Type_EC2), COSE_ERR_INVALID_PARAMETER);
-		break;
-
-	default:
-		CHECK_CONDITION(false, COSE_ERR_INVALID_PARAMETER);
 	}
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pMessage->m_message.m_allocContext;
 #endif
 
-	pSigner = (COSE_SignerInfo *)COSE_CALLOC(1, sizeof(COSE_SignerInfo), context);
-	CHECK_CONDITION(pSigner != NULL, COSE_ERR_OUT_OF_MEMORY);
+	hSigner = COSE_Signer_Init(context, perr);
+	if (hSigner == NULL) goto errorReturn;
 
-	if (!_COSE_Init(&pSigner->m_message, COSE_unknown_object, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+	cbor2 = cn_cbor_int_create(algId, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cbor2 != NULL, cbor_error);
+	if (!COSE_Signer_map_put(hSigner, COSE_Header_Algorithm, cbor2, COSE_PROTECT_ONLY, perr)) goto errorReturn;
+	cbor2 = NULL;
 
 	cbor = cn_cbor_mapget_int(pkey, COSE_Key_ID);
 	if (cbor != NULL) {
 		CHECK_CONDITION(cbor->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
-		cbor2 = cn_cbor_data_create(cbor->v.bytes, (int) cbor->length, CBOR_CONTEXT_PARAM_COMMA NULL);
-		CHECK_CONDITION(cbor2 != NULL, COSE_ERR_CBOR);
-		CHECK_CONDITION(cn_cbor_mapput_int(pSigner->m_message.m_unprotectMap, COSE_Parameter_KID, cbor2, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+		cbor2 = cn_cbor_data_create(cbor->v.bytes, (int) cbor->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(cbor2 != NULL, cbor_error);
+		if (!COSE_Signer_map_put(hSigner, COSE_Header_KID, cbor2, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
 		cbor2 = NULL;
 	}
 
-	pSigner->m_pkey = pkey;
+	if (!COSE_Signer_SetKey(hSigner, pkey, perr)) goto errorReturn;
 
-	pSigner->m_signerNext = pMessage->m_signerFirst;
-	pMessage->m_signerFirst = pSigner;
+	if (!COSE_Sign_AddSigner(hSign, hSigner, perr)) goto errorReturn;
 
-	cn_cbor * pSigners = cn_cbor_index(pMessage->m_message.m_cbor, INDEX_SIGNERS);   // M00BUG
-
-	if (pSigners == NULL) {
-		pSigners = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
-		CHECK_CONDITION(pSigners != NULL, COSE_ERR_OUT_OF_MEMORY);
-		if (!_COSE_array_replace(&pMessage->m_message, pSigners, INDEX_SIGNERS, CBOR_CONTEXT_PARAM_COMMA NULL)) {
-			CN_CBOR_FREE(pSigners, context);
-			CHECK_CONDITION(false, COSE_ERR_CBOR);
-		}
-	}
-
-	CHECK_CONDITION(cn_cbor_array_append(pSigners, pSigner->m_message.m_cbor, NULL), COSE_ERR_CBOR);
-
-	return (HCOSE_SIGNER)pSigner;
+	return hSigner;
 }
 
 bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr)

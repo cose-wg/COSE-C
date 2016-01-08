@@ -265,7 +265,7 @@ void PrintUsage()
     exit(1);
 }
 
-void DumpBytes(FILE * fp, const cn_cbor* cbor, int depth)
+void DumpBytes(FILE * fp, const cn_cbor* cbor)
 {
 	int i;
 	int fText = true;
@@ -400,7 +400,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 		break;
 
 	case CN_CBOR_BYTES:
-		DumpBytes(out, cbor, depth);
+		DumpBytes(out, cbor);
 		if ((pFOO != NULL) && (pFOO->children != NULL)) {
 			const cn_cbor * cbor3 = cn_cbor_decode(cbor->v.bytes, cbor->length CBOR_CONTEXT_PARAM, NULL);
 			if (cbor3 != NULL) {
