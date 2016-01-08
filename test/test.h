@@ -17,6 +17,12 @@ int ValidateEnveloped(const cn_cbor * pControl);
 int EncryptMessage();
 int BuildEncryptMessage(const cn_cbor * pControl);
 
+//  sign.c
+
+int ValidateSigned(const cn_cbor * pControl);
+int SignMessage();
+int BuildSignedMessage(const cn_cbor * pControl);
+
 
 //  test.c
 enum {

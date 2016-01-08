@@ -117,6 +117,7 @@ extern cose_error _MapFromCBOR(cn_cbor_errback err);
 
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 extern bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
+extern bool IsValidSignerHandle(HCOSE_SIGNER h);
 
 extern bool _COSE_Init(COSE * pcose, int msgType, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose_errback * perror);
@@ -145,6 +146,7 @@ extern void _COSE_Sign_Release(COSE_SignMessage * p);
 extern bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr);
 extern COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr);
 extern void _COSE_Signer_Free(COSE_SignerInfo * pSigner);
+extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const byte * pbContent, size_t cbContent, const byte * pbProtected, size_t cbProtected, cose_errback * perr);
 
 //  Mac-ed items
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
