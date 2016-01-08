@@ -145,7 +145,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	context = &pMessage->m_message.m_allocContext;
 #endif
 
-	hSigner = COSE_Signer_Init(context, perr);
+	hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA perr);
 	if (hSigner == NULL) goto errorReturn;
 
 
