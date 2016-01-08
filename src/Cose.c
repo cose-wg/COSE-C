@@ -119,7 +119,7 @@ void _COSE_Release(COSE * pobj)
 }
 
 
-HCOSE COSE_Decode(const byte * rgbData, int cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
+HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * cbor = NULL;
 #ifdef TAG_IN_ARRAY

@@ -110,7 +110,6 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 	cn_cbor * pAuthData = NULL;
 	byte * pbProtected = NULL;
 	ssize_t cbProtected;
-	cn_cbor * ptmp = NULL;
 	COSE_Encrypt * pcose = &pRecip->m_encrypt;
 
 #ifdef USE_CBOR_CONTEXT
@@ -194,8 +193,6 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 		break;
 	}
-
-	if (perr != NULL) perr->err = COSE_ERR_NONE;
 
 	return true;
 }

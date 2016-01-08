@@ -13,7 +13,7 @@
 #include "context.h"
 
 
-int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, int cbEncoded)
+int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
@@ -41,8 +41,9 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, int cbE
 	pRecipients = cn_cbor_mapget_string(pEnveloped, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
 
+	iRecipient = (int) pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
-	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
+	for (; pRecipients != NULL; iRecipient--, pRecipients = pRecipients->next) {
 
 		hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hEnc == NULL) exit(1);

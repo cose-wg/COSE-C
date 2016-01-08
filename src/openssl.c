@@ -625,7 +625,7 @@ errorReturn:
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
+EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * perr)
 {
 	EC_KEY * pNewKey = EC_KEY_new();
 	byte  rgbKey[512+1];
@@ -639,18 +639,21 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, cose_errback * perr)
 	switch (p->v.sint) {
 	case 1: // P-256
 		nidGroup = NID_X9_62_prime256v1;
+		*cbGroup = 256 / 8;
 		break;
 
 	case 2: // P-384
 		nidGroup = NID_secp384r1;
+		*cbGroup = 384 / 8;
 		break;
 
 	case 3: // P-521
 		nidGroup = NID_secp521r1;
+		*cbGroup = (521 + 7) / 8;
 		break;
 
 	default:
-		return NULL;
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
 	EC_GROUP * ecgroup = EC_GROUP_new_by_curve_name(nidGroup);
@@ -700,19 +703,24 @@ bool ECDSA_Sign(const cn_cbor * pKey)
 }
 */
 
-bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
+bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
 	EC_KEY * eckey = NULL;
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	unsigned int cbDigest = sizeof(rgbDigest);
 	byte  * pbSig = NULL;
-	unsigned int cbSig;
+	const EVP_MD * digest;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
 #endif
 	cn_cbor * p = NULL;
+	ECDSA_SIG * psig = NULL;
+	cn_cbor_errback cbor_error;
+	int cbR;
+	byte rgbSig[66];
+	int cb;
 	
-	eckey = ECKey_From(pSigner->m_pkey, perr);
+	eckey = ECKey_From(pSigner->m_pkey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
 		if (p != NULL) CN_CBOR_FREE(p, context);
@@ -720,22 +728,83 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, const byte * rgbToSign, size_t cbToSi
 		return false;
 	}
 
-	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, EVP_sha256(), NULL);
+	switch (cbitDigest) {
+	case 256: digest = EVP_sha256(); break;
+	case 512: digest = EVP_sha512(); break;
+	case 384: digest = EVP_sha384(); break;
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
 
-	cbSig = ECDSA_size(eckey);
-	pbSig = COSE_CALLOC(cbSig, 1, context);
+	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, digest, NULL);
+
+	psig = ECDSA_do_sign(rgbDigest, cbDigest, eckey);
+	CHECK_CONDITION(psig != NULL, COSE_ERR_CRYPTO_FAIL);
+
+	pbSig = COSE_CALLOC(cbR, 2, context);
 	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(ECDSA_sign(0, rgbDigest, cbDigest, pbSig, &cbSig, eckey), COSE_ERR_CRYPTO_FAIL);
 
-	p = cn_cbor_data_create(pbSig, cbSig, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	cb = BN_bn2bin(psig->r, rgbSig);
+	CHECK_CONDITION(cb <= cbR, COSE_ERR_INVALID_PARAMETER);
+	memcpy(pbSig + cbR - cb, rgbSig, cb);
+
+	cb = BN_bn2bin(psig->s, rgbSig);
+	CHECK_CONDITION(cb <= cbR, COSE_ERR_INVALID_PARAMETER);
+	memcpy(pbSig + 2*cbR - cb, rgbSig, cb);
+
+	p = cn_cbor_data_create(pbSig, cbR*2, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
 
 	CHECK_CONDITION(_COSE_array_replace(&pSigner->m_message, p, INDEX_SIGNATURE, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 	
 	return true;
 }
 
+bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSign, size_t cbToSign, const byte * rgbSignature, size_t cbSignature, cose_errback * perr)
+{
+	EC_KEY * eckey = NULL;
+	byte rgbDigest[EVP_MAX_MD_SIZE];
+	unsigned int cbDigest = sizeof(rgbDigest);
+	const EVP_MD * digest;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
+#endif
+	cn_cbor * p = NULL;
+	ECDSA_SIG sig = { NULL, NULL };
+	int cbR;
+
+	eckey = ECKey_From(pSigner->m_pkey, &cbR, perr);
+	if (eckey == NULL) {
+	errorReturn:
+		if (sig.r != NULL) BN_free(sig.r);
+		if (sig.s != NULL) BN_free(sig.s);
+		if (p != NULL) CN_CBOR_FREE(p, context);
+		if (eckey != NULL) EC_KEY_free(eckey);
+		return false;
+	}
+
+	switch (cbitDigest) {
+	case 256: digest = EVP_sha256(); break;
+	case 512: digest = EVP_sha512(); break;
+	case 384: digest = EVP_sha384(); break;
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, digest, NULL);
+
+	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);
+	sig.r = BN_bin2bn(rgbSignature,(int) cbSignature/2, NULL);
+	sig.s = BN_bin2bn(rgbSignature+cbSignature/2, (int) cbSignature/2, NULL);
+
+	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, &sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL);
+
+	BN_free(sig.r);
+	BN_free(sig.s);
+
+	return true;
+}
 
 bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
 {

@@ -8,7 +8,7 @@ endif()
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test )
 
-add_executable ( cose_test test.c json.c encrypt.c context.c )
+add_executable ( cose_test test.c json.c encrypt.c sign.c context.c )
 
 target_link_libraries (cose_test PRIVATE cose-c )
 
@@ -31,6 +31,11 @@ enable_testing()
 add_test ( NAME cose_test COMMAND cose_test )
 add_test ( NAME mac-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Mac-02.json )
 add_test ( NAME mac-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Mac-04.json )
+
+add_test ( NAME sig-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-01.json )
+add_test ( NAME sig-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-02.json )
+add_test ( NAME sig-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-03.json )
+add_test ( NAME sig-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-04.json )
 
 add_test ( NAME hmac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-01.json )
 add_test ( NAME hmac-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-02.json )

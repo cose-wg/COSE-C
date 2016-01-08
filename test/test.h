@@ -17,6 +17,12 @@ int ValidateEnveloped(const cn_cbor * pControl);
 int EncryptMessage();
 int BuildEncryptMessage(const cn_cbor * pControl);
 
+//  sign.c
+
+int ValidateSigned(const cn_cbor * pControl);
+int SignMessage();
+int BuildSignedMessage(const cn_cbor * pControl);
+
 
 //  test.c
 enum {
@@ -28,6 +34,12 @@ enum {
 	Attributes_Enveloped_protected,
 	Attributes_Enveloped_unprotected,
 	Attributes_Enveloped_unsent,
+	Attributes_Sign_protected,
+	Attributes_Sign_unprotected,
+	Attributes_Sign_unsent,
+	Attributes_Signer_protected,
+	Attributes_Signer_unprotected,
+	Attributes_Signer_unsent,
 } whichSet;
 
 extern int CFails;
