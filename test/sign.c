@@ -148,7 +148,7 @@ int SignMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_SIGN)COSE_Decode(rgb, (int)cb, &typ, COSE_sign_object, NULL, NULL);
+	hEncObj = (HCOSE_SIGN)COSE_Decode(rgb, (int)cb, &typ, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 #if 0
 	int iSigner = 0;
