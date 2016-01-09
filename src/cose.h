@@ -80,10 +80,10 @@ typedef enum {
 	COSE_Algorithm_AES_GCM_192 = 2,
 	COSE_Algorithm_AES_GCM_256 = 3,
 
-	COSE_Algorithm_HMAC_256_256 = 4,
-	COSE_Algorithm_HMAC_384_384 = 5,
-	COSE_Algorithm_HMAC_512_512 = 6,
-	COSE_Algorithm_HMAC_256_64 = 7,
+	COSE_Algorithm_HMAC_256_64 = 4,
+	COSE_Algorithm_HMAC_256_256 = 5,
+	COSE_Algorithm_HMAC_384_384 = 6,
+	COSE_Algorithm_HMAC_512_512 = 7,
 
 	COSE_Algorithm_CBC_MAC_128_64 = 14,
 	COSE_Algorithm_CBC_MAC_256_64 = 15,
@@ -99,30 +99,36 @@ typedef enum {
 	COSE_Algorithm_AES_CCM_64_128_128 = 32,
 	COSE_Algorithm_AES_CCM_64_128_256 = 33,
 
-	COSE_Algorithm_ECDH_ES_HKDF_256 = 50,
-	COSE_Algorithm_ECDH_ES_HKDF_512 = 51,
-	COSE_Algorithm_ECDH_SS_HKDF_256 = 52,
-	COSE_Algorithm_ECDH_SS_HKDF_512 = 53,
+	COSE_Algorithm_ECDH_ES_HKDF_256 = -25,
+	COSE_Algorithm_ECDH_ES_HKDF_512 = -26,
+	COSE_Algorithm_ECDH_SS_HKDF_256 = -27,
+	COSE_Algorithm_ECDH_SS_HKDF_512 = -28,
 
-	COSE_Algorithm_ECDH_ES_A128KW = 54,
-	COSE_Algorithm_ECDH_ES_A192KW = 55,
-	COSE_Algorithm_ECDH_ES_A256KW = 56,
-	COSE_Algorithm_ECDH_SS_A128KW = 57,
-	COSE_Algorithm_ECDH_SS_A192KW = 58,
-	COSE_Algorithm_ECDH_SS_A256KW = 59,
+	COSE_Algorithm_ECDH_ES_A128KW = -29,
+	COSE_Algorithm_ECDH_ES_A192KW = -30,
+	COSE_Algorithm_ECDH_ES_A256KW = -31,
+	COSE_Algorithm_ECDH_SS_A128KW = -32,
+	COSE_Algorithm_ECDH_SS_A192KW = -33,
+	COSE_Algorithm_ECDH_SS_A256KW = -34,
 
 	COSE_Algorithm_AES_KW_128 = -3,
 	COSE_Algorithm_AES_KW_192 = -4,
 	COSE_Algorithm_AES_KW_256 = -5,
 
 	COSE_Algorithm_Direct = -6,
-	COSE_Algorithm_PS256 = -26,
-	COSE_Algorithm_PS384 = -27,
-	COSE_Algorithm_PS512 = -28,
+
+	COSE_Algorithm_Direct_HKDF_HMAC_SHA_256 = -10,
+	COSE_Algorithm_Direct_HKDF_HMAC_SHA_512 = -11,
+	COSE_Algorithm_Direct_HKDF_AES_128 = -12,
+	COSE_Algorithm_Direct_HKDF_AES_256 = -13,
+
+	COSE_Algorithm_PS256 = -8,
+	COSE_Algorithm_PS384 = -37,
+	COSE_Algorithm_PS512 = -38,
 
 	COSE_Algorithm_ECDSA_SHA_256 = -7,
-	COSE_Algorithm_ECDSA_SHA_384 = -8,
-	COSE_Algorithm_ECDSA_SHA_512 = -9,
+	COSE_Algorithm_ECDSA_SHA_384 = -35,
+	COSE_Algorithm_ECDSA_SHA_512 = -36,
 } COSE_Algorithms;
 
 typedef enum {

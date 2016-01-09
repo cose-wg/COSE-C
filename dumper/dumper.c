@@ -39,43 +39,52 @@ extern FOO Signer[];
 #define CBOR_CONTEXT_PARAM
 #endif
 
-FOO AlgorithmMap[36] = {
-	{ "ES512", CN_CBOR_INT, -9, NULL, 0, 0 },
-	{ "ES384", CN_CBOR_INT, -8, NULL, 0, 0 },
-	{"ES256", CN_CBOR_INT, -7, NULL, 0, 0 },
+FOO AlgorithmMap[37] = {
+	{ "ECHD-SS+A256KW", CN_CBOR_INT, -34, NULL, 0, 0 },
+	{ "ECHD-SS+A192KW", CN_CBOR_INT, -33, NULL, 0, 0 },
+	{ "ECHD-SS+A128KW", CN_CBOR_INT, -32, NULL, 0, 0 },
+	{ "ECHD-ES+A256KW", CN_CBOR_INT, -31, NULL, 0, 0 },
+	{ "ECHD-ES+A192KW", CN_CBOR_INT, -30, NULL, 0, 0 },
+	{ "ECHD-ES+A128KW", CN_CBOR_INT, -29, NULL, 0, 0 },
+	{ "ECDH-SS + HKDF-512", CN_CBOR_INT, -28, NULL, 0, 0 },
+	{ "ECDH-SS + HKDF-256", CN_CBOR_INT, -27, NULL, 0, 0 },
+	{ "ECDH-ES + HKDF-512", CN_CBOR_INT, -26, NULL, 0, 0 },
+	{ "ECDH-ES + HKDF-256", CN_CBOR_INT, -25, NULL, 0, 0 },
+
+	{ "ECDSA 512", CN_CBOR_INT, -9, NULL, 0, 0 },
+	{ "ECDSA 384", CN_CBOR_INT, -8, NULL, 0, 0 },
+	{"ECDSA 256", CN_CBOR_INT, -7, NULL, 0, 0 },
+
 	{"direct", CN_CBOR_INT, -6, NULL, 0, 0 },
+
 	{"A256KW", CN_CBOR_INT, -5, NULL, 0, 0 },
 	{"A192KW", CN_CBOR_INT, -4, NULL, 0, 0 },
 	{"A128KW", CN_CBOR_INT, -3, NULL, 0, 0 },
+
 	{"AES-GCM 128", CN_CBOR_UINT, 1, NULL, 0, 0 },
 	{"AES-GCM 192", CN_CBOR_UINT, 2, NULL, 0, 0 },
 	{"AES-GCM 256", CN_CBOR_UINT, 3, NULL, 0, 0 },
-	{"HMAC 256//256", CN_CBOR_UINT, 4, NULL, 0, 0 },
-	{"HMAC 384//384", CN_CBOR_UINT, 5, NULL, 0, 0 },
-	{"HMAC 512//512", CN_CBOR_UINT, 6, NULL, 0, 0 },
+
+	{"HMAC 256//64", CN_CBOR_UINT, 4, NULL, 0, 0},
+	{"HMAC 256//256", CN_CBOR_UINT, 5, NULL, 0, 0 },
+	{"HMAC 384//384", CN_CBOR_UINT, 6, NULL, 0, 0 },
+	{"HMAC 512//512", CN_CBOR_UINT, 8, NULL, 0, 0 },
+
 	{"AES-CCM-16-64-128", CN_CBOR_UINT, 10, NULL, 0, 0 },
 	{"AES-CCM-16-64-256", CN_CBOR_UINT, 11, NULL, 0, 0 },
 	{"AES-CCM-16-128-128", CN_CBOR_UINT, 12, NULL, 0, 0 },
 	{"AES-CCM-16-128-256", CN_CBOR_UINT, 13, NULL, 0, 0 },
 	{"AES-CBC-MAC-128//64", CN_CBOR_UINT, 14, NULL, 0, 0},
 	{"AES-CBC-MAC-256//64", CN_CBOR_UINT, 15, NULL, 0, 0},
+
 	{"ChaCha20//Poly1305", CN_CBOR_UINT, 24, NULL, 0, 0 },
+
 	{"AES-CBC-MAC-128/128", CN_CBOR_UINT, 25, NULL, 0, 0},
 	{"AES-CBC-MAC-256/128", CN_CBOR_UINT, 26, NULL, 0, 0},
 	{"AES-CCM-64-64-128", CN_CBOR_UINT, 30, NULL, 0, 0 },
 	{"AES-CCM-64-64-256", CN_CBOR_UINT, 31, NULL, 0, 0 },
 	{"AES-CCM-64-128-128", CN_CBOR_UINT, 32, NULL, 0, 0 },
 	{"AES-CCM-64-128-256", CN_CBOR_UINT, 33, NULL, 0, 0 },
-	{"ECDH-ES + HKDF-256", CN_CBOR_UINT, 50, NULL, 0, 0 },
-	{"ECDH-ES + HKDF-512", CN_CBOR_UINT, 51, NULL, 0, 0 },
-	{"ECDH-SS + HKDF-256", CN_CBOR_UINT, 52, NULL, 0, 0 },
-	{"ECDH-SS + HKDF-512", CN_CBOR_UINT, 53, NULL, 0, 0 },
-	{"ECHD-ES+A128KW", CN_CBOR_UINT, 54, NULL, 0, 0 },
-	{ "ECHD-ES+A192KW", CN_CBOR_UINT, 55, NULL, 0, 0 },
-	{ "ECHD-ES+A256KW", CN_CBOR_UINT, 56, NULL, 0, 0 },
-	{ "ECHD-SS+A128KW", CN_CBOR_UINT, 57, NULL, 0, 0 },
-	{ "ECHD-SS+A192KW", CN_CBOR_UINT, 58, NULL, 0, 0 },
-	{ "ECHD-SS+A256KW", CN_CBOR_UINT, 59, NULL, 0, 0 },
 };
 
 FOO KeyMap[9] = {
@@ -168,12 +177,22 @@ FOO SignBody[5] = {
 	{ "signatures", CN_CBOR_ARRAY, 0, &Signers, 1, 0 }
 };
 
+FOO Sign0Body[4] = {
+	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
+	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
+	{ "payload", CN_CBOR_BYTES, 0, NULL, 0, 0 }
+};
+
 FOO EnvelopedMessage = {
 	NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0
 };
 FOO SignedMessage = {
 	NULL, CN_CBOR_ARRAY, 0, SignBody, _countof(SignBody), 0
 };
+FOO Sign0Message = {
+	NULL, CN_CBOR_ARRAY, 0, Sign0Body, _countof(Sign0Body), 0
+};
+
 FOO MacMessage = {
 	NULL, CN_CBOR_ARRAY, 0, MacBody, _countof(MacBody), 0
 };
@@ -192,6 +211,10 @@ FOO EnvelopedMessageWithTag = {
 
 FOO SignedMessageWithTag = {
 	NULL, CN_CBOR_TAG, 999, &SignedMessage, 1, 0
+};
+
+FOO Sign0MessageWithTag = {
+	NULL, CN_CBOR_TAG, 997, &Sign0Message, 1, 0
 };
 
 FOO MacMessageWithTag = {
@@ -573,7 +596,8 @@ int main(int argc, char ** argv)
 			case 992: root = &EnvelopedMessageWithTag; break;
 			case 993: root = &EncryptedMessageWithTag; break;
 			case 994: root = &MacMessageWithTag; break;
-			case 997: root = &Mac0MessageWithTag; break;
+			case 996: root = &Mac0MessageWithTag; break;
+			case 997: root = &Sign0MessageWithTag; break;
 			}
 		}
 	}
