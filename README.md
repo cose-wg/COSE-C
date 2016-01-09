@@ -1,8 +1,6 @@
-[![Build Status](https://travis-ci.org/cose-wg/COSE-C.svg?branch=master)](https://travis-ci.org/cose-wg/COSE-C)
+
+# COSE-C Implementation [![Build Status](https://travis-ci.org/cose-wg/COSE-C.svg?branch=master)](https://travis-ci.org/cose-wg/COSE-C)
 [![Coverage Status](https://coveralls.io/repos/cose-wg/COSE-C/badge.svg?branch=master&service=github)](https://coveralls.io/github/cose-wg/COSE-C?branch=master)
-
-
-# COSE-C Implementation
 
 This project is a C implementation of the IETF CBOR Encoded Mesage Syntax (COSE).
 There are currently two versions of the COSE document that can be read.
@@ -27,4 +25,15 @@ The project requires the use of cn-cbor(https://github.com/cabo/cn-cbor) in orde
 
 The memory model used in this library is a mess.  This is in large part because the memory model of cn-cbor is still poorly understood.
 
-This needs to get figured out in the near future.
+There are three different memory models that can be used with cn-cbor and cose-c, at this time only one of them is going to produce good results for long running systems.
+
+The cn-cbor project was built with a specific memory model, but did not limit itself to that memory model when writing the code.
+It was originally designed for working on small devices that use a block allocater with suballocations done from that allocated block.
+This allows for all of the items allocated in that large block to be freed in a single operation when everything is done.
+
+* Build without USE_CONTEXT: This model uses standard calloc/free and suffers from the cn-cbor memory model problems.
+
+* Build with USE_CONTEXT and pass in NULL:  This model is equivalent to the previous configuration.
+
+* Build with USE_CONTEXT and pass in a block allocator:  This model works, but requires that you provide the allocator.
+
