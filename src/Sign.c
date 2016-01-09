@@ -36,12 +36,7 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor * cbor, COSE_SignMessage * pIn, C
 	if (perr == NULL) perr = &error;
 
 	if (pobj == NULL) pobj = (COSE_SignMessage *)COSE_CALLOC(1, sizeof(COSE_SignMessage), context);
-	if (pobj == NULL) {
-		perr->err = COSE_ERR_OUT_OF_MEMORY;
-	errorReturn:
-		if ((pIn == NULL) && (pobj != NULL)) COSE_FREE(pobj, context);
-		return NULL;
-	}
+	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	if (!_COSE_Init_From_Object(&pobj->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
@@ -50,12 +45,11 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor * cbor, COSE_SignMessage * pIn, C
 	pSigners = _COSE_arrayget_int(&pobj->m_message, INDEX_SIGNERS);
 	CHECK_CONDITION(pSigners != NULL, COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(pSigners->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(pSigners->length > 0, COSE_ERR_INVALID_PARAMETER); // Must be at least one signer
 
 	pSigners = pSigners->first_child;
-	CHECK_CONDITION(pSigners != NULL, COSE_ERR_INVALID_PARAMETER);  // Must be at least one signer
-
 	do {
-		COSE_SignerInfo * pInfo = _COSE_SignerInfo_Init_From_Object(pSigners, CBOR_CONTEXT_PARAM_COMMA perr);
+		COSE_SignerInfo * pInfo = _COSE_SignerInfo_Init_From_Object(pSigners, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (pInfo == NULL) goto errorReturn;
 
 		pInfo->m_signerNext = pobj->m_signerFirst;
@@ -64,6 +58,10 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor * cbor, COSE_SignMessage * pIn, C
 	} while (pSigners != NULL);
 
 	return(HCOSE_SIGN)pobj;
+
+errorReturn:
+	if ((pIn == NULL) && (pobj != NULL)) COSE_FREE(pobj, context);
+	return NULL;
 }
 
 bool COSE_Sign_Free(HCOSE_SIGN h)
@@ -71,25 +69,37 @@ bool COSE_Sign_Free(HCOSE_SIGN h)
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context context;
 #endif
+	COSE_SignMessage * pMessage = (COSE_SignMessage *)h;
 
 	if (!IsValidSignHandle(h)) return false;
 
+	//  Check reference counting
+	if (pMessage->m_message.m_refCount > 1) {
+		pMessage->m_message.m_refCount--;
+		return true;
+	}
+
 #ifdef USE_CBOR_CONTEXT
-	context = ((COSE_SignMessage *)h)->m_message.m_allocContext;
+	context = pMessage->m_message.m_allocContext;
 #endif
 
-	_COSE_Sign_Release((COSE_SignMessage *)h);
+	_COSE_Sign_Release(pMessage);
 
-	COSE_FREE((COSE_SignMessage *)h, &context);
+	COSE_FREE(pMessage, &context);
 
 	return true;
 }
 
 void _COSE_Sign_Release(COSE_SignMessage * p)
 {
-	// if (p->pbContent != NULL) COSE_FREE(p->pbContent, &p->m_message.m_allocContext);
-	//	if (p->pbIV != NULL) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
-	// if (p->pbKey != NULL) COSE_FREE(p->pbKey, &p->m_message.m_allocContext);
+	COSE_SignerInfo * pSigner;
+	COSE_SignerInfo * pSigner2;
+
+	for (pSigner = p->m_signerFirst; pSigner != NULL; pSigner = pSigner2)
+	{
+		pSigner2 = pSigner->m_signerNext;
+		_COSE_SignerInfo_Free(pSigner);
+	}
 
 	_COSE_Release(&p->m_message);
 }
@@ -127,7 +137,6 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	cn_cbor_context * context = NULL;
 #endif
 	COSE_SignMessage * pMessage = (COSE_SignMessage *)hSign;
-	COSE_SignerInfo * pSigner = NULL;
 	const cn_cbor * cbor;
 	cn_cbor * cbor2 = NULL;
 	HCOSE_SIGNER hSigner = NULL;
@@ -266,7 +275,7 @@ bool COSE_Sign_AddSigner(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * 
 	}
 
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pSigners, pSigner->m_message.m_cbor, &cbor_error), cbor_error);
-
+	pSigner->m_message.m_refCount++;
 
 	return true;
 
@@ -294,4 +303,28 @@ bool COSE_Sign_map_put(HCOSE_SIGN h, int key, cn_cbor * value, int flags, cose_e
 
 	return _COSE_map_put(&((COSE_SignMessage *)h)->m_message, key, value, flags, perror);
 }
+
+HCOSE_SIGNER COSE_Sign_GetSigner(HCOSE_SIGN cose, int iSigner, cose_errback * perr)
+{
+	int i;
+	COSE_SignerInfo * p;
+
+	if (!IsValidSignHandle(cose)) {
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		return NULL;
+	}
+
+	p = ((COSE_SignMessage *)cose)->m_signerFirst;
+	for (i = 0; i < iSigner; i++) {
+		if (p == NULL) {
+			if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+			return NULL;
+		}
+		p = p->m_signerNext;
+	}
+	p->m_message.m_refCount++;
+
+	return (HCOSE_SIGNER)p;
+}
+
 
