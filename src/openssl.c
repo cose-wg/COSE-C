@@ -16,7 +16,7 @@
 #include <openssl/rand.h>
 
 
-bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
@@ -72,20 +72,20 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	TSize /= 8; // Comes in in bits not bytes.
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, (LSize/8), 0), COSE_ERR_DECRYPT_FAILED);
 	// CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, NSize, 0), COSE_ERR_DECRYPT_FAILED);
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *) &pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *) &pbCrypto[cbCrypto - TSize]), COSE_ERR_DECRYPT_FAILED);
 
 	CHECK_CONDITION(EVP_DecryptInit(&ctx, 0, pbKey, rgbIV), COSE_ERR_DECRYPT_FAILED);
 
 
-	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &cbOut, NULL, (int) pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &cbOut, NULL, (int) cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
-	cbOut = (int)  pcose->cbContent - TSize;
+	cbOut = (int)  cbCrypto - TSize;
 	rgbOut = (byte *)COSE_CALLOC(cbOut, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &outl, pbAuthData, cbAuthData), COSE_ERR_DECRYPT_FAILED);
 
-	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pcose->pbContent, (int) pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pbCrypto, (int) cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
@@ -195,7 +195,7 @@ errorReturn:
 	return false;
 }
 
-bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
@@ -251,7 +251,7 @@ bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const 
 
 	CHECK_CONDITION(EVP_DecryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_DECRYPT_FAILED);
 
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *)&pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *)&pbCrypto[cbCrypto - TSize]), COSE_ERR_DECRYPT_FAILED);
 
 	CHECK_CONDITION(EVP_DecryptInit(&ctx, 0, pbKey, rgbIV), COSE_ERR_DECRYPT_FAILED);
 	
@@ -261,17 +261,17 @@ bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const 
 
 	//  
 
-	cbOut = (int)pcose->cbContent - TSize;
+	cbOut = (int)cbCrypto - TSize;
 	rgbOut = (byte *)COSE_CALLOC(cbOut, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	//  Process content
 
-	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pcose->pbContent, (int)pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pbCrypto, (int)cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
 	//  Process Tag
 
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, TSize, (byte *) pcose->pbContent + pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, TSize, (byte *)pbCrypto + cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
 	//  Check the result
 

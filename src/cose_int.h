@@ -155,7 +155,7 @@ extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CB
 extern bool _COSE_Mac_Release(COSE_MacMessage * p);
 
 
-#define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}
+#define CHECK_CONDITION(condition, error) { if (!(condition)) { /*assert(false);*/ perr->err = error; goto errorReturn;}}
 #define FAIL_CONDITION(error) { assert(false); perr->err = error; goto errorReturn;}
 #define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { assert(false); perr->err = _MapFromCBOR(error); goto errorReturn;}}
 

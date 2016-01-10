@@ -8,8 +8,8 @@
 * @param[in]   int          Size of authenticated data structure
 * @return                   Did the function succeed?
 */
-bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbitKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr);
 
 /**

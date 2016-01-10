@@ -45,7 +45,6 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn,
 {
 	COSE_Encrypt * pobj = pIn;
 	cn_cbor * pRecipients = NULL;
-	cn_cbor * tmp;
 	cose_errback error = { 0 };
 	if (perr == NULL) perr = &error;
 
@@ -59,13 +58,6 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn,
 
 	if (!_COSE_Init_From_Object(&pobj->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
-	}
-
-	tmp = _COSE_arrayget_int(&pobj->m_message, INDEX_BODY);
-	if (tmp != NULL) {
-		CHECK_CONDITION(tmp->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
-		pobj->cbContent = tmp->length;
-		pobj->pbContent = (byte *) tmp->v.str;
 	}
 
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_RECIPIENTS);
@@ -329,33 +321,36 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, in
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
 	CHECK_CONDITION((cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData), COSE_ERR_CBOR);
 
+	cn = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
+	CHECK_CONDITION(cn != NULL, COSE_ERR_INVALID_PARAMETER);
+
 	switch (alg) {
 #ifdef INCLUDE_AES_CCM
 	case COSE_Algorithm_AES_CCM_16_64_128:
 	case COSE_Algorithm_AES_CCM_16_64_256:
-		if (!AES_CCM_Decrypt(pcose, 64, 16, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
+		if (!AES_CCM_Decrypt(pcose, 64, 16, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 
 	case COSE_Algorithm_AES_CCM_16_128_128:
 	case COSE_Algorithm_AES_CCM_16_128_256:
-		if (!AES_CCM_Decrypt(pcose, 128, 16, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
+		if (!AES_CCM_Decrypt(pcose, 128, 16, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_64_128:
 	case COSE_Algorithm_AES_CCM_64_64_256:
-		if (!AES_CCM_Decrypt(pcose, 64, 64, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
+		if (!AES_CCM_Decrypt(pcose, 64, 64, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_128_128:
 	case COSE_Algorithm_AES_CCM_64_128_256:
-		if (!AES_CCM_Decrypt(pcose, 128, 64, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
+		if (!AES_CCM_Decrypt(pcose, 128, 64, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 #endif // INCLUDE_AES_CCM
 
 	case COSE_Algorithm_AES_GCM_128:
 	case COSE_Algorithm_AES_GCM_192:
 	case COSE_Algorithm_AES_GCM_256:
-		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, pbAuthData, cbAuthData, perr)) goto error;
+		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 
 	default:
