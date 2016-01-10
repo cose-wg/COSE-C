@@ -27,10 +27,10 @@ bool AES_GCM_Encrypt(COSE_Encrypt * pcose, int KeySize,const byte * pbAuthData, 
 bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr);
 
 
-extern bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+extern bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 
 extern bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 
 /**
 * Perform an HMAC Creation operation
@@ -44,7 +44,7 @@ extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSi
 * @return						Did the function succeed?
 */
 bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
 
 /**
 * Perform a signature operation

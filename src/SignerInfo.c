@@ -211,13 +211,8 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 {
 	cn_cbor_errback cbor_error;
 	byte * pbAuthData = NULL;
-	int cbitKey = 0;
-	byte * pbKeyIn = NULL;
-
 	int alg;
 	const cn_cbor * cn = NULL;
-
-	byte * pbKey = pbKeyIn;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
 #endif
@@ -299,20 +294,12 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if ((pbKey != NULL) && (pbKeyIn == NULL)) {
-		memset(pbKey, 0xff, cbitKey / 8);
-		COSE_FREE(pbKey, context);
-	}
 
 	return true;
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if ((pbKey != NULL) && (pbKeyIn == NULL)) {
-		memset(pbKey, 0xff, cbitKey / 8);
-		COSE_FREE(pbKey, context);
-	}
 
 	return false;
 }

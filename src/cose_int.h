@@ -152,7 +152,7 @@ extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pS
 
 //  Mac-ed items
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
-extern void _COSE_Mac_Release(COSE_MacMessage * p);
+extern bool _COSE_Mac_Release(COSE_MacMessage * p);
 
 
 #define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}

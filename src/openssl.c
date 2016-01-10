@@ -436,7 +436,7 @@ errorReturn:
 	return false;
 }
 
-bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
 	EVP_CIPHER_CTX ctx;
@@ -446,7 +446,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const
 	bool f = false;
 	unsigned int i;
 
-	switch (KeySize) {
+	switch (cbitKey) {
 	case 128:
 		pcipher = EVP_aes_128_cbc();
 		break;
@@ -462,7 +462,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const
 	//  Setup and run the OpenSSL code
 
 	EVP_CIPHER_CTX_init(&ctx);
-	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pcose->pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
 
 	TSize /= 8;
 
@@ -575,7 +575,7 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbA
 	return true;
 }
 
-bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
 	const EVP_MD * pmd = NULL;
@@ -599,7 +599,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(HMAC_Init(&ctx, pcose->pbKey, (int) pcose->cbKey, pmd), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(HMAC_Init(&ctx, pbKey, cbitKey/8, pmd), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
@@ -616,7 +616,6 @@ errorReturn:
 	COSE_FREE(rgbOut, context);
 	HMAC_cleanup(&ctx);
 	return false;
-
 }
 
 
