@@ -805,17 +805,17 @@ bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToS
 	return true;
 }
 
-bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
+bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, const byte * pbCipherText, size_t cbCipherText, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
 {
 	byte rgbOut[256 / 8];
 	AES_KEY key;
 
 	CHECK_CONDITION(AES_set_decrypt_key(pbKeyIn, (int)cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
 
-	CHECK_CONDITION(AES_unwrap_key(&key, NULL, rgbOut, pcose->pbContent, (unsigned int) pcose->cbContent), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(AES_unwrap_key(&key, NULL, rgbOut,pbCipherText, cbCipherText), COSE_ERR_CRYPTO_FAIL);
 
-	memcpy(pbKeyOut, rgbOut, pcose->cbContent - 8);
-	*pcbKeyOut = (int) (pcose->cbContent - 8);
+	memcpy(pbKeyOut, rgbOut, cbCipherText - 8);
+	*pcbKeyOut = (int) (cbCipherText - 8);
 
 	return true;
 errorReturn:

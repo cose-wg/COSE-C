@@ -116,6 +116,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 	byte * pbProtected = NULL;
 	ssize_t cbProtected;
 	COSE_Encrypt * pcose = &pRecip->m_encrypt;
+	cn_cbor * cnBody = NULL;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pcose->m_message.m_allocContext;
@@ -177,6 +178,9 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 		if (_COSE_Recipient_decrypt(pRecip2, cbitKey, pbKey, perr)) break;
 	}
 
+	cnBody = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
+	CHECK_CONDITION(cnBody != NULL, COSE_ERR_INVALID_PARAMETER);
+
 	switch (alg) {
 	case COSE_Algorithm_AES_KW_128:
 	case COSE_Algorithm_AES_KW_256:
@@ -186,11 +190,12 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 			cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
 			CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
-		return 			AES_KW_Decrypt(pcose, cn->v.bytes, cn->length*8, pbKey, &x, perr);
+			if (!AES_KW_Decrypt(pcose, cn->v.bytes, cn->length * 8, cnBody->v.bytes, cnBody->length, pbKey, &x, perr)) goto errorReturn;
 		}
-		CHECK_CONDITION(pcose->cbKey == (unsigned int)cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
-		memcpy(pbKey, pcose->pbKey, pcose->cbKey);
-		return true;
+		else {
+			CHECK_CONDITION(pcose->cbKey == (unsigned int)cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
+			memcpy(pbKey, pcose->pbKey, pcose->cbKey);
+		}
 
 		break;
 
