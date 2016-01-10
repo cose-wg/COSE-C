@@ -114,11 +114,10 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, const byte * pbKey, size_t cbKe
 	cn_cbor_context * context;
 #endif
 	byte * pbAuthData = NULL;
-	ssize_t cbAuthData;
+	size_t cbAuthData;
 	cn_cbor * pAuthData = NULL;
 	byte * pbProtected = NULL;
 	ssize_t cbProtected;
-	cn_cbor * ptmp = NULL;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pcose->m_message.m_allocContext;
@@ -187,28 +186,7 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, const byte * pbKey, size_t cbKe
 	}
 
 	//  Build authenticated data
-	pbAuthData = NULL;
-	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
-
-	ptmp = cn_cbor_string_create("Encrypted", CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
-	cn_cbor_array_append(pAuthData, ptmp, NULL);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(pbProtected, cbProtected, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
-	cn_cbor_array_append(pAuthData, ptmp, NULL);
-	pbProtected = NULL;
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
-	cn_cbor_array_append(pAuthData, ptmp, NULL);
-
-	cbAuthData = cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), pAuthData);
-	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
-	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION((cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData), COSE_ERR_CBOR);
+	if (!_COSE_Encrypt_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, "Encrypted", perr)) goto errorReturn;
 
 	cn = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -267,7 +245,6 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 	cn_cbor_context * context = NULL;
 #endif
 	COSE_Encrypt * pcose = (COSE_Encrypt *) h;
-	cn_cbor_errback cbor_error;
 
 	CHECK_CONDITION(IsValidEncryptHandle(h), COSE_ERR_INVALID_PARAMETER);
 
@@ -314,30 +291,9 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 	if (cbProtected == NULL) goto errorReturn;
 
 	//  Build authenticated data
-	ssize_t cbAuthData = 0;
-	pbAuthData = NULL;
-	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(pAuthData != NULL, cbor_error);
+	size_t cbAuthData = 0;
 
-	ptmp = cn_cbor_string_create("Encrypted", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(cbProtected->v.bytes, (int) cbProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	cbAuthData = cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), pAuthData);
-	pbAuthData = (byte *) COSE_CALLOC(cbAuthData, 1, context);
-	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+	if (!_COSE_Encrypt_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, "Encrypted", perr)) goto errorReturn;
 
 	switch (alg) {
 #ifdef INCLUDE_AES_CCM

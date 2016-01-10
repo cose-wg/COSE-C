@@ -210,11 +210,10 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	cn_cbor_context * context;
 #endif
 	byte * pbAuthData = NULL;
-	ssize_t cbAuthData;
+	size_t cbAuthData;
 	cn_cbor * pAuthData = NULL;
 	byte * pbProtected = NULL;
 	ssize_t cbProtected;
-	cn_cbor * ptmp = NULL;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pcose->m_message.m_allocContext;
@@ -298,28 +297,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	}
 
 	//  Build authenticated data
-	pbAuthData = NULL;
-	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	ptmp = cn_cbor_string_create("Enveloped", CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
-	cn_cbor_array_append(pAuthData, ptmp, NULL);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(pbProtected, cbProtected, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
-	cn_cbor_array_append(pAuthData, ptmp, NULL);
-	pbProtected = NULL;
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
-	cn_cbor_array_append(pAuthData, ptmp, NULL);
-
-	cbAuthData = cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), pAuthData);
-	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
-	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION((cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData), COSE_ERR_CBOR);
+	if (!_COSE_Encrypt_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, "Enveloped", perr)) goto errorReturn;
 
 	cn = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -381,7 +360,6 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	cn_cbor_context * context = NULL;
 #endif
 	COSE_Enveloped * pcose = (COSE_Enveloped *) h;
-	cn_cbor_errback cbor_error;
 
 	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_PARAMETER);
 
@@ -453,74 +431,35 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	if (cbProtected == NULL) goto errorReturn;
 
 	//  Build authenticated data
-	ssize_t cbAuthData = 0;
-	pbAuthData = NULL;
-	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(pAuthData != NULL, cbor_error);
 
-	ptmp = cn_cbor_string_create("Enveloped", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(cbProtected->v.bytes, (int) cbProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	cbAuthData = cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), pAuthData);
-	pbAuthData = (byte *) COSE_CALLOC(cbAuthData, 1, context);
-	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+	size_t cbAuthData = 0;
+	if (!_COSE_Encrypt_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, "Enveloped", perr)) goto errorReturn;
 
 	switch (alg) {
 #ifdef INCLUDE_AES_CCM
 	case COSE_Algorithm_AES_CCM_16_64_128:
-		if (!AES_CCM_Encrypt(pcose, 64, 16, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_16_64_256:
 		if (!AES_CCM_Encrypt(pcose, 64, 16, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_16_128_128:
-		if (!AES_CCM_Encrypt(pcose, 128, 16, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_16_128_256:
 		if (!AES_CCM_Encrypt(pcose, 128, 16, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_64_128:
-		if (!AES_CCM_Encrypt(pcose, 64, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_64_64_256:
 		if (!AES_CCM_Encrypt(pcose, 64, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_128_128:
-		if (!AES_CCM_Encrypt(pcose, 128, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_64_128_256:
 		if (!AES_CCM_Encrypt(pcose, 128, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 #endif
 
 	case COSE_Algorithm_AES_GCM_128:
-		if (!AES_GCM_Encrypt(pcose, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_GCM_192:
-		if (!AES_GCM_Encrypt(pcose, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_GCM_256:
 		if (!AES_GCM_Encrypt(pcose, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
@@ -634,5 +573,56 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, c
 	return true;
 
 errorReturn:
+	return false;
+}
+
+bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, const char * szContext, cose_errback * perr)
+{
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context = &pMessage->m_allocContext;
+#endif
+	cn_cbor_errback cbor_error;
+	byte  * pbAuthData;
+	size_t cbAuthData;
+	cn_cbor * pAuthData;
+	cn_cbor * pItem;
+	cn_cbor * ptmp = NULL;
+
+	//  Build authenticated data
+	pbAuthData = NULL;
+	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(pAuthData != NULL, cbor_error);
+
+	ptmp = cn_cbor_string_create(szContext, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+	ptmp = NULL;
+
+	pItem = _COSE_arrayget_int(pMessage, INDEX_PROTECTED);
+	CHECK_CONDITION(pItem != NULL, COSE_ERR_INVALID_PARAMETER);
+	ptmp = cn_cbor_data_create(pItem->v.bytes, (int)pItem->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+	ptmp = NULL;
+
+	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+	ptmp = NULL;
+
+	cbAuthData = cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), pAuthData);
+	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
+	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+
+	*ppbAAD = pbAuthData;
+	*pcbAAD = cbAuthData;
+
+	return true;
+
+errorReturn:
+	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
+	if (ptmp != NULL) CN_CBOR_FREE(ptmp, NULL);
+	if (pAuthData != NULL) CN_CBOR_FREE(pAuthData, context);
 	return false;
 }

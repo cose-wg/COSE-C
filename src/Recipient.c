@@ -111,10 +111,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 	cn_cbor_context * context;
 #endif
 	byte * pbAuthData = NULL;
-	ssize_t cbAuthData;
 	cn_cbor * pAuthData = NULL;
 	byte * pbProtected = NULL;
-	ssize_t cbProtected;
 	COSE_Enveloped * pcose = &pRecip->m_encrypt;
 	cn_cbor * cnBody = NULL;
 
@@ -124,7 +122,6 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 
 	cn = _COSE_map_get_int(&pRecip->m_encrypt.m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn == NULL) {
-	error:
 	errorReturn:
 		if (pbProtected != NULL) COSE_FREE(pbProtected, context);
 		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
