@@ -342,46 +342,28 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 	switch (alg) {
 #ifdef INCLUDE_AES_CCM
 	case COSE_Algorithm_AES_CCM_16_64_128:
-		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_16_64_256:
 		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_16_128_128:
-		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_16_128_256:
 		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_64_128:
-		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_64_64_256:
 		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_AES_CCM_64_128_128:
-		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_CCM_64_128_256:
 		if (!AES_CCM_Encrypt((COSE_Enveloped *)pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 #endif
 
 	case COSE_Algorithm_AES_GCM_128:
-		if (!AES_GCM_Encrypt((COSE_Enveloped *)pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_GCM_192:
-		if (!AES_GCM_Encrypt((COSE_Enveloped *)pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_AES_GCM_256:
 		if (!AES_GCM_Encrypt((COSE_Enveloped *)pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
