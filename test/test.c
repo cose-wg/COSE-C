@@ -108,6 +108,20 @@ byte fromHex(char c)
 	exit(1);
 }
 
+
+byte * FromHex(const char * rgch, int cch)
+{
+	byte * pb = malloc(cch / 2);
+	const char * pb2 = rgch;
+	int i;
+
+	for (i = 0; i < cch; i += 2) {
+		pb[i / 2] = fromHex(pb2[i]) * 16 + fromHex(pb2[i + 1]);
+	}
+
+	return pb;
+}
+
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 {
 	const cn_cbor * pOutputs = cn_cbor_mapget_string(pControl, "output");
@@ -181,6 +195,10 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 			keyNew = COSE_Header_Content_Type;
 			pValueNew = cn_cbor_clone(pValue);;
 		}
+		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
+			keyNew = COSE_Header_IV;
+			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, pValue->length), (int) pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
+		}
 		else {
 			continue;
 		}
@@ -207,15 +225,27 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 			break;
 
 		case Attributes_Enveloped_protected:
-			COSE_Encrypt_map_put((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
 			break;
 
 		case Attributes_Enveloped_unprotected:
-			COSE_Encrypt_map_put((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
 			break;
 
 		case Attributes_Enveloped_unsent:
-			COSE_Encrypt_map_put((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
+		case Attributes_Encrypt_protected:
+			COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Encrypt_unprotected:
+			COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Encrypt_unsent:
+			COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
 			break;
 
 		case Attributes_Sign_protected:
@@ -370,11 +400,15 @@ int main(int argc, char ** argv)
 		}
 		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
 			ValidateEnveloped(pControl);
-			BuildEncryptMessage(pControl);
+			BuildEnvelopedMessage(pControl);
 		}
 		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 			ValidateSigned(pControl);
 			BuildSignedMessage(pControl);
+		}
+		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+			ValidateEncrypt(pControl);
+			BuildEncryptMessage(pControl);
 		}
 	}
 	else {

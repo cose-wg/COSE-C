@@ -40,17 +40,17 @@ bool COSE_Recipient_Free(HCOSE_RECIPIENT hRecipient)
 }
 
 
-HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, cose_errback * perr)
+HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient, cose_errback * perr)
 {
 	int i;
 	COSE_RecipientInfo * p;
 
-	if (!IsValidEncryptHandle(cose)) {
+	if (!IsValidEnvelopedHandle(cose)) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
 		return NULL;
 	}
 
-	p = ((COSE_Encrypt *)cose)->m_recipientFirst;
+	p = ((COSE_Enveloped *)cose)->m_recipientFirst;
 	for (i = 0; i < iRecipient; i++) {
 		if (p == NULL) {
 			if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
@@ -78,7 +78,7 @@ COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor * cbor, CBOR_CONTE
 	}
 #endif
 
-	if (_COSE_Encrypt_Init_From_Object(cbor, &pRecipient->m_encrypt, CBOR_CONTEXT_PARAM_COMMA perr) == NULL) {
+	if (_COSE_Enveloped_Init_From_Object(cbor, &pRecipient->m_encrypt, CBOR_CONTEXT_PARAM_COMMA perr) == NULL) {
 		goto errorReturn;
 	}
 
@@ -111,11 +111,9 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 	cn_cbor_context * context;
 #endif
 	byte * pbAuthData = NULL;
-	ssize_t cbAuthData;
 	cn_cbor * pAuthData = NULL;
 	byte * pbProtected = NULL;
-	ssize_t cbProtected;
-	COSE_Encrypt * pcose = &pRecip->m_encrypt;
+	COSE_Enveloped * pcose = &pRecip->m_encrypt;
 	cn_cbor * cnBody = NULL;
 
 #ifdef USE_CBOR_CONTEXT
@@ -124,7 +122,6 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 
 	cn = _COSE_map_get_int(&pRecip->m_encrypt.m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn == NULL) {
-	error:
 	errorReturn:
 		if (pbProtected != NULL) COSE_FREE(pbProtected, context);
 		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
@@ -190,7 +187,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int cbitKey, byte * pb
 			cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
 			CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
-			if (!AES_KW_Decrypt(pcose, cn->v.bytes, cn->length * 8, cnBody->v.bytes, cnBody->length, pbKey, &x, perr)) goto errorReturn;
+			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, cn->v.bytes, cn->length * 8, cnBody->v.bytes, cnBody->length, pbKey, &x, perr)) goto errorReturn;
 		}
 		else {
 			CHECK_CONDITION(pcose->cbKey == (unsigned int)cbitKey / 8, COSE_ERR_INVALID_PARAMETER);

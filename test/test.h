@@ -15,6 +15,8 @@ cn_cbor_context * allocator;
 
 int ValidateEnveloped(const cn_cbor * pControl);
 int EncryptMessage();
+int BuildEnvelopedMessage(const cn_cbor * pControl);
+int ValidateEncrypt(const cn_cbor * pControl);
 int BuildEncryptMessage(const cn_cbor * pControl);
 
 //  sign.c
@@ -39,6 +41,9 @@ enum {
 	Attributes_Enveloped_protected,
 	Attributes_Enveloped_unprotected,
 	Attributes_Enveloped_unsent,
+	Attributes_Encrypt_protected,
+	Attributes_Encrypt_unprotected,
+	Attributes_Encrypt_unsent,
 	Attributes_Sign_protected,
 	Attributes_Sign_unprotected,
 	Attributes_Sign_unsent,

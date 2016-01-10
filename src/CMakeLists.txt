@@ -9,6 +9,7 @@ set ( cose_sources
 	Sign.c
 	cbor.c
 	Encrypt.c
+        Encrypt0.c
 	Message.c
 	Recipient.c
 	SignerInfo.c

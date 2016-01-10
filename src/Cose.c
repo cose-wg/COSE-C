@@ -170,7 +170,7 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 
 	switch (*ptype) {
 	case COSE_enveloped_object:
-		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+		h = (HCOSE)_COSE_Enveloped_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
@@ -185,6 +185,13 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 
 	case COSE_mac_object:
 		h = (HCOSE)_COSE_Mac_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+		if (h == NULL) {
+			goto errorReturn;
+		}
+		break;
+
+	case COSE_encrypt_object:
+		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
@@ -366,4 +373,49 @@ cose_error _MapFromCBOR(cn_cbor_errback err)
 	default:
 		return COSE_ERR_CBOR;
 	}
+}
+
+void _COSE_InsertInList(COSE ** root, COSE * newMsg)
+{
+	if (*root == NULL) {
+		*root = newMsg;
+		return;
+	}
+
+	newMsg->m_handleList = *root;
+	*root = newMsg;
+	return;
+}
+
+bool _COSE_IsInList(COSE * root, COSE * thisMsg)
+{
+	COSE * walk;
+
+	if (root == NULL) return false;
+	if (thisMsg == NULL) return false;
+
+	for (walk = root; walk != NULL; walk = walk->m_handleList) {
+		if (walk == thisMsg) return true;		
+	}
+	return false;
+}
+
+void _COSE_RemoveFromList(COSE ** root, COSE * thisMsg)
+{
+	COSE * walk;
+
+	if (*root == thisMsg) {
+		*root = thisMsg->m_handleList;
+		thisMsg->m_handleList = NULL;
+		return;
+	}
+
+	for (walk = *root; walk->m_handleList != NULL; walk = walk->m_handleList) {
+		if (walk->m_handleList == thisMsg) {
+			walk->m_handleList = thisMsg->m_handleList;
+			thisMsg->m_handleList = NULL;
+			return;
+		}
+	}
+	return;
 }

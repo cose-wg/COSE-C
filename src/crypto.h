@@ -1,29 +1,29 @@
 /**
 * Perform an AES-CCM Decryption operation
 *
-* @param[in]   COSE_Encrypt Pointer to COSE Encryption context object
+* @param[in]   COSE_Enveloped Pointer to COSE Encryption context object
 * @param[in]   int          Size of the Tag value to be create
 * @param[in]   int          Size of the Message Length field
 * @param[in]   byte *       Pointer to authenticated data structure
 * @param[in]   int          Size of authenticated data structure
 * @return                   Did the function succeed?
 */
-bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbitKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, const byte * pbCipherText, size_t cbCipherText, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr);
+bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, int cbitKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+bool AES_KW_Decrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbitKey, const byte * pbCipherText, size_t cbCipherText, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr);
 
 /**
 * Perform an AES-CCM Encryption operation
 *
-* @param[in]   COSE_Encrypt Pointer to COSE Encryption context object
+* @param[in]   COSE_Enveloped Pointer to COSE Encryption context object
 * @param[in]   int          Size of the Tag value to be create
 * @param[in]   int          Size of the Message Length field
 * @param[in]   byte *       Pointer to authenticated data structure
 * @param[in]   int          Size of authenticated data structure
 * @return                   Did the function succeed?
 */
-bool AES_CCM_Encrypt(COSE_Encrypt * pcose, int TSize, int LSize, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-bool AES_GCM_Encrypt(COSE_Encrypt * pcose, int KeySize,const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
 bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr);
 
 
@@ -35,7 +35,7 @@ extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TagSize, const byt
 /**
 * Perform an HMAC Creation operation
 *
-* @param[in]	COSE_Encrypt	Pointer to COSE Encryption context object
+* @param[in]	COSE_Enveloped	Pointer to COSE Encryption context object
 * @param[in]	int				Hash function to be used
 * @param[in]	int				Size of Tag value to be created
 * @param[in]	byte *			Pointer to authenticated data structure
