@@ -73,7 +73,8 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 		}
 
-		// COSE_Encrypt_Free(hSig);
+		COSE_Sign_Free(hSig);
+		COSE_Signer_Free(hSigner);
 	}
 
 	if (fFailBody) {
@@ -143,6 +144,8 @@ int BuildSignedMessage(const cn_cbor * pControl)
 		if (!COSE_Signer_SetKey(hSigner, pkey, NULL)) exit(1);
 
 		if (!COSE_Sign_AddSigner(hSignObj, hSigner, NULL)) exit(1);
+
+		COSE_Signer_Free(hSigner);
 	}
 
 	if (!COSE_Sign_Sign(hSignObj, NULL)) exit(1);
@@ -150,6 +153,8 @@ int BuildSignedMessage(const cn_cbor * pControl)
 	size_t cb = COSE_Encode((HCOSE)hSignObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hSignObj, rgb, 0, cb);
+
+	COSE_Sign_Free(hSignObj);
 
 	int f = _ValidateSigned(pControl, rgb, cb);
 
@@ -183,7 +188,7 @@ int SignMessage()
 	cn_cbor_mapput_int(pkey, -4, cn_cbor_data_create(rgbD, sizeof(rgbD), CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	COSE_Sign_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
-	COSE_Sign_add_signer(hEncObj, pkey, COSE_Algorithm_ECDSA_SHA_256, NULL);
+	COSE_Signer_Free(COSE_Sign_add_signer(hEncObj, pkey, COSE_Algorithm_ECDSA_SHA_256, NULL));
 
 	COSE_Sign_Sign(hEncObj, NULL);
 
@@ -191,6 +196,7 @@ int SignMessage()
 	rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
 
+	COSE_Sign_Free(hEncObj);
 
 	FILE * fp = fopen("test.mac.cbor", "wb");
 	fwrite(rgb, cb, 1, fp);
@@ -206,8 +212,6 @@ int SignMessage()
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
 #endif
-
-	COSE_Sign_Free(hEncObj);
 
 	/* */
 

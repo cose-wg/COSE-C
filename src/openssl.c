@@ -16,7 +16,7 @@
 #include <openssl/rand.h>
 
 
-bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
@@ -72,20 +72,20 @@ bool AES_CCM_Decrypt(COSE_Encrypt * pcose, int TSize, int LSize, const byte * pb
 	TSize /= 8; // Comes in in bits not bytes.
 	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_L, (LSize/8), 0), COSE_ERR_DECRYPT_FAILED);
 	// CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, NSize, 0), COSE_ERR_DECRYPT_FAILED);
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *) &pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *) &pbCrypto[cbCrypto - TSize]), COSE_ERR_DECRYPT_FAILED);
 
 	CHECK_CONDITION(EVP_DecryptInit(&ctx, 0, pbKey, rgbIV), COSE_ERR_DECRYPT_FAILED);
 
 
-	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &cbOut, NULL, (int) pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &cbOut, NULL, (int) cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
-	cbOut = (int)  pcose->cbContent - TSize;
+	cbOut = (int)  cbCrypto - TSize;
 	rgbOut = (byte *)COSE_CALLOC(cbOut, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, NULL, &outl, pbAuthData, cbAuthData), COSE_ERR_DECRYPT_FAILED);
 
-	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pcose->pbContent, (int) pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pbCrypto, (int) cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
@@ -195,7 +195,7 @@ errorReturn:
 	return false;
 }
 
-bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
@@ -251,7 +251,7 @@ bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const 
 
 	CHECK_CONDITION(EVP_DecryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_DECRYPT_FAILED);
 
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *)&pcose->pbContent[pcose->cbContent - TSize]), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, TSize, (void *)&pbCrypto[cbCrypto - TSize]), COSE_ERR_DECRYPT_FAILED);
 
 	CHECK_CONDITION(EVP_DecryptInit(&ctx, 0, pbKey, rgbIV), COSE_ERR_DECRYPT_FAILED);
 	
@@ -261,17 +261,17 @@ bool AES_GCM_Decrypt(COSE_Encrypt * pcose, const byte * pbKey, int cbKey, const 
 
 	//  
 
-	cbOut = (int)pcose->cbContent - TSize;
+	cbOut = (int)cbCrypto - TSize;
 	rgbOut = (byte *)COSE_CALLOC(cbOut, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	//  Process content
 
-	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pcose->pbContent, (int)pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_DecryptUpdate(&ctx, rgbOut, &cbOut, pbCrypto, (int)cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
 	//  Process Tag
 
-	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, TSize, (byte *) pcose->pbContent + pcose->cbContent - TSize), COSE_ERR_DECRYPT_FAILED);
+	CHECK_CONDITION(EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, TSize, (byte *)pbCrypto + cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
 	//  Check the result
 
@@ -436,7 +436,7 @@ errorReturn:
 	return false;
 }
 
-bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
 	EVP_CIPHER_CTX ctx;
@@ -446,7 +446,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const
 	bool f = false;
 	unsigned int i;
 
-	switch (KeySize) {
+	switch (cbitKey) {
 	case 128:
 		pcipher = EVP_aes_128_cbc();
 		break;
@@ -462,7 +462,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int KeySize, int TSize, const
 	//  Setup and run the OpenSSL code
 
 	EVP_CIPHER_CTX_init(&ctx);
-	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pcose->pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
 
 	TSize /= 8;
 
@@ -575,7 +575,7 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbA
 	return true;
 }
 
-bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
 	const EVP_MD * pmd = NULL;
@@ -599,7 +599,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(HMAC_Init(&ctx, pcose->pbKey, (int) pcose->cbKey, pmd), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(HMAC_Init(&ctx, pbKey, cbitKey/8, pmd), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
@@ -616,7 +616,6 @@ errorReturn:
 	COSE_FREE(rgbOut, context);
 	HMAC_cleanup(&ctx);
 	return false;
-
 }
 
 
@@ -806,17 +805,17 @@ bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToS
 	return true;
 }
 
-bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
+bool AES_KW_Decrypt(COSE_Encrypt * pcose, const byte * pbKeyIn, size_t cbitKey, const byte * pbCipherText, size_t cbCipherText, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
 {
 	byte rgbOut[256 / 8];
 	AES_KEY key;
 
 	CHECK_CONDITION(AES_set_decrypt_key(pbKeyIn, (int)cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
 
-	CHECK_CONDITION(AES_unwrap_key(&key, NULL, rgbOut, pcose->pbContent, (unsigned int) pcose->cbContent), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(AES_unwrap_key(&key, NULL, rgbOut,pbCipherText, cbCipherText), COSE_ERR_CRYPTO_FAIL);
 
-	memcpy(pbKeyOut, rgbOut, pcose->cbContent - 8);
-	*pcbKeyOut = (int) (pcose->cbContent - 8);
+	memcpy(pbKeyOut, rgbOut, cbCipherText - 8);
+	*pcbKeyOut = (int) (cbCipherText - 8);
 
 	return true;
 errorReturn:

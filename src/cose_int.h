@@ -8,7 +8,9 @@ typedef struct {
 	int m_ownMsg;		//  Do I own the pointer @ m_cbor?
 	int m_ownUnprotectedMap; //  Do I own the pointer @ m_unportectedMap?
 	int m_msgType;		//  What message type is this?
+	int m_refCount;			//  Allocator Reference Counting.
 	cn_cbor * m_cbor;
+	cn_cbor * m_cborRoot;
 	cn_cbor * m_protectedMap;
 	cn_cbor * m_unprotectMap;
 	cn_cbor * m_dontSendMap;
@@ -144,16 +146,16 @@ extern HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *, COSE_SignMessage * pIn,
 extern void _COSE_Sign_Release(COSE_SignMessage * p);
 
 extern bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr);
-extern COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr);
-extern void _COSE_Signer_Free(COSE_SignerInfo * pSigner);
+extern COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, COSE_SignerInfo * pIn, CBOR_CONTEXT_COMMA cose_errback * perr);
+extern bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner);
 extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const byte * pbContent, size_t cbContent, const byte * pbProtected, size_t cbProtected, cose_errback * perr);
 
 //  Mac-ed items
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
-extern void _COSE_Mac_Release(COSE_MacMessage * p);
+extern bool _COSE_Mac_Release(COSE_MacMessage * p);
 
 
-#define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}
+#define CHECK_CONDITION(condition, error) { if (!(condition)) { /*assert(false);*/ perr->err = error; goto errorReturn;}}
 #define FAIL_CONDITION(error) { assert(false); perr->err = error; goto errorReturn;}
 #define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { assert(false); perr->err = _MapFromCBOR(error); goto errorReturn;}}
 

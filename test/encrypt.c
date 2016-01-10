@@ -74,7 +74,8 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 		}
 
-		// COSE_Encrypt_Free(hEnc);
+		COSE_Encrypt_Free(hEnc);
+		COSE_Recipient_Free(hRecip);
 	}
 
 	if (fFailBody) {
@@ -144,6 +145,8 @@ int BuildEncryptMessage(const cn_cbor * pControl)
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) exit(1);
 
 		if (!COSE_Encrypt_AddRecipient(hEncObj, hRecip, NULL)) exit(1);
+
+		COSE_Recipient_Free(hRecip);
 	}
 
 	if (!COSE_Encrypt_encrypt(hEncObj, NULL)) exit(1);
@@ -151,6 +154,8 @@ int BuildEncryptMessage(const cn_cbor * pControl)
 	size_t cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
+
+	COSE_Encrypt_Free(hEncObj);
 
 	int f = _ValidateEnveloped(pControl, rgb, cb);
 	free(rgb);
@@ -177,7 +182,7 @@ int EncryptMessage()
 	COSE_Encrypt_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
 	COSE_Encrypt_map_put(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, 13, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_UNPROTECT_ONLY, NULL);
 
-	COSE_Encrypt_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid, NULL);
+	HCOSE_RECIPIENT hRecip = COSE_Encrypt_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid, NULL);
 
 	COSE_Encrypt_encrypt(hEncObj, NULL);
 
@@ -185,6 +190,7 @@ int EncryptMessage()
 	rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
 
+	COSE_Recipient_Free(hRecip);
 
 	FILE * fp = fopen("test.cbor", "wb");
 	fwrite(rgb, cb, 1, fp);
@@ -219,9 +225,12 @@ int EncryptMessage()
 
 		COSE_Encrypt_decrypt(hEncObj, hRecip, NULL);
 
+		COSE_Recipient_Free(hRecip);
+
 		iRecipient += 1;
 
 	} while (true);
 
+	COSE_Encrypt_Free(hEncObj);
 	return 1;
 }

@@ -133,6 +133,7 @@ typedef enum {
 
 typedef enum {
 	COSE_Header_Algorithm = 1,
+	COSE_Header_Content_Type = 3,
 	COSE_Header_KID = 4,
 	COSE_Header_IV = 5,
 } COSE_Header;

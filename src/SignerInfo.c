@@ -31,57 +31,51 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	return (HCOSE_SIGNER)pobj;
 }
 
-bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
-{
-	if (IsValidSignerHandle(hSigner)) {
 
-		_COSE_Signer_Free((COSE_SignerInfo *)hSigner);
+bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner)
+{
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context context;
+#endif
+
+	//  Check ref counting
+	if (pSigner->m_message.m_refCount > 1) {
+		pSigner->m_message.m_refCount--;
 		return true;
 	}
 
-	return false;
+#ifdef USE_CBOR_CONTEXT
+	context = pSigner->m_message.m_allocContext;
+#endif
+
+	_COSE_Release(&pSigner->m_message);
+
+	COSE_FREE(pSigner, &context);
+	return true;
 }
 
-void _COSE_Signer_Free(COSE_SignerInfo * pSigner)
+bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
 {
-	COSE_FREE(pSigner, &pSigner->m_message.m_allocContext);
+	COSE_SignerInfo * pSigner = (COSE_SignerInfo *)hSigner;
 
-	return;
+	if (!IsValidSignerHandle(hSigner))  return false;
+
+	return _COSE_SignerInfo_Free(pSigner);
 }
 
-
-HCOSE_SIGNER COSE_Sign_GetSigner(HCOSE_SIGN cose, int iSigner, cose_errback * perr)
+COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, COSE_SignerInfo * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	int i;
-	COSE_SignerInfo * p;
+	COSE_SignerInfo * pSigner = pIn;
 
-	if (!IsValidSignHandle(cose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-		return NULL;
+	if (pSigner == NULL) {
+		pSigner = (COSE_SignerInfo *)COSE_CALLOC(1, sizeof(COSE_SignerInfo), context);
+		CHECK_CONDITION(pSigner != NULL, COSE_ERR_OUT_OF_MEMORY);
 	}
-
-	p = ((COSE_SignMessage *)cose)->m_signerFirst;
-	for (i = 0; i < iSigner; i++) {
-		if (p == NULL) {
-			if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-			return NULL;
-		}
-		p = p->m_signerNext;
-	}
-	return (HCOSE_SIGNER)p;
-}
-
-COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr)
-{
-	COSE_SignerInfo * pSigner = NULL;
-
-	pSigner = (COSE_SignerInfo *)COSE_CALLOC(1, sizeof(COSE_SignerInfo), context);
-	CHECK_CONDITION(pSigner != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
 	if (!_COSE_Init_From_Object(&pSigner->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		_COSE_Signer_Free(pSigner);
+		_COSE_SignerInfo_Free(pSigner);
 		return NULL;
 	}
 
@@ -217,13 +211,8 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 {
 	cn_cbor_errback cbor_error;
 	byte * pbAuthData = NULL;
-	int cbitKey = 0;
-	byte * pbKeyIn = NULL;
-
 	int alg;
 	const cn_cbor * cn = NULL;
-
-	byte * pbKey = pbKeyIn;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
 #endif
@@ -305,20 +294,12 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if ((pbKey != NULL) && (pbKeyIn == NULL)) {
-		memset(pbKey, 0xff, cbitKey / 8);
-		COSE_FREE(pbKey, context);
-	}
 
 	return true;
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if ((pbKey != NULL) && (pbKeyIn == NULL)) {
-		memset(pbKey, 0xff, cbitKey / 8);
-		COSE_FREE(pbKey, context);
-	}
 
 	return false;
 }
