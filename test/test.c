@@ -2,7 +2,6 @@
 //
 
 #define _CRT_SECURE_NO_WARNINGS
-#define USE_CBOR_CONTEXT 1
 
 #include <stdio.h>
 #include <stdlib.h>

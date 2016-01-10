@@ -25,7 +25,7 @@ int BuildSignedMessage(const cn_cbor * pControl);
 
 // mac_testc
 
-int ValidateMac(const cn_cbor * pControl);
+int ValidateMAC(const cn_cbor * pControl);
 int MacMessage();
 int BuildMacMessage(const cn_cbor * pControl);
 

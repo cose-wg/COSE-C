@@ -27,7 +27,7 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 		fFailBody = true;
 	}
 
-	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, NULL, NULL);
+	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) exit(1);
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
@@ -190,12 +190,10 @@ int MacMessage()
 	fprintf(stdout, "\r\n");
 #endif
 
-	COSE_Mac_Free(hEncObj);
-
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, COSE_mac_object, NULL, NULL);
+	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	int iRecipient = 0;
 	do {

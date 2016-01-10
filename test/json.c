@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <cn-cbor/cn-cbor.h>
 
 #include "json.h"
@@ -72,6 +73,21 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 			node = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 			node->type = CN_CBOR_FALSE;
 			ib += 4;
+			break;
+
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case'9':
+			node = cn_cbor_int_create(atol(&rgch[ib]), CBOR_CONTEXT_PARAM_COMMA NULL);
+			while (isdigit(rgch[ib])) ib++;
+			ib--;
 			break;
 
 		default:

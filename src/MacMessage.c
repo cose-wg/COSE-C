@@ -652,7 +652,7 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errba
 		CHECK_CONDITION(p != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		p = p->m_recipientNext;
 	}
-	p->m_encrypt.m_message.m_refCount++;
+	if (p != NULL) p->m_encrypt.m_message.m_refCount++;
 	return (HCOSE_RECIPIENT)p;
 
 errorReturn:
