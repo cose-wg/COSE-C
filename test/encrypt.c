@@ -268,7 +268,7 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hEnc == NULL) exit(1);
 
-	if (!SetAttributes((HCOSE)hEnc, cn_cbor_mapget_string(pEncrypt, "unsent"), Attributes_Enveloped_unsent)) {
+	if (!SetAttributes((HCOSE)hEnc, cn_cbor_mapget_string(pEncrypt, "unsent"), Attributes_Encrypt_unsent)) {
 		fFail = true;
 		goto exitHere;
 	}
