@@ -197,7 +197,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		}
 		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
 			keyNew = COSE_Header_IV;
-			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, pValue->length), pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
+			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, pValue->length), (int) pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
 		}
 		else {
 			continue;

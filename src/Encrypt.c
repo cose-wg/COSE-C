@@ -10,12 +10,12 @@
 
 byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
 
+COSE * EnvelopedRoot = NULL;
 
 bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h)
 {
 	COSE_Enveloped * p = (COSE_Enveloped *)h;
-	if (p == NULL) return false;
-	return true;
+	return _COSE_IsInList(EnvelopedRoot, p);
 }
 
 
@@ -37,6 +37,8 @@ HCOSE_ENVELOPED COSE_Enveloped_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		COSE_Enveloped_Free((HCOSE_ENVELOPED)pobj);
 		return NULL;
 	}
+
+	_COSE_InsertInList(&EnvelopedRoot, pobj);
 
 	return (HCOSE_ENVELOPED) pobj;
 }
@@ -75,6 +77,8 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped 
 		}
 	}
 
+	if (pIn == NULL) _COSE_InsertInList(&EnvelopedRoot, pobj);
+
 	return(HCOSE_ENVELOPED) pobj;
 }
 
@@ -89,6 +93,8 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 #ifdef USE_CBOR_CONTEXT
 	context = ((COSE_Enveloped *)h)->m_message.m_allocContext;
 #endif
+
+	_COSE_RemoveFromList(&EnvelopedRoot, (COSE_Enveloped *)h);
 
 	_COSE_Enveloped_Release((COSE_Enveloped *)h);
 

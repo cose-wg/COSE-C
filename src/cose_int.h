@@ -3,7 +3,7 @@
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
 
-typedef struct {
+typedef struct _COSE {
 	int m_flags;		//  Not sure what goes here yet
 	int m_ownMsg;		//  Do I own the pointer @ m_cbor?
 	int m_ownUnprotectedMap; //  Do I own the pointer @ m_unportectedMap?
@@ -17,6 +17,7 @@ typedef struct {
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;
 #endif
+	struct _COSE * m_handleList;
 } COSE;
 
 struct _SignerInfo;
@@ -124,6 +125,14 @@ typedef struct {
 #endif
 
 extern cose_error _MapFromCBOR(cn_cbor_errback err);
+
+/*
+ *  Set of routines for handle checking
+ */
+
+extern void _COSE_InsertInList(COSE ** rootNode, COSE * newMsg);
+extern bool _COSE_IsInList(COSE * rootNode, COSE * thisMsg);
+extern void _COSE_RemoveFromList(COSE ** rootNode, COSE * thisMsg);
 
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 extern bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h);

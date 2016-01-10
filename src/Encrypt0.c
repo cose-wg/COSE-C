@@ -10,12 +10,13 @@
 
 byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
 
+COSE * EncryptRoot = NULL;
+
 
 bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 {
 	COSE_Encrypt * p = (COSE_Encrypt *)h;
-	if (p == NULL) return false;
-	return true;
+	return _COSE_IsInList(EncryptRoot, &p->m_message);
 }
 
 
@@ -31,6 +32,8 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		COSE_Encrypt_Free((HCOSE_ENCRYPT)pobj);
 		return NULL;
 	}
+
+	_COSE_InsertInList(&EncryptRoot, &pobj->m_message);
 
 	return (HCOSE_ENCRYPT) pobj;
 }
@@ -57,6 +60,8 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn,
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_RECIPIENTS);
 	CHECK_CONDITION(pRecipients == NULL, COSE_ERR_INVALID_PARAMETER);
 
+	_COSE_InsertInList(&EncryptRoot, &pobj->m_message);
+
 	return(HCOSE_ENCRYPT) pobj;
 }
 
@@ -65,6 +70,7 @@ bool COSE_Encrypt_Free(HCOSE_ENCRYPT h)
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context context;
 #endif
+	COSE_Encrypt * pEncrypt = (COSE_Encrypt *)h;
 
 	if (!IsValidEncryptHandle(h)) return false;
 
@@ -72,8 +78,10 @@ bool COSE_Encrypt_Free(HCOSE_ENCRYPT h)
 	context = ((COSE_Encrypt *)h)->m_message.m_allocContext;
 #endif
 
-	_COSE_Encrypt_Release((COSE_Encrypt *)h);
+	_COSE_Encrypt_Release(pEncrypt);
 
+	_COSE_RemoveFromList(&EncryptRoot, &pEncrypt->m_message);
+	
 	COSE_FREE((COSE_Encrypt *)h, &context);
 
 	return true;

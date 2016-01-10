@@ -143,6 +143,7 @@ typedef enum {
 	COSE_Parameter_KID = 4,
 } COSE_Constants;
 
+
 /*
  *  messages dealing with the Enveloped message type
  */

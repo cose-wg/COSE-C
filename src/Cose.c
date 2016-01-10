@@ -374,3 +374,48 @@ cose_error _MapFromCBOR(cn_cbor_errback err)
 		return COSE_ERR_CBOR;
 	}
 }
+
+void _COSE_InsertInList(COSE ** root, COSE * newMsg)
+{
+	if (*root == NULL) {
+		*root = newMsg;
+		return;
+	}
+
+	newMsg->m_handleList = *root;
+	*root = newMsg;
+	return;
+}
+
+bool _COSE_IsInList(COSE * root, COSE * thisMsg)
+{
+	COSE * walk;
+
+	if (root == NULL) return false;
+	if (thisMsg == NULL) return false;
+
+	for (walk = root; walk != NULL; walk = walk->m_handleList) {
+		if (walk == thisMsg) return true;		
+	}
+	return false;
+}
+
+void _COSE_RemoveFromList(COSE ** root, COSE * thisMsg)
+{
+	COSE * walk;
+
+	if (*root == thisMsg) {
+		*root = thisMsg->m_handleList;
+		thisMsg->m_handleList = NULL;
+		return;
+	}
+
+	for (walk = *root; walk->m_handleList != NULL; walk = walk->m_handleList) {
+		if (walk->m_handleList == thisMsg) {
+			walk->m_handleList = thisMsg->m_handleList;
+			thisMsg->m_handleList = NULL;
+			return;
+		}
+	}
+	return;
+}
