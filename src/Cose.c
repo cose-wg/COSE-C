@@ -190,6 +190,13 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 		}
 		break;
 
+	case COSE_encrypt_object:
+		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+		if (h == NULL) {
+			goto errorReturn;
+		}
+		break;
+
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}

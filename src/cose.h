@@ -6,6 +6,7 @@ typedef struct _cose * HCOSE;
 typedef struct _cose_sign * HCOSE_SIGN;
 typedef struct _cose_signer * HCOSE_SIGNER;
 typedef struct _cose_encrypt * HCOSE_ENCRYPT;
+typedef struct _cose_enveloped * HCOSE_ENVELOPED;
 typedef struct _cose_recipient * HCOSE_RECIPIENT;
 typedef struct _cose_mac * HCOSE_MAC;
 
@@ -44,7 +45,7 @@ typedef enum {
 	COSE_sign_object = 991,
 	COSE_sign1_object = 997,
 	COSE_enveloped_object = 992,
-	COSE_encrypted_object = 993,
+	COSE_encrypt_object = 993,
 	COSE_mac_object = 994,
 	COSE_mac0_object = 996,
 	COSE_recipient_object = -1
@@ -61,9 +62,6 @@ cn_cbor * COSE_get_cbor(HCOSE hmsg);
 
 HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Sign_Free(HCOSE_SIGN cose);
-
-HCOSE_ENCRYPT  COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
-bool COSE_Encrypt_Free(HCOSE_ENCRYPT cose);
 
 HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Mac_Free(HCOSE_MAC cose);
@@ -145,21 +143,31 @@ typedef enum {
 	COSE_Parameter_KID = 4,
 } COSE_Constants;
 
-bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
-bool COSE_Encrypt_SetNonce(HCOSE_ENCRYPT cose, byte * rgbIV, size_t cbIV);
+/*
+ *  messages dealing with the Enveloped message type
+ */
 
-cn_cbor * COSE_Encrypt_map_get_string(HCOSE_ENCRYPT cose, const char * key, int flags, cose_errback * errp);
-cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
+HCOSE_ENVELOPED  COSE_Enveloped_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Enveloped_Free(HCOSE_ENVELOPED cose);
 
-bool COSE_Encrypt_map_put(HCOSE_ENCRYPT cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+cn_cbor * COSE_Enveloped_map_get_int(HCOSE_ENVELOPED cose, int key, int flags, cose_errback * errp);
+cn_cbor * COSE_Enveloped_map_get_string(HCOSE_ENVELOPED cose, const char * key, int flags, cose_errback * errp);
+bool COSE_Enveloped_map_put_int(HCOSE_ENVELOPED cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+bool COSE_Enveloped_map_put_string(HCOSE_ENVELOPED cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
-bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT cose, cose_errback * perror);
-bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT, HCOSE_RECIPIENT, cose_errback * perr);
 
-HCOSE_RECIPIENT COSE_Encrypt_add_shared_secret(HCOSE_ENCRYPT cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
+bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+byte * COSE_Enveloped_GetContent(HCOSE_ENVELOPED cose, size_t * pcbContent, cose_errback * errp);
 
-extern bool COSE_Encrypt_AddRecipient(HCOSE_ENCRYPT hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
-HCOSE_RECIPIENT COSE_Encrypt_GetRecipient(HCOSE_ENCRYPT cose, int iRecipient, cose_errback * perr);
+bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED cose, cose_errback * perror);
+bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED, HCOSE_RECIPIENT, cose_errback * perr);
+
+HCOSE_RECIPIENT COSE_Enveloped_add_shared_secret(HCOSE_ENVELOPED cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
+extern bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
+HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient, cose_errback * perr);
+
+/*
+ */
 
 HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror);
 bool COSE_Recipient_Free(HCOSE_RECIPIENT cose);
@@ -169,6 +177,26 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback
 bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror);
 cn_cbor * COSE_Recipient_map_get_string(HCOSE_RECIPIENT cose, const char * key, int flags, cose_errback * errp);
 cn_cbor * COSE_Recipient_map_get_int(HCOSE_RECIPIENT cose, int key, int flags, cose_errback * errp);
+
+
+/*
+ *  Encrypt message API
+ */
+
+HCOSE_ENCRYPT  COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Encrypt_Free(HCOSE_ENCRYPT cose);
+
+cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
+cn_cbor * COSE_Encrypt_map_get_string(HCOSE_ENCRYPT cose, const char * key, int flags, cose_errback * errp);
+bool COSE_Encrypt_map_put_int(HCOSE_ENCRYPT cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+bool COSE_Encrypt_map_put_string(HCOSE_ENCRYPT cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+
+bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+byte * COSE_Encrypt_GetContent(HCOSE_ENCRYPT cose, size_t * pcbContent, cose_errback * errp);
+
+bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT cose, const byte * pbKey, size_t cbKey, cose_errback * perror);
+bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT, const byte * pbKey, size_t cbKey, cose_errback * perr);
 
 
 //
@@ -181,8 +209,6 @@ bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_
 
 bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
 bool COSE_Mac_validate(HCOSE_MAC, HCOSE_RECIPIENT, cose_errback * perr);
-
-bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
 

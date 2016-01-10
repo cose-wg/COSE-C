@@ -40,15 +40,23 @@ typedef struct _RecipientInfo COSE_RecipientInfo;
 
 typedef struct {
 	COSE m_message;		// The message object
-	COSE_RecipientInfo * m_recipientFirst;
 	const byte * pbContent;
 	size_t cbContent;
 	byte * pbKey;
 	size_t cbKey;
 } COSE_Encrypt;
 
+typedef struct {
+	COSE m_message;		// The message object
+	const byte * pbContent;
+	size_t cbContent;
+	byte * pbKey;
+	size_t cbKey;
+	COSE_RecipientInfo * m_recipientFirst;
+} COSE_Enveloped;
+
 struct _RecipientInfo {
-	COSE_Encrypt m_encrypt;
+	COSE_Enveloped m_encrypt;
 	COSE_RecipientInfo * m_recipientNext;
 	const cn_cbor * m_pkey;
 };
@@ -118,6 +126,7 @@ typedef struct {
 extern cose_error _MapFromCBOR(cn_cbor_errback err);
 
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
+extern bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h);
 extern bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
 extern bool IsValidSignerHandle(HCOSE_SIGNER h);
 
@@ -129,9 +138,14 @@ extern cn_cbor * _COSE_map_get_string(COSE * cose, const char * key, int flags, 
 extern cn_cbor * _COSE_map_get_int(COSE * cose, int key, int flags, cose_errback * errp);
 extern bool _COSE_map_put(COSE * cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
+extern HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *, COSE_Enveloped * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
+extern void _COSE_Enveloped_Release(COSE_Enveloped * p);
+extern bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip, int cbitKey, byte *pbKeyIn, cose_errback * perr);
+extern bool _COSE_Enveloped_SetContent(COSE_Enveloped * cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+
 extern HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Encrypt_Release(COSE_Encrypt * p);
-extern bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, COSE_RecipientInfo * pRecip, int cbitKey, byte *pbKeyIn, cose_errback * perr);
+extern bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, const byte * pbKey, size_t cbKey, cose_errback * perr);
 extern bool _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 extern COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor *, CBOR_CONTEXT_COMMA cose_errback * errp);
