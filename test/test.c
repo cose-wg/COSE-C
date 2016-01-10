@@ -89,6 +89,10 @@ cn_cbor * cn_cbor_clone(const cn_cbor * pIn)
 		pOut = cn_cbor_string_create(sz, CBOR_CONTEXT_PARAM_COMMA NULL);
 		break;
 
+	case CN_CBOR_UINT:
+		pOut = cn_cbor_int_create(pIn->v.sint, CBOR_CONTEXT_PARAM_COMMA NULL);
+		break;
+
 	default:
 		break;
 	}
@@ -172,6 +176,10 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		if (strcmp(pKey->v.str, "alg") == 0) {
 			keyNew = COSE_Header_Algorithm;
 			pValueNew = cn_cbor_int_create(MapAlgorithmName(pValue), CBOR_CONTEXT_PARAM_COMMA NULL);
+		}
+		else if (strcmp(pKey->v.str, "ctyp") == 0) {
+			keyNew = COSE_Header_Content_Type;
+			pValueNew = cn_cbor_clone(pValue);;
 		}
 		else {
 			continue;
