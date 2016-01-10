@@ -634,6 +634,8 @@ bool COSE_Encrypt_AddRecipient(HCOSE_ENCRYPT hEnc, HCOSE_RECIPIENT hRecip, cose_
 
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients, pRecip->m_encrypt.m_message.m_cbor, &cbor_error), cbor_error);
 
+	pRecip->m_encrypt.m_message.m_refCount++;
+
 	return true;
 
 errorReturn:
