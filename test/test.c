@@ -108,6 +108,20 @@ byte fromHex(char c)
 	exit(1);
 }
 
+
+byte * FromHex(const char * rgch, int cch)
+{
+	byte * pb = malloc(cch / 2);
+	const char * pb2 = rgch;
+	int i;
+
+	for (i = 0; i < cch; i += 2) {
+		pb[i / 2] = fromHex(pb2[i]) * 16 + fromHex(pb2[i + 1]);
+	}
+
+	return pb;
+}
+
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 {
 	const cn_cbor * pOutputs = cn_cbor_mapget_string(pControl, "output");
@@ -180,6 +194,10 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		else if (strcmp(pKey->v.str, "ctyp") == 0) {
 			keyNew = COSE_Header_Content_Type;
 			pValueNew = cn_cbor_clone(pValue);;
+		}
+		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
+			keyNew = COSE_Header_IV;
+			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, pValue->length), pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
 		}
 		else {
 			continue;
