@@ -28,6 +28,10 @@ typedef struct {
 	COSE_SignerInfo * m_signerFirst;
 } COSE_SignMessage;
 
+typedef struct {
+	COSE m_message;	    // The message object
+} COSE_Sign0Message;
+
 struct _SignerInfo {
 	COSE m_message;
 	byte * pbKey;
@@ -64,10 +68,14 @@ struct _RecipientInfo {
 
 typedef struct {
 	COSE m_message;			// The message object
-	COSE_RecipientInfo * m_recipientFirst;
 	byte * pbKey;
 	size_t cbKey;
+	COSE_RecipientInfo * m_recipientFirst;
 } COSE_MacMessage;
+
+typedef struct {
+	COSE m_message;			// The message object
+} COSE_Mac0Message;
 
 #ifdef USE_CBOR_CONTEXT
 /**
@@ -179,8 +187,14 @@ extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pS
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern bool _COSE_Mac_Release(COSE_MacMessage * p);
 
+//  MAC0 Items
+extern HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *, COSE_Mac0Message * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
+extern bool _COSE_Mac0_Release(COSE_Mac0Message * p);
 
-#define CHECK_CONDITION(condition, error) { if (!(condition)) { /*assert(false);*/ perr->err = error; goto errorReturn;}}
+//
+//  Debugging Items
+
+#define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}
 #define FAIL_CONDITION(error) { assert(false); perr->err = error; goto errorReturn;}
 #define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { assert(false); perr->err = _MapFromCBOR(error); goto errorReturn;}}
 

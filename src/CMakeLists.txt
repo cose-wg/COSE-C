@@ -5,8 +5,10 @@
 set ( cose_sources 
 	Cose.c
 	MacMessage.c
+        MacMessage0.c
 	openssl.c
 	Sign.c
+        Sign0.c
 	cbor.c
 	Encrypt.c
         Encrypt0.c

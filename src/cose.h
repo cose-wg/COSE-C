@@ -5,10 +5,12 @@ typedef unsigned char byte;
 typedef struct _cose * HCOSE;
 typedef struct _cose_sign * HCOSE_SIGN;
 typedef struct _cose_signer * HCOSE_SIGNER;
+typedef struct _cose_sign0 * HCOSE_SIGN0;
 typedef struct _cose_encrypt * HCOSE_ENCRYPT;
 typedef struct _cose_enveloped * HCOSE_ENVELOPED;
 typedef struct _cose_recipient * HCOSE_RECIPIENT;
 typedef struct _cose_mac * HCOSE_MAC;
+typedef struct _cose_mac0 * HCOSE_MAC0;
 
 /**
 * All of the different kinds of errors
@@ -43,7 +45,7 @@ typedef struct _cose_errback {
 typedef enum {
 	COSE_unknown_object = 0,
 	COSE_sign_object = 991,
-	COSE_sign1_object = 997,
+	COSE_sign0_object = 997,
 	COSE_enveloped_object = 992,
 	COSE_encrypt_object = 993,
 	COSE_mac_object = 994,
@@ -206,7 +208,7 @@ bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT, const byte * pbKey, size_t cbKey, cose_
 bool COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
-bool COSE_Mac_map_put(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+bool COSE_Mac_map_put_int(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
 bool COSE_Mac_validate(HCOSE_MAC, HCOSE_RECIPIENT, cose_errback * perr);
@@ -215,6 +217,19 @@ HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC cose, COSE_Algorithms algId
 
 extern bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
 HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errback * perr);
+
+//  MAC0 calls
+
+HCOSE_MAC0 COSE_Mac0_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Mac0_Free(HCOSE_MAC0 cose);
+
+bool COSE_Mac0_SetContent(HCOSE_MAC0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+
+cn_cbor * COSE_Mac0_map_get_int(HCOSE_MAC0 h, int key, int flags, cose_errback * perror);
+bool COSE_Mac0_map_put_int(HCOSE_MAC0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+bool COSE_Mac0_encrypt(HCOSE_MAC0 cose, const byte * pbKey, size_t cbKey, cose_errback * perror);
+bool COSE_Mac0_validate(HCOSE_MAC0, const byte * pbKey, size_t cbKey, cose_errback * perr);
 
 //
 //
@@ -233,3 +248,15 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror);
 bool COSE_Signer_Free(HCOSE_SIGNER cose);
 bool COSE_Signer_SetKey(HCOSE_SIGNER hSigner, const cn_cbor * pkey, cose_errback * perr);
 bool COSE_Signer_map_put(HCOSE_SIGNER cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+/*
+ *  Sign routines
+ */
+
+HCOSE_SIGN0 COSE_Sign0_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
+bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
+bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback * perr);
+cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
+bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);

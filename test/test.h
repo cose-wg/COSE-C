@@ -24,17 +24,25 @@ int BuildEncryptMessage(const cn_cbor * pControl);
 int ValidateSigned(const cn_cbor * pControl);
 int SignMessage();
 int BuildSignedMessage(const cn_cbor * pControl);
+int ValidateSign0(const cn_cbor * pControl);
+int BuildSign0Message(const cn_cbor * pControl);
 
 // mac_testc
 
 int ValidateMAC(const cn_cbor * pControl);
 int MacMessage();
 int BuildMacMessage(const cn_cbor * pControl);
+int ValidateMac0(const cn_cbor * pControl);
+int BuildMac0Message(const cn_cbor * pControl);
 
 //  test.c
 enum {
 	Attributes_MAC_protected=1,
 	Attributes_MAC_unprotected,
+	Attributes_MAC_unsent,
+	Attributes_MAC0_protected,
+	Attributes_MAC0_unprotected,
+	Attributes_MAC0_unsent,
 	Attributes_Recipient_protected,
 	Attributes_Recipient_unprotected,
 	Attributes_Recipient_unsent,
@@ -50,6 +58,9 @@ enum {
 	Attributes_Signer_protected,
 	Attributes_Signer_unprotected,
 	Attributes_Signer_unsent,
+	Attributes_Sign0_protected,
+	Attributes_Sign0_unprotected,
+	Attributes_Sign0_unsent,
 } whichSet;
 
 extern int CFails;

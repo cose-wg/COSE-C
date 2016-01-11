@@ -197,7 +197,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		}
 		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
 			keyNew = COSE_Header_IV;
-			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, pValue->length), (int) pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
+			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, (int) pValue->length), (int) pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
 		}
 		else {
 			continue;
@@ -205,11 +205,27 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 
 		switch (which) {
 		case Attributes_MAC_protected:
-			COSE_Mac_map_put((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
 			break;
 
 		case Attributes_MAC_unprotected:
-			COSE_Mac_map_put((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_MAC_unsent:
+			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
+		case Attributes_MAC0_protected:
+			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_MAC0_unprotected:
+			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_MAC0_unsent:
+			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
 			break;
 
 		case Attributes_Recipient_protected:
@@ -271,6 +287,19 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		case Attributes_Signer_unsent:
 			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
 			break;
+
+		case Attributes_Sign0_protected:
+			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Sign0_unprotected:
+			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Sign0_unsent:
+			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
 		}
 	}
 
@@ -398,6 +427,10 @@ int main(int argc, char ** argv)
 			ValidateMAC(pControl);
 			BuildMacMessage(pControl);
 		}
+		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+			ValidateMac0(pControl);
+			BuildMac0Message(pControl);
+		}
 		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
 			ValidateEnveloped(pControl);
 			BuildEnvelopedMessage(pControl);
@@ -405,6 +438,10 @@ int main(int argc, char ** argv)
 		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 			ValidateSigned(pControl);
 			BuildSignedMessage(pControl);
+		}
+		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+			ValidateSign0(pControl);
+			BuildSign0Message(pControl);
 		}
 		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
 			ValidateEncrypt(pControl);

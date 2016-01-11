@@ -376,7 +376,7 @@ errorReturn:
 }
 
 
-bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int KeySize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
 	EVP_CIPHER_CTX ctx;
@@ -393,7 +393,7 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int KeySize, int TSize, const b
 	rgbOut = COSE_CALLOC(16, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	switch (KeySize) {
+	switch (cbKey*8) {
 	case 128:
 		pcipher = EVP_aes_128_cbc();
 		break;
@@ -409,7 +409,7 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int KeySize, int TSize, const b
 	//  Setup and run the OpenSSL code
 
 	EVP_CIPHER_CTX_init(&ctx);
-	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pcose->pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
 
 	for (i = 0; i < (unsigned int)cbAuthData / 16; i++) {
 		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, pbAuthData + (i * 16), 16), COSE_ERR_CRYPTO_FAIL);
@@ -436,7 +436,7 @@ errorReturn:
 	return false;
 }
 
-bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
 	EVP_CIPHER_CTX ctx;
@@ -446,7 +446,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey
 	bool f = false;
 	unsigned int i;
 
-	switch (cbitKey) {
+	switch (cbKey*8) {
 	case 128:
 		pcipher = EVP_aes_128_cbc();
 		break;
@@ -536,7 +536,7 @@ errorReturn:
 }
 #endif
 
-bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
 	const EVP_MD * pmd = NULL;
@@ -565,7 +565,7 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbA
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(HMAC_Init(&ctx, pcose->pbKey, (int) pcose->cbKey, pmd), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(HMAC_Init(&ctx, pbKey, (int) cbKey, pmd), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
@@ -575,7 +575,7 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbA
 	return true;
 }
 
-bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr)
+bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	HMAC_CTX ctx;
 	const EVP_MD * pmd = NULL;
@@ -599,7 +599,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(HMAC_Init(&ctx, pbKey, cbitKey/8, pmd), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(HMAC_Init(&ctx, pbKey, (int) cbKey, pmd), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Update(&ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(&ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
@@ -702,7 +702,7 @@ bool ECDSA_Sign(const cn_cbor * pKey)
 }
 */
 
-bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
+bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
 	EC_KEY * eckey = NULL;
 	byte rgbDigest[EVP_MAX_MD_SIZE];
@@ -710,7 +710,7 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSig
 	byte  * pbSig = NULL;
 	const EVP_MD * digest;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
+	cn_cbor_context * context = &pSigner->m_allocContext;
 #endif
 	cn_cbor * p = NULL;
 	ECDSA_SIG * psig = NULL;
@@ -719,7 +719,7 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSig
 	byte rgbSig[66];
 	int cb;
 	
-	eckey = ECKey_From(pSigner->m_pkey, &cbR, perr);
+	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
 		if (p != NULL) CN_CBOR_FREE(p, context);
@@ -743,8 +743,6 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSig
 	pbSig = COSE_CALLOC(cbR, 2, context);
 	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-
-
 	cb = BN_bn2bin(psig->r, rgbSig);
 	CHECK_CONDITION(cb <= cbR, COSE_ERR_INVALID_PARAMETER);
 	memcpy(pbSig + cbR - cb, rgbSig, cb);
@@ -756,25 +754,27 @@ bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSig
 	p = cn_cbor_data_create(pbSig, cbR*2, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
 
-	CHECK_CONDITION(_COSE_array_replace(&pSigner->m_message, p, INDEX_SIGNATURE, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+	CHECK_CONDITION(_COSE_array_replace(pSigner, p, index, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 	
 	return true;
 }
 
-bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToSign, size_t cbToSign, const byte * rgbSignature, size_t cbSignature, cose_errback * perr)
+bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
 	EC_KEY * eckey = NULL;
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	unsigned int cbDigest = sizeof(rgbDigest);
 	const EVP_MD * digest;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
+	cn_cbor_context * context = &pSigner->m_allocContext;
 #endif
 	cn_cbor * p = NULL;
 	ECDSA_SIG sig = { NULL, NULL };
 	int cbR;
+	cn_cbor * pSig;
+	size_t cbSignature;
 
-	eckey = ECKey_From(pSigner->m_pkey, &cbR, perr);
+	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
 		if (sig.r != NULL) BN_free(sig.r);
@@ -793,14 +793,19 @@ bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitDigest, const byte * rgbToS
 	}
 	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, digest, NULL);
 
+	pSig = _COSE_arrayget_int(pSigner, index);
+	CHECK_CONDITION(pSig != NULL, CN_CBOR_ERR_INVALID_PARAMETER);
+	cbSignature = pSig->length;
+
 	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);
-	sig.r = BN_bin2bn(rgbSignature,(int) cbSignature/2, NULL);
-	sig.s = BN_bin2bn(rgbSignature+cbSignature/2, (int) cbSignature/2, NULL);
+	sig.r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL);
+	sig.s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL);
 
 	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, &sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL);
 
 	BN_free(sig.r);
 	BN_free(sig.s);
+	if (eckey != NULL) EC_KEY_free(eckey);
 
 	return true;
 }
