@@ -531,6 +531,7 @@ int main(int argc, char ** argv)
 	bool fDir = false;
 
 	for (i = 1; i < argc; i++) {
+		printf("arg: '%s'\n", argv[i]);
 		if (argv[i][0] == '-') {
 			if (strcmp(argv[i], "--dir") == 0) {
 				fDir = true;
