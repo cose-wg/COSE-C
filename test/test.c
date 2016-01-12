@@ -498,7 +498,7 @@ void RunTestsInDirectory(const char * szDir)
 	struct dirent * dp;
 	char rgchFullName[2 * 1024];
 	strcpy(rgchFullName, szDir);
-	int ich = strlen(szDir);
+	int ich;
 	int cFailTotal = 0;
 
 	if (dirp == NULL) {
@@ -506,9 +506,10 @@ void RunTestsInDirectory(const char * szDir)
 		exit(1);
 	}
 	strcat(rgchFullName, "/");
-	ich = strlen(szDir);
+	ich = strlen(rgchFullName);
 
 	while ((dp = readdir(dirp)) != NULL) {
+		if (dirp->d_type != DT_REG) continue;
 		rgchFullName[ich] = 0;
 		strcat(rgchFullName, dp->d_name);
 		printf("Run test '%s'", rgchFullName);
