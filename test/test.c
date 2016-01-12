@@ -498,14 +498,15 @@ void RunTestsInDirectory(const char * szDir)
 	struct dirent * dp;
 	char rgchFullName[2 * 1024];
 	strcpy(rgchFullName, szDir);
-	strcat(rgchFullName, "/");
 	int ich = strlen(szDir);
 	int cFailTotal = 0;
 
 	if (dirp == NULL) {
-		fprintf(stderr, "Cannot open director '%s'\n", szDir);
+		fprintf(stderr, "Cannot open directory '%s'\n", szDir);
 		exit(1);
 	}
+	strcat(rgchFullName, "/");
+	ich = strlen(szDir);
 
 	while ((dp = readdir(dirp)) != NULL) {
 		rgchFullName[ich] = 0;
