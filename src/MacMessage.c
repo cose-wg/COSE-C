@@ -556,12 +556,12 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 
 	case COSE_Algorithm_CBC_MAC_128_64:
 	case COSE_Algorithm_CBC_MAC_256_64:
-		if (!AES_CBC_MAC_Validate(pcose, 64, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CBC_MAC_Validate(pcose, 64, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_CBC_MAC_128_128:
 	case COSE_Algorithm_CBC_MAC_256_128:
-		if (!AES_CBC_MAC_Validate(pcose, 128, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CBC_MAC_Validate(pcose, 128, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	default:

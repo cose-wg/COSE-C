@@ -95,7 +95,4 @@ add_test ( NAME ecdsa-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test
 add_test ( NAME ecdsa-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-03.json )
 add_test ( NAME ecdsa-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-04.json )
 
-add_test ( NAME ecdsa-sig-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-sig-01.json )
-add_test ( NAME ecdsa-sig-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-sig-02.json )
-add_test ( NAME ecdsa-sig-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-sig-03.json )
-add_test ( NAME ecdsa-sig-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-sig-04.json )
+add_test ( NAME ecdsa-sig-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/ecdsa-examples )
