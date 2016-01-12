@@ -509,7 +509,7 @@ void RunTestsInDirectory(const char * szDir)
 	ich = strlen(rgchFullName);
 
 	while ((dp = readdir(dirp)) != NULL) {
-		if (dirp->d_type != DT_REG) continue;
+		if (dp->d_type != DT_REG) continue;
 		rgchFullName[ich] = 0;
 		strcat(rgchFullName, dp->d_name);
 		printf("Run test '%s'", rgchFullName);
