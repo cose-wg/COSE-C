@@ -509,7 +509,8 @@ void RunTestsInDirectory(const char * szDir)
 	ich = strlen(rgchFullName);
 
 	while ((dp = readdir(dirp)) != NULL) {
-	//	if (dp->d_type != DT_REG) continue;
+		int cch = strlen(dp->d_name);
+		if (cch < 4) continue;
 		printf("type = %d\n", dp->d_type);
 		rgchFullName[ich] = 0;
 		strcat(rgchFullName, dp->d_name);
@@ -521,7 +522,6 @@ void RunTestsInDirectory(const char * szDir)
 		cFailTotal += CFails;
 	}
 
-	cFailTotal += 1;
 	(void)closedir(dirp);
 	exit(cFailTotal);
 }
