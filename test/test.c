@@ -520,6 +520,7 @@ void RunTestsInDirectory(const char * szDir)
 		cFailTotal += CFails;
 	}
 
+	cFailTotal += 1;
 	(void)closedir(dirp);
 	exit(cFailTotal);
 }
