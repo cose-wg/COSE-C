@@ -40,16 +40,17 @@ add_test ( NAME sig-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test E
 add_test ( NAME enc-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-04.json )
 add_test ( NAME enc-05 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-05.json )
 
-add_test ( NAME hmac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-01.json )
-add_test ( NAME hmac-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-02.json )
-add_test ( NAME hmac-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-03.json )
-add_test ( NAME hmac-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-04.json )
-add_test ( NAME hmac-05 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/hmac-examples/HMac-05.json )
+add_test ( NAME hmac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/hmac-examples )
 
 add_test ( NAME cbc-mac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-01.json )
 add_test ( NAME cbc-mac-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-02.json )
 add_test ( NAME cbc-mac-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-03.json )
 add_test ( NAME cbc-mac-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-04.json )
+
+add_test ( NAME cbc-mac-enc-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-01.json )
+add_test ( NAME cbc-mac-enc-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-02.json )
+add_test ( NAME cbc-mac-enc-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-03.json )
+add_test ( NAME cbc-mac-enc-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-04.json )
 
 add_test ( NAME aes-gcm-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-01.json )
 add_test ( NAME aes-gcm-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-02.json )
@@ -79,7 +80,4 @@ add_test ( NAME aes-ccm-enc-06 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cos
 add_test ( NAME aes-ccm-enc-07 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-07.json )
 add_test ( NAME aes-ccm-enc-08 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-08.json )
 
-add_test ( NAME ecdsa-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-01.json )
-add_test ( NAME ecdsa-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-02.json )
-add_test ( NAME ecdsa-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-03.json )
-add_test ( NAME ecdsa-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/ecdsa-examples/ecdsa-04.json )
+add_test ( NAME ecdsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/ecdsa-examples )

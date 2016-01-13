@@ -27,10 +27,10 @@ bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr);
 
 
-extern bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+extern bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
 
-extern bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+extern bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, size_t cbitKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
 
 /**
 * Perform an HMAC Creation operation
@@ -43,8 +43,8 @@ extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TagSize, const byt
 * @param[in]	cose_errback *	Error return location
 * @return						Did the function succeed?
 */
-bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
-bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, int cbAuthData, cose_errback * perr);
+bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, size_t cbitKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
 
 /**
 * Perform a signature operation
@@ -55,8 +55,8 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 * @param[in]	cose_errback *	Error return location
 * @return						Did the function succeed?
 */
-bool ECDSA_Sign(COSE_SignerInfo * pSigner, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
-bool ECDSA_Verify(COSE_SignerInfo * pSigner, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, const byte * rgbSig, size_t cbSig, cose_errback * perr);
+bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
+bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
 
 /**
 *  Generate random bytes in a buffer

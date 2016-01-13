@@ -237,7 +237,7 @@ cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * p
 }
 
 
-bool COSE_Mac_map_put(HCOSE_MAC h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Mac_map_put_int(HCOSE_MAC h, int key, cn_cbor * value, int flags, cose_errback * perror)
 {
 	if (!IsValidMacHandle(h) || (value == NULL)) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
@@ -377,35 +377,29 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	switch (alg) {
 	case COSE_Algorithm_CBC_MAC_128_64:
-		if (!AES_CBC_MAC_Create(pcose, 128, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
+	case COSE_Algorithm_CBC_MAC_256_64:
+		if (!AES_CBC_MAC_Create(pcose, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_CBC_MAC_128_128:
-		if (!AES_CBC_MAC_Create(pcose, 128, 128, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
-	case COSE_Algorithm_CBC_MAC_256_64:
-		if (!AES_CBC_MAC_Create(pcose, 256, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-
 	case COSE_Algorithm_CBC_MAC_256_128:
-		if (!AES_CBC_MAC_Create(pcose, 256, 128, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CBC_MAC_Create(pcose, 128, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_256_64:
-		if (!HMAC_Create(pcose, 256, 64, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 256, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_256_256:
-		if (!HMAC_Create(pcose, 256, 256, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 256, 256, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_384_384:
-		if (!HMAC_Create(pcose, 384, 384, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 384, 384, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_512_512:
-		if (!HMAC_Create(pcose, 512, 512, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 512, 512, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	default:
@@ -545,29 +539,29 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 
 	switch (alg) {
 	case COSE_Algorithm_HMAC_256_256:
-		if (!HMAC_Validate(pcose, 256, 256, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Validate(pcose, 256, 256, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_256_64:
-		if (!HMAC_Validate(pcose, 256, 64, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Validate(pcose, 256, 64, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_384_384:
-		if (!HMAC_Validate(pcose, 384, 384, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Validate(pcose, 384, 384, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_512_512:
-		if (!HMAC_Validate(pcose, 512, 512, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Validate(pcose, 512, 512, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_CBC_MAC_128_64:
 	case COSE_Algorithm_CBC_MAC_256_64:
-		if (!AES_CBC_MAC_Validate(pcose, 64, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CBC_MAC_Validate(pcose, 64, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_CBC_MAC_128_128:
 	case COSE_Algorithm_CBC_MAC_256_128:
-		if (!AES_CBC_MAC_Validate(pcose, 128, pbKey, cbitKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CBC_MAC_Validate(pcose, 128, pbKey, cbitKey/8, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	default:

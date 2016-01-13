@@ -15,7 +15,7 @@ COSE * EnvelopedRoot = NULL;
 bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h)
 {
 	COSE_Enveloped * p = (COSE_Enveloped *)h;
-	return _COSE_IsInList(EnvelopedRoot, p);
+	return _COSE_IsInList(EnvelopedRoot, &p->m_message);
 }
 
 
@@ -38,7 +38,7 @@ HCOSE_ENVELOPED COSE_Enveloped_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		return NULL;
 	}
 
-	_COSE_InsertInList(&EnvelopedRoot, pobj);
+	_COSE_InsertInList(&EnvelopedRoot, &pobj->m_message);
 
 	return (HCOSE_ENVELOPED) pobj;
 }
@@ -77,7 +77,7 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped 
 		}
 	}
 
-	if (pIn == NULL) _COSE_InsertInList(&EnvelopedRoot, pobj);
+	if (pIn == NULL) _COSE_InsertInList(&EnvelopedRoot, &pobj->m_message);
 
 	return(HCOSE_ENVELOPED) pobj;
 }
@@ -87,6 +87,7 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context context;
 #endif
+	COSE_Enveloped * p = (COSE_Enveloped *)h;
 
 	if (!IsValidEnvelopedHandle(h)) return false;
 
@@ -94,7 +95,7 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 	context = ((COSE_Enveloped *)h)->m_message.m_allocContext;
 #endif
 
-	_COSE_RemoveFromList(&EnvelopedRoot, (COSE_Enveloped *)h);
+	_COSE_RemoveFromList(&EnvelopedRoot, &p->m_message);
 
 	_COSE_Enveloped_Release((COSE_Enveloped *)h);
 

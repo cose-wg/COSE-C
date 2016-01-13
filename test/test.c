@@ -10,6 +10,12 @@
 #include <cn-cbor/cn-cbor.h>
 #include <assert.h>
 
+#ifndef _MSC_VER
+#include <dirent.h>
+#else
+#include <windows.h>
+#endif
+
 #include "json.h"
 
 #include "test.h"
@@ -197,7 +203,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		}
 		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
 			keyNew = COSE_Header_IV;
-			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, pValue->length), (int) pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
+			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, (int) pValue->length), (int) pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
 		}
 		else {
 			continue;
@@ -205,11 +211,27 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 
 		switch (which) {
 		case Attributes_MAC_protected:
-			COSE_Mac_map_put((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
 			break;
 
 		case Attributes_MAC_unprotected:
-			COSE_Mac_map_put((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_MAC_unsent:
+			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
+		case Attributes_MAC0_protected:
+			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_MAC0_unprotected:
+			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_MAC0_unsent:
+			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
 			break;
 
 		case Attributes_Recipient_protected:
@@ -271,6 +293,19 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		case Attributes_Signer_unsent:
 			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
 			break;
+
+		case Attributes_Sign0_protected:
+			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Sign0_unprotected:
+			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
+			break;
+
+		case Attributes_Sign0_unsent:
+			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			break;
+
 		}
 	}
 
@@ -366,17 +401,147 @@ bool Test_cn_cbor_array_replace()
 }
 
 
+void RunFileTest(const char * szFileName)
+{
+	const cn_cbor * pControl = NULL;
+
+	pControl = ParseJson(szFileName);
+
+	//
+	//  If we are given a file name, then process the file name
+	//
+
+	if (pControl == NULL) {
+		CFails += 1;
+		return;
+	}
+
+	//  To find out what we are doing we need to get the correct item
+
+	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
+		fprintf(stderr, "No or bad input section");
+		exit(1);
+	}
+
+	if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+		ValidateMAC(pControl);
+		BuildMacMessage(pControl);
+	}
+	else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+		ValidateMac0(pControl);
+		BuildMac0Message(pControl);
+	}
+	else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+		ValidateEnveloped(pControl);
+		BuildEnvelopedMessage(pControl);
+	}
+	else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+		ValidateSigned(pControl);
+		BuildSignedMessage(pControl);
+	}
+	else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+		ValidateSign0(pControl);
+		BuildSign0Message(pControl);
+	}
+	else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+		ValidateEncrypt(pControl);
+		BuildEncryptMessage(pControl);
+	}
+
+	return;
+}
+
+#ifdef _MSC_VER
+void RunTestsInDirectory(const char * szDir)
+{
+	int cFailTotal = 0;
+	WIN32_FIND_DATA FindFileData;
+	HANDLE hFind;
+	char rgchFullName[2 * 1024];
+
+	strcpy(rgchFullName, szDir);
+	strcat(rgchFullName, "\\");
+	size_t ich = strlen(rgchFullName);
+	strcat(rgchFullName, "*.json");
+
+	hFind = FindFirstFile(rgchFullName, &FindFileData);
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		printf("FindFirstFile failed (%d)\n", GetLastError());
+		return;
+	}
+
+	do {
+		rgchFullName[ich] = 0;
+		strcat(rgchFullName, FindFileData.cFileName);
+		printf("Run test '%s'", rgchFullName);
+
+		CFails = 0;
+		RunFileTest(rgchFullName);
+		if (CFails == 0) printf(" PASS\n");
+		else printf(" FAILED\n");
+		cFailTotal += CFails;
+	} while (FindNextFile(hFind, &FindFileData));
+
+	FindClose(hFind);
+
+	CFails = cFailTotal;
+	return;
+}
+
+#else
+void RunTestsInDirectory(const char * szDir)
+{
+	DIR * dirp = opendir(szDir);
+	struct dirent * dp;
+	char rgchFullName[2 * 1024];
+	strcpy(rgchFullName, szDir);
+	int ich;
+	int cFailTotal = 0;
+
+	if (dirp == NULL) {
+		fprintf(stderr, "Cannot open directory '%s'\n", szDir);
+		exit(1);
+	}
+	strcat(rgchFullName, "/");
+	ich = strlen(rgchFullName);
+
+	while ((dp = readdir(dirp)) != NULL) {
+		int cch = strlen(dp->d_name);
+		if (cch < 4) continue;
+		printf("type = %d\n", dp->d_type);
+		rgchFullName[ich] = 0;
+		strcat(rgchFullName, dp->d_name);
+		printf("Run test '%s'", rgchFullName);
+		CFails = 0;
+		RunFileTest(rgchFullName);
+		if (CFails == 0) printf(" PASS\n");
+		else printf(" FAILED\n");
+		cFailTotal += CFails;
+	}
+
+	(void)closedir(dirp);
+	exit(cFailTotal);
+}
+#endif // _MSCVER
+
 int main(int argc, char ** argv)
 {
 	int i;
-	const cn_cbor * pControl = NULL;
+	const char * szWhere = NULL;
+	bool fDir = false;
 
 	for (i = 1; i < argc; i++) {
-		if (argv[0][0] == '-') {
-
+		printf("arg: '%s'\n", argv[i]);
+		if (argv[i][0] == '-') {
+			if (strcmp(argv[i], "--dir") == 0) {
+				fDir = true;
+			}
 		}
 		else {
-			pControl = ParseJson(argv[i]);
+			szWhere = argv[i];
 		}
 	}
 
@@ -384,32 +549,9 @@ int main(int argc, char ** argv)
 	//  If we are given a file name, then process the file name
 	//
 
-	if (pControl != NULL) {
-		//  To find out what we are doing we need to get the correct item
-
-		const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
-
-		if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
-			fprintf(stderr, "No or bad input section");
-			exit(1);
-		}
-
-		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
-			ValidateMAC(pControl);
-			BuildMacMessage(pControl);
-		}
-		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
-			ValidateEnveloped(pControl);
-			BuildEnvelopedMessage(pControl);
-		}
-		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
-			ValidateSigned(pControl);
-			BuildSignedMessage(pControl);
-		}
-		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
-			ValidateEncrypt(pControl);
-			BuildEncryptMessage(pControl);
-		}
+	if (szWhere != NULL) {
+		if (fDir) RunTestsInDirectory(szWhere);
+		else RunFileTest(szWhere);
 	}
 	else {
 		MacMessage();

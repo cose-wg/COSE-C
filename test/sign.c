@@ -239,3 +239,119 @@ int SignMessage()
 
 	return 1;
 }
+
+
+int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
+{
+	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+	const cn_cbor * pFail;
+	const cn_cbor * pSign;
+	HCOSE_SIGN0	hSig;
+	int type;
+	bool fFail = false;
+	bool fFailBody = false;
+
+#ifdef USE_CBOR_CONTEXT
+	allocator = CreateContext();
+#endif 
+
+	pFail = cn_cbor_mapget_string(pControl, "fail");
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
+		fFailBody = true;
+	}
+
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
+	pSign = cn_cbor_mapget_string(pInput, "sign0");
+	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) exit(1);
+
+	hSig = (HCOSE_SIGN0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hSig == NULL) exit(1);
+
+
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"));
+	if (pkey == NULL) {
+		fFail = true;
+		goto exitHere;
+	}
+
+
+	pFail = cn_cbor_mapget_string(pInput, "fail");
+	if (COSE_Sign0_validate(hSig, pkey, NULL)) {
+		if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+	}
+	else {
+		if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+	}
+
+	COSE_Sign0_Free(hSig);
+
+	if (fFailBody) {
+		if (!fFail) fFail = true;
+		else fFail = false;
+	}
+
+exitHere:
+#ifdef USE_CBOR_CONTEXT
+	FreeContext(allocator);
+	allocator = NULL;
+#endif
+
+	if (fFail) CFails += 1;
+	return 0;
+}
+
+int ValidateSign0(const cn_cbor * pControl)
+{
+	int cbEncoded;
+	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
+
+	return _ValidateSign0(pControl, pbEncoded, cbEncoded);
+}
+
+int BuildSign0Message(const cn_cbor * pControl)
+{
+	//
+	//  We don't run this for all control sequences - skip those marked fail.
+	//
+
+	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
+
+	HCOSE_SIGN0 hSignObj = COSE_Sign0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
+	if (pInputs == NULL) exit(1);
+	const cn_cbor * pSign = cn_cbor_mapget_string(pInputs, "sign0");
+	if (pSign == NULL) exit(1);
+
+	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
+	if (!COSE_Sign0_SetContent(hSignObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
+
+	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "protected"), Attributes_Sign0_protected)) goto returnError;
+	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "unprotected"), Attributes_Sign0_unprotected)) goto returnError;
+	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "unsent"), Attributes_Sign0_unsent)) goto returnError;
+
+	const cn_cbor * pAlg = COSE_Sign0_map_get_int(hSignObj, 1, COSE_BOTH, NULL);
+
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"));
+	if (pkey == NULL) exit(1);
+
+
+	if (!COSE_Sign0_Sign(hSignObj, pkey, NULL)) exit(1);
+
+	size_t cb = COSE_Encode((HCOSE)hSignObj, NULL, 0, 0) + 1;
+	byte * rgb = (byte *)malloc(cb);
+	cb = COSE_Encode((HCOSE)hSignObj, rgb, 0, cb);
+
+	COSE_Sign0_Free(hSignObj);
+
+	int f = _ValidateSign0(pControl, rgb, cb);
+
+	free(rgb);
+	return f;
+
+returnError:
+	CFails += 1;
+	return 1;
+}
+

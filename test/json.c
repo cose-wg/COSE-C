@@ -129,9 +129,8 @@ const cn_cbor * ParseJson(const char * fileName)
 
 	if (fp == NULL) {
 		fprintf(stderr, "Cannot open file '%s'\n", fileName);
-		exit(1);
+		return NULL;
 	}
-	fprintf(stderr, "Processing '%s'\n", fileName);
 
 	cch = (int) fread(rgch, 1, 8*1024, fp);
 	fclose(fp);
