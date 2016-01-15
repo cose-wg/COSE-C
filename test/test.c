@@ -28,7 +28,7 @@ typedef struct _NameMap {
 	int    i;
 } NameMap;
 
-NameMap RgAlgorithmNames[26] = {
+NameMap RgAlgorithmNames[30] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -55,6 +55,10 @@ NameMap RgAlgorithmNames[26] = {
 	{"ES256", COSE_Algorithm_ECDSA_SHA_256},
 	{"ES384", COSE_Algorithm_ECDSA_SHA_384},
 	{"ES512", COSE_Algorithm_ECDSA_SHA_512},
+	{"HKDF-HMAC-SHA-256", COSE_Algorithm_Direct_HKDF_HMAC_SHA_256},
+	{"HKDF-HMAC-SHA-512", COSE_Algorithm_Direct_HKDF_HMAC_SHA_512},
+	{"HKDF-AES-128", COSE_Algorithm_Direct_HKDF_AES_128},
+	{"HKDF-AES-256", COSE_Algorithm_Direct_HKDF_AES_256},
 };
 
 
@@ -82,29 +86,6 @@ int MapAlgorithmName(const cn_cbor * p)
 	return MapName(p, RgAlgorithmNames, _countof(RgAlgorithmNames));
 }
 
-cn_cbor * cn_cbor_clone(const cn_cbor * pIn)
-{
-	cn_cbor * pOut = NULL;
-	char * sz;
-
-	switch (pIn->type) {
-	case CN_CBOR_TEXT:
-		sz = malloc(pIn->length + 1);
-		memcpy(sz, pIn->v.str, pIn->length);
-		sz[pIn->length] = 0;
-		pOut = cn_cbor_string_create(sz, CBOR_CONTEXT_PARAM_COMMA NULL);
-		break;
-
-	case CN_CBOR_UINT:
-		pOut = cn_cbor_int_create(pIn->v.sint, CBOR_CONTEXT_PARAM_COMMA NULL);
-		break;
-
-	default:
-		break;
-	}
-
-	return pOut;
-}
 
 byte fromHex(char c)
 {
@@ -199,7 +180,8 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		}
 		else if (strcmp(pKey->v.str, "ctyp") == 0) {
 			keyNew = COSE_Header_Content_Type;
-			pValueNew = cn_cbor_clone(pValue);;
+			pValueNew = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) return FALSE;
 		}
 		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
 			keyNew = COSE_Header_IV;
@@ -349,7 +331,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
 					switch (RgStringKeys[i].operation) {
 					case OPERATION_NONE:
-						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_clone(pValue), CBOR_CONTEXT_PARAM_COMMA NULL);
+						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
 						break;
 
 					case OPERATION_BASE64:

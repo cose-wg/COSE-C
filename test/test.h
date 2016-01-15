@@ -66,7 +66,6 @@ enum {
 extern int CFails;
 
 int MapAlgorithmName(const cn_cbor * p);
-cn_cbor * cn_cbor_clone(const cn_cbor * pIn);
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded);
 bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which);
 cn_cbor * BuildKey(const cn_cbor * pKeyIn);

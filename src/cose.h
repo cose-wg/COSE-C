@@ -136,6 +136,17 @@ typedef enum {
 	COSE_Header_Content_Type = 3,
 	COSE_Header_KID = 4,
 	COSE_Header_IV = 5,
+
+	COSE_Header_HKDF_salt = -20,
+	COSE_Header_KDF_U_nonce = -21,
+	COSE_Header_KDF_U_name = -22,
+	COSE_Header_KDF_U_other = -23,
+	COSE_Header_KDF_V_nonce = -24,
+	COSE_Header_KDF_V_name = -25,
+	COSE_Header_KDF_V_other = -26,
+
+	COSE_Header_KDF_PUB_other = -999,
+	COSE_Header_KDF_PRIV = -998,
 } COSE_Header;
 
 typedef enum {
@@ -260,3 +271,10 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
 bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback * perr);
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
 bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+
+/*
+*/
+
+extern cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
+
