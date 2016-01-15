@@ -600,9 +600,9 @@ bool HKDF_Expand(COSE * pcose, int cbitDigest, const byte * pbPRK, size_t cbPRK,
 	}
 
 	HMAC_CTX_init(&ctx);
-	CHECK_CONDITION(HMAC_Init(&ctx, pbPRK, (int)cbPRK, pmd), COSE_ERR_CRYPTO_FAIL);
 
 	for (ib = 0; ib < cbOutput; ib += cbDigest, bCount += 1) {
+		CHECK_CONDITION(HMAC_Init_ex(&ctx, pbPRK, (int)cbPRK, pmd, NULL), COSE_ERR_CRYPTO_FAIL);
 		CHECK_CONDITION(HMAC_Update(&ctx, rgbDigest, cbDigest), COSE_ERR_CRYPTO_FAIL);
 		CHECK_CONDITION(HMAC_Update(&ctx, pbInfo, cbInfo), COSE_ERR_CRYPTO_FAIL);
 		CHECK_CONDITION(HMAC_Update(&ctx, &bCount, 1), COSE_ERR_CRYPTO_FAIL);
