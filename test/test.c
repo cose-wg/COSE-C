@@ -181,7 +181,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		else if (strcmp(pKey->v.str, "ctyp") == 0) {
 			keyNew = COSE_Header_Content_Type;
 			pValueNew = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
-			if (pValueNew == NULL) return FALSE;
+			if (pValueNew == NULL) return false;
 		}
 		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
 			keyNew = COSE_Header_IV;
