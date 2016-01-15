@@ -25,10 +25,6 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 	bool fFail = false;
 	bool fFailBody = false;
 
-#ifdef USE_CBOR_CONTEXT
-        allocator = CreateContext();
-#endif 
-
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
@@ -255,10 +251,6 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
-
-#ifdef USE_CBOR_CONTEXT
-	allocator = CreateContext();
-#endif 
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {

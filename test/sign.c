@@ -24,10 +24,6 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 	bool fFail = false;
 	bool fFailBody = false;
 
-#ifdef USE_CBOR_CONTEXT
-        allocator = CreateContext();
-#endif 
-
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
@@ -250,10 +246,6 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
-
-#ifdef USE_CBOR_CONTEXT
-	allocator = CreateContext();
-#endif 
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {

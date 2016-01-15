@@ -28,7 +28,7 @@ HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	}
 
 	if (!_COSE_Init(&pobj->m_encrypt.m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
-		COSE_Recipient_Free((HCOSE_RECIPIENT)pobj);
+		_COSE_Recipient_Free(pobj);
 		return NULL;
 	}
 
@@ -98,7 +98,7 @@ COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor * cbor, CBOR_CONTE
 	return pRecipient;
 
 errorReturn:
-	_COSE_Recipient_Free(pRecipient);
+	if (pRecipient != NULL) _COSE_Recipient_Free(pRecipient);
 	return NULL;
 }
 

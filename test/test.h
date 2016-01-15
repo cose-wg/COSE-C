@@ -36,6 +36,11 @@ int ValidateMac0(const cn_cbor * pControl);
 int BuildMac0Message(const cn_cbor * pControl);
 void MAC_Corners();
 
+//  context.c
+extern cn_cbor_context * CreateContext(unsigned int iFailPoint);
+void FreeContext(cn_cbor_context* pContext);
+
+
 //  test.c
 enum {
 	Attributes_MAC_protected=1,

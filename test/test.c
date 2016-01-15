@@ -414,6 +414,53 @@ void RunCorners()
         MAC_Corners();
 }
 
+void RunMemoryTest(const char * szFileName)
+{
+	unsigned int iFail;
+	const cn_cbor * pControl = ParseJson(szFileName);
+
+	if (pControl == NULL) {
+		CFails += 1;
+		return;
+	}
+
+	//
+	//  To find out what we are doing we need to get the correct item
+
+	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
+		fprintf(stderr, "No or bad input section");
+		exit(1);
+	}
+
+	//
+	bool fValidateDone = false;
+	bool fBuildDone = false;
+
+	for (iFail = 0; !fValidateDone || !fBuildDone; iFail++) {
+		allocator = CreateContext(iFail);
+		
+		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateMAC(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildMacMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+	}
+	CFails = 0;
+	allocator = NULL;
+}
+
 void RunFileTest(const char * szFileName)
 {
 	const cn_cbor * pControl = NULL;
@@ -546,6 +593,7 @@ int main(int argc, char ** argv)
 	const char * szWhere = NULL;
 	bool fDir = false;
         bool fCorners = false;
+		bool fMemory = false;
 
 	for (i = 1; i < argc; i++) {
 		printf("arg: '%s'\n", argv[i]);
@@ -553,8 +601,11 @@ int main(int argc, char ** argv)
 			if (strcmp(argv[i], "--dir") == 0) {
 				fDir = true;
 			}
-                        else if (strcmp(argv[i],"--corners") == 0) {
+			else if (strcmp(argv[i], "--corners") == 0) {
 				fCorners = true;
+			}
+			else if (strcmp(argv[i], "--memory") == 0) {
+				fMemory = true;
 			}
 		}
 		else {
@@ -566,7 +617,10 @@ int main(int argc, char ** argv)
 	//  If we are given a file name, then process the file name
 	//
 
-	if (szWhere != NULL) {
+	if (fMemory) {
+		RunMemoryTest(szWhere);
+	}
+	else if (szWhere != NULL) {
 		if (fDir) RunTestsInDirectory(szWhere);
 		else RunFileTest(szWhere);
 	}

@@ -121,6 +121,7 @@ cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback 
 	switch (pIn->type) {
 	case CN_CBOR_TEXT:
 		sz = CN_CBOR_CALLOC(pIn->length + 1, 1, context);
+		if (sz == NULL) return NULL;
 		memcpy(sz, pIn->v.str, pIn->length);
 		sz[pIn->length] = 0;
 		pOut = cn_cbor_string_create(sz CBOR_CONTEXT_PARAM, pcn_cbor_error);
@@ -132,6 +133,7 @@ cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback 
 
 	case CN_CBOR_BYTES:
 		pb = CN_CBOR_CALLOC((int) pIn->length, 1, context);
+		if (sz == NULL) return NULL;
 		memcpy(pb, pIn->v.bytes, pIn->length);
 		pOut = cn_cbor_data_create(pb, (int) pIn->length CBOR_CONTEXT_PARAM, pcn_cbor_error);
 		break;
