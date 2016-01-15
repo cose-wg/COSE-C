@@ -336,7 +336,7 @@ returnError:
 }
 
 
-void MacCorners()
+void MAC_Corners()
 {
     HCOSE_MAC hMAC;
     HCOSE_ENCRYPT hEncrypt = NULL;
