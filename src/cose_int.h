@@ -199,9 +199,10 @@ extern bool _COSE_Mac0_Release(COSE_Mac0Message * p);
 //
 //  Debugging Items
 
-#define CHECK_CONDITION(condition, error) { if (!(condition)) { /*assert(false);*/ if (perr != NULL) {perr->err = error;} goto errorReturn;}}
-#define FAIL_CONDITION(error) { /*assert(false);*/ if (perr != NULL) {perr->err = error;} goto errorReturn;}
-#define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { /*assert(false);*/ if (perr != NULL) {perr->err = _MapFromCBOR(error);} goto errorReturn;}}
+#define DO_ASSERT assert(false);
+#define CHECK_CONDITION(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}}
+#define FAIL_CONDITION(error) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}
+#define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = _MapFromCBOR(error);} goto errorReturn;}}
 
 extern cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
 

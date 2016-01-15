@@ -575,7 +575,6 @@ void RunTestsInDirectory(const char * szDir)
 	while ((dp = readdir(dirp)) != NULL) {
 		int cch = strlen(dp->d_name);
 		if (cch < 4) continue;
-		printf("type = %d\n", dp->d_type);
 		rgchFullName[ich] = 0;
 		strcat(rgchFullName, dp->d_name);
 		printf("Run test '%s'", rgchFullName);

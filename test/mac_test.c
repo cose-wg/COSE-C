@@ -100,7 +100,7 @@ int BuildMacMessage(const cn_cbor * pControl)
 	//
 
 	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
-	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) goto returnError;
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
 
 	HCOSE_MAC hMacObj = COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 
