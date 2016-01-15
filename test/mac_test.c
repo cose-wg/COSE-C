@@ -334,3 +334,43 @@ returnError:
 	CFails += 1;
 	return 1;
 }
+
+
+void MacCorners()
+{
+    HCOSE_MAC hMAC;
+    HCOSE_ENCRYPT hEncrypt = NULL;
+    byte rgb[10];
+
+    //  Missing case - addref then release on item
+
+    //  Incorrect algorithm
+    
+    hMAC = (HCOSE_MAC) COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+    COSE_Mac_add_shared_secret(hMAC, COSE_Algorithm_Direct_HKDF_HMAC_SHA_256, rgb, 10, rgb, 10, NULL);
+
+    //  Invalid Handle checks
+
+    COSE_Mac_Free((HCOSE_MAC) hEncrypt);
+    COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL);
+    COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL);
+    COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL);
+    COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL);
+
+    hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+    COSE_Mac_Free((HCOSE_MAC)hEncrypt);
+    COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL);
+    COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL);
+    COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL);
+    COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL);
+
+    //
+
+    return;
+}

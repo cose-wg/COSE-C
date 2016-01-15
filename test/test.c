@@ -401,9 +401,18 @@ bool Test_cn_cbor_array_replace()
 	pItem = cn_cbor_int_create(7, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA NULL);
 
+        pItem = cn_cbor_int_create(8, CBOR_CONTEXT_PARAM_COMMA NULL);
+        cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA NULL);
+
 	return true;
 }
 
+
+void RunCorners()
+{
+    	Test_cn_cbor_array_replace();
+        MAC_Corners();
+}
 
 void RunFileTest(const char * szFileName)
 {
@@ -536,12 +545,16 @@ int main(int argc, char ** argv)
 	int i;
 	const char * szWhere = NULL;
 	bool fDir = false;
+        bool fCorners = false;
 
 	for (i = 1; i < argc; i++) {
 		printf("arg: '%s'\n", argv[i]);
 		if (argv[i][0] == '-') {
 			if (strcmp(argv[i], "--dir") == 0) {
 				fDir = true;
+			}
+                        else if (strcmp(argv[i],"--corners") == 0) {
+				fCorners = true;
 			}
 		}
 		else {
@@ -557,13 +570,14 @@ int main(int argc, char ** argv)
 		if (fDir) RunTestsInDirectory(szWhere);
 		else RunFileTest(szWhere);
 	}
+	else if (fCorners) {
+		RunCorners();
+	}
 	else {
 		MacMessage();
 		SignMessage();
 		EncryptMessage();
 	}
-
-	Test_cn_cbor_array_replace();
 
 	if (CFails > 0) fprintf(stderr, "Failed %d tests\n", CFails);
 	else fprintf(stderr, "SUCCESS\n");
