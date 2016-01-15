@@ -29,6 +29,7 @@ target_include_directories ( cose_test PUBLIC ../../cn-cbor/implement/cn-cbor/in
 enable_testing()
 
 add_test ( NAME cose_test COMMAND cose_test )
+
 add_test ( NAME mac-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Mac-02.json )
 add_test ( NAME mac-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Mac-04.json )
 
@@ -37,47 +38,18 @@ add_test ( NAME sig-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test E
 add_test ( NAME sig-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-03.json )
 add_test ( NAME sig-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-04.json )
 
+add_test ( NAME enc-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-02.json )
 add_test ( NAME enc-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-04.json )
 add_test ( NAME enc-05 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-05.json )
 
-add_test ( NAME hmac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/hmac-examples )
+add_test ( NAME aes-ccm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/aes-ccm-examples )
 
-add_test ( NAME cbc-mac-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-01.json )
-add_test ( NAME cbc-mac-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-02.json )
-add_test ( NAME cbc-mac-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-03.json )
-add_test ( NAME cbc-mac-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-04.json )
+add_test ( NAME aes-gcm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/aes-gcm-examples )
 
-add_test ( NAME cbc-mac-enc-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-01.json )
-add_test ( NAME cbc-mac-enc-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-02.json )
-add_test ( NAME cbc-mac-enc-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-03.json )
-add_test ( NAME cbc-mac-enc-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/cbc-mac-examples/cbc-mac-enc-04.json )
-
-add_test ( NAME aes-gcm-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-01.json )
-add_test ( NAME aes-gcm-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-02.json )
-add_test ( NAME aes-gcm-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-03.json )
-add_test ( NAME aes-gcm-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-04.json )
-
-add_test ( NAME aes-gcm-enc-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-enc-01.json )
-add_test ( NAME aes-gcm-enc-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-enc-02.json )
-add_test ( NAME aes-gcm-enc-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-enc-03.json )
-add_test ( NAME aes-gcm-enc-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-gcm-examples/aes-gcm-enc-04.json )
-
-add_test ( NAME aes-ccm-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-01.json )
-add_test ( NAME aes-ccm-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-02.json )
-add_test ( NAME aes-ccm-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-03.json )
-add_test ( NAME aes-ccm-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-04.json )
-add_test ( NAME aes-ccm-05 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-05.json )
-add_test ( NAME aes-ccm-06 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-06.json )
-add_test ( NAME aes-ccm-07 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-07.json )
-add_test ( NAME aes-ccm-08 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-08.json )
-
-add_test ( NAME aes-ccm-enc-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-01.json )
-add_test ( NAME aes-ccm-enc-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-02.json )
-add_test ( NAME aes-ccm-enc-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-03.json )
-add_test ( NAME aes-ccm-enc-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-04.json )
-add_test ( NAME aes-ccm-enc-05 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-05.json )
-add_test ( NAME aes-ccm-enc-06 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-06.json )
-add_test ( NAME aes-ccm-enc-07 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-07.json )
-add_test ( NAME aes-ccm-enc-08 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/aes-ccm-examples/aes-ccm-enc-08.json )
+add_test ( NAME cbc-mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/cbc-mac-examples )
 
 add_test ( NAME ecdsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/ecdsa-examples )
+
+add_test ( NAME hmac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/hmac-examples )
+
+add_test (NAME hkdf-hmac-sha WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/hkdf-hmac-sha-examples )

@@ -15,6 +15,7 @@
 #include <openssl/ecdsa.h>
 #include <openssl/rand.h>
 
+#define MIN(A, B) ((A) < (B) ? (A) : (B))
 
 bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
@@ -535,6 +536,85 @@ errorReturn:
 
 }
 #endif
+
+
+bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDigest, byte * rgbDigest, size_t * pcbDigest, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+	byte rgbSalt[EVP_MAX_MD_SIZE] = { 0 };
+	int cbSalt;
+	cn_cbor * cnSalt;
+	HMAC_CTX ctx;
+	const EVP_MD * pmd = NULL;
+	unsigned int cbDigest;
+
+	if (0) {
+	errorReturn:
+		HMAC_cleanup(&ctx);
+		return false;
+	}
+
+	switch (cbitDigest) {
+	case 256: pmd = EVP_sha256(); cbSalt = 256 / 8;  break;
+	case 384: pmd = EVP_sha384(); cbSalt = 384 / 8; break;
+	case 512: pmd = EVP_sha512(); cbSalt = 512 / 8; break;
+	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
+	}
+
+	cnSalt = _COSE_map_get_int(pcose, COSE_Header_HKDF_salt, COSE_BOTH, perr);
+
+	HMAC_CTX_init(&ctx);
+	if (cnSalt != NULL) {
+		CHECK_CONDITION(HMAC_Init(&ctx, cnSalt->v.bytes, (int) cnSalt->length, pmd), COSE_ERR_CRYPTO_FAIL);
+	}
+	else {
+		CHECK_CONDITION(HMAC_Init(&ctx, rgbSalt, cbSalt, pmd), COSE_ERR_CRYPTO_FAIL);
+	}
+	CHECK_CONDITION(HMAC_Update(&ctx, pbKey, (int)cbKey), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(HMAC_Final(&ctx, rgbDigest, &cbDigest), COSE_ERR_CRYPTO_FAIL);
+	*pcbDigest = cbDigest;
+	HMAC_cleanup(&ctx);
+	return true;
+}
+
+bool HKDF_Expand(COSE * pcose, int cbitDigest, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
+{
+	HMAC_CTX ctx;
+	const EVP_MD * pmd = NULL;
+	size_t ib;
+	int cbSalt;
+	unsigned int cbDigest = 0;
+	byte rgbDigest[EVP_MAX_MD_SIZE];
+	byte bCount = 1;
+
+	if (0) {
+	errorReturn:
+		HMAC_cleanup(&ctx);
+		return false;
+	}
+
+	switch (cbitDigest) {
+	case 256: pmd = EVP_sha256(); cbSalt = 256 / 8;  break;
+	case 384: pmd = EVP_sha384(); cbSalt = 384 / 8; break;
+	case 512: pmd = EVP_sha512(); cbSalt = 512 / 8; break;
+	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
+	}
+
+	HMAC_CTX_init(&ctx);
+
+	for (ib = 0; ib < cbOutput; ib += cbDigest, bCount += 1) {
+		CHECK_CONDITION(HMAC_Init_ex(&ctx, pbPRK, (int)cbPRK, pmd, NULL), COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(HMAC_Update(&ctx, rgbDigest, cbDigest), COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(HMAC_Update(&ctx, pbInfo, cbInfo), COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(HMAC_Update(&ctx, &bCount, 1), COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(HMAC_Final(&ctx, rgbDigest, &cbDigest), COSE_ERR_CRYPTO_FAIL);
+
+		memcpy(pbOutput + ib, rgbDigest, MIN(cbDigest, cbOutput - ib));
+	}
+
+	HMAC_cleanup(&ctx);
+	return true;
+
+}
 
 bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {

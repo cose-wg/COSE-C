@@ -1,5 +1,6 @@
 #include "cn-cbor/cn-cbor.h"
 #include <stdlib.h>
+#include <memory.h>
 
 #define INIT_CB(v) \
   if (errp) {errp->err = CN_CBOR_NO_ERROR;} \
@@ -14,10 +15,14 @@
     calloc(1, sizeof(cn_cbor));
 
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
+#define CN_CBOR_CALLOC(c, i, ctx) ((ctx) && (ctx)->calloc_func) ? \
+    (ctx)->calloc_func(c, i, (ctx)->context) : \
+	calloc(c, i)
 #else
 #define CBOR_CONTEXT_PARAM
 #define CN_CALLOC(ctx) calloc(1, sizeof(cn_cbor));
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
+#define CN_CBOR_CALLOC(c, i, ctx) calloc(c, i);
 #endif
 
 
@@ -105,4 +110,35 @@ bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CB
 	cn_cbor_free(cb_temp2 CBOR_CONTEXT_PARAM);
 
 	return true;
+}
+
+cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * pcn_cbor_error)
+{
+	cn_cbor * pOut = NULL;
+	char * sz;
+	unsigned char * pb;
+
+	switch (pIn->type) {
+	case CN_CBOR_TEXT:
+		sz = CN_CBOR_CALLOC(pIn->length + 1, 1, context);
+		memcpy(sz, pIn->v.str, pIn->length);
+		sz[pIn->length] = 0;
+		pOut = cn_cbor_string_create(sz CBOR_CONTEXT_PARAM, pcn_cbor_error);
+		break;
+
+	case CN_CBOR_UINT:
+		pOut = cn_cbor_int_create(pIn->v.sint CBOR_CONTEXT_PARAM, pcn_cbor_error);
+		break;
+
+	case CN_CBOR_BYTES:
+		pb = CN_CBOR_CALLOC((int) pIn->length, 1, context);
+		memcpy(pb, pIn->v.bytes, pIn->length);
+		pOut = cn_cbor_data_create(pb, (int) pIn->length CBOR_CONTEXT_PARAM, pcn_cbor_error);
+		break;
+
+	default:
+		break;
+	}
+
+	return pOut;
 }

@@ -48,6 +48,10 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 		hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hEnc == NULL) exit(1);
 
+		if (!SetAttributes((HCOSE)hEnc, cn_cbor_mapget_string(pEnveloped, "unsent"), Attributes_Enveloped_unsent)) {
+			fFail = true;
+			continue;
+		}
 
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
 		if (pkey == NULL) {
@@ -62,6 +66,11 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 		}
 
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
+			fFail = true;
+			continue;
+		}
+
+		if (!SetAttributes((HCOSE)hRecip, cn_cbor_mapget_string(pRecipients, "unsent"), Attributes_Recipient_unsent)) {
 			fFail = true;
 			continue;
 		}

@@ -310,7 +310,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 		for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
 			if (pri->m_encrypt.m_message.m_flags & 1) {
 				t |= 1;
-				pcose->pbKey = _COSE_RecipientInfo_generateKey(pri, cbitKey, perr);
+				pcose->pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
 				if (pcose->pbKey == NULL) goto errorReturn;
 
 				pcose->cbKey = cbitKey / 8;
@@ -499,7 +499,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	//  If there is a recipient - ask it for the key
 
 	for (pRecip = pcose->m_recipientFirst; pRecip != NULL; pRecip = pRecip->m_recipientNext) {
-		if (_COSE_Recipient_decrypt(pRecip, cbitKey, pbKey, perr)) break;
+		if (_COSE_Recipient_decrypt(pRecip, alg, cbitKey, pbKey, perr)) break;
 	}
 	CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 

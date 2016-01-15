@@ -3,11 +3,14 @@
 #include "cose.h"
 #include "cose_int.h"
 
+COSE * SignRoot = NULL;
+
 bool IsValidSignHandle(HCOSE_SIGN h)
 {
 	COSE_SignMessage * p = (COSE_SignMessage *)h;
+
 	if (p == NULL) return false;
-	return true;
+	return _COSE_IsInList(SignRoot, &p->m_message);
 }
 
 
@@ -23,6 +26,8 @@ HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		COSE_Sign_Free((HCOSE_SIGN)pobj);
 		return NULL;
 	}
+
+	_COSE_InsertInList(&SignRoot, &pobj->m_message);
 
 	return (HCOSE_SIGN)pobj;
 }
@@ -57,6 +62,8 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor * cbor, COSE_SignMessage * pIn, C
 		pSigners = pSigners->next;
 	} while (pSigners != NULL);
 
+	if (pIn == NULL) _COSE_InsertInList(&SignRoot, &pobj->m_message);
+
 	return(HCOSE_SIGN)pobj;
 
 errorReturn:
@@ -78,6 +85,8 @@ bool COSE_Sign_Free(HCOSE_SIGN h)
 		pMessage->m_message.m_refCount--;
 		return true;
 	}
+
+	_COSE_RemoveFromList(&SignRoot, &pMessage->m_message);
 
 #ifdef USE_CBOR_CONTEXT
 	context = pMessage->m_message.m_allocContext;

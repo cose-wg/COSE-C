@@ -8,13 +8,14 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cose_errback * perr);
 void _COSE_Sign0_Release(COSE_Sign0Message * p);
 
-
+COSE * Sign0Root = NULL;
 
 bool IsValidSign0Handle(HCOSE_SIGN0 h)
 {
 	COSE_Sign0Message * p = (COSE_Sign0Message *)h;
+
 	if (p == NULL) return false;
-	return true;
+	return _COSE_IsInList(Sign0Root, &p->m_message);
 }
 
 
@@ -31,15 +32,16 @@ HCOSE_SIGN0 COSE_Sign0_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		return NULL;
 	}
 
+	_COSE_InsertInList(&Sign0Root, &pobj->m_message);
+
 	return (HCOSE_SIGN0)pobj;
 }
 
 HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_Sign0Message * pobj = pIn;
-	cn_cbor * pSigners = NULL;
-	// cn_cbor * tmp;
 	cose_errback error = { 0 };
+
 	if (perr == NULL) perr = &error;
 
 	if (pobj == NULL) pobj = (COSE_Sign0Message *)COSE_CALLOC(1, sizeof(COSE_Sign0Message), context);
@@ -48,6 +50,8 @@ HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn
 	if (!_COSE_Init_From_Object(&pobj->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
+
+	if (pIn == NULL) _COSE_InsertInList(&Sign0Root, &pobj->m_message);
 
 	return(HCOSE_SIGN0)pobj;
 
@@ -70,6 +74,8 @@ bool COSE_Sign0_Free(HCOSE_SIGN0 h)
 		pMessage->m_message.m_refCount--;
 		return true;
 	}
+
+	_COSE_RemoveFromList(&Sign0Root, &pMessage->m_message);
 
 #ifdef USE_CBOR_CONTEXT
 	context = pMessage->m_message.m_allocContext;
