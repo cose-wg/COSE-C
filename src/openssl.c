@@ -537,6 +537,62 @@ errorReturn:
 }
 #endif
 
+bool HKDF_AES_Expand(COSE * pcose, int cbitKey, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
+{
+	const EVP_CIPHER * pcipher = NULL;
+	EVP_CIPHER_CTX ctx;
+	int cbOut;
+	byte rgbIV[16] = { 0 };
+	byte bCount = 1;
+	size_t ib;
+	byte rgbDigest[128 / 8];
+	int cbDigest = 0;
+	byte rgbOut[16];
+
+	switch (cbitKey) {
+	case 128:
+		pcipher = EVP_aes_128_cbc();
+		break;
+
+	case 256:
+		pcipher = EVP_aes_256_cbc();
+		break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+	CHECK_CONDITION(cbPRK == cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
+
+	//  Setup and run the OpenSSL code
+
+	EVP_CIPHER_CTX_init(&ctx);
+
+	for (ib = 0; ib < cbOutput; ib += 16, bCount += 1) {
+		size_t ib2;
+
+		CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pbPRK, rgbIV), COSE_ERR_CRYPTO_FAIL);
+
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, rgbDigest, cbDigest), COSE_ERR_CRYPTO_FAIL);
+		for (ib2 = 0; ib2 < cbInfo; ib2+=16) {
+			CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, pbInfo+ib2, (int) MIN(16, cbInfo-ib2)), COSE_ERR_CRYPTO_FAIL);
+		}
+		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, &bCount, 1), COSE_ERR_CRYPTO_FAIL);
+		if ((cbInfo + 1) % 16 != 0) {
+			CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, rgbIV, (int) 16-(cbInfo+1)%16), COSE_ERR_CRYPTO_FAIL);
+		}
+		memcpy(rgbDigest, rgbOut, cbOut);
+		cbDigest = cbOut;
+		memcpy(pbOutput + ib, rgbDigest, MIN(16, cbOutput - ib));
+	}
+
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return true;
+
+errorReturn:
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return false;
+}
+
 
 bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDigest, byte * rgbDigest, size_t * pcbDigest, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
