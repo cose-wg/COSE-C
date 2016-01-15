@@ -78,11 +78,6 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 		else fFail = false;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-        FreeContext(allocator);
-        allocator = NULL;
-#endif
-
 	if (fFail) CFails += 1;
 	return 0;
 }
@@ -283,10 +278,6 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	}
 
 exitHere:
-#ifdef USE_CBOR_CONTEXT
-	FreeContext(allocator);
-	allocator = NULL;
-#endif
 
 	if (fFail) CFails += 1;
 	return 0;

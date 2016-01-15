@@ -416,6 +416,7 @@ void RunCorners()
 
 void RunMemoryTest(const char * szFileName)
 {
+#ifdef USE_CBOR_CONTEXT
 	unsigned int iFail;
 	const cn_cbor * pControl = ParseJson(szFileName);
 
@@ -459,6 +460,9 @@ void RunMemoryTest(const char * szFileName)
 	}
 	CFails = 0;
 	allocator = NULL;
+#else
+	return;
+#endif
 }
 
 void RunFileTest(const char * szFileName)

@@ -88,11 +88,6 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 		else fFail = false;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-        FreeContext(allocator);
-        allocator = NULL;
-#endif
-
 	if (fFail) CFails += 1;
 	return 0;
 }
@@ -301,11 +296,6 @@ exitHere:
 		if (!fFail) fFail = true;
 		else fFail = false;
 	}
-
-#ifdef USE_CBOR_CONTEXT
-	FreeContext(allocator);
-	allocator = NULL;
-#endif
 
 	if (fFail) CFails += 1;
 	return 0;
