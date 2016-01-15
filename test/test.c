@@ -187,6 +187,28 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 			keyNew = COSE_Header_IV;
 			pValueNew = cn_cbor_data_create(FromHex(pValue->v.str, (int) pValue->length), (int) pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
 		}
+		else if (strcmp(pKey->v.str, "apu_id") == 0) {
+			keyNew = COSE_Header_KDF_U_name;
+			pValueNew = cn_cbor_data_create(pValue->v.bytes, (int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) return false;
+
+		}
+		else if (strcmp(pKey->v.str, "apv_id") == 0) {
+			keyNew = COSE_Header_KDF_V_name;
+			pValueNew = cn_cbor_data_create(pValue->v.bytes, (int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) return false;
+
+		}
+		else if (strcmp(pKey->v.str, "supp_pub_other") == 0) {
+			keyNew = COSE_Header_KDF_PUB_other;
+			pValueNew = cn_cbor_data_create(pValue->v.bytes, (int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) return false;
+		}
+		else if (strcmp(pKey->v.str, "supp_priv_other") == 0) {
+			keyNew = COSE_Header_KDF_PRIV;
+			pValueNew = cn_cbor_data_create(pValue->v.bytes, (int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) return false;
+		}
 		else {
 			continue;
 		}

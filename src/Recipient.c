@@ -217,6 +217,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 			CHECK_CONDITION(pcose->cbKey == (unsigned int)cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
 			memcpy(pbKey, pcose->pbKey, pcose->cbKey);
 		}
+		break;
 
 	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
 		if (!BuildContextBytes(&pcose->m_message, algIn, cbitKey, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
@@ -548,7 +549,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
@@ -557,7 +558,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
@@ -566,7 +567,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
@@ -581,7 +582,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
@@ -590,7 +591,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
@@ -599,7 +600,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
@@ -628,7 +629,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
@@ -641,7 +642,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnParam, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
