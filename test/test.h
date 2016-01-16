@@ -35,6 +35,7 @@ int BuildMacMessage(const cn_cbor * pControl);
 int ValidateMac0(const cn_cbor * pControl);
 int BuildMac0Message(const cn_cbor * pControl);
 void MAC_Corners();
+void MAC0_Corners();
 
 #ifdef USE_CBOR_CONTEXT
 //  context.c

@@ -385,3 +385,34 @@ void MAC_Corners()
 
     return;
 }
+
+void MAC0_Corners()
+{
+	HCOSE_ENCRYPT hEncrypt = NULL;
+	byte rgb[10];
+	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	//  Missing case - addref then release on item
+
+	//  Invalid Handle checks
+
+	COSE_Mac0_Free((HCOSE_MAC0)hEncrypt);
+	COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_map_get_int((HCOSE_MAC0)hEncrypt, 1, COSE_BOTH, NULL);
+	COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
+	COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+
+	hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	COSE_Mac0_Free((HCOSE_MAC0)hEncrypt);
+	COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_map_get_int((HCOSE_MAC0)hEncrypt, 1, COSE_BOTH, NULL);
+	COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
+	COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+
+	//
+
+	return;
+}

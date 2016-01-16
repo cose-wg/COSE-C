@@ -420,6 +420,7 @@ void RunCorners()
 {
     	Test_cn_cbor_array_replace();
         MAC_Corners();
+		MAC0_Corners();
 }
 
 void RunMemoryTest(const char * szFileName)
