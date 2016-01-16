@@ -61,4 +61,6 @@ add_test (NAME Memory-mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_tes
 add_test (NAME Memory-mac0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/hmac-examples/HMac-enc-01.json )
 add_test (NAME Memory-encrypt WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/aes-gcm-examples/aes-gcm-enc-01.json )
 add_test (NAME Memory-enveloped WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/aes-gcm-examples/aes-gcm-01.json )
+add_test (NAME Memory-sign0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-sig-01.json )
+add_test (NAME Memory-sign WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-01.json )
 

@@ -97,6 +97,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	cn_cbor * pcborProtected2 = NULL;
 	cn_cbor * pcborProtectedSign = NULL;
 	cn_cbor * pArray = NULL;
+	cn_cbor * cnX = NULL;
 	cn_cbor * cn = NULL;
 	cn_cbor_errback cbor_error;
 	size_t cbToSign;
@@ -116,16 +117,16 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 		return false;
 	}
 
-	cn = _COSE_map_get_int(&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn == NULL) goto errorReturn;
+	cnX = _COSE_map_get_int(&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
+	if (cnX == NULL) goto errorReturn;
 
-	if (cn->type == CN_CBOR_TEXT) {
+	if (cnX->type == CN_CBOR_TEXT) {
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 	else {
-		CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION((cnX->type == CN_CBOR_UINT || cnX->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 
-		alg = (int)cn->v.uint;
+		alg = (int)cnX->v.uint;
 	}
 
 

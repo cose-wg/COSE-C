@@ -273,7 +273,6 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 	if (pArray == NULL) {
 		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
-		if (cn != NULL) CN_CBOR_FREE(cn, context);
 		if (pcborBody2 != NULL) CN_CBOR_FREE(pcborBody2, context);
 		if (pcborProtected2 != NULL) CN_CBOR_FREE(pcborProtected2, context);
 		if (pArray != NULL) COSE_FREE(pArray, context);

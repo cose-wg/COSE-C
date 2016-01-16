@@ -511,6 +511,36 @@ void RunMemoryTest(const char * szFileName)
 				if (CFails == 0) fBuildDone = true;
 			}
 		}
+		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateSigned(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildSignedMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateSign0(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildSign0Message(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
 	}
 	CFails = 0;
 	allocator = NULL;
