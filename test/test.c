@@ -328,6 +328,8 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 	unsigned char * pb;
 	size_t cb;
 
+	if (pKeyOut == NULL) return NULL;
+
 	if ((pKty == NULL) || (pKty->type != CN_CBOR_TEXT)) return NULL;
 	if (pKty->length == 2) {
 		if (strncmp(pKty->v.str, "EC", 2) == 0) kty = 2;
@@ -353,16 +355,22 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
 					switch (RgStringKeys[i].operation) {
 					case OPERATION_NONE:
-						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
+						p = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
+						if (p == NULL) return NULL;
+						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
 
 					case OPERATION_BASE64:
 						pb = base64_decode(pValue->v.str, pValue->length, &cb);
-						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_data_create(pb, (int) cb, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
+						p = cn_cbor_data_create(pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA NULL);
+						if (p == NULL) return NULL;
+						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
 
 					case OPERATION_STRING:
-						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_int_create(MapName(pValue, RgCurveNames, _countof(RgCurveNames)), CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
+						p = cn_cbor_int_create(MapName(pValue, RgCurveNames, _countof(RgCurveNames)), CBOR_CONTEXT_PARAM_COMMA NULL);
+						if (p == NULL) return NULL;
+						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
 					}
 					i = 99;
@@ -401,9 +409,145 @@ bool Test_cn_cbor_array_replace()
 	pItem = cn_cbor_int_create(7, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA NULL);
 
+        pItem = cn_cbor_int_create(8, CBOR_CONTEXT_PARAM_COMMA NULL);
+        cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA NULL);
+
 	return true;
 }
 
+
+void RunCorners()
+{
+    	Test_cn_cbor_array_replace();
+        MAC_Corners();
+		MAC0_Corners();
+}
+
+void RunMemoryTest(const char * szFileName)
+{
+#ifdef USE_CBOR_CONTEXT
+	unsigned int iFail;
+	const cn_cbor * pControl = ParseJson(szFileName);
+
+	if (pControl == NULL) {
+		CFails += 1;
+		return;
+	}
+
+	//
+	//  To find out what we are doing we need to get the correct item
+
+	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
+		fprintf(stderr, "No or bad input section");
+		exit(1);
+	}
+
+	//
+	bool fValidateDone = false;
+	bool fBuildDone = false;
+
+	for (iFail = 0; !fValidateDone || !fBuildDone; iFail++) {
+		allocator = CreateContext(iFail);
+
+		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateMAC(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildMacMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateMac0(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildMac0Message(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateEncrypt(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildEncryptMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateEnveloped(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildEnvelopedMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateSigned(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildSignedMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateSign0(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildSign0Message(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+	}
+	CFails = 0;
+	allocator = NULL;
+#else
+	return;
+#endif
+}
 
 void RunFileTest(const char * szFileName)
 {
@@ -515,7 +659,6 @@ void RunTestsInDirectory(const char * szDir)
 	while ((dp = readdir(dirp)) != NULL) {
 		int cch = strlen(dp->d_name);
 		if (cch < 4) continue;
-		printf("type = %d\n", dp->d_type);
 		rgchFullName[ich] = 0;
 		strcat(rgchFullName, dp->d_name);
 		printf("Run test '%s'", rgchFullName);
@@ -536,12 +679,20 @@ int main(int argc, char ** argv)
 	int i;
 	const char * szWhere = NULL;
 	bool fDir = false;
+        bool fCorners = false;
+		bool fMemory = false;
 
 	for (i = 1; i < argc; i++) {
 		printf("arg: '%s'\n", argv[i]);
 		if (argv[i][0] == '-') {
 			if (strcmp(argv[i], "--dir") == 0) {
 				fDir = true;
+			}
+			else if (strcmp(argv[i], "--corners") == 0) {
+				fCorners = true;
+			}
+			else if (strcmp(argv[i], "--memory") == 0) {
+				fMemory = true;
 			}
 		}
 		else {
@@ -553,17 +704,21 @@ int main(int argc, char ** argv)
 	//  If we are given a file name, then process the file name
 	//
 
-	if (szWhere != NULL) {
+	if (fMemory) {
+		RunMemoryTest(szWhere);
+	}
+	else if (szWhere != NULL) {
 		if (fDir) RunTestsInDirectory(szWhere);
 		else RunFileTest(szWhere);
+	}
+	else if (fCorners) {
+		RunCorners();
 	}
 	else {
 		MacMessage();
 		SignMessage();
 		EncryptMessage();
 	}
-
-	Test_cn_cbor_array_replace();
 
 	if (CFails > 0) fprintf(stderr, "Failed %d tests\n", CFails);
 	else fprintf(stderr, "SUCCESS\n");

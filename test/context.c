@@ -13,6 +13,7 @@ typedef unsigned char byte;
 typedef struct {
 	cn_cbor_context context;
 	byte * pFirst;
+	unsigned int iFailLeft;
 } MyContext;
 
 typedef struct _MyItem {
@@ -64,6 +65,9 @@ void * MyCalloc(size_t count, size_t size, void * context)
 
 	CheckMemory(myContext);
 
+	if (myContext->iFailLeft == 0) return NULL;
+		myContext->iFailLeft--;
+
 	memset(pb, 0xef, sizeof(MyItem) + count*size);
 	memset(&pb->data, 0, count*size);
 
@@ -80,12 +84,13 @@ void MyFree(void * ptr, void * context)
 	MyContext * myContext = (MyContext *)context;
 
 	CheckMemory(myContext);
+	if (ptr == NULL) return;
 
 	memset(&pb->pad, 0xab, pb->size + 8);
 }
 
 
-cn_cbor_context * CreateContext()
+cn_cbor_context * CreateContext(unsigned int iFailPoint)
 {
 	MyContext * p = malloc(sizeof(MyContext));
 
@@ -93,6 +98,7 @@ cn_cbor_context * CreateContext()
 	p->context.free_func = MyFree;
 	p->context.context = p;
 	p->pFirst = NULL;
+	p->iFailLeft = iFailPoint;
 
 	return &p->context;
 }

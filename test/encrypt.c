@@ -25,28 +25,24 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 	bool fFail = false;
 	bool fFailBody = false;
 
-#ifdef USE_CBOR_CONTEXT
-        allocator = CreateContext();
-#endif 
-
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
 	}
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto errorReturn;
 	pEnveloped = cn_cbor_mapget_string(pInput, "enveloped");
-	if ((pEnveloped == NULL) || (pEnveloped->type != CN_CBOR_MAP)) exit(1);
+	if ((pEnveloped == NULL) || (pEnveloped->type != CN_CBOR_MAP)) goto errorReturn;
 
 	pRecipients = cn_cbor_mapget_string(pEnveloped, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto errorReturn;
 
 	iRecipient = (int) pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
 	for (; pRecipients != NULL; iRecipient--, pRecipients = pRecipients->next) {
 
 		hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-		if (hEnc == NULL) exit(1);
+		if (hEnc == NULL) goto errorReturn;
 
 		if (!SetAttributes((HCOSE)hEnc, cn_cbor_mapget_string(pEnveloped, "unsent"), Attributes_Enveloped_unsent)) {
 			fFail = true;
@@ -92,12 +88,11 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 		else fFail = false;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-        FreeContext(allocator);
-        allocator = NULL;
-#endif
-
 	if (fFail) CFails += 1;
+	return 0;
+
+errorReturn:
+	CFails += 1;
 	return 0;
 }
 
@@ -123,9 +118,9 @@ int BuildEnvelopedMessage(const cn_cbor * pControl)
 	HCOSE_ENVELOPED hEncObj = COSE_Enveloped_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL) exit(1);
+	if (pInputs == NULL) goto returnError;
 	const cn_cbor * pEnveloped = cn_cbor_mapget_string(pInputs, "enveloped");
-	if (pEnveloped == NULL) exit(1);
+	if (pEnveloped == NULL) goto returnError;
 
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Enveloped_SetContent(hEncObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
@@ -135,30 +130,31 @@ int BuildEnvelopedMessage(const cn_cbor * pControl)
 	if (!SetAttributes((HCOSE)hEncObj, cn_cbor_mapget_string(pEnveloped, "unsent"), Attributes_Enveloped_unsent)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Enveloped_map_get_int(hEncObj, 1, COSE_BOTH, NULL);
+	if (pAlg == NULL) goto returnError;
 
 	const cn_cbor * pRecipients = cn_cbor_mapget_string(pEnveloped, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
-		if (pkey == NULL) exit(1);
+		if (pkey == NULL) goto returnError;
 
 		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-		if (hRecip == NULL) exit(1);
+		if (hRecip == NULL) goto returnError;
 
 		if (!SetAttributes((HCOSE)hRecip, cn_cbor_mapget_string(pRecipients, "protected"), Attributes_Recipient_protected)) goto returnError;
 		if (!SetAttributes((HCOSE)hRecip, cn_cbor_mapget_string(pRecipients, "unprotected"), Attributes_Recipient_unprotected)) goto returnError;
 		if (!SetAttributes((HCOSE)hRecip, cn_cbor_mapget_string(pRecipients, "unsent"), Attributes_Recipient_unsent)) goto returnError;
 
-		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) exit(1);
+		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) goto returnError;
 
-		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL)) exit(1);
+		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL)) goto returnError;
 
 		COSE_Recipient_Free(hRecip);
 	}
 
-	if (!COSE_Enveloped_encrypt(hEncObj, NULL)) exit(1);
+	if (!COSE_Enveloped_encrypt(hEncObj, NULL)) goto returnError;
 
 	size_t cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);
@@ -256,26 +252,22 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	bool fFail = false;
 	bool fFailBody = false;
 
-#ifdef USE_CBOR_CONTEXT
-	allocator = CreateContext();
-#endif 
-
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
 	}
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto returnError;
 	pEncrypt = cn_cbor_mapget_string(pInput, "encrypted");
-	if ((pEncrypt == NULL) || (pEncrypt->type != CN_CBOR_MAP)) exit(1);
+	if ((pEncrypt == NULL) || (pEncrypt->type != CN_CBOR_MAP)) goto returnError;
 
 	pRecipients = cn_cbor_mapget_string(pEncrypt, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
 	pRecipients = pRecipients->first_child;
 
 	hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEnc == NULL) exit(1);
+	if (hEnc == NULL) goto returnError;
 
 	if (!SetAttributes((HCOSE)hEnc, cn_cbor_mapget_string(pEncrypt, "unsent"), Attributes_Encrypt_unsent)) {
 		fFail = true;
@@ -283,9 +275,7 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	}
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
-	if (pkey == NULL) {
-		fFail = true;
-	}
+	if (pkey == NULL) goto returnError;
 
 	cn_cbor * k = cn_cbor_mapget_int(pkey, -1);
 	if (k == NULL) {
@@ -310,12 +300,11 @@ exitHere:
 		else fFail = false;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-	FreeContext(allocator);
-	allocator = NULL;
-#endif
-
 	if (fFail) CFails += 1;
+	return 0;
+
+returnError:
+	CFails += 1;
 	return 0;
 }
 
@@ -340,9 +329,9 @@ int BuildEncryptMessage(const cn_cbor * pControl)
 	HCOSE_ENCRYPT hEncObj = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL) exit(1);
+	if (pInputs == NULL) goto returnError;
 	const cn_cbor * pEncrypt = cn_cbor_mapget_string(pInputs, "encrypted");
-	if (pEncrypt == NULL) exit(1);
+	if (pEncrypt == NULL) goto returnError;
 
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Encrypt_SetContent(hEncObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
@@ -352,18 +341,19 @@ int BuildEncryptMessage(const cn_cbor * pControl)
 	if (!SetAttributes((HCOSE)hEncObj, cn_cbor_mapget_string(pEncrypt, "unsent"), Attributes_Encrypt_unsent)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Encrypt_map_get_int(hEncObj, 1, COSE_BOTH, NULL);
+	if (pAlg == NULL) goto returnError;
 
 	const cn_cbor * pRecipients = cn_cbor_mapget_string(pEncrypt, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
 	pRecipients = pRecipients->first_child;
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
-		if (pkey == NULL) exit(1);
+		if (pkey == NULL) goto returnError;
 
 		cn_cbor * k = cn_cbor_mapget_int(pkey, -1);
 
 
-	if (!COSE_Encrypt_encrypt(hEncObj, k->v.bytes, k->length, NULL)) exit(1);
+	if (!COSE_Encrypt_encrypt(hEncObj, k->v.bytes, k->length, NULL)) goto returnError;
 
 	size_t cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);

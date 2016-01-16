@@ -11,12 +11,12 @@
 
 byte RgbDontUse2[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
 
+COSE * MacRoot = NULL;
 
 bool IsValidMacHandle(HCOSE_MAC h)
 {
 	COSE_MacMessage * p = (COSE_MacMessage *)h;
-	if (p == NULL) return false;
-	return true;
+	return _COSE_IsInList(MacRoot, &p->m_message);
 }
 
 
@@ -29,10 +29,15 @@ HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 		goto errorReturn;
 	}
 
+	_COSE_InsertInList(&MacRoot, &pobj->m_message);
+
 	return (HCOSE_MAC)pobj;
 
 errorReturn:
-	if (pobj != NULL) COSE_Mac_Free((HCOSE_MAC)pobj);
+	if (pobj != NULL) {
+		_COSE_Mac_Release(pobj);
+		COSE_FREE(pobj, context);
+	}
 	return NULL;
 }
 
@@ -48,7 +53,12 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor * cbor, COSE_MacMessage * pIn, CBOR
 	if (pobj == NULL) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
-		if ((pIn == NULL) && (pobj != NULL)) COSE_FREE(pobj, context);
+		if (pobj != NULL) {
+			_COSE_Mac_Release(pobj);
+			if (pIn == NULL) {
+				COSE_FREE(pobj, context);
+			}
+		}
 		return NULL;
 	}
 
@@ -71,6 +81,8 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor * cbor, COSE_MacMessage * pIn, CBOR
 		}
 	}
 
+	_COSE_InsertInList(&MacRoot, &pobj->m_message);
+
 	return(HCOSE_MAC)pobj;
 }
 
@@ -87,6 +99,8 @@ bool COSE_Mac_Free(HCOSE_MAC h)
 		p->m_message.m_refCount--;
 		return true;
 	}
+
+	_COSE_RemoveFromList(&MacRoot, &p->m_message);
 
 #ifdef USE_CBOR_CONTEXT
 	context = ((COSE_MacMessage *)h)->m_message.m_allocContext;

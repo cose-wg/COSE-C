@@ -23,7 +23,8 @@ HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	}
 
 	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
-		COSE_Sign_Free((HCOSE_SIGN)pobj);
+		_COSE_Sign_Release(pobj);
+		COSE_FREE(pobj, context);
 		return NULL;
 	}
 
@@ -67,7 +68,10 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor * cbor, COSE_SignMessage * pIn, C
 	return(HCOSE_SIGN)pobj;
 
 errorReturn:
-	if ((pIn == NULL) && (pobj != NULL)) COSE_FREE(pobj, context);
+	if (pobj != NULL) {
+		_COSE_Sign_Release(pobj);
+		if (pIn == NULL) COSE_FREE(pobj, context);
+	}
 	return NULL;
 }
 
@@ -240,7 +244,7 @@ bool COSE_Sign_validate(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * p
 	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION(cnProtected != NULL && cnContent->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
-	f = _COSE_Signer_validate(pSign, pSigner, cnContent->v.bytes, cnContent->length, cnProtected->v.bytes, cnProtected->length, perr);
+	f = _COSE_Signer_validate(pSign, pSigner, cnContent, cnProtected, perr);
 
 	return f;
 

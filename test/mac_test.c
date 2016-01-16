@@ -28,14 +28,14 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	}
 
 	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) exit(1);
+	if (hMAC == NULL) goto failTest;
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto failTest;
 	pMac = cn_cbor_mapget_string(pInput, "mac");
-	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) exit(1);
+	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) goto failTest;
 
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto failTest;
 
 	iRecipient = (int) pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
@@ -77,6 +77,10 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 
 	if (fFail) CFails += 1;
 	return 0;
+
+failTest:
+	CFails += 1;
+	return 0;
 }
 
 int ValidateMAC(const cn_cbor * pControl)
@@ -101,9 +105,9 @@ int BuildMacMessage(const cn_cbor * pControl)
 	HCOSE_MAC hMacObj = COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL) exit(1);
+	if (pInputs == NULL) goto returnError;
 	const cn_cbor * pMac = cn_cbor_mapget_string(pInputs, "mac");
-	if (pMac == NULL) exit(1);
+	if (pMac == NULL) goto returnError;
 
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Mac_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
@@ -114,27 +118,27 @@ int BuildMacMessage(const cn_cbor * pControl)
 	const cn_cbor * pAlg = COSE_Mac_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
 	const cn_cbor * pRecipients = cn_cbor_mapget_string(pMac, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
-		if (pkey == NULL) exit(1);
+		if (pkey == NULL) goto returnError;
 
 		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-		if (hRecip == NULL) exit(1);
+		if (hRecip == NULL) goto returnError;
 
 		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "protected"), Attributes_Recipient_protected)) goto returnError;
 		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "unprotected"), Attributes_Recipient_unprotected)) goto returnError;
 
-		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) exit(1);
+		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL))goto returnError;
 
-		if (!COSE_Mac_AddRecipient(hMacObj, hRecip, NULL)) exit(1);
+		if (!COSE_Mac_AddRecipient(hMacObj, hRecip, NULL)) goto returnError;
 
 		COSE_Recipient_Free(hRecip);
 	}
 
-	if (!COSE_Mac_encrypt(hMacObj, NULL)) exit(1);
+	if (!COSE_Mac_encrypt(hMacObj, NULL)) goto returnError;
 
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);
@@ -235,14 +239,14 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	}
 
 	hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) exit(1);
+	if (hMAC == NULL) goto errorReturn;
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto errorReturn;
 	pMac = cn_cbor_mapget_string(pInput, "mac0");
-	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) exit(1);
+	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) goto errorReturn;
 
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto errorReturn;
 
 	pRecipients = pRecipients->first_child;
 
@@ -272,6 +276,10 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	exitHere:
 	if (fFail) CFails += 1;
 	return 0;
+
+errorReturn:
+	CFails += 1;
+	return 0;
 }
 
 int ValidateMac0(const cn_cbor * pControl)
@@ -295,9 +303,9 @@ int BuildMac0Message(const cn_cbor * pControl)
 	HCOSE_MAC0 hMacObj = COSE_Mac0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL) exit(1);
+	if (pInputs == NULL) goto returnError;
 	const cn_cbor * pMac = cn_cbor_mapget_string(pInputs, "mac0");
-	if (pMac == NULL) exit(1);
+	if (pMac == NULL) goto returnError;
 
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Mac0_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
@@ -308,16 +316,16 @@ int BuildMac0Message(const cn_cbor * pControl)
 	const cn_cbor * pAlg = COSE_Mac0_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
 	const cn_cbor * pRecipients = cn_cbor_mapget_string(pMac, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
 	pRecipients = pRecipients->first_child;
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
-		if (pkey == NULL) exit(1);
+		if (pkey == NULL) goto returnError;
 
 		cn_cbor * k = cn_cbor_mapget_int(pkey, -1);
 
-	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) exit(1);
+	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) goto returnError;
 
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);
@@ -333,4 +341,78 @@ int BuildMac0Message(const cn_cbor * pControl)
 returnError:
 	CFails += 1;
 	return 1;
+}
+
+
+void MAC_Corners()
+{
+    HCOSE_MAC hMAC;
+    HCOSE_ENCRYPT hEncrypt = NULL;
+    byte rgb[10];
+	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+    //  Missing case - addref then release on item
+
+    //  Incorrect algorithm
+    
+    hMAC = (HCOSE_MAC) COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+    COSE_Mac_add_shared_secret(hMAC, COSE_Algorithm_Direct_HKDF_HMAC_SHA_256, rgb, 10, rgb, 10, NULL);
+
+    //  Invalid Handle checks
+
+    COSE_Mac_Free((HCOSE_MAC) hEncrypt);
+    COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL);
+    COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL);
+	COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
+    COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL);
+    COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL);
+
+    hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+    COSE_Mac_Free((HCOSE_MAC)hEncrypt);
+    COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL);
+    COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL);
+	COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
+	COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL);
+    COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
+    COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL);
+
+    //
+
+    return;
+}
+
+void MAC0_Corners()
+{
+	HCOSE_ENCRYPT hEncrypt = NULL;
+	byte rgb[10];
+	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	//  Missing case - addref then release on item
+
+	//  Invalid Handle checks
+
+	COSE_Mac0_Free((HCOSE_MAC0)hEncrypt);
+	COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_map_get_int((HCOSE_MAC0)hEncrypt, 1, COSE_BOTH, NULL);
+	COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
+	COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+
+	hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	COSE_Mac0_Free((HCOSE_MAC0)hEncrypt);
+	COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_map_get_int((HCOSE_MAC0)hEncrypt, 1, COSE_BOTH, NULL);
+	COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
+	COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+	COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL);
+
+	//
+
+	return;
 }

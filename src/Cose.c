@@ -53,7 +53,6 @@ bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 	return true;
 
 errorReturn:
-	_COSE_Release(pobj);
 	return false;
 }
 
@@ -111,7 +110,6 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 	return true;
 
 errorReturn:
-	_COSE_Release(pobj);
 	return false;
 }
 

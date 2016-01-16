@@ -8,6 +8,8 @@
 #include "configure.h"
 #include "crypto.h"
 
+void _COSE_Enveloped_Release(COSE_Enveloped * p);
+
 byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
 
 COSE * EnvelopedRoot = NULL;
@@ -34,7 +36,8 @@ HCOSE_ENVELOPED COSE_Enveloped_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	}
 
 	if (!_COSE_Init(&pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
-		COSE_Enveloped_Free((HCOSE_ENVELOPED)pobj);
+		_COSE_Enveloped_Release(pobj);
+		COSE_FREE(pobj, context);
 		return NULL;
 	}
 
@@ -54,7 +57,10 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped 
 	if (pobj == NULL) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
-		if ((pIn == NULL) && (pobj != NULL)) COSE_FREE(pobj, context);
+		if (pobj != NULL) {
+			_COSE_Enveloped_Release(pobj);
+			if (pIn == NULL) COSE_FREE(pobj, context);
+		}
 		return NULL;
 	}
 
@@ -106,9 +112,17 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 
 void _COSE_Enveloped_Release(COSE_Enveloped * p)
 {
+	COSE_RecipientInfo * pRecipient1;
+	COSE_RecipientInfo * pRecipient2;
+
 	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent, &p->m_message.m_allocContext);
 	//	if (p->pbIV != NULL) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
 	if (p->pbKey != NULL) COSE_FREE(p ->pbKey, &p->m_message.m_allocContext);
+
+	for (pRecipient1 = p->m_recipientFirst; pRecipient1 != NULL; pRecipient1 = pRecipient2) {
+		pRecipient2 = pRecipient1->m_recipientNext;
+		COSE_Recipient_Free((HCOSE_RECIPIENT)pRecipient1);
+	}
 
 	_COSE_Release(&p->m_message);
 }

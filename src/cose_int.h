@@ -181,7 +181,7 @@ extern void _COSE_Sign_Release(COSE_SignMessage * p);
 extern bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr);
 extern COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, COSE_SignerInfo * pIn, CBOR_CONTEXT_COMMA cose_errback * perr);
 extern bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner);
-extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const byte * pbContent, size_t cbContent, const byte * pbProtected, size_t cbProtected, cose_errback * perr);
+extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const cn_cbor * pbContent, const cn_cbor * pbProtected, cose_errback * perr);
 
 
 // Sign0 items
@@ -199,9 +199,11 @@ extern bool _COSE_Mac0_Release(COSE_Mac0Message * p);
 //
 //  Debugging Items
 
-#define CHECK_CONDITION(condition, error) { if (!(condition)) { assert(false); perr->err = error; goto errorReturn;}}
-#define FAIL_CONDITION(error) { assert(false); perr->err = error; goto errorReturn;}
-#define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { assert(false); perr->err = _MapFromCBOR(error); goto errorReturn;}}
+//#define DO_ASSERT assert(false);
+#define DO_ASSERT
+#define CHECK_CONDITION(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}}
+#define FAIL_CONDITION(error) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}
+#define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = _MapFromCBOR(error);} goto errorReturn;}}
 
 extern cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr);
 
