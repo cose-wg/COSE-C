@@ -69,6 +69,7 @@ HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient
 		}
 		p = p->m_recipientNext;
 	}
+	if (p != NULL) p->m_encrypt.m_message.m_refCount++;
 	return (HCOSE_RECIPIENT)p;
 }
 

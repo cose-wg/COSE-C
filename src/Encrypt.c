@@ -120,7 +120,7 @@ void _COSE_Enveloped_Release(COSE_Enveloped * p)
 	if (p->pbKey != NULL) COSE_FREE(p ->pbKey, &p->m_message.m_allocContext);
 
 	for (pRecipient1 = p->m_recipientFirst; pRecipient1 != NULL; pRecipient1 = pRecipient2) {
-		pRecipient2 = pRecipient1;
+		pRecipient2 = pRecipient1->m_recipientNext;
 		COSE_Recipient_Free((HCOSE_RECIPIENT)pRecipient1);
 	}
 
