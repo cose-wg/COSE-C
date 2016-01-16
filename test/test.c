@@ -450,7 +450,7 @@ void RunMemoryTest(const char * szFileName)
 
 	for (iFail = 0; !fValidateDone || !fBuildDone; iFail++) {
 		allocator = CreateContext(iFail);
-		
+
 		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 			if (!fValidateDone) {
 				allocator = CreateContext(iFail);
@@ -478,6 +478,36 @@ void RunMemoryTest(const char * szFileName)
 				allocator = CreateContext(iFail);
 				CFails = 0;
 				BuildMac0Message(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateEncrypt(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildEncryptMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateEnveloped(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildEnvelopedMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
 		}

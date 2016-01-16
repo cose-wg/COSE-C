@@ -302,6 +302,9 @@ bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 #endif
 	cn_cbor_errback cbor_error;
 
+	// Make it first so we can clean it up
+	EVP_CIPHER_CTX_init(&ctx);
+
 	//  Setup the IV/Nonce and put it into the message
 
 	cbor_iv = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, perr);
@@ -344,7 +347,6 @@ bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 
 	//  Setup and run the OpenSSL code
 
-	EVP_CIPHER_CTX_init(&ctx);
 	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_CRYPTO_FAIL);
 
 	CHECK_CONDITION(EVP_EncryptInit(&ctx, 0, pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
