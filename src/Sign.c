@@ -240,7 +240,7 @@ bool COSE_Sign_validate(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * p
 	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION(cnProtected != NULL && cnContent->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
-	f = _COSE_Signer_validate(pSign, pSigner, cnContent->v.bytes, cnContent->length, cnProtected->v.bytes, cnProtected->length, perr);
+	f = _COSE_Signer_validate(pSign, pSigner, cnContent, cnProtected, perr);
 
 	return f;
 

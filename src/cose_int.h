@@ -181,7 +181,7 @@ extern void _COSE_Sign_Release(COSE_SignMessage * p);
 extern bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr);
 extern COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, COSE_SignerInfo * pIn, CBOR_CONTEXT_COMMA cose_errback * perr);
 extern bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner);
-extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const byte * pbContent, size_t cbContent, const byte * pbProtected, size_t cbProtected, cose_errback * perr);
+extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const cn_cbor * pbContent, const cn_cbor * pbProtected, cose_errback * perr);
 
 
 // Sign0 items
