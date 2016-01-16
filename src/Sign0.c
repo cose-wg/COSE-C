@@ -28,7 +28,8 @@ HCOSE_SIGN0 COSE_Sign0_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	}
 
 	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
-		COSE_Sign0_Free((HCOSE_SIGN0)pobj);
+		_COSE_Sign0_Release(pobj);
+		COSE_FREE(pobj, context);
 		return NULL;
 	}
 
@@ -56,7 +57,10 @@ HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn
 	return(HCOSE_SIGN0)pobj;
 
 errorReturn:
-	if ((pIn == NULL) && (pobj != NULL)) COSE_FREE(pobj, context);
+	if (pobj != NULL) {
+		_COSE_Sign0_Release(pobj);
+		if (pIn == NULL) COSE_FREE(pobj, context);
+	}
 	return NULL;
 }
 
