@@ -58,4 +58,5 @@ add_test (NAME hkdf-aes WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test 
 
 add_test (NAME corner-cases WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --corners )
 add_test (NAME Memory-mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/hmac-examples/HMac-01.json )
+add_test (NAME Memory-mac0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/hmac-examples/HMac-enc-01.json )
 

@@ -34,7 +34,10 @@ HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 	return (HCOSE_MAC)pobj;
 
 errorReturn:
-	if (pobj != NULL) COSE_Mac_Free((HCOSE_MAC)pobj);
+	if (pobj != NULL) {
+		_COSE_Mac_Release(pobj);
+		COSE_FREE(pobj, context);
+	}
 	return NULL;
 }
 
@@ -50,7 +53,12 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor * cbor, COSE_MacMessage * pIn, CBOR
 	if (pobj == NULL) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
-		if ((pIn == NULL) && (pobj != NULL)) COSE_FREE(pobj, context);
+		if (pobj != NULL) {
+			_COSE_Mac_Release(pobj);
+			if (pIn == NULL) {
+				COSE_FREE(pobj, context);
+			}
+		}
 		return NULL;
 	}
 

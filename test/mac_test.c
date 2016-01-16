@@ -239,14 +239,14 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	}
 
 	hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) exit(1);
+	if (hMAC == NULL) goto errorReturn;
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) exit(1);
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto errorReturn;
 	pMac = cn_cbor_mapget_string(pInput, "mac0");
-	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) exit(1);
+	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) goto errorReturn;
 
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto errorReturn;
 
 	pRecipients = pRecipients->first_child;
 
@@ -276,6 +276,10 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	exitHere:
 	if (fFail) CFails += 1;
 	return 0;
+
+errorReturn:
+	CFails += 1;
+	return 0;
 }
 
 int ValidateMac0(const cn_cbor * pControl)
@@ -299,9 +303,9 @@ int BuildMac0Message(const cn_cbor * pControl)
 	HCOSE_MAC0 hMacObj = COSE_Mac0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL) exit(1);
+	if (pInputs == NULL) goto returnError;
 	const cn_cbor * pMac = cn_cbor_mapget_string(pInputs, "mac0");
-	if (pMac == NULL) exit(1);
+	if (pMac == NULL) goto returnError;
 
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Mac0_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
@@ -312,16 +316,16 @@ int BuildMac0Message(const cn_cbor * pControl)
 	const cn_cbor * pAlg = COSE_Mac0_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
 	const cn_cbor * pRecipients = cn_cbor_mapget_string(pMac, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) exit(1);
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
 	pRecipients = pRecipients->first_child;
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
-		if (pkey == NULL) exit(1);
+		if (pkey == NULL) goto returnError;
 
 		cn_cbor * k = cn_cbor_mapget_int(pkey, -1);
 
-	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) exit(1);
+	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) goto returnError;
 
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);

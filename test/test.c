@@ -328,6 +328,8 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 	unsigned char * pb;
 	size_t cb;
 
+	if (pKeyOut == NULL) return NULL;
+
 	if ((pKty == NULL) || (pKty->type != CN_CBOR_TEXT)) return NULL;
 	if (pKty->length == 2) {
 		if (strncmp(pKty->v.str, "EC", 2) == 0) kty = 2;
@@ -353,16 +355,22 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
 					switch (RgStringKeys[i].operation) {
 					case OPERATION_NONE:
-						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
+						p = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
+						if (p == NULL) return NULL;
+						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
 
 					case OPERATION_BASE64:
 						pb = base64_decode(pValue->v.str, pValue->length, &cb);
-						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_data_create(pb, (int) cb, CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
+						p = cn_cbor_data_create(pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA NULL);
+						if (p == NULL) return NULL;
+						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
 
 					case OPERATION_STRING:
-						cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, cn_cbor_int_create(MapName(pValue, RgCurveNames, _countof(RgCurveNames)), CBOR_CONTEXT_PARAM_COMMA NULL), CBOR_CONTEXT_PARAM_COMMA NULL);
+						p = cn_cbor_int_create(MapName(pValue, RgCurveNames, _countof(RgCurveNames)), CBOR_CONTEXT_PARAM_COMMA NULL);
+						if (p == NULL) return NULL;
+						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
 					}
 					i = 99;
@@ -454,6 +462,21 @@ void RunMemoryTest(const char * szFileName)
 				allocator = CreateContext(iFail);
 				CFails = 0;
 				BuildMacMessage(pControl);
+				if (CFails == 0) fBuildDone = true;
+			}
+		}
+		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+			if (!fValidateDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				ValidateMac0(pControl);
+				if (CFails == 0) fValidateDone = true;
+			}
+
+			if (!fBuildDone) {
+				allocator = CreateContext(iFail);
+				CFails = 0;
+				BuildMac0Message(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
 		}
