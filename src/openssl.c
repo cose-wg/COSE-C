@@ -950,7 +950,7 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 
 bool AES_KW_Decrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbitKey, const byte * pbCipherText, size_t cbCipherText, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
 {
-	byte rgbOut[256 / 8];
+	byte rgbOut[512 / 8];
 	AES_KEY key;
 
 	CHECK_CONDITION(AES_set_decrypt_key(pbKeyIn, (int)cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
