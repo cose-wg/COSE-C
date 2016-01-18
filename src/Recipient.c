@@ -205,6 +205,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 
 	switch (alg) {
 	case COSE_Algorithm_AES_KW_128:
+	case COSE_Algorithm_AES_KW_192:
 	case COSE_Algorithm_AES_KW_256:
 		CHECK_CONDITION((pcose->pbKey != NULL) || (pRecip->m_pkey != NULL), COSE_ERR_INVALID_PARAMETER);
 		if (pRecip->m_pkey != NULL) {
@@ -374,6 +375,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 
 
+	case COSE_Algorithm_AES_KW_128:
+	case COSE_Algorithm_AES_KW_192:
 	case COSE_Algorithm_AES_KW_256:
 		if (pRecipient->m_pkey != NULL) {
 			cn_cbor * pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
@@ -718,7 +721,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
+		CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cnT, &cbor_error), cbor_error);
 		cnT = NULL;
 		cnParam = NULL;
 	}
