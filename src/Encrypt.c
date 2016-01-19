@@ -371,7 +371,6 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	COSE_RecipientInfo * pri;
 	const cn_cbor * cn_Alg = NULL;
 	byte * pbAuthData = NULL;
-	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
@@ -496,7 +495,6 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
 	return fRet;
 }
 
