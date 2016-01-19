@@ -28,7 +28,7 @@ typedef struct _NameMap {
 	int    i;
 } NameMap;
 
-NameMap RgAlgorithmNames[31] = {
+NameMap RgAlgorithmNames[32] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -59,7 +59,8 @@ NameMap RgAlgorithmNames[31] = {
 	{"HKDF-HMAC-SHA-512", COSE_Algorithm_Direct_HKDF_HMAC_SHA_512},
 	{"HKDF-AES-128", COSE_Algorithm_Direct_HKDF_AES_128},
 	{"HKDF-AES-256", COSE_Algorithm_Direct_HKDF_AES_256},
-	{"ECDH-ES", COSE_Algorithm_ECDH_ES_HKDF_256}
+	{"ECDH-ES", COSE_Algorithm_ECDH_ES_HKDF_256},
+{"ECDH-ES-512",COSE_Algorithm_ECDH_ES_HKDF_512},
 };
 
 

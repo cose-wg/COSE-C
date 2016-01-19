@@ -183,6 +183,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 		break;
 
 	case COSE_Algorithm_ECDH_ES_HKDF_256:
+	case COSE_Algorithm_ECDH_ES_HKDF_512:
 		break;
 
 	default:
@@ -271,6 +272,21 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 		if (!HKDF_Extract(&pcose->m_message, pbSecret, cbSecret, 256, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 		if (!HKDF_Expand(&pcose->m_message, 256, rgbDigest, cbDigest, pbContext, cbContext, pbKey, cbitKey / 8, perr)) goto errorReturn;
+
+		break;
+
+	case COSE_Algorithm_ECDH_ES_HKDF_512:
+		if (!BuildContextBytes(&pcose->m_message, algIn, cbitKey, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		pkey = _COSE_map_get_int(&pcose->m_message, COSE_Header_ECDH_EPHEMERAL, COSE_BOTH, perr);
+		if (pkey == NULL) goto errorReturn;
+
+		CHECK_CONDITION(pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+		if (!ECDH_ComputeSecret(&pcose->m_message, (cn_cbor **)&pRecip->m_pkey, pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Extract(&pcose->m_message, pbSecret, cbSecret, 512, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Expand(&pcose->m_message, 512, rgbDigest, cbDigest, pbContext, cbContext, pbKey, cbitKey / 8, perr)) goto errorReturn;
 
 		break;
 
@@ -536,6 +552,26 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, int algI
 		if (!HKDF_Extract(&pRecipient->m_encrypt.m_message, pbSecret, cbSecret, 256, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 		if (!HKDF_Expand(&pRecipient->m_encrypt.m_message, 256, rgbDigest, cbDigest, pbContext, cbContext, pb, cbitKeySize / 8, perr)) goto errorReturn;
+
+		break;
+
+	case COSE_Algorithm_ECDH_ES_HKDF_512:
+		if (!BuildContextBytes(&pRecipient->m_encrypt.m_message, algIn, cbitKeySize, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		pkey = _COSE_map_get_int(&pRecipient->m_encrypt.m_message, COSE_Header_ECDH_EPHEMERAL, COSE_BOTH, perr);
+
+		if (!ECDH_ComputeSecret(&pRecipient->m_encrypt.m_message, &pkey, pRecipient->m_pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (pkey->parent == NULL) {
+			if (!_COSE_map_put(&pRecipient->m_encrypt.m_message, COSE_Header_ECDH_EPHEMERAL, pkey, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+		}
+
+		pb = COSE_CALLOC(cbitKeySize / 8, 1, context);
+		CHECK_CONDITION(pb != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+		if (!HKDF_Extract(&pRecipient->m_encrypt.m_message, pbSecret, cbSecret, 512, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Expand(&pRecipient->m_encrypt.m_message, 512, rgbDigest, cbDigest, pbContext, cbContext, pb, cbitKeySize / 8, perr)) goto errorReturn;
 
 		break;
 

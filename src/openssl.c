@@ -795,34 +795,38 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * perr)
 	}
 
 	EC_GROUP * ecgroup = EC_GROUP_new_by_curve_name(nidGroup);
-	EC_KEY_set_group(pNewKey, ecgroup);
+	CHECK_CONDITION(ecgroup != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(EC_KEY_set_group(pNewKey, ecgroup) == 1, COSE_ERR_CRYPTO_FAIL);
 
 	rgbKey[0] = POINT_CONVERSION_UNCOMPRESSED;
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_X);
-	if (p == NULL) return NULL;
-	if (p->type != CN_CBOR_BYTES) return NULL;
+	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey+1, p->v.str, p->length);
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Y);
-	if (p == NULL) return NULL;
-	if (p->type != CN_CBOR_BYTES) return NULL;
+	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey + p->length+1, p->v.str, p->length);
 
 	pPoint = EC_POINT_new(ecgroup);
-	EC_POINT_oct2point(ecgroup, pPoint, rgbKey, p->length * 2 + 1, NULL);
-	EC_KEY_set_public_key(pNewKey, pPoint);
+	CHECK_CONDITION(pPoint != NULL, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EC_POINT_oct2point(ecgroup, pPoint, rgbKey, p->length * 2 + 1, NULL) == 1, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EC_KEY_set_public_key(pNewKey, pPoint) == 1, COSE_ERR_CRYPTO_FAIL);
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
 	if (p != NULL) {
 		BIGNUM * pbn;
 
 		pbn = BN_bin2bn(p->v.bytes, (int) p->length, NULL);
-		EC_KEY_set_private_key(pNewKey, pbn);
+		CHECK_CONDITION(pbn != NULL, COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(EC_KEY_set_private_key(pNewKey, pbn) == 1, COSE_ERR_CRYPTO_FAIL);
 	}
 	
 	return pNewKey;
 
- errorReturn:
+errorReturn:
+	if (pNewKey != NULL) EC_KEY_free(pNewKey);
 	return NULL;
 }
 
@@ -838,11 +842,12 @@ cn_cbor * EC_FromKey(const EC_KEY * pKey, CBOR_CONTEXT_COMMA cose_errback * perr
 	byte * pbOut = NULL;
 
 	pgroup = EC_KEY_get0_group(pKey);
+	CHECK_CONDITION(pgroup != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	switch (EC_GROUP_get_curve_name(pgroup)) {
-	case NID_X9_62_prime256v1:
-		cose_group = 1;
-		break;
+	case NID_X9_62_prime256v1:		cose_group = 1;		break;
+	case NID_secp384r1: cose_group = 2; break;
+	case NID_secp521r1: cose_group = 3; break;
 
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
@@ -1094,7 +1099,7 @@ bool ECDH_ComputeSecret(COSE * pRecipient, cn_cbor ** ppKeyMe, const cn_cbor * p
 	CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	cbsecret = ECDH_compute_key(pbsecret, cbGroup, EC_KEY_get0_public_key(pkeyYou), pkeyMe, NULL);
-	CHECK_CONDITION(cbsecret != 0, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(cbsecret > 0, COSE_ERR_CRYPTO_FAIL);
 
 	*ppbSecret = pbsecret;
 	*pcbSecret = cbsecret;
