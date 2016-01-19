@@ -232,7 +232,6 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 #endif
 	byte * pbAuthData = NULL;
 	size_t cbAuthData;
-	cn_cbor * pAuthData = NULL;
 	byte * pbProtected = NULL;
 	ssize_t cbProtected;
 
@@ -246,7 +245,6 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	errorReturn:
 		if (pbProtected != NULL) COSE_FREE(pbProtected, context);
 		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-		if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 		if ((pbKey != NULL) && (pbKeyIn == NULL)) {
 			memset(pbKey, 0xff, cbitKey / 8);
 			COSE_FREE(pbKey, context);
@@ -360,7 +358,6 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 
 	if (pbProtected != NULL) COSE_FREE(pbProtected, context);
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 	if ((pbKey != NULL) && (pbKeyIn == NULL)) COSE_FREE(pbKey, context);
 	if (perr != NULL) perr->err = COSE_ERR_NONE;
 
@@ -374,13 +371,13 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	COSE_RecipientInfo * pri;
 	const cn_cbor * cn_Alg = NULL;
 	byte * pbAuthData = NULL;
-	cn_cbor * pAuthData = NULL;
 	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
 #endif
 	COSE_Enveloped * pcose = (COSE_Enveloped *) h;
+	bool fRet = false;
 
 	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_PARAMETER);
 
@@ -495,16 +492,12 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 
 	//  Figure out the clean up
 
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-
-	return true;
+	fRet = true;
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
-	return false;
+	return fRet;
 }
 
 bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h, const byte * rgb, size_t cb, cose_errback * perror)

@@ -13,6 +13,7 @@
 #include <openssl/cmac.h>
 #include <openssl/hmac.h>
 #include <openssl/ecdsa.h>
+#include <openssl/ecdh.h>
 #include <openssl/rand.h>
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
@@ -794,35 +795,101 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * perr)
 	}
 
 	EC_GROUP * ecgroup = EC_GROUP_new_by_curve_name(nidGroup);
-	EC_KEY_set_group(pNewKey, ecgroup);
+	CHECK_CONDITION(ecgroup != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(EC_KEY_set_group(pNewKey, ecgroup) == 1, COSE_ERR_CRYPTO_FAIL);
 
 	rgbKey[0] = POINT_CONVERSION_UNCOMPRESSED;
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_X);
-	if (p == NULL) return NULL;
-	if (p->type != CN_CBOR_BYTES) return NULL;
+	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey+1, p->v.str, p->length);
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Y);
-	if (p == NULL) return NULL;
-	if (p->type != CN_CBOR_BYTES) return NULL;
+	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey + p->length+1, p->v.str, p->length);
 
 	pPoint = EC_POINT_new(ecgroup);
-	EC_POINT_oct2point(ecgroup, pPoint, rgbKey, p->length * 2 + 1, NULL);
-	EC_KEY_set_public_key(pNewKey, pPoint);
+	CHECK_CONDITION(pPoint != NULL, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EC_POINT_oct2point(ecgroup, pPoint, rgbKey, p->length * 2 + 1, NULL) == 1, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EC_KEY_set_public_key(pNewKey, pPoint) == 1, COSE_ERR_CRYPTO_FAIL);
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
 	if (p != NULL) {
 		BIGNUM * pbn;
 
 		pbn = BN_bin2bn(p->v.bytes, (int) p->length, NULL);
-		EC_KEY_set_private_key(pNewKey, pbn);
+		CHECK_CONDITION(pbn != NULL, COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(EC_KEY_set_private_key(pNewKey, pbn) == 1, COSE_ERR_CRYPTO_FAIL);
 	}
 	
 	return pNewKey;
 
- errorReturn:
+errorReturn:
+	if (pNewKey != NULL) EC_KEY_free(pNewKey);
 	return NULL;
+}
+
+cn_cbor * EC_FromKey(const EC_KEY * pKey, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+	cn_cbor * pkey = NULL;
+	const EC_GROUP * pgroup;
+	int cose_group;
+	cn_cbor * p = NULL;
+	cn_cbor_errback cbor_error;
+	const EC_POINT * pPoint;
+	size_t cbSize;
+	byte * pbOut = NULL;
+
+	pgroup = EC_KEY_get0_group(pKey);
+	CHECK_CONDITION(pgroup != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	switch (EC_GROUP_get_curve_name(pgroup)) {
+	case NID_X9_62_prime256v1:		cose_group = 1;		break;
+	case NID_secp384r1: cose_group = 2; break;
+	case NID_secp521r1: cose_group = 3; break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+
+	pkey = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(pkey != NULL, cbor_error);
+
+	p = cn_cbor_int_create(cose_group, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Curve, p, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
+	p = NULL;
+
+	pPoint = EC_KEY_get0_public_key(pKey);
+	CHECK_CONDITION(pPoint != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	cbSize = EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+	CHECK_CONDITION(cbSize > 0, COSE_ERR_CRYPTO_FAIL);
+	pbOut = COSE_CALLOC(cbSize, 1, context);
+	CHECK_CONDITION(pbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_UNCOMPRESSED, pbOut, cbSize, NULL) == cbSize, COSE_ERR_CRYPTO_FAIL);
+
+	p = cn_cbor_data_create(pbOut+1, (int) (cbSize / 2), CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_X, p, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
+	p = NULL;
+
+	p = cn_cbor_data_create(pbOut + cbSize / 2+1, (int) (cbSize / 2), CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	pbOut = NULL;   // It is already part of the other one.
+	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Y, p, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
+	p = NULL;
+
+returnHere:
+	if (pbOut != NULL) COSE_FREE(pbOut, context);
+	if (p != NULL) CN_CBOR_FREE(p, context);
+	return pkey;
+
+errorReturn:
+	CN_CBOR_FREE(pkey, context);
+	pkey = NULL;
+	goto returnHere;
 }
 
 /*
@@ -860,6 +927,7 @@ bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest,
 	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
+		if (pbSig != NULL) COSE_FREE(pbSig, context);
 		if (p != NULL) CN_CBOR_FREE(p, context);
 		if (eckey != NULL) EC_KEY_free(eckey);
 		return false;
@@ -894,6 +962,10 @@ bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest,
 
 	CHECK_CONDITION(_COSE_array_replace(pSigner, p, index, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 	
+	pbSig = NULL;
+
+	if (eckey != NULL) EC_KEY_free(eckey);
+
 	return true;
 }
 
@@ -998,6 +1070,53 @@ errorReturn:
 void rand_bytes(byte * pb, size_t cb)
 {
 	RAND_bytes(pb, (int) cb);
+}
+
+bool ECDH_ComputeSecret(COSE * pRecipient, cn_cbor ** ppKeyMe, const cn_cbor * pKeyYou, byte ** ppbSecret, size_t * pcbSecret, CBOR_CONTEXT_COMMA cose_errback *perr)
+{
+	EC_KEY * pkeyMe = NULL;
+	EC_KEY * pkeyYou = NULL;
+	int cbGroup;
+	int cbsecret;
+	byte * pbsecret = NULL;
+
+	pkeyYou = ECKey_From(pKeyYou, &cbGroup, perr);
+	if (pkeyYou == NULL) goto errorReturn;
+
+	if (*ppKeyMe == NULL) {
+		pkeyMe = EC_KEY_new();
+		EC_KEY_set_group(pkeyMe, EC_KEY_get0_group(pkeyYou));
+		CHECK_CONDITION(EC_KEY_generate_key(pkeyMe) == 1, COSE_ERR_CRYPTO_FAIL);
+		*ppKeyMe = EC_FromKey(pkeyMe, CBOR_CONTEXT_PARAM_COMMA perr);
+		if (*ppKeyMe == NULL) goto errorReturn;
+	}
+	else {
+		pkeyMe = ECKey_From(*ppKeyMe, &cbGroup, perr);
+		if (pkeyMe == NULL) goto errorReturn;
+	}
+
+	pbsecret = COSE_CALLOC(cbGroup, 1, context);
+	CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	cbsecret = ECDH_compute_key(pbsecret, cbGroup, EC_KEY_get0_public_key(pkeyYou), pkeyMe, NULL);
+	CHECK_CONDITION(cbsecret > 0, COSE_ERR_CRYPTO_FAIL);
+
+	*ppbSecret = pbsecret;
+	*pcbSecret = cbsecret;
+	pbsecret = NULL;
+
+	if (pkeyMe != NULL) EC_KEY_free(pkeyMe);
+	if (pkeyYou != NULL) EC_KEY_free(pkeyYou);
+
+	return true;
+
+errorReturn:
+	if (pbsecret != NULL) COSE_FREE(pbsecret, context);
+	if (pkeyMe != NULL) EC_KEY_free(pkeyMe);
+	if (pkeyYou != NULL) EC_KEY_free(pkeyYou);
+
+	return false;
+
 }
 
 #endif // USE_OPEN_SSL

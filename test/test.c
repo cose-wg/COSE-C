@@ -28,7 +28,7 @@ typedef struct _NameMap {
 	int    i;
 } NameMap;
 
-NameMap RgAlgorithmNames[30] = {
+NameMap RgAlgorithmNames[32] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -59,6 +59,8 @@ NameMap RgAlgorithmNames[30] = {
 	{"HKDF-HMAC-SHA-512", COSE_Algorithm_Direct_HKDF_HMAC_SHA_512},
 	{"HKDF-AES-128", COSE_Algorithm_Direct_HKDF_AES_128},
 	{"HKDF-AES-256", COSE_Algorithm_Direct_HKDF_AES_256},
+	{"ECDH-ES", COSE_Algorithm_ECDH_ES_HKDF_256},
+{"ECDH-ES-512",COSE_Algorithm_ECDH_ES_HKDF_512},
 };
 
 
@@ -609,6 +611,10 @@ void RunTestsInDirectory(const char * szDir)
 	HANDLE hFind;
 	char rgchFullName[2 * 1024];
 
+	if (strlen(szDir) + 7 >= sizeof(rgchFullName)) {
+		fprintf(stderr, "Buffer overflow error\n");
+		exit(1);
+	}
 	strcpy(rgchFullName, szDir);
 	strcat(rgchFullName, "\\");
 	size_t ich = strlen(rgchFullName);
@@ -623,6 +629,10 @@ void RunTestsInDirectory(const char * szDir)
 
 	do {
 		rgchFullName[ich] = 0;
+		if (ich + strlen(FindFileData.cFileName) >= sizeof(rgchFullName)) {
+			fprintf(stderr, "Buffer overflow problem\n");
+			exit(1);
+		}
 		strcat(rgchFullName, FindFileData.cFileName);
 		printf("Run test '%s'", rgchFullName);
 
@@ -645,7 +655,6 @@ void RunTestsInDirectory(const char * szDir)
 	DIR * dirp = opendir(szDir);
 	struct dirent * dp;
 	char rgchFullName[2 * 1024];
-	strcpy(rgchFullName, szDir);
 	int ich;
 	int cFailTotal = 0;
 
@@ -653,6 +662,11 @@ void RunTestsInDirectory(const char * szDir)
 		fprintf(stderr, "Cannot open directory '%s'\n", szDir);
 		exit(1);
 	}
+	if (strlen(szDir) >= sizeof(rgchFullName) - 3) {
+		fprintf(stderr, "Buffer overflow problem\n");
+		exit(1);
+	}
+	strcpy(rgchFullName, szDir);
 	strcat(rgchFullName, "/");
 	ich = strlen(rgchFullName);
 
@@ -660,6 +674,10 @@ void RunTestsInDirectory(const char * szDir)
 		int cch = strlen(dp->d_name);
 		if (cch < 4) continue;
 		rgchFullName[ich] = 0;
+		if (ich + strlen(dp->d_name) >= sizeof(rgchFullName) - 2) {
+			fprintf(stderr, "Buffer overflow problem\n");
+			exit(1);
+		}
 		strcat(rgchFullName, dp->d_name);
 		printf("Run test '%s'", rgchFullName);
 		CFails = 0;

@@ -34,15 +34,16 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 			node = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
-		case '}':
-			parent = parent->parent;
-			break;
-
 		case '[':
 			node = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
+		case '}':
 		case ']':
+			if (parent == NULL) {
+				fprintf(stderr, "Parse failure @ '%s'\n", &rgch[ib]);
+				return NULL;
+			}
 			parent = parent->parent;
 			break;
 
@@ -93,7 +94,7 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 		default:
 			error:
 			fprintf(stderr, "Parse failure @ '%s'\n", &rgch[ib]);
-			break;
+			return NULL;
 		}
 
 		if ((node != NULL) && (parent != NULL)) {
@@ -124,14 +125,16 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 const cn_cbor * ParseJson(const char * fileName)
 {
 	int     cch;
-	char *	rgch = malloc(8 * 1024);
+	char *	rgch;
     FILE * fp = fopen(fileName, "r");
 
 	if (fp == NULL) {
 		fprintf(stderr, "Cannot open file '%s'\n", fileName);
+		
 		return NULL;
 	}
 
+	rgch = malloc(8 * 1024);
 	cch = (int) fread(rgch, 1, 8*1024, fp);
 	fclose(fp);
 
@@ -205,7 +208,10 @@ unsigned char *base64_decode(const char *data,
 	if (data[input_length - 2] == '=') (*output_length)--;
 
 	unsigned char *decoded_data = malloc(*output_length);
-	if (decoded_data == NULL) return NULL;
+	if (decoded_data == NULL) {
+		if (p != NULL) free(p);
+		return NULL;
+	}
 
 	for (unsigned int i = 0, j = 0; i < input_length;) {
 

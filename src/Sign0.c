@@ -164,7 +164,7 @@ bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pKey, cose_errback *
 	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
 	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != NULL && cnContent->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
 	f = _COSE_Signer0_validate(pSign, pKey,  perr);
 
@@ -331,8 +331,8 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
 	cn_cbor_context * context = NULL;
 #endif
 	size_t cbToSign;
-	cn_cbor * pAuthData = NULL;
 	cn_cbor * cnSignature = NULL;
+	bool fRet = false;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pSign->m_message.m_allocContext;
@@ -374,14 +374,10 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
 		break;
 	}
 
-	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-
-	return true;
+	fRet = true;
 
 errorReturn:
 	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 
-	return false;
+	return fRet;
 }
