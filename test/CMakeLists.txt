@@ -38,6 +38,7 @@ add_test ( NAME sig-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test E
 add_test ( NAME sig-03 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-03.json )
 add_test ( NAME sig-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Sig-04.json )
 
+add_test ( NAME enc-01 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-01.json )
 add_test ( NAME enc-02 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-02.json )
 add_test ( NAME enc-04 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-04.json )
 add_test ( NAME enc-05 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test Examples/spec-examples/Enc-05.json )

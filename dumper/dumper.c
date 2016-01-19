@@ -269,8 +269,14 @@ void WrapPrintF(FILE * fp, char * format, ...)
 
 		fprintf(fp, "%s", t);
 		fprintf(fp, "\n");
+		if (strlen(OutputBuffer) + strlen(iRet + 1) >= sizeof(OutputBuffer)-1) {
+			fprintf(stderr, "Internal buffer too small for dumpping");
+			exit(1);
+		}
 		strcpy(OutputBuffer, iRet + 1);
 	}
+
+	va_end(args);
 }
 
 

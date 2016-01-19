@@ -147,6 +147,10 @@ typedef enum {
 
 	COSE_Header_KDF_PUB_other = -999,
 	COSE_Header_KDF_PRIV = -998,
+
+	COSE_Header_ECDH_EPHEMERAL = -1,
+	COSE_Header_ECDH_STATIC = -2
+
 } COSE_Header;
 
 typedef enum {

@@ -277,6 +277,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 #endif
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	cn_cbor_errback cbor_error;
+	bool fRet = false;
 
 	CHECK_CONDITION(IsValidMacHandle(h), COSE_ERR_INVALID_PARAMETER);
 
@@ -426,16 +427,13 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	//  Figure out the clean up
 
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
-	return true;
+	fRet = true;
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
-	return false;
+	return fRet;
 }
 
 byte RgbDontUseMac[1024];
