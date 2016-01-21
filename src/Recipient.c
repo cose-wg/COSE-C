@@ -517,6 +517,23 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	case COSE_Algorithm_ECDH_ES_A128KW:
 	case COSE_Algorithm_ECDH_ES_A192KW:
 	case COSE_Algorithm_ECDH_ES_A256KW:
+		if (!BuildContextBytes(&pRecipient->m_encrypt.m_message, alg, 128, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		pkey = _COSE_map_get_int(&pRecipient->m_encrypt.m_message, COSE_Header_ECDH_EPHEMERAL, COSE_BOTH, perr);
+
+		CHECK_CONDITION(pRecipient->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+		if (!ECDH_ComputeSecret(&pRecipient->m_encrypt.m_message, &pkey, pRecipient->m_pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (pkey->parent == NULL) {
+			if (!_COSE_map_put(&pRecipient->m_encrypt.m_message, COSE_Header_ECDH_EPHEMERAL, pkey, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+		}
+
+		if (!HKDF_Extract(&pRecipient->m_encrypt.m_message, pbSecret, cbSecret, 256, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Expand(&pRecipient->m_encrypt.m_message, 256, rgbDigest, cbDigest, pbContext, cbContext, rgbKey, 128 / 8, perr)) goto errorReturn;
+
+		if (!AES_KW_Encrypt(pRecipient, rgbKey, 128, pbContent, (int)cbContent, perr)) goto errorReturn;
+
 		break;
 
 	case COSE_Algorithm_ECDH_SS_A128KW:
@@ -528,7 +545,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		if (pkey == NULL) goto errorReturn;
 
 		CHECK_CONDITION(pRecipient->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
-		if (!ECDH_ComputeSecret(&pRecipient->m_encrypt.m_message, (cn_cbor **)&pRecipient->m_pkey, pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+		if (!ECDH_ComputeSecret(&pRecipient->m_encrypt.m_message, &pkey, pRecipient->m_pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 		if (!HKDF_Extract(&pRecipient->m_encrypt.m_message, pbSecret, cbSecret, 256, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 

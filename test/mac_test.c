@@ -123,7 +123,7 @@ int BuildMacMessage(const cn_cbor * pControl)
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 		if (pkey == NULL) goto returnError;
 
 		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
