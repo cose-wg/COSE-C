@@ -249,6 +249,7 @@ void WrapPrintF(FILE * fp, char * format, ...)
 	vsprintf(buffer, format, args);
 	if (WrapLineAt == 0) {
 		fprintf(fp, "%s", buffer);
+        	va_end(args);
 		return;
 	}
 

@@ -40,7 +40,7 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	iRecipient = (int) pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
 	for (; pRecipients != NULL; iRecipient--, pRecipients=pRecipients->next) {
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 		if (pkey == NULL) {
 			fFail = true;
 			continue;
@@ -51,6 +51,8 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 			fFail = true;
 			continue;
 		}
+
+		if (!SetReceivingAttributes((HCOSE)hRecip, pRecipients, Attributes_Recipient_protected)) goto failTest;
 
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
 			fFail = true;
@@ -112,8 +114,7 @@ int BuildMacMessage(const cn_cbor * pControl)
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Mac_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetAttributes((HCOSE) hMacObj, cn_cbor_mapget_string(pMac, "protected"), Attributes_MAC_protected)) goto returnError;
-	if (!SetAttributes((HCOSE) hMacObj, cn_cbor_mapget_string(pMac, "unprotected"), Attributes_MAC_unprotected)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC_protected)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Mac_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
@@ -122,14 +123,13 @@ int BuildMacMessage(const cn_cbor * pControl)
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 		if (pkey == NULL) goto returnError;
 
 		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hRecip == NULL) goto returnError;
 
-		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "protected"), Attributes_Recipient_protected)) goto returnError;
-		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "unprotected"), Attributes_Recipient_unprotected)) goto returnError;
+		if (!SetSendingAttributes((HCOSE) hRecip, pRecipients, Attributes_Recipient_protected)) goto returnError;
 
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL))goto returnError;
 
@@ -169,7 +169,8 @@ int MacMessage()
 	COSE_Mac_map_put_int(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_HMAC_256_256, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL);
 	COSE_Mac_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
 
-	COSE_Mac_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, sizeof(rgbSecret), rgbKid, cbKid, NULL);
+	HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret, sizeof(rgbSecret), rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
+	COSE_Mac_AddRecipient(hEncObj, hRecip, NULL);
 
 	COSE_Mac_encrypt(hEncObj, NULL);
 
@@ -201,18 +202,18 @@ int MacMessage()
 
 	int iRecipient = 0;
 	do {
-		HCOSE_RECIPIENT hRecip;
+		HCOSE_RECIPIENT hRecip2;
 
-		hRecip = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
-		if (hRecip == NULL) break;
+		hRecip2 = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
+		if (hRecip2 == NULL) break;
 
-		COSE_Recipient_SetKey_secret(hRecip, rgbSecret, sizeof(rgbSecret), NULL);
+		COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL);
 
-		COSE_Mac_validate(hEncObj, hRecip, NULL);
+		COSE_Mac_validate(hEncObj, hRecip2, NULL);
 
 		iRecipient += 1;
 
-		COSE_Recipient_Free(hRecip);
+		COSE_Recipient_Free(hRecip2);
 
 	} while (true);
 
@@ -250,7 +251,7 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 
 	pRecipients = pRecipients->first_child;
 
-	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 		if (pkey == NULL) {
 			fFail = true;
 			goto exitHere;
@@ -310,8 +311,7 @@ int BuildMac0Message(const cn_cbor * pControl)
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Mac0_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetAttributes((HCOSE)hMacObj, cn_cbor_mapget_string(pMac, "protected"), Attributes_MAC0_protected)) goto returnError;
-	if (!SetAttributes((HCOSE)hMacObj, cn_cbor_mapget_string(pMac, "unprotected"), Attributes_MAC0_unprotected)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC0_protected)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Mac0_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
@@ -320,7 +320,7 @@ int BuildMac0Message(const cn_cbor * pControl)
 
 	pRecipients = pRecipients->first_child;
 
-	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 		if (pkey == NULL) goto returnError;
 
 		cn_cbor * k = cn_cbor_mapget_int(pkey, -1);
@@ -356,8 +356,6 @@ void MAC_Corners()
     //  Incorrect algorithm
     
     hMAC = (HCOSE_MAC) COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-
-    COSE_Mac_add_shared_secret(hMAC, COSE_Algorithm_Direct_HKDF_HMAC_SHA_256, rgb, 10, rgb, 10, NULL);
 
     //  Invalid Handle checks
 

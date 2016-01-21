@@ -259,7 +259,7 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 	cn_cbor_context * context = NULL;
 #endif
 	size_t cbToBeSigned;
-	cn_cbor * pAuthData = NULL;
+	bool fRet = false;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pSign->m_message.m_allocContext;
@@ -307,16 +307,12 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 		break;
 	}
 
-	if (pbToBeSigned != NULL) COSE_FREE(pbToBeSigned, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-
-	return true;
+	fRet = true;
 
 errorReturn:
 	if (pbToBeSigned != NULL) COSE_FREE(pbToBeSigned, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 
-	return false;
+	return fRet;
 }
 
 bool COSE_Signer_map_put(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perror)

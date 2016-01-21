@@ -159,14 +159,15 @@ bool COSE_Mac0_encrypt(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errb
 	int alg;
 	const cn_cbor * cn_Alg = NULL;
 	byte * pbAuthData = NULL;
-	cn_cbor * pAuthData = NULL;
-	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
 #endif
 	COSE_Mac0Message * pcose = (COSE_Mac0Message *)h;
 	cn_cbor_errback cbor_error;
+	bool fRet = false;
+	cn_cbor * pAuthData = NULL;
+	cn_cbor * ptmp = NULL;
 
 	CHECK_CONDITION(IsValidMac0Handle(h), COSE_ERR_INVALID_PARAMETER);
 
@@ -250,7 +251,7 @@ bool COSE_Mac0_encrypt(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errb
 	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+	CHECK_CONDITION((size_t)cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
 
 	switch (alg) {
 	case COSE_Algorithm_CBC_MAC_128_64:
@@ -285,16 +286,13 @@ bool COSE_Mac0_encrypt(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errb
 
 	//  Figure out the clean up
 
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
-	return true;
+	fRet = true;
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
-	return false;
+	return fRet;
 }
 
 byte RgbDontUseMac[1024];
