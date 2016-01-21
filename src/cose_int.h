@@ -14,6 +14,8 @@ typedef struct _COSE {
 	cn_cbor * m_protectedMap;
 	cn_cbor * m_unprotectMap;
 	cn_cbor * m_dontSendMap;
+	byte * m_pbExternal;
+	size_t m_cbExternal;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;
 #endif
@@ -154,6 +156,9 @@ extern void _COSE_Release(COSE * pcose);
 extern cn_cbor * _COSE_map_get_string(COSE * cose, const char * key, int flags, cose_errback * errp);
 extern cn_cbor * _COSE_map_get_int(COSE * cose, int key, int flags, cose_errback * errp);
 extern bool _COSE_map_put(COSE * cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+bool _COSE_SetExternal(COSE * hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
+
 
 extern HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *, COSE_Enveloped * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Enveloped_Release(COSE_Enveloped * p);

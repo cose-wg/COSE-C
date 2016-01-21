@@ -39,7 +39,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 
 	pIV = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, NULL);
 	if ((pIV == NULL) || (pIV->type!= CN_CBOR_BYTES)) {
-		perr->err = COSE_ERR_INVALID_PARAMETER;
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
 
 	errorReturn:
 		if (rgbOut != NULL) COSE_FREE(rgbOut, context);
@@ -218,7 +218,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, int cbKey, cons
 
 	pIV = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, NULL);
 	if ((pIV == NULL) || (pIV->type != CN_CBOR_BYTES)) {
-		perr->err = COSE_ERR_INVALID_PARAMETER;
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
 
 	errorReturn:
 		if (rgbOut != NULL) COSE_FREE(rgbOut, context);

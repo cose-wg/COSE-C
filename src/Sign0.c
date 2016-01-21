@@ -220,6 +220,7 @@ static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size
 	cn = NULL;
 
 	cn2 = _COSE_arrayget_int(&pMessage->m_message, INDEX_PROTECTED);
+	CHECK_CONDITION(cn2 != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	cn = cn_cbor_data_create(cn2->v.bytes, (int)cn2->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);

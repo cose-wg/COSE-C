@@ -197,6 +197,7 @@ HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC hcose, COSE_Algorithms alg,
 
 	cnTemp = cn_cbor_data_create(pbKey, cbKey, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
+	pbKey = NULL;
 	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(cn_Temp, -1, cnTemp, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
 	cnTemp = NULL;
 
@@ -224,6 +225,7 @@ errorReturn:
 	if (cnTemp != NULL) CN_CBOR_FREE(cnTemp, context);
 	if (pRecipientsNew != NULL) CN_CBOR_FREE(pRecipientsNew, context);
 	if (hRecipient != NULL) COSE_Recipient_Free(hRecipient);
+	if (pbKey != NULL) COSE_FREE(pbKey, context);
 	return NULL;
 }
 

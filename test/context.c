@@ -60,22 +60,24 @@ bool CheckMemory(MyContext * pContext)
 
 void * MyCalloc(size_t count, size_t size, void * context)
 {
-	MyItem * pb = (MyItem *) malloc(sizeof(MyItem) + count*size);
+	MyItem * pb;
 	MyContext * myContext = (MyContext *)context;
 
 	CheckMemory(myContext);
 
 	if (myContext->iFailLeft == 0) return NULL;
-		myContext->iFailLeft--;
+	myContext->iFailLeft--;
+
+	pb = (MyItem *)malloc(sizeof(MyItem) + count*size);
 
 	memset(pb, 0xef, sizeof(MyItem) + count*size);
 	memset(&pb->data, 0, count*size);
 
 	pb->pNext = (struct _MyItem *) myContext->pFirst;
-	myContext->pFirst = (byte *) pb;
+	myContext->pFirst = (byte *)pb;
 	pb->size = count*size;
 
-    return &pb->data;
+	return &pb->data;
 }
 
 void MyFree(void * ptr, void * context)

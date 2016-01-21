@@ -228,6 +228,15 @@ cn_cbor * COSE_get_cbor(HCOSE h)
 	return msg->m_cbor;
 }
 
+bool _COSE_SetExternal(COSE * pcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+{
+	pcose->m_pbExternal = pbExternalData;
+	pcose->m_cbExternal = cbExternalData;
+
+	return true;
+}
+
+
 cn_cbor * _COSE_map_get_int(COSE * pcose, int key, int flags, cose_errback * perror)
 {
 	cn_cbor * p = NULL;

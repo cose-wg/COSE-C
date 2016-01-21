@@ -358,6 +358,14 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 #endif
 	cn_cbor_errback cbor_error;
 	bool fRet = false;
+	byte * pbContext = NULL;
+	size_t cbContext;
+	cn_cbor * pkey;
+	byte rgbDigest[512 / 8];
+	size_t cbDigest;
+	size_t cbSecret;
+	byte rgbKey[256 / 8];
+	byte * pbSecret = NULL;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pRecipient->m_encrypt.m_message.m_allocContext;
@@ -385,14 +393,20 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 
 	case COSE_Algorithm_AES_KW_128:
+	case COSE_Algorithm_ECDH_ES_A128KW:
+	case COSE_Algorithm_ECDH_SS_A128KW:
 		cbitKey = 128;
 		break;
 
 	case COSE_Algorithm_AES_KW_192:
+	case COSE_Algorithm_ECDH_ES_A192KW:
+	case COSE_Algorithm_ECDH_SS_A192KW:
 		cbitKey = 192;
 		break;
 
 	case COSE_Algorithm_AES_KW_256:
+	case COSE_Algorithm_ECDH_ES_A256KW:
+	case COSE_Algorithm_ECDH_SS_A256KW:
 		cbitKey = 256;
 		break;
 
@@ -466,6 +480,30 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		}
 		break;
 
+	case COSE_Algorithm_ECDH_ES_A128KW:
+	case COSE_Algorithm_ECDH_ES_A192KW:
+	case COSE_Algorithm_ECDH_ES_A256KW:
+		break;
+
+	case COSE_Algorithm_ECDH_SS_A128KW:
+	case COSE_Algorithm_ECDH_SS_A192KW:
+	case COSE_Algorithm_ECDH_SS_A256KW:
+		if (!BuildContextBytes(&pRecipient->m_encrypt.m_message, alg, 128, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		pkey = _COSE_map_get_int(&pRecipient->m_encrypt.m_message, COSE_Header_ECDH_STATIC, COSE_BOTH, perr);
+		if (pkey == NULL) goto errorReturn;
+
+		CHECK_CONDITION(pRecipient->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+		if (!ECDH_ComputeSecret(&pRecipient->m_encrypt.m_message, (cn_cbor **)&pRecipient->m_pkey, pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Extract(&pRecipient->m_encrypt.m_message, pbSecret, cbSecret, 256, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Expand(&pRecipient->m_encrypt.m_message, 256, rgbDigest, cbDigest, pbContext, cbContext, rgbKey, 128 / 8, perr)) goto errorReturn;
+
+		if (!AES_KW_Encrypt(pRecipient, rgbKey, 128, pbContent, (int) cbContent, perr)) goto errorReturn;
+
+		break;
+
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
@@ -479,6 +517,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	fRet = true;
 
 errorReturn:
+	if (pbSecret != NULL) COSE_FREE(pbSecret, context);
+	if (pbContext != NULL) COSE_FREE(pbContext, context);
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
 	return fRet;
