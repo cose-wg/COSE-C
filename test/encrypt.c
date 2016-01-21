@@ -177,7 +177,8 @@ int EncryptMessage()
 	COSE_Enveloped_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
 	COSE_Enveloped_map_put_int(hEncObj, COSE_Header_IV, cn_cbor_data_create(rgbKid, 13, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_UNPROTECT_ONLY, NULL);
 
-	HCOSE_RECIPIENT hRecip = COSE_Enveloped_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, cbSecret, rgbKid, cbKid, NULL);
+	HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret, cbSecret, rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
+	COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL);
 
 	COSE_Enveloped_encrypt(hEncObj, NULL);
 

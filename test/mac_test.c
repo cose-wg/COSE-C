@@ -169,7 +169,8 @@ int MacMessage()
 	COSE_Mac_map_put_int(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_HMAC_256_256, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL);
 	COSE_Mac_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
 
-	COSE_Mac_add_shared_secret(hEncObj, COSE_Algorithm_Direct, rgbSecret, sizeof(rgbSecret), rgbKid, cbKid, NULL);
+	HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret, sizeof(rgbSecret), rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
+	COSE_Mac_AddRecipient(hEncObj, hRecip, NULL);
 
 	COSE_Mac_encrypt(hEncObj, NULL);
 
@@ -201,18 +202,18 @@ int MacMessage()
 
 	int iRecipient = 0;
 	do {
-		HCOSE_RECIPIENT hRecip;
+		HCOSE_RECIPIENT hRecip2;
 
-		hRecip = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
-		if (hRecip == NULL) break;
+		hRecip2 = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
+		if (hRecip2 == NULL) break;
 
-		COSE_Recipient_SetKey_secret(hRecip, rgbSecret, sizeof(rgbSecret), NULL);
+		COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL);
 
-		COSE_Mac_validate(hEncObj, hRecip, NULL);
+		COSE_Mac_validate(hEncObj, hRecip2, NULL);
 
 		iRecipient += 1;
 
-		COSE_Recipient_Free(hRecip);
+		COSE_Recipient_Free(hRecip2);
 
 	} while (true);
 
@@ -355,8 +356,6 @@ void MAC_Corners()
     //  Incorrect algorithm
     
     hMAC = (HCOSE_MAC) COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-
-    COSE_Mac_add_shared_secret(hMAC, COSE_Algorithm_Direct_HKDF_HMAC_SHA_256, rgb, 10, rgb, 10, NULL);
 
     //  Invalid Handle checks
 

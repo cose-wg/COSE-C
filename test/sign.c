@@ -115,7 +115,7 @@ int BuildSignedMessage(const cn_cbor * pControl)
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Sign_SetContent(hSignObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Enveloped_protected)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Sign_protected)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Sign_map_get_int(hSignObj, 1, COSE_BOTH, NULL);
 

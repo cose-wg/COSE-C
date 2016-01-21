@@ -47,29 +47,13 @@ void FreeContext(cn_cbor_context* pContext);
 //  test.c
 enum {
 	Attributes_MAC_protected=1,
-	Attributes_MAC_unprotected,
-	Attributes_MAC_unsent,
 	Attributes_MAC0_protected,
-	Attributes_MAC0_unprotected,
-	Attributes_MAC0_unsent,
 	Attributes_Recipient_protected,
-	Attributes_Recipient_unprotected,
-	Attributes_Recipient_unsent,
 	Attributes_Enveloped_protected,
-	Attributes_Enveloped_unprotected,
-	Attributes_Enveloped_unsent,
 	Attributes_Encrypt_protected,
-	Attributes_Encrypt_unprotected,
-	Attributes_Encrypt_unsent,
 	Attributes_Sign_protected,
-	Attributes_Sign_unprotected,
-	Attributes_Sign_unsent,
 	Attributes_Signer_protected,
-	Attributes_Signer_unprotected,
-	Attributes_Signer_unsent,
 	Attributes_Sign0_protected,
-	Attributes_Sign0_unprotected,
-	Attributes_Sign0_unsent,
 } whichSet;
 
 extern int CFails;

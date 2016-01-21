@@ -635,7 +635,7 @@ bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDig
 	return true;
 }
 
-bool HKDF_Expand(COSE * pcose, int cbitDigest, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
+bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
 {
 	HMAC_CTX ctx;
 	const EVP_MD * pmd = NULL;

@@ -181,7 +181,6 @@ bool COSE_Encrypt_SetExternal(HCOSE_ENVELOPED hcose, const byte * pbExternalData
 bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED cose, cose_errback * perror);
 bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED, HCOSE_RECIPIENT, cose_errback * perr);
 
-HCOSE_RECIPIENT COSE_Enveloped_add_shared_secret(HCOSE_ENVELOPED cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
 extern bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
 HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient, cose_errback * perr);
 
@@ -190,6 +189,8 @@ HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient
 
 HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror);
 bool COSE_Recipient_Free(HCOSE_RECIPIENT cose);
+HCOSE_RECIPIENT COSE_Recipient_from_shared_secret(byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, CBOR_CONTEXT_COMMA cose_errback * perr);
+
 bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_errback * perr);
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback * perror);
 
@@ -228,8 +229,6 @@ bool COSE_Mac_map_put_int(HCOSE_MAC cose, int key, cn_cbor * value, int flags, c
 
 bool COSE_Mac_encrypt(HCOSE_MAC cose, cose_errback * perror);
 bool COSE_Mac_validate(HCOSE_MAC, HCOSE_RECIPIENT, cose_errback * perr);
-
-HCOSE_RECIPIENT COSE_Mac_add_shared_secret(HCOSE_MAC cose, COSE_Algorithms algId, byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, cose_errback * perr);
 
 extern bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
 HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errback * perr);
