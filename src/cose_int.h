@@ -14,7 +14,7 @@ typedef struct _COSE {
 	cn_cbor * m_protectedMap;
 	cn_cbor * m_unprotectMap;
 	cn_cbor * m_dontSendMap;
-	byte * m_pbExternal;
+	const byte * m_pbExternal;
 	size_t m_cbExternal;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;

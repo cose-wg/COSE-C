@@ -18,7 +18,7 @@
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 
-bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
+bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, size_t cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
@@ -197,7 +197,7 @@ errorReturn:
 	return false;
 }
 
-bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, int cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
+bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	EVP_CIPHER_CTX ctx;
 	int cbOut;
@@ -540,7 +540,7 @@ errorReturn:
 }
 #endif
 
-bool HKDF_AES_Expand(COSE * pcose, int cbitKey, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
+bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
 	EVP_CIPHER_CTX ctx;
@@ -1004,7 +1004,7 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, digest, NULL);
 
 	pSig = _COSE_arrayget_int(pSigner, index);
-	CHECK_CONDITION(pSig != NULL, CN_CBOR_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(pSig != NULL, COSE_ERR_INVALID_PARAMETER);
 	cbSignature = pSig->length;
 
 	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);

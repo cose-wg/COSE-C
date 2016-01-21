@@ -251,7 +251,7 @@ bool COSE_Mac0_encrypt(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errb
 	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+	CHECK_CONDITION((size_t)cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
 
 	switch (alg) {
 	case COSE_Algorithm_CBC_MAC_128_64:

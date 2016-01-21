@@ -148,8 +148,8 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 {
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
-#endif
 	COSE_SignMessage * pMessage = (COSE_SignMessage *)hSign;
+#endif
 	const cn_cbor * cbor;
 	cn_cbor * cbor2 = NULL;
 	HCOSE_SIGNER hSigner = NULL;

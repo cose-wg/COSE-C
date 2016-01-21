@@ -122,7 +122,7 @@ bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, const byte * pbKey, size_t cbKe
 {
 	int alg;
 	const cn_cbor * cn = NULL;
-	int cbitKey;
+	size_t cbitKey;
 
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context;

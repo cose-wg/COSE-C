@@ -318,7 +318,7 @@ int BuildSign0Message(const cn_cbor * pControl)
 
 	const cn_cbor * pAlg = COSE_Sign0_map_get_int(hSignObj, 1, COSE_BOTH, NULL);
 
-	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), true);
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
 	if (pkey == NULL) goto returnError;
 
 
