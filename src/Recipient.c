@@ -302,6 +302,36 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 
 		break;
 
+	case COSE_Algorithm_ECDH_SS_HKDF_256:
+		if (!BuildContextBytes(&pcose->m_message, algIn, cbitKey, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		pkey = _COSE_map_get_int(&pcose->m_message, COSE_Header_ECDH_STATIC, COSE_BOTH, perr);
+		if (pkey == NULL) goto errorReturn;
+
+		CHECK_CONDITION(pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+		if (!ECDH_ComputeSecret(&pcose->m_message, (cn_cbor **)&pRecip->m_pkey, pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Extract(&pcose->m_message, pbSecret, cbSecret, 256, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Expand(&pcose->m_message, 256, rgbDigest, cbDigest, pbContext, cbContext, pbKey, cbitKey / 8, perr)) goto errorReturn;
+
+		break;
+
+	case COSE_Algorithm_ECDH_SS_HKDF_512:
+		if (!BuildContextBytes(&pcose->m_message, algIn, cbitKey, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		pkey = _COSE_map_get_int(&pcose->m_message, COSE_Header_ECDH_STATIC, COSE_BOTH, perr);
+		if (pkey == NULL) goto errorReturn;
+
+		CHECK_CONDITION(pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+		if (!ECDH_ComputeSecret(&pcose->m_message, (cn_cbor **)&pRecip->m_pkey, pkey, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Extract(&pcose->m_message, pbSecret, cbSecret, 512, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+
+		if (!HKDF_Expand(&pcose->m_message, 512, rgbDigest, cbDigest, pbContext, cbContext, pbKey, cbitKey / 8, perr)) goto errorReturn;
+
+		break;
+
 	case COSE_Algorithm_ECDH_ES_A128KW:
 		if (!BuildContextBytes(&pcose->m_message, alg, 128, &pbContext, &cbContext, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
@@ -387,6 +417,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	case COSE_Algorithm_Direct_HKDF_AES_256:
 	case COSE_Algorithm_ECDH_ES_HKDF_256:
 	case COSE_Algorithm_ECDH_ES_HKDF_512:
+	case COSE_Algorithm_ECDH_SS_HKDF_256:
+	case COSE_Algorithm_ECDH_SS_HKDF_512:
 		//  This is a NOOP
 		cbitKey = 0;
 		CHECK_CONDITION(pRecipient->m_encrypt.m_recipientFirst == NULL, COSE_ERR_INVALID_PARAMETER);
@@ -460,6 +492,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	case COSE_Algorithm_Direct_HKDF_AES_256:
 	case COSE_Algorithm_ECDH_ES_HKDF_256:
 	case COSE_Algorithm_ECDH_ES_HKDF_512:
+	case COSE_Algorithm_ECDH_SS_HKDF_256:
+	case COSE_Algorithm_ECDH_SS_HKDF_512:
 		ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
 		CHECK_CONDITION_CBOR(_COSE_array_replace(&pRecipient->m_encrypt.m_message, ptmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
