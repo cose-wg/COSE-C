@@ -48,6 +48,7 @@ add_test (NAME hkdf-aes WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test 
 add_test (NAME aes-wrap WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/aes-wrap-examples )
 
 add_test (NAME ecdh-direct WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/ecdh-direct-examples )
+add_test (NAME ecdh-wrap WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/ecdh-wrap-examples )
 
 
 add_test (NAME corner-cases WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --corners )
