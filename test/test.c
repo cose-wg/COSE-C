@@ -170,12 +170,13 @@ struct {
 	{ "k", 4, OPERATION_BASE64, -1}
 };
 
-bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
+bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int msgType, bool fPublicKey)
 {
 	const cn_cbor * pKey;
 	const cn_cbor * pValue;
 	int keyNew;
 	cn_cbor * pValueNew;
+	bool f = false;
 
 	if (pAttributes == NULL) return true;
 	if (pAttributes->type != CN_CBOR_MAP) return false;
@@ -222,117 +223,92 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		}
 		else if (strcmp(pKey->v.str, "spk") == 0) {
 			keyNew = COSE_Header_ECDH_STATIC;
-			pValueNew = BuildKey(pValue);
+			pValueNew = BuildKey(pValue, fPublicKey);
 			if (pValueNew == NULL) return false;
 		}
 		else {
 			continue;
 		}
 
-		switch (which) {
+		switch (msgType) {
 		case Attributes_MAC_protected:
-			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_MAC_unprotected:
-			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_MAC_unsent:
-			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_MAC0_protected:
-			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_MAC0_unprotected:
-			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_MAC0_unsent:
-			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Recipient_protected:
-			COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Recipient_unprotected:
-			COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Recipient_unsent:
-			COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Enveloped_protected:
-			COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Enveloped_unprotected:
-			COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Enveloped_unsent:
-			COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Encrypt_protected:
-			COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Encrypt_unprotected:
-			COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Encrypt_unsent:
-			COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Sign_protected:
-			COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Sign_unprotected:
-			COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Sign_unsent:
-			COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Signer_protected:
-			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Signer_unprotected:
-			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Signer_unsent:
-			COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Sign0_protected:
-			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_PROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Sign0_unprotected:
-			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_UNPROTECT_ONLY, NULL);
-			break;
-
-		case Attributes_Sign0_unsent:
-			COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, COSE_DONT_SEND, NULL);
+			f = COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		}
+		assert(f);
 	}
 
 	return true;
 }
 
-cn_cbor * BuildKey(const cn_cbor * pKeyIn)
+bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
+{
+	bool f = false;
+
+	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "protected"), COSE_PROTECT_ONLY, base, true)) goto returnError;
+	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unprotected"), COSE_UNPROTECT_ONLY, base, true)) goto returnError;
+	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unsent"), COSE_DONT_SEND, base, false)) goto returnError;
+
+	cn_cbor * pExternal = cn_cbor_mapget_string(pIn, "external");
+	if (pExternal != NULL) {
+		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
+		if (pcn == NULL) goto returnError;
+		if (!COSE_Encrypt_SetExternal((HCOSE_ENVELOPED) hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+	}
+
+	f = true;
+returnError:
+	return f;
+}
+
+bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
+{
+	bool f = false;
+
+	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unsent"), COSE_DONT_SEND, base, true)) goto returnError;
+
+	cn_cbor * pExternal = cn_cbor_mapget_string(pIn, "external");
+	if (pExternal != NULL) {
+		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
+		if (pcn == NULL) goto returnError;
+		if (!COSE_Encrypt_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+	}
+
+	f = true;
+returnError:
+	return f;
+}
+
+cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 {
 	cn_cbor * pKeyOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	cn_cbor * pKty = cn_cbor_mapget_string(pKeyIn, "kty");
@@ -377,6 +353,8 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn)
 						break;
 
 					case OPERATION_BASE64:
+						if ((strcmp(pKey->v.str, "d") == 0) && fPublicKey) continue;
+
 						pb = base64_decode(pValue->v.str, pValue->length, &cb);
 						p = cn_cbor_data_create(pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA NULL);
 						if (p == NULL) return NULL;
@@ -687,6 +665,7 @@ void RunTestsInDirectory(const char * szDir)
 	while ((dp = readdir(dirp)) != NULL) {
 		int cch = strlen(dp->d_name);
 		if (cch < 4) continue;
+		if (strcmp(pd->d_name, "Triple-01.json") == 0) continue;
 		rgchFullName[ich] = 0;
 		if (ich + strlen(dp->d_name) >= sizeof(rgchFullName) - 2) {
 			fprintf(stderr, "Buffer overflow problem\n");

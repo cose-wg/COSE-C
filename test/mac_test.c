@@ -40,7 +40,7 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	iRecipient = (int) pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
 	for (; pRecipients != NULL; iRecipient--, pRecipients=pRecipients->next) {
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 		if (pkey == NULL) {
 			fFail = true;
 			continue;
@@ -52,7 +52,7 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 			continue;
 		}
 
-		if (!SetAttributes((HCOSE)hRecip, cn_cbor_mapget_string(pRecipients, "unsent"), Attributes_Recipient_unsent)) goto failTest;
+		if (!SetReceivingAttributes((HCOSE)hRecip, pRecipients, Attributes_Recipient_protected)) goto failTest;
 
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
 			fFail = true;
@@ -114,9 +114,7 @@ int BuildMacMessage(const cn_cbor * pControl)
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Mac_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetAttributes((HCOSE) hMacObj, cn_cbor_mapget_string(pMac, "protected"), Attributes_MAC_protected)) goto returnError;
-	if (!SetAttributes((HCOSE) hMacObj, cn_cbor_mapget_string(pMac, "unprotected"), Attributes_MAC_unprotected)) goto returnError;
-	if (!SetAttributes((HCOSE)hMacObj, cn_cbor_mapget_string(pMac, "unsent"), Attributes_MAC_unsent)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC_protected)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Mac_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
@@ -125,15 +123,13 @@ int BuildMacMessage(const cn_cbor * pControl)
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 		if (pkey == NULL) goto returnError;
 
 		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hRecip == NULL) goto returnError;
 
-		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "protected"), Attributes_Recipient_protected)) goto returnError;
-		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "unprotected"), Attributes_Recipient_unprotected)) goto returnError;
-		if (!SetAttributes((HCOSE) hRecip, cn_cbor_mapget_string(pRecipients, "unsent"), Attributes_Recipient_unsent)) goto returnError;
+		if (!SetSendingAttributes((HCOSE) hRecip, pRecipients, Attributes_Recipient_protected)) goto returnError;
 
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL))goto returnError;
 
@@ -254,7 +250,7 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 
 	pRecipients = pRecipients->first_child;
 
-	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 		if (pkey == NULL) {
 			fFail = true;
 			goto exitHere;
@@ -314,8 +310,7 @@ int BuildMac0Message(const cn_cbor * pControl)
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Mac0_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetAttributes((HCOSE)hMacObj, cn_cbor_mapget_string(pMac, "protected"), Attributes_MAC0_protected)) goto returnError;
-	if (!SetAttributes((HCOSE)hMacObj, cn_cbor_mapget_string(pMac, "unprotected"), Attributes_MAC0_unprotected)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC0_protected)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Mac0_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
@@ -324,7 +319,7 @@ int BuildMac0Message(const cn_cbor * pControl)
 
 	pRecipients = pRecipients->first_child;
 
-	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"));
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 		if (pkey == NULL) goto returnError;
 
 		cn_cbor * k = cn_cbor_mapget_int(pkey, -1);

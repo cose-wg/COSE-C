@@ -76,6 +76,8 @@ extern int CFails;
 
 int MapAlgorithmName(const cn_cbor * p);
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded);
-bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which);
-cn_cbor * BuildKey(const cn_cbor * pKeyIn);
+//bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, bool fPublicKey);
+cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey);
 byte * FromHex(const char * rgch, int cch);
+bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
+bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);

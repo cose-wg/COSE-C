@@ -44,7 +44,7 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 		if (hSig == NULL) goto returnError;
 
 
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"));
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
 		if (pkey == NULL) {
 			fFail = true;
 			continue;
@@ -115,9 +115,7 @@ int BuildSignedMessage(const cn_cbor * pControl)
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Sign_SetContent(hSignObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "protected"), Attributes_Sign_protected)) goto returnError;
-	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "unprotected"), Attributes_Sign_unprotected)) goto returnError;
-	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "unsent"), Attributes_Sign_unsent)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Enveloped_protected)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Sign_map_get_int(hSignObj, 1, COSE_BOTH, NULL);
 
@@ -126,15 +124,13 @@ int BuildSignedMessage(const cn_cbor * pControl)
 
 	pSigners = pSigners->first_child;
 	for (iSigner = 0; pSigners != NULL; iSigner++, pSigners = pSigners->next) {
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"));
+		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
 		if (pkey == NULL) goto returnError;
 
 		HCOSE_SIGNER hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hSigner == NULL) goto returnError;
 
-		if (!SetAttributes((HCOSE)hSigner, cn_cbor_mapget_string(pSigners, "protected"), Attributes_Signer_protected)) goto returnError;
-		if (!SetAttributes((HCOSE)hSigner, cn_cbor_mapget_string(pSigners, "unprotected"), Attributes_Signer_unprotected)) goto returnError;
-		if (!SetAttributes((HCOSE)hSigner, cn_cbor_mapget_string(pSigners, "unsent"), Attributes_Signer_unsent)) goto returnError;
+		if (!SetSendingAttributes((HCOSE)hSigner, pSigners, Attributes_Signer_protected)) goto returnError;
 
 		if (!COSE_Signer_SetKey(hSigner, pkey, NULL)) goto returnError;
 
@@ -259,7 +255,7 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	if (hSig == NULL) goto returnError;
 
 
-	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"));
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
 	if (pkey == NULL) {
 		fFail = true;
 		goto exitHere;
@@ -318,13 +314,11 @@ int BuildSign0Message(const cn_cbor * pControl)
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Sign0_SetContent(hSignObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "protected"), Attributes_Sign0_protected)) goto returnError;
-	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "unprotected"), Attributes_Sign0_unprotected)) goto returnError;
-	if (!SetAttributes((HCOSE)hSignObj, cn_cbor_mapget_string(pSign, "unsent"), Attributes_Sign0_unsent)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Sign0_protected)) goto returnError;
 
 	const cn_cbor * pAlg = COSE_Sign0_map_get_int(hSignObj, 1, COSE_BOTH, NULL);
 
-	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"));
+	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), true);
 	if (pkey == NULL) goto returnError;
 
 
