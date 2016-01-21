@@ -28,7 +28,7 @@ typedef struct _NameMap {
 	int    i;
 } NameMap;
 
-NameMap RgAlgorithmNames[32] = {
+NameMap RgAlgorithmNames[40] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -61,6 +61,14 @@ NameMap RgAlgorithmNames[32] = {
 	{"HKDF-AES-256", COSE_Algorithm_Direct_HKDF_AES_256},
 	{"ECDH-ES", COSE_Algorithm_ECDH_ES_HKDF_256},
 {"ECDH-ES-512",COSE_Algorithm_ECDH_ES_HKDF_512},
+{ "ECDH-SS", COSE_Algorithm_ECDH_SS_HKDF_256 },
+{ "ECDH-SS-512",COSE_Algorithm_ECDH_SS_HKDF_512 },
+{ "ECDH-ES+A128KW", COSE_Algorithm_ECDH_ES_A128KW },
+{ "ECDH-ES+A192KW", COSE_Algorithm_ECDH_ES_A192KW },
+{ "ECDH-ES+A256KW", COSE_Algorithm_ECDH_ES_A256KW },
+{"ECDH-SS+A128KW", COSE_Algorithm_ECDH_SS_A128KW},
+{ "ECDH-SS+A192KW", COSE_Algorithm_ECDH_SS_A192KW },
+{ "ECDH-SS+A256KW", COSE_Algorithm_ECDH_SS_A256KW },
 };
 
 
@@ -93,6 +101,7 @@ byte fromHex(char c)
 {
 	if (('0' <= c) && (c <= '9')) return c - '0';
 	if (('A' <= c) && (c <= 'F')) return c - 'A' + 10;
+	if (('a' <= c) && (c <= 'f')) return c - 'a' + 10;
 	fprintf(stderr, "Invalid hex");
 	exit(1);
 }
@@ -209,6 +218,11 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which)
 		else if (strcmp(pKey->v.str, "priv_other") == 0) {
 			keyNew = COSE_Header_KDF_PRIV;
 			pValueNew = cn_cbor_data_create(pValue->v.bytes, (int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) return false;
+		}
+		else if (strcmp(pKey->v.str, "spk") == 0) {
+			keyNew = COSE_Header_ECDH_STATIC;
+			pValueNew = BuildKey(pValue);
 			if (pValueNew == NULL) return false;
 		}
 		else {
@@ -723,9 +737,17 @@ int main(int argc, char ** argv)
 	//
 
 	if (fMemory) {
+		if (szWhere == NULL) {
+			fprintf(stderr, "Must specify a file name\n");
+			exit(1);
+		}
 		RunMemoryTest(szWhere);
 	}
 	else if (szWhere != NULL) {
+		if (szWhere == NULL) {
+			fprintf(stderr, "Must specify a file name\n");
+			exit(1);
+		}
 		if (fDir) RunTestsInDirectory(szWhere);
 		else RunFileTest(szWhere);
 	}
