@@ -379,6 +379,7 @@ void Enveloped_Corners()
 	if (COSE_Enveloped_decrypt(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Enveloped_AddRecipient(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Enveloped_GetRecipient(hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Enveloped_SetExternal(hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Enveloped_Free(hEncrypt)) CFails++;
 
 	//  Incorrect handle checks
@@ -392,6 +393,7 @@ void Enveloped_Corners()
 	if (COSE_Enveloped_decrypt(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Enveloped_AddRecipient(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Enveloped_GetRecipient(hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Enveloped_SetExternal(hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Enveloped_Free(hEncrypt)) CFails++;
 
 	//

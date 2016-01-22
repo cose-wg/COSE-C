@@ -431,7 +431,7 @@ bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h, const byte * rgb, size_t cb, c
 	return _COSE_Enveloped_SetContent((COSE_Enveloped *)h, rgb, cb, perror);
 }
 
-bool COSE_Encrypt_SetExternal(HCOSE_ENVELOPED hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+bool COSE_Enveloped_SetExternal(HCOSE_ENVELOPED hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
 	if (!IsValidEnvelopedHandle(hcose)) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
