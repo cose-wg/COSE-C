@@ -355,3 +355,104 @@ returnError:
 	CFails += 1;
 	return 1;
 }
+
+void Enveloped_Corners()
+{
+	HCOSE_MAC hMAC = NULL;
+	HCOSE_ENVELOPED hEncrypt = NULL;
+	HCOSE_RECIPIENT hRecipient = NULL;
+	byte rgb[10];
+	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	//  Missing case - addref then release on item
+
+	//  Incorrect algorithm
+
+	hMAC = (HCOSE_MAC)COSE_Enveloped_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	// NULL Handle checks
+
+	if (COSE_Enveloped_SetContent(hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Enveloped_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Enveloped_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Enveloped_encrypt(hEncrypt, NULL)) CFails++;
+	if (COSE_Enveloped_decrypt(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Enveloped_AddRecipient(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Enveloped_GetRecipient(hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Enveloped_Free(hEncrypt)) CFails++;
+
+	//  Incorrect handle checks
+
+	hEncrypt = (HCOSE_ENVELOPED) COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	if (COSE_Enveloped_SetContent(hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Enveloped_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Enveloped_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Enveloped_encrypt(hEncrypt, NULL)) CFails++;
+	if (COSE_Enveloped_decrypt(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Enveloped_AddRecipient(hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Enveloped_GetRecipient(hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Enveloped_Free(hEncrypt)) CFails++;
+
+	//
+	//  Unsupported algorithm
+
+hEncrypt = COSE_Enveloped_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hEncrypt == NULL) CFails++;
+	if (!COSE_Enveloped_SetContent(hEncrypt, (byte *) "Message", 7, NULL)) CFails++;
+	if (!COSE_Enveloped_map_put_int(hEncrypt, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	hRecipient = COSE_Recipient_from_shared_secret(rgb, sizeof(rgb), rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hRecipient == NULL) CFails++;
+	if (!COSE_Enveloped_AddRecipient(hEncrypt, hRecipient, NULL)) CFails++;
+	if (COSE_Enveloped_encrypt(hEncrypt, NULL)) CFails++;
+
+	if (!COSE_Enveloped_map_put_int(hEncrypt, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Enveloped_encrypt(hEncrypt, NULL)) CFails++;
+
+	return;
+}
+
+void Encrypt_Corners()
+{
+	HCOSE_MAC hMAC;
+	HCOSE_ENCRYPT hEncrypt = NULL;
+	HCOSE_RECIPIENT hRecipient = NULL;
+	byte rgb[10];
+	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	//  Missing case - addref then release on item
+
+	//  NULL Handle checks
+
+	if (COSE_Encrypt_SetContent(hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
+	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
+	if (COSE_Encrypt_Free((HCOSE_ENCRYPT)hEncrypt)) CFails++;
+
+	//  Wrong type of handle checks
+
+	hEncrypt = (HCOSE_ENCRYPT) COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	if (COSE_Encrypt_SetContent(hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
+	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
+	if (COSE_Encrypt_Free(hEncrypt)) CFails++;
+
+	//
+	//  Unsupported algorithm
+
+	hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hEncrypt == NULL) CFails++;
+	if (!COSE_Encrypt_SetContent(hEncrypt, (byte *) "Message", 7, NULL)) CFails++;
+	if (!COSE_Encrypt_map_put_int(hEncrypt, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
+
+	if (!COSE_Encrypt_map_put_int(hEncrypt, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
+
+	return;
+}
