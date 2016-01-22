@@ -9,8 +9,6 @@
 #include "configure.h"
 #include "crypto.h"
 
-byte RgbDontUse2[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
-
 COSE * Mac0Root = NULL;
 
 bool IsValidMac0Handle(HCOSE_MAC0 h)
@@ -253,8 +251,6 @@ errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	return fRet;
 }
-
-byte RgbDontUseMac[1024];
 
 bool COSE_Mac0_validate(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errback * perr)
 {

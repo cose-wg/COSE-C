@@ -381,8 +381,6 @@ errorReturn:
 	return fRet;
 }
 
-byte RgbDontUseMac[1024];
-
 bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
