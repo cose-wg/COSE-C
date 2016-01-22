@@ -178,6 +178,75 @@ bool COSE_Mac_map_put_int(HCOSE_MAC h, int key, cn_cbor * value, int flags, cose
 }
 
 
+static bool Mac_Build_AAD(COSE * pCose, byte ** ppbAuthData, size_t * pcbAuthData, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+	cn_cbor * pAuthData = NULL;
+	bool fRet = false;
+	cn_cbor_errback cbor_error;
+	cn_cbor * ptmp = NULL;
+	cn_cbor * pcn;
+	size_t cbAuthData;
+	byte * pbAuthData = NULL;
+
+	//  Build authenticated data
+	//  Protected headers
+	//  external data
+	//  body
+
+	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(pAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	//  Add the context string
+
+	ptmp = cn_cbor_string_create("MAC", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+	ptmp = NULL;
+
+	// Add the protected attributes
+
+	pcn = _COSE_arrayget_int(pCose, INDEX_PROTECTED);
+	CHECK_CONDITION((pcn != NULL) && (pcn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+
+	ptmp = cn_cbor_data_create(pcn->v.bytes, (int)pcn->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
+
+	CHECK_CONDITION(cn_cbor_array_append(pAuthData, ptmp, NULL), COSE_ERR_CBOR);
+	ptmp = NULL;
+
+	//  Add the external bytes
+
+	ptmp = cn_cbor_data_create(pCose->m_pbExternal, (int) pCose->m_cbExternal, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+	ptmp = NULL;
+
+	//  Add the content
+	pcn = _COSE_arrayget_int(pCose, INDEX_BODY);
+	ptmp = cn_cbor_data_create(pcn->v.bytes, (int)pcn->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
+	ptmp = NULL;
+
+	//  Turn it into bytes
+	cbAuthData = cn_cbor_encoder_write(RgbDontUse2, 0, sizeof(RgbDontUse2), pAuthData);
+	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
+	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
+	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+
+	*ppbAuthData = pbAuthData;
+	*pcbAuthData = cbAuthData;
+	pbAuthData = NULL;
+	fRet = true;
+
+errorReturn:
+	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
+	if (pAuthData != NULL) CN_CBOR_FREE(pAuthData, context);
+	if (ptmp != NULL) CN_CBOR_FREE(ptmp, context);
+	return fRet;
+}
+
 bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 {
 	int alg;
@@ -192,8 +261,8 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	cn_cbor_context * context = NULL;
 #endif
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
-	cn_cbor_errback cbor_error;
 	bool fRet = false;
+	size_t cbAuthData = 0;
 
 	CHECK_CONDITION(IsValidMacHandle(h), COSE_ERR_INVALID_PARAMETER);
 
@@ -266,45 +335,9 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, perr);
 	if (cbProtected == NULL) goto errorReturn;
 
-	//  Get the body
-	const cn_cbor * cbBody = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
-	CHECK_CONDITION(cbBody != NULL, COSE_ERR_INVALID_PARAMETER);
-
 	//  Build authenticated data
-	//  Protected headers
-	//  external data
-	//  body
 
-	ssize_t cbAuthData = 0;
-	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(pAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-
-	ptmp = cn_cbor_string_create("MAC", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(cbProtected->v.bytes, (int) cbProtected->length, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
-
-	CHECK_CONDITION(cn_cbor_array_append(pAuthData, ptmp, NULL), COSE_ERR_CBOR);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	ptmp = cn_cbor_data_create(cbBody->v.bytes, (int) cbBody->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
-
-	cbAuthData = cn_cbor_encoder_write(RgbDontUse2, 0, sizeof(RgbDontUse2), pAuthData);
-	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
-	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
-	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+	if (!Mac_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
 	case COSE_Algorithm_CBC_MAC_128_64:
@@ -358,7 +391,6 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	COSE_RecipientInfo * pRecip = (COSE_RecipientInfo *)hRecip;
-	cn_cbor_errback cbor_error;
 	byte * pbAuthData = NULL;
 	int cbitKey = 0;
 
@@ -369,9 +401,8 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
 #endif
-	ssize_t cbAuthData;
+	size_t cbAuthData;
 	cn_cbor * pAuthData = NULL;
-	cn_cbor * ptmp = NULL;
 
 	CHECK_CONDITION(IsValidMacHandle(h) && IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
 
@@ -436,34 +467,9 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	cn_cbor * cnProtected = _COSE_arrayget_int(&pcose->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION((cnProtected != NULL) && (cnProtected->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
-	cn_cbor * cnContent = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
-	CHECK_CONDITION((cnContent != NULL) && (cnContent->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-
 	//  Build authenticated data
-	pbAuthData = NULL;
-	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(pAuthData != NULL, cbor_error);
 
-	ptmp = cn_cbor_string_create("MAC", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-
-	ptmp = cn_cbor_data_create(cnProtected->v.bytes, (int) cnProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-
-	ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-
-	ptmp = cn_cbor_data_create(cnContent->v.bytes, (int) cnContent->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-
-	cbAuthData = cn_cbor_encoder_write(RgbDontUseMac, 0, sizeof(RgbDontUseMac), pAuthData);
-	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
-	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION((cn_cbor_encoder_write(pbAuthData, 0, cbAuthData+1, pAuthData) == cbAuthData), COSE_ERR_CBOR); // M00HACK
+	if (!Mac_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
 	case COSE_Algorithm_HMAC_256_256:
