@@ -208,7 +208,12 @@ bool _COSE_Mac_Build_AAD(COSE * pCose, char * szContext, byte ** ppbAuthData, si
 	pcn = _COSE_arrayget_int(pCose, INDEX_PROTECTED);
 	CHECK_CONDITION((pcn != NULL) && (pcn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
-	ptmp = cn_cbor_data_create(pcn->v.bytes, (int)pcn->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if ((pcn->length == 1) && (pcn->v.bytes[0] == 0xa0)) {
+		ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	}
+	else {
+		ptmp = cn_cbor_data_create(pcn->v.bytes, (int)pcn->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+	}
 	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
 
 	CHECK_CONDITION(cn_cbor_array_append(pAuthData, ptmp, NULL), COSE_ERR_CBOR);

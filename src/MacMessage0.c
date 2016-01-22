@@ -14,7 +14,7 @@ COSE * Mac0Root = NULL;
 bool IsValidMac0Handle(HCOSE_MAC0 h)
 {
 	COSE_Mac0Message * p = (COSE_Mac0Message *)h;
-	return _COSE_IsInList(Mac0Root, &p->m_message);
+	return _COSE_IsInList(Mac0Root, (COSE *) p);
 }
 
 HCOSE_MAC0 COSE_Mac0_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
