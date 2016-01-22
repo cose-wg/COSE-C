@@ -431,7 +431,7 @@ bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h, const byte * rgb, size_t cb, c
 	return _COSE_Enveloped_SetContent((COSE_Enveloped *)h, rgb, cb, perror);
 }
 
-bool COSE_Encrypt_SetExternal(HCOSE_ENVELOPED hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+bool COSE_Enveloped_SetExternal(HCOSE_ENVELOPED hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
 	if (!IsValidEnvelopedHandle(hcose)) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
@@ -546,7 +546,12 @@ bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, c
 
 	pItem = _COSE_arrayget_int(pMessage, INDEX_PROTECTED);
 	CHECK_CONDITION(pItem != NULL, COSE_ERR_INVALID_PARAMETER);
-	ptmp = cn_cbor_data_create(pItem->v.bytes, (int)pItem->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	if ((pItem->length == 1) && (pItem->v.bytes[0] == 0xa0)) {
+		ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	}
+	else {
+		ptmp = cn_cbor_data_create(pItem->v.bytes, (int)pItem->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	}
 	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
 	ptmp = NULL;

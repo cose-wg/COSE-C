@@ -270,7 +270,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		}
-		assert(f);
+		// assert(f);
 	}
 
 	return true;
@@ -288,7 +288,15 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 	if (pExternal != NULL) {
 		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pcn == NULL) goto returnError;
-		if (!COSE_Encrypt_SetExternal((HCOSE_ENVELOPED) hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+		switch (base) {
+		case Attributes_Encrypt_protected:
+			if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Enveloped_protected:
+			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+		}
 	}
 
 	f = true;
@@ -306,7 +314,15 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 	if (pExternal != NULL) {
 		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pcn == NULL) goto returnError;
-		if (!COSE_Encrypt_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+		switch (base) {
+		case Attributes_Encrypt_protected:
+			if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Enveloped_protected:
+			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+		}
 	}
 
 	f = true;
@@ -421,6 +437,8 @@ void RunCorners()
     	Test_cn_cbor_array_replace();
         MAC_Corners();
 		MAC0_Corners();
+		Encrypt_Corners();
+		Enveloped_Corners();
 }
 
 void RunMemoryTest(const char * szFileName)
