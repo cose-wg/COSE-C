@@ -270,7 +270,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		}
-		assert(f);
+		// assert(f);
 	}
 
 	return true;

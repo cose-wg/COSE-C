@@ -63,7 +63,7 @@ add_test (NAME Memory-mac-cbc-mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND 
 add_test (NAME Memory-mac0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/hmac-examples/HMac-enc-01.json )
 
 add_test (NAME Memory-encrypt-gcm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/aes-gcm-examples/aes-gcm-enc-01.json )
-add_test (NAME Memory-encrypt-ccm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/aes-gcm-examples/aes-ccm-enc-01.json )
+add_test (NAME Memory-encrypt-ccm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/aes-ccm-examples/aes-ccm-enc-01.json )
 add_test (NAME Memory-enveloped WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/aes-gcm-examples/aes-gcm-01.json )
 
 add_test (NAME Memory-ecdh WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdh-direct-examples/p256-hkdf-256-01.json )

@@ -116,6 +116,8 @@ bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 	byte * pbIV = NULL;
 	cn_cbor_errback cbor_error;
 
+	EVP_CIPHER_CTX_init(&ctx);
+
 	switch (cbKey*8) {
 	case 128:
 		cipher = EVP_aes_128_ccm();
@@ -155,7 +157,6 @@ bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 
 	//  Setup and run the OpenSSL code
 
-	EVP_CIPHER_CTX_init(&ctx);
 	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, cipher, NULL, NULL, NULL), COSE_ERR_CRYPTO_FAIL);
 
 	TSize /= 8; // Comes in in bits not bytes.
@@ -394,6 +395,8 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey, 
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 
+	EVP_CIPHER_CTX_init(&ctx);
+
 	rgbOut = COSE_CALLOC(16, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
@@ -412,7 +415,6 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey, 
 
 	//  Setup and run the OpenSSL code
 
-	EVP_CIPHER_CTX_init(&ctx);
 	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
 
 	for (i = 0; i < (unsigned int)cbAuthData / 16; i++) {
@@ -1047,6 +1049,7 @@ bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKe
 	cn_cbor * cnTmp = NULL;
 
 	pbOut = COSE_CALLOC(cbContent + 8, 1, context);
+	CHECK_CONDITION(pbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(AES_set_encrypt_key(pbKeyIn, cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
 
