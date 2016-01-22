@@ -42,7 +42,7 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 	for (; pRecipients != NULL; iRecipient--, pRecipients = pRecipients->next) {
 
 		hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-		if (hEnc == NULL) goto errorReturn;
+		if (hEnc == NULL) if (fFailBody) return; else  goto errorReturn;
 
 		if (!SetReceivingAttributes((HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected)) goto errorReturn;
 
@@ -258,7 +258,7 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	pRecipients = pRecipients->first_child;
 
 	hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEnc == NULL) goto returnError;
+	if (hEnc == NULL) if (fFailBody) return; else  goto returnError;
 
 	if (!SetReceivingAttributes((HCOSE)hEnc, pEncrypt, Attributes_Encrypt_protected)) goto returnError;
 

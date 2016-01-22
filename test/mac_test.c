@@ -166,17 +166,24 @@ int MacMessage()
 	size_t cb;
 	byte * rgb;
 
-	COSE_Mac_map_put_int(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_HMAC_256_256, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL);
-	COSE_Mac_SetContent(hEncObj, (byte *) sz, strlen(sz), NULL);
+	if (hEncObj == NULL) goto errorReturn;
+
+	if (!COSE_Mac_map_put_int(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_HMAC_256_256, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) goto errorReturn;
+	if (!COSE_Mac_SetContent(hEncObj, (byte *)sz, strlen(sz), NULL))goto errorReturn;
 
 	HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret, sizeof(rgbSecret), rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
-	COSE_Mac_AddRecipient(hEncObj, hRecip, NULL);
+	if (hRecip == NULL) goto errorReturn;
+	if (!COSE_Mac_AddRecipient(hEncObj, hRecip, NULL)) goto errorReturn;
 
-	COSE_Mac_encrypt(hEncObj, NULL);
+	if (!COSE_Mac_encrypt(hEncObj, NULL)) goto errorReturn;
 
-	cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
+	cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0);
+	if (cb == 0) goto errorReturn;
+
 	rgb = (byte *)malloc(cb);
+	if (rgb == NULL) goto errorReturn;
 	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
+	if (cb == 0) goto errorReturn;
 
 	COSE_Mac_Free(hEncObj);
 
@@ -199,6 +206,7 @@ int MacMessage()
 
 	int typ;
 	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hEncObj == NULL) goto errorReturn;
 
 	int iRecipient = 0;
 	do {
@@ -207,9 +215,9 @@ int MacMessage()
 		hRecip2 = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
 		if (hRecip2 == NULL) break;
 
-		COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL);
+		if (!COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL)) goto errorReturn;
 
-		COSE_Mac_validate(hEncObj, hRecip2, NULL);
+		if (!COSE_Mac_validate(hEncObj, hRecip2, NULL)) goto errorReturn;
 
 		iRecipient += 1;
 
@@ -219,6 +227,10 @@ int MacMessage()
 
 	COSE_Mac_Free(hEncObj);
 
+	return 1;
+
+errorReturn:
+	CFails++;
 	return 1;
 }
 
@@ -240,7 +252,7 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	}
 
 	hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) goto errorReturn;
+	if (hMAC == NULL) if (fFailBody) return 0; else goto errorReturn;
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto errorReturn;
 	pMac = cn_cbor_mapget_string(pInput, "mac0");

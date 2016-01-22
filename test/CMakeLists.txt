@@ -36,6 +36,9 @@ add_test ( NAME aes-ccm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test 
 
 add_test ( NAME aes-gcm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/aes-gcm-examples )
 
+add_test ( NAME enveloped WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/enveloped-tests )
+add_test ( NAME encrypted WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/encrypted-tests )
+
 add_test ( NAME cbc-mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/cbc-mac-examples )
 
 add_test ( NAME ecdsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/ecdsa-examples )
