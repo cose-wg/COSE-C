@@ -360,25 +360,25 @@ void MAC_Corners()
 
     //  Invalid Handle checks
 
-    COSE_Mac_Free((HCOSE_MAC) hEncrypt);
-    COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL);
-    COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL);
-	COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
-    COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL);
-    COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
-    COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
-    COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL);
+	if (COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL)) CFails++;
+	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
 
     hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 
-    COSE_Mac_Free((HCOSE_MAC)hEncrypt);
-    COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL);
-    COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL);
-	COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL);
-	COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL);
-    COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
-    COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL);
-    COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL);
+	if (COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL)) CFails++;
+	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
 
     //
 	//  Unsupported algorithm

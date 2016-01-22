@@ -178,7 +178,7 @@ bool COSE_Mac_map_put_int(HCOSE_MAC h, int key, cn_cbor * value, int flags, cose
 }
 
 
-static bool Mac_Build_AAD(COSE * pCose, byte ** ppbAuthData, size_t * pcbAuthData, CBOR_CONTEXT_COMMA cose_errback * perr)
+bool _COSE_Mac_Build_AAD(COSE * pCose, char * szContext, byte ** ppbAuthData, size_t * pcbAuthData, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pAuthData = NULL;
 	bool fRet = false;
@@ -198,7 +198,7 @@ static bool Mac_Build_AAD(COSE * pCose, byte ** ppbAuthData, size_t * pcbAuthDat
 
 	//  Add the context string
 
-	ptmp = cn_cbor_string_create("MAC", CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	ptmp = cn_cbor_string_create(szContext, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
 	ptmp = NULL;
@@ -337,7 +337,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	//  Build authenticated data
 
-	if (!Mac_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
 	case COSE_Algorithm_CBC_MAC_128_64:
@@ -469,7 +469,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 
 	//  Build authenticated data
 
-	if (!Mac_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
 	case COSE_Algorithm_HMAC_256_256:
