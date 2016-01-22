@@ -86,7 +86,9 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 		case '7':
 		case '8':
 		case'9':
+		case'-':
 			node = cn_cbor_int_create(atol(&rgch[ib]), CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (rgch[ib] == '-') ib++;
 			while (isdigit(rgch[ib])) ib++;
 			ib--;
 			break;

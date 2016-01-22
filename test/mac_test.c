@@ -28,7 +28,7 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	}
 
 	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) goto failTest;
+	if (hMAC == NULL) if (fFailBody) return 0; else goto failTest;
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto failTest;
 	pMac = cn_cbor_mapget_string(pInput, "mac");

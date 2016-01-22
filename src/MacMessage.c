@@ -254,8 +254,6 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	COSE_RecipientInfo * pri;
 	const cn_cbor * cn_Alg = NULL;
 	byte * pbAuthData = NULL;
-	cn_cbor * pAuthData = NULL;
-	cn_cbor * ptmp = NULL;
 	size_t cbitKey;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
@@ -380,8 +378,6 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if (ptmp != NULL) cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
 	return fRet;
 }
 
@@ -393,6 +389,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	COSE_RecipientInfo * pRecip = (COSE_RecipientInfo *)hRecip;
 	byte * pbAuthData = NULL;
 	int cbitKey = 0;
+	bool fRet = false;
 
 	int alg;
 	const cn_cbor * cn = NULL;
@@ -402,7 +399,6 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	cn_cbor_context * context = NULL;
 #endif
 	size_t cbAuthData;
-	cn_cbor * pAuthData = NULL;
 
 	CHECK_CONDITION(IsValidMacHandle(h) && IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
 
@@ -503,24 +499,15 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 		break;
 	}
 
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
-	if ((pbKey != NULL)) {
-		memset(pbKey, 0xff, cbitKey / 8);
-		COSE_FREE(pbKey, context);
-	}
-
-	return true;
+	fRet = true;
 
 errorReturn:
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pAuthData != NULL) cn_cbor_free(pAuthData CBOR_CONTEXT_PARAM);
 	if ((pbKey != NULL)) {
 		memset(pbKey, 0xff, cbitKey / 8);
 		COSE_FREE(pbKey, context);
 	}
 
-	return false;
+	return fRet;
 }
 
 bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr)
