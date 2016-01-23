@@ -18,7 +18,7 @@ COSE * EncryptRoot = NULL;
 bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 {
 	COSE_Encrypt * p = (COSE_Encrypt *)h;
-	return _COSE_IsInList(EncryptRoot, &p->m_message);
+	return _COSE_IsInList(EncryptRoot, (COSE *)p);
 }
 
 

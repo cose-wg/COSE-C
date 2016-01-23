@@ -17,7 +17,7 @@ COSE * EnvelopedRoot = NULL;
 bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h)
 {
 	COSE_Enveloped * p = (COSE_Enveloped *)h;
-	return _COSE_IsInList(EnvelopedRoot, &p->m_message);
+	return _COSE_IsInList(EnvelopedRoot, (COSE *) p);
 }
 
 
