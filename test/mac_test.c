@@ -34,6 +34,8 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	pMac = cn_cbor_mapget_string(pInput, "mac");
 	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) goto failTest;
 
+	if (!SetReceivingAttributes((HCOSE)hMAC, pMac, Attributes_MAC_protected)) goto failTest;
+
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto failTest;
 
@@ -257,6 +259,8 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto errorReturn;
 	pMac = cn_cbor_mapget_string(pInput, "mac0");
 	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) goto errorReturn;
+
+	if (!SetReceivingAttributes((HCOSE)hMAC, pMac, Attributes_MAC0_protected)) goto errorReturn;
 
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto errorReturn;

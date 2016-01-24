@@ -296,6 +296,22 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 		case Attributes_Enveloped_protected:
 			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+
+		case Attributes_MAC_protected:
+			if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_MAC0_protected:
+			if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Signer_protected:
+			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Sign0_protected:
+			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
 		}
 	}
 
@@ -321,6 +337,22 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 
 		case Attributes_Enveloped_protected:
 			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_MAC_protected:
+			if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_MAC0_protected:
+			if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Signer_protected:
+			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Sign0_protected:
+			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 		}
 	}

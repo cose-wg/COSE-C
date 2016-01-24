@@ -369,6 +369,21 @@ bool _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgb, size_t cb, 
 	return true;
 }
 
+/*!
+* @brief Set the application external data for authentication
+*
+* Enveloped data objects support the authentication of external application
+* supplied data.  This function is provided to supply that data to the library.
+*
+* The external data is not copied, nor will be it freed when the handle is released.
+*
+* @param hcose  Handle for the COSE Enveloped data object
+* @param pbEternalData  point to the external data
+* @param cbExternalData size of the external data
+* @param perr  location to return errors
+* @return result of the operation.
+*/
+
 bool COSE_Encrypt_SetExternal(HCOSE_ENCRYPT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
 	if (!IsValidEncryptHandle(hcose)) {

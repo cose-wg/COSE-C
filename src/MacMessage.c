@@ -186,7 +186,7 @@ errorReturn:
 * @return result of the operation.
 */
 
-bool COSE_MAC_SetExternal(HCOSE_MAC hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+bool COSE_Mac_SetExternal(HCOSE_MAC hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
 	if (!IsValidMacHandle(hcose)) {
 		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
