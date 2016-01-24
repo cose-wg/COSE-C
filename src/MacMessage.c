@@ -17,6 +17,20 @@ byte RgbDontUse2[8 * 1024];   //  Remove this array when we can compute the size
 
 COSE * MacRoot = NULL;
 
+/*! \private
+* @brief Test if a HCOSE_MAC handle is valid
+*
+*  Internal function to test if a MAC message handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
+
 bool IsValidMacHandle(HCOSE_MAC h)
 {
 	COSE_MacMessage * p = (COSE_MacMessage *)h;
