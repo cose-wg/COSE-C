@@ -340,3 +340,78 @@ returnError:
 	return 1;
 }
 
+void Sign_Corners()
+{
+	HCOSE_SIGN hSign = NULL;
+	HCOSE_SIGN hSign2;
+	HCOSE_SIGNER hSigner = NULL;
+	HCOSE_SIGNER hSigner2;
+	byte rgb[10];
+	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	hSign2 = COSE_Sign_Init(NULL, NULL);
+	hSigner2 = COSE_Signer_Init(NULL, NULL);
+
+	//  Missing case - addref then release on item
+
+	//  Incorrect algorithm
+
+	//  Null handle checks
+
+	if (COSE_Sign_SetContent(hSign, rgb, 10, NULL)) CFails++;
+	if (COSE_Sign_map_get_int(hSign, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Sign_map_put_int(hSign, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Sign_AddSigner(hSign, hSigner, NULL)) CFails++;
+	if (COSE_Sign_AddSigner(hSign2, hSigner, NULL)) CFails++;
+	if (COSE_Sign_GetSigner(hSign, 2, NULL)) CFails++;
+	if (COSE_Sign_Sign(hSign, NULL)) CFails++;
+	if (COSE_Sign_validate(hSign, hSigner, NULL)) CFails++;
+	if (COSE_Sign_validate(hSign2, hSigner, NULL)) CFails++;
+
+	if (COSE_Signer_SetKey(hSigner, NULL, NULL)) CFails++;
+	if (COSE_Signer_SetKey(hSigner2, NULL, NULL)) CFails++;
+	if (COSE_Signer_map_put_int(hSigner, 1, cn, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Signer_map_put_int(hSigner2, 1, NULL, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Signer_map_get_int(hSigner, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Signer_SetExternal(hSigner, rgb, sizeof(rgb), NULL)) CFails++;
+
+
+	hSign = (HCOSE_SIGN) COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSigner = (HCOSE_SIGNER) COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	if (COSE_Sign_SetContent(hSign, rgb, 10, NULL)) CFails++;
+	if (COSE_Sign_map_get_int(hSign, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Sign_map_put_int(hSign, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Sign_AddSigner(hSign, hSigner, NULL)) CFails++;
+	if (COSE_Sign_AddSigner(hSign2, hSigner, NULL)) CFails++;
+	if (COSE_Sign_GetSigner(hSign, 2, NULL)) CFails++;
+	if (COSE_Sign_Sign(hSign, NULL)) CFails++;
+	if (COSE_Sign_validate(hSign, hSigner, NULL)) CFails++;
+	if (COSE_Sign_validate(hSign2, hSigner, NULL)) CFails++;
+
+	if (COSE_Signer_SetKey(hSigner, NULL, NULL)) CFails++;
+	if (COSE_Signer_SetKey(hSigner2, NULL, NULL)) CFails++;
+	if (COSE_Signer_map_put_int(hSigner, 1, cn, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Signer_map_put_int(hSigner2, 1, NULL, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Signer_map_get_int(hSigner, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Signer_SetExternal(hSigner, rgb, sizeof(rgb), NULL)) CFails++;
+
+	//
+	//  Unsupported algorithm
+
+	hSign = COSE_Sign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hSign == NULL) CFails++;
+	hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hSigner == NULL) CFails++;
+
+	if (!COSE_Sign_SetContent(hSign, (byte *) "Message", 7, NULL)) CFails++;
+	if (!COSE_Signer_map_put_int(hSigner, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (!COSE_Sign_AddSigner(hSign, hSigner, NULL)) CFails++;
+	if (COSE_Sign_Sign(hSign, NULL)) CFails++;
+	if (COSE_Sign_GetSigner(hSign, 9, NULL)) CFails++;
+
+	if (!COSE_Signer_map_put_int(hSigner, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Sign_Sign(hSign, NULL)) CFails++;
+
+	return;
+}

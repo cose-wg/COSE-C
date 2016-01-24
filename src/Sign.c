@@ -332,7 +332,7 @@ cn_cbor * COSE_Sign_map_get_int(HCOSE_SIGN h, int key, int flags, cose_errback *
 	return _COSE_map_get_int(&((COSE_SignMessage *)h)->m_message, key, flags, perror);
 }
 
-bool COSE_Sign_map_put(HCOSE_SIGN h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Sign_map_put_int(HCOSE_SIGN h, int key, cn_cbor * value, int flags, cose_errback * perror)
 {
 	if (!IsValidSignHandle(h) || (value == NULL)) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;

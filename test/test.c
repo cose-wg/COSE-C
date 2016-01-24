@@ -258,7 +258,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		case Attributes_Sign_protected:
-			f = COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Signer_protected:
@@ -439,6 +439,7 @@ void RunCorners()
 		MAC0_Corners();
 		Encrypt_Corners();
 		Enveloped_Corners();
+		Sign_Corners();
 }
 
 void RunMemoryTest(const char * szFileName)

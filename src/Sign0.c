@@ -1,3 +1,7 @@
+/** \file Sign.c
+* Contains implementation of the functions related to HCOSE_SIGN handle objects.
+*/
+
 #include <stdlib.h>
 
 #include "cose.h"
@@ -9,6 +13,20 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
 void _COSE_Sign0_Release(COSE_Sign0Message * p);
 
 COSE * Sign0Root = NULL;
+
+/*! \private
+* @brief Test if a HCOSE_SIGN handle is valid
+*
+*  Internal function to test if a sign handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
 
 bool IsValidSign0Handle(HCOSE_SIGN0 h)
 {
@@ -122,6 +140,31 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 h, const byte * rgb, size_t cb, cose_errb
 	CHECK_CONDITION(_COSE_array_replace(&pMessage->m_message, p, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
 
 	return true;
+}
+
+/*!
+* @brief Set the application external data for authentication
+*
+* Enveloped data objects support the authentication of external application
+* supplied data.  This function is provided to supply that data to the library.
+*
+* The external data is not copied, nor will be it freed when the handle is released.
+*
+* @param hcose  Handle for the COSE Enveloped data object
+* @param pbEternalData  point to the external data
+* @param cbExternalData size of the external data
+* @param perr  location to return errors
+* @return result of the operation.
+*/
+
+bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+{
+	if (!IsValidSign0Handle(hcose)) {
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	return _COSE_SetExternal(&((COSE_Sign0Message *)hcose)->m_message, pbExternalData, cbExternalData, perr);
 }
 
 bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
