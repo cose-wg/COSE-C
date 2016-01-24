@@ -30,6 +30,7 @@ int BuildSignedMessage(const cn_cbor * pControl);
 int ValidateSign0(const cn_cbor * pControl);
 int BuildSign0Message(const cn_cbor * pControl);
 void Sign_Corners();
+void Sign0_Corners();
 
 
 // mac_testc

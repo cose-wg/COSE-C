@@ -101,6 +101,11 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 
 	if (!IsValidEnvelopedHandle(h)) return false;
 
+	if (p->m_message.m_refCount > 1) {
+		p->m_message.m_refCount--;
+		return true;
+	}
+
 #ifdef USE_CBOR_CONTEXT
 	context = ((COSE_Enveloped *)h)->m_message.m_allocContext;
 #endif

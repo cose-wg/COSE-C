@@ -466,12 +466,13 @@ bool Test_cn_cbor_array_replace()
 
 void RunCorners()
 {
-    	Test_cn_cbor_array_replace();
-        MAC_Corners();
-		MAC0_Corners();
-		Encrypt_Corners();
-		Enveloped_Corners();
-		Sign_Corners();
+	Test_cn_cbor_array_replace();
+	MAC_Corners();
+	MAC0_Corners();
+	Encrypt_Corners();
+	Enveloped_Corners();
+	Sign_Corners();
+	Sign0_Corners();
 }
 
 void RunMemoryTest(const char * szFileName)

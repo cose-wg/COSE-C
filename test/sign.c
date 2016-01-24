@@ -415,3 +415,51 @@ void Sign_Corners()
 
 	return;
 }
+
+void Sign0_Corners()
+{
+	HCOSE_SIGN0 hSign = NULL;
+	HCOSE_SIGN0 hSign2;
+	byte rgb[10];
+	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	hSign2 = COSE_Sign0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	//  Missing case - addref then release on item
+
+	//  Incorrect algorithm
+
+	//  Null handle checks
+
+	if (COSE_Sign0_SetContent(hSign, rgb, 10, NULL)) CFails++;
+	if (COSE_Sign0_map_get_int(hSign, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Sign0_map_put_int(hSign, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Sign0_Sign(hSign, cn, NULL)) CFails++;
+	if (COSE_Sign0_Sign(hSign2, NULL, NULL)) CFails++;
+	if (COSE_Sign0_validate(hSign, cn, NULL)) CFails++;
+	if (COSE_Sign0_validate(hSign2, NULL, NULL)) CFails++;
+	if (COSE_Sign0_SetExternal(hSign, rgb, sizeof(rgb), NULL)) CFails++;
+
+	hSign = (HCOSE_SIGN0)COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	if (COSE_Sign0_SetContent(hSign, rgb, 10, NULL)) CFails++;
+	if (COSE_Sign0_map_get_int(hSign, 1, COSE_BOTH, NULL)) CFails++;
+	if (COSE_Sign0_map_put_int(hSign, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Sign0_Sign(hSign, cn, NULL)) CFails++;
+	if (COSE_Sign0_validate(hSign, cn, NULL)) CFails++;
+	if (COSE_Sign0_SetExternal(hSign, rgb, sizeof(rgb), NULL)) CFails++;
+
+	//
+	//  Unsupported algorithm
+
+	hSign = COSE_Sign0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hSign == NULL) CFails++;
+
+	if (!COSE_Sign0_SetContent(hSign, (byte *) "Message", 7, NULL)) CFails++;
+	if (!COSE_Sign0_map_put_int(hSign, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Sign0_Sign(hSign, cn, NULL)) CFails++;
+
+	if (!COSE_Sign0_map_put_int(hSign, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Sign0_Sign(hSign, cn, NULL)) CFails++;
+
+	return;
+}

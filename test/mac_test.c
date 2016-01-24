@@ -383,6 +383,7 @@ void MAC_Corners()
 	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Mac_SetExternal((HCOSE_MAC)hEncrypt, rgb, 0, NULL)) CFails++;
 	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
 
     hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
@@ -394,6 +395,7 @@ void MAC_Corners()
 	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
 	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) CFails++;
+	if (COSE_Mac_SetExternal((HCOSE_MAC)hEncrypt, rgb, 0, NULL)) CFails++;
 	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
 
     //
@@ -433,6 +435,7 @@ void MAC0_Corners()
 	if (COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
 	if (COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Mac0_SetExternal((HCOSE_MAC0)hEncrypt, rgb, 0, NULL)) CFails++;
 	if (COSE_Mac0_Free((HCOSE_MAC0)hEncrypt)) CFails++;
 
 	hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
@@ -442,6 +445,7 @@ void MAC0_Corners()
 	if (COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
 	if (COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Mac0_SetExternal((HCOSE_MAC0)hEncrypt, rgb, 0, NULL)) CFails++;
 
 	if (COSE_Mac0_Free((HCOSE_MAC0)hEncrypt)) CFails++;
 
