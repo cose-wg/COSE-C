@@ -554,6 +554,8 @@ bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cb
 	int cbDigest = 0;
 	byte rgbOut[16];
 
+	EVP_CIPHER_CTX_init(&ctx);
+
 	switch (cbitKey) {
 	case 128:
 		pcipher = EVP_aes_128_cbc();
@@ -570,7 +572,6 @@ bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cb
 
 	//  Setup and run the OpenSSL code
 
-	EVP_CIPHER_CTX_init(&ctx);
 
 	for (ib = 0; ib < cbOutput; ib += 16, bCount += 1) {
 		size_t ib2;
@@ -608,6 +609,8 @@ bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDig
 	const EVP_MD * pmd = NULL;
 	unsigned int cbDigest;
 
+	HMAC_CTX_init(&ctx);
+
 	if (0) {
 	errorReturn:
 		HMAC_cleanup(&ctx);
@@ -623,7 +626,6 @@ bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDig
 
 	cnSalt = _COSE_map_get_int(pcose, COSE_Header_HKDF_salt, COSE_BOTH, perr);
 
-	HMAC_CTX_init(&ctx);
 	if (cnSalt != NULL) {
 		CHECK_CONDITION(HMAC_Init(&ctx, cnSalt->v.bytes, (int) cnSalt->length, pmd), COSE_ERR_CRYPTO_FAIL);
 	}
@@ -647,6 +649,8 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	byte bCount = 1;
 
+	HMAC_CTX_init(&ctx);
+
 	if (0) {
 	errorReturn:
 		HMAC_cleanup(&ctx);
@@ -660,7 +664,6 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
 	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
 	}
 
-	HMAC_CTX_init(&ctx);
 
 	for (ib = 0; ib < cbOutput; ib += cbDigest, bCount += 1) {
 		CHECK_CONDITION(HMAC_Init_ex(&ctx, pbPRK, (int)cbPRK, pmd, NULL), COSE_ERR_CRYPTO_FAIL);

@@ -1,9 +1,27 @@
+/** \file Sign.c
+* Contains implementation of the functions related to HCOSE_SIGN handle objects.
+*/
+
 #include <stdlib.h>
 
 #include "cose.h"
 #include "cose_int.h"
 
 COSE * SignRoot = NULL;
+
+/*! \private
+* @brief Test if a HCOSE_SIGN handle is valid
+*
+*  Internal function to test if a sign handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
 
 bool IsValidSignHandle(HCOSE_SIGN h)
 {
@@ -14,15 +32,22 @@ bool IsValidSignHandle(HCOSE_SIGN h)
 }
 
 
-HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+/** Allocate a SIGN message structure.
+*
+* Allocate a new SIGN message structure for creation of a COSE_Sign object.
+* @param context is a cn_cbor context object
+* @param perr is a cose_errback return variable
+* @return HCOSE_SIGN a handle for the newly allocated object
+*/
+HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_SignMessage * pobj = (COSE_SignMessage *)COSE_CALLOC(1, sizeof(COSE_SignMessage), context);
 	if (pobj == NULL) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
+		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Sign_Release(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;

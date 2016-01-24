@@ -443,6 +443,7 @@ void Encrypt_Corners()
 	if (COSE_Encrypt_SetContent(hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
 	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
+	if (COSE_Encrypt_SetExternal(hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
 	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
 	if (COSE_Encrypt_Free((HCOSE_ENCRYPT)hEncrypt)) CFails++;
@@ -455,6 +456,7 @@ void Encrypt_Corners()
 	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
 	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
 	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
+	if (COSE_Encrypt_SetExternal(hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL)) CFails++;
 	if (COSE_Encrypt_Free(hEncrypt)) CFails++;
 

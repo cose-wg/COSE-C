@@ -725,6 +725,32 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback
 	return true;
 }
 
+/*!
+* @brief Set the application external data for authentication
+*
+* Recipient data objects support the authentication of external application
+* supplied data.  This function is provided to supply that data to the library.
+*
+* The external data is not copied, nor will be it freed when the handle is released.
+*
+* @param hcose  Handle for the COSE recipient data object
+* @param pbEternalData  point to the external data
+* @param cbExternalData size of the external data
+* @param perr  location to return errors
+* @return result of the operation.
+*/
+
+bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+{
+	if (!IsValidRecipientHandle(hcose)) {
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	return _COSE_SetExternal(&((COSE_RecipientInfo *)hcose)->m_encrypt.m_message, pbExternalData, cbExternalData, perr);
+}
+
+
 bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror)
 {
 	if (!IsValidRecipientHandle(h) || (value == NULL)) {

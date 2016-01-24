@@ -1,3 +1,7 @@
+/** \file SignerInfo.c
+* Contains implementation of the functions related to HCOSE_SIGNER handle objects.
+*/
+
 #include <stdlib.h>
 #include <memory.h>
 
@@ -231,6 +235,32 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor * pKey, cose_errback * per
 
 	return true;
 }
+
+/*!
+* @brief Set the application external data for authentication
+*
+* Signer data objects support the authentication of external application
+* supplied data.  This function is provided to supply that data to the library.
+*
+* The external data is not copied, nor will be it freed when the handle is released.
+*
+* @param hcose  Handle for the COSE MAC data object
+* @param pbEternalData  point to the external data
+* @param cbExternalData size of the external data
+* @param perr  location to return errors
+* @return result of the operation.
+*/
+
+bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+{
+	if (!IsValidSignerHandle(hcose)) {
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	return _COSE_SetExternal(&((COSE_SignerInfo *)hcose)->m_message, pbExternalData, cbExternalData, perr);
+}
+
 
 bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr)
 {

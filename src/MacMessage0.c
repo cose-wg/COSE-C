@@ -1,3 +1,7 @@
+/** \file MacMessage0.c
+* Contains implementation of the functions related to HCOSE_MAC0 handle objects.
+*/
+
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
@@ -129,6 +133,30 @@ errorReturn:
 	return false;
 }
 
+/*!
+* @brief Set the application external data for authentication
+*
+* MAC data objects support the authentication of external application
+* supplied data.  This function is provided to supply that data to the library.
+*
+* The external data is not copied, nor will be it freed when the handle is released.
+*
+* @param hcose  Handle for the COSE MAC data object
+* @param pbEternalData  point to the external data
+* @param cbExternalData size of the external data
+* @param perr  location to return errors
+* @return result of the operation.
+*/
+
+bool COSE_Mac0_SetExternal(HCOSE_MAC0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+{
+	if (!IsValidMac0Handle(hcose)) {
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		return false;
+	}
+
+	return _COSE_SetExternal(&((COSE_Mac0Message *)hcose)->m_message, pbExternalData, cbExternalData, perr);
+}
 
 cn_cbor * COSE_Mac0_map_get_int(HCOSE_MAC0 h, int key, int flags, cose_errback * perror)
 {
