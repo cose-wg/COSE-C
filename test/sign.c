@@ -349,8 +349,8 @@ void Sign_Corners()
 	byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	hSign2 = COSE_Sign_Init(NULL, NULL);
-	hSigner2 = COSE_Signer_Init(NULL, NULL);
+	hSign2 = COSE_Sign_Init(CBOR_CONTEXT_PARAM_COMMA  NULL);
+	hSigner2 = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA  NULL);
 
 	//  Missing case - addref then release on item
 
