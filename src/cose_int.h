@@ -36,8 +36,6 @@ typedef struct {
 
 struct _SignerInfo {
 	COSE m_message;
-	byte * pbKey;
-	size_t cbKey;
 	const cn_cbor * m_pkey;
 	COSE_SignerInfo * m_signerNext;
 };
@@ -49,16 +47,12 @@ typedef struct {
 	COSE m_message;		// The message object
 	const byte * pbContent;
 	size_t cbContent;
-	byte * pbKey;
-	size_t cbKey;
 } COSE_Encrypt;
 
 typedef struct {
 	COSE m_message;		// The message object
 	const byte * pbContent;
 	size_t cbContent;
-	byte * pbKey;
-	size_t cbKey;
 	COSE_RecipientInfo * m_recipientFirst;
 } COSE_Enveloped;
 
@@ -70,8 +64,6 @@ struct _RecipientInfo {
 
 typedef struct {
 	COSE m_message;			// The message object
-	byte * pbKey;
-	size_t cbKey;
 	COSE_RecipientInfo * m_recipientFirst;
 } COSE_MacMessage;
 

@@ -96,8 +96,6 @@ bool COSE_Encrypt_Free(HCOSE_ENCRYPT h)
 void _COSE_Encrypt_Release(COSE_Encrypt * p)
 {
 	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent, &p->m_message.m_allocContext);
-	//	if (p->pbIV != NULL) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
-	if (p->pbKey != NULL) COSE_FREE(p ->pbKey, &p->m_message.m_allocContext);
 
 	_COSE_Release(&p->m_message);
 }

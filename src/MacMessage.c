@@ -16,7 +16,7 @@ COSE * MacRoot = NULL;
 bool IsValidMacHandle(HCOSE_MAC h)
 {
 	COSE_MacMessage * p = (COSE_MacMessage *)h;
-	return _COSE_IsInList(MacRoot, &p->m_message);
+	return _COSE_IsInList(MacRoot, (COSE *) p);
 }
 
 
@@ -117,8 +117,6 @@ bool _COSE_Mac_Release(COSE_MacMessage * p)
 {
 	COSE_RecipientInfo * pRecipient;
 	COSE_RecipientInfo * pRecipient2;
-
-	if (p->pbKey != NULL) COSE_FREE(p->pbKey, &p->m_message.m_allocContext);
 
 	for (pRecipient = p->m_recipientFirst; pRecipient != NULL; pRecipient = pRecipient2) {
 		pRecipient2 = pRecipient->m_recipientNext;
@@ -266,6 +264,8 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	bool fRet = false;
 	size_t cbAuthData = 0;
+	byte * pbKey = NULL;
+	size_t cbKey = 0;
 
 	CHECK_CONDITION(IsValidMacHandle(h), COSE_ERR_INVALID_PARAMETER);
 
@@ -308,15 +308,14 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	//  If we are doing direct encryption - then recipient generates the key
 
-	if (pcose->pbKey == NULL) {
+	if (pbKey == NULL) {
 		t = 0;
 		for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
 			if (pri->m_encrypt.m_message.m_flags & 1) {
 				t |= 1;
-				pcose->pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
-				if (pcose->pbKey == NULL) goto errorReturn;
-
-				pcose->cbKey = cbitKey / 8;
+				pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
+				cbKey = cbitKey / 8;
+				if (pbKey == NULL) goto errorReturn;
 			}
 			else {
 				t |= 2;
@@ -325,12 +324,12 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 		CHECK_CONDITION(t != 3, COSE_ERR_INVALID_PARAMETER);
 	}
 
-	if (pcose->pbKey == NULL) {
-		pcose->pbKey = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
-		CHECK_CONDITION(pcose->pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+	if (pbKey == NULL) {
+		pbKey = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
+		CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-		pcose->cbKey = cbitKey / 8;
-		rand_bytes(pcose->pbKey, pcose->cbKey);
+		cbKey = cbitKey / 8;
+		rand_bytes(pbKey, cbKey);
 	}
 
 	//  Build protected headers
@@ -345,28 +344,28 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	switch (alg) {
 	case COSE_Algorithm_CBC_MAC_128_64:
 	case COSE_Algorithm_CBC_MAC_256_64:
-		if (!AES_CBC_MAC_Create(pcose, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CBC_MAC_Create(pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_CBC_MAC_128_128:
 	case COSE_Algorithm_CBC_MAC_256_128:
-		if (!AES_CBC_MAC_Create(pcose, 128, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!AES_CBC_MAC_Create(pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_256_64:
-		if (!HMAC_Create(pcose, 256, 64, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 256, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_256_256:
-		if (!HMAC_Create(pcose, 256, 256, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 256, 256, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_384_384:
-		if (!HMAC_Create(pcose, 384, 384, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 384, 384, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_HMAC_512_512:
-		if (!HMAC_Create(pcose, 512, 512, pcose->pbKey, pcose->cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		if (!HMAC_Create(pcose, 512, 512, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 
 	default:
@@ -374,7 +373,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	}
 
 	for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
-		if (!_COSE_Recipient_encrypt(pri, pcose->pbKey, pcose->cbKey, perr)) goto errorReturn;
+		if (!_COSE_Recipient_encrypt(pri, pbKey, cbKey, perr)) goto errorReturn;
 	}
 
 	//  Figure out the clean up
@@ -382,6 +381,10 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	fRet = true;
 
 errorReturn:
+	if (pbKey != NULL) {
+		memset(pbKey, 0, cbKey);
+		COSE_FREE(pbKey, context);
+	}
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	return fRet;
 }

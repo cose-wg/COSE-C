@@ -215,7 +215,7 @@ int MacMessage()
 		hRecip2 = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
 		if (hRecip2 == NULL) break;
 
-		if (!COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL)) goto errorReturn;
+		if (!COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL, 0, NULL)) goto errorReturn;
 
 		if (!COSE_Mac_validate(hEncObj, hRecip2, NULL)) goto errorReturn;
 
@@ -403,6 +403,7 @@ void MAC_Corners()
 	if (hRecipient == NULL) CFails++;
 	if (!COSE_Mac_AddRecipient(hMAC, hRecipient, NULL)) CFails++;
 	if (COSE_Mac_encrypt(hMAC, NULL)) CFails++;
+	if (COSE_Mac_GetRecipient(hMAC, 9, NULL)) CFails++;
 
 	if (!COSE_Mac_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
 	if (COSE_Mac_encrypt(hMAC, NULL)) CFails++;

@@ -51,92 +51,21 @@ bool COSE_Recipient_Free(HCOSE_RECIPIENT hRecipient)
 
 HCOSE_RECIPIENT COSE_Recipient_from_shared_secret(byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	cn_cbor * cn_Temp = NULL;
-	cn_cbor * pRecipientsNew = NULL;
-	byte * pbKey = NULL;
-	byte * pbTemp = NULL;
-	cn_cbor * cnTemp = NULL;
-	cn_cbor_errback cbor_error;
 	HCOSE_RECIPIENT hRecipient = NULL;
-
-	int alg = COSE_Algorithm_Direct;
 
 	hRecipient = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA perr);
 	if (hRecipient == NULL) goto errorReturn;
 
-	cn_Temp = cn_cbor_int_create(alg, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
-	if (!COSE_Recipient_map_put(hRecipient, COSE_Header_Algorithm, cn_Temp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
-	cn_Temp = NULL;
-
-	if (cbKid > 0) {
-		pbTemp = (byte *)COSE_CALLOC(cbKid, 1, context);
-		CHECK_CONDITION(pbTemp != NULL, COSE_ERR_OUT_OF_MEMORY);
-
-		memcpy(pbTemp, rgbKid, cbKid);
-		cnTemp = cn_cbor_data_create(pbTemp, cbKid, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
-		pbTemp = NULL;
-
-		if (!COSE_Recipient_map_put(hRecipient, COSE_Header_KID, cnTemp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
-	}
-
-
-	pbKey = (byte *)COSE_CALLOC(cbKey, 1, context);
-	CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
-
-	memcpy(pbKey, rgbKey, cbKey);
-
-	cn_Temp = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
-
-	cnTemp = cn_cbor_int_create(4, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(cn_Temp, COSE_Key_Type, cnTemp, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
-	cnTemp = NULL;
-
-	cnTemp = cn_cbor_data_create(pbKey, cbKey, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
-	pbKey = NULL;
-	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(cn_Temp, -1, cnTemp, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
-	cnTemp = NULL;
-
-	if (!COSE_Recipient_SetKey(hRecipient, cn_Temp, perr)) goto errorReturn;
-	cn_Temp = NULL;
+	if (!COSE_Recipient_SetKey_secret(hRecipient, rgbKey, cbKey, rgbKid, cbKid, perr)) goto errorReturn;
 
 	return hRecipient;
 
 errorReturn:
-	if (cn_Temp != NULL) CN_CBOR_FREE(cn_Temp, context);
-	if (cnTemp != NULL) CN_CBOR_FREE(cnTemp, context);
-	if (pRecipientsNew != NULL) CN_CBOR_FREE(pRecipientsNew, context);
 	if (hRecipient != NULL) COSE_Recipient_Free(hRecipient);
-	if (pbKey != NULL) COSE_FREE(pbKey, context);
 	return NULL;
 }
 
 
-HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient, cose_errback * perr)
-{
-	int i;
-	COSE_RecipientInfo * p;
-
-	if (!IsValidEnvelopedHandle(cose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-		return NULL;
-	}
-
-	p = ((COSE_Enveloped *)cose)->m_recipientFirst;
-	for (i = 0; i < iRecipient; i++) {
-		if (p == NULL) {
-			if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-			return NULL;
-		}
-		p = p->m_recipientNext;
-	}
-	if (p != NULL) p->m_encrypt.m_message.m_refCount++;
-	return (HCOSE_RECIPIENT)p;
-}
 
 COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
@@ -294,17 +223,12 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 
 	switch (alg) {
 	case COSE_Algorithm_Direct:
-		CHECK_CONDITION((pcose->pbKey != NULL) || (pRecip->m_pkey != NULL), COSE_ERR_INVALID_PARAMETER);
-		if (pRecip->m_pkey != NULL) {
-			cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
-			CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-			CHECK_CONDITION((cn->length == (unsigned int)cbitKey / 8), COSE_ERR_INVALID_PARAMETER);
-			memcpy(pbKey, cn->v.bytes, cn->length);
+		CHECK_CONDITION(pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+		cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
+		CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION((cn->length == (unsigned int)cbitKey / 8), COSE_ERR_INVALID_PARAMETER);
+		memcpy(pbKey, cn->v.bytes, cn->length);
 
-			return true;
-		}
-		CHECK_CONDITION(pcose->cbKey == (unsigned int)cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
-		memcpy(pbKey, pcose->pbKey, pcose->cbKey);
 		return true;
 
 	case COSE_Algorithm_AES_KW_128:
@@ -352,18 +276,12 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 	case COSE_Algorithm_AES_KW_128:
 	case COSE_Algorithm_AES_KW_192:
 	case COSE_Algorithm_AES_KW_256:
-		CHECK_CONDITION((pcose->pbKey != NULL) || (pRecip->m_pkey != NULL), COSE_ERR_INVALID_PARAMETER);
-		if (pRecip->m_pkey != NULL) {
-			int x = cbitKey / 8;
-			cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
-			CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+		int x = cbitKey / 8;
+		cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
+		CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
-			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, cn->v.bytes, cn->length * 8, cnBody->v.bytes, cnBody->length, pbKey, &x, perr)) goto errorReturn;
-		}
-		else {
-			CHECK_CONDITION(pcose->cbKey == (unsigned int)cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
-			memcpy(pbKey, pcose->pbKey, pcose->cbKey);
-		}
+		if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, cn->v.bytes, cn->length * 8, cnBody->v.bytes, cnBody->length, pbKey, &x, perr)) goto errorReturn;
 		break;
 
 	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
@@ -465,6 +383,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	byte * pbContext = NULL;
 	byte rgbKey[256 / 8];
 	byte * pbSecret = NULL;
+	byte * pbKey;
+	size_t cbKey;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pRecipient->m_encrypt.m_message.m_allocContext;
@@ -517,14 +437,14 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 
 	//  If we are doing direct encryption - then recipient generates the key
 
-	if ((pRecipient->m_encrypt.m_recipientFirst != NULL) && ( pRecipient->m_encrypt.pbKey == NULL)) {
+	if (pRecipient->m_encrypt.m_recipientFirst != NULL) {
 		t = 0;
 		for (pri = pRecipient->m_encrypt.m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
 			if (pri->m_encrypt.m_message.m_flags & 1) {
 				t |= 1;
-				pRecipient->m_encrypt.pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
-				if (pRecipient->m_encrypt.pbKey == NULL) goto errorReturn;
-				pRecipient->m_encrypt.cbKey = cbitKey / 8;
+				pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
+				if (pbKey == NULL) goto errorReturn;
+				cbKey = cbitKey / 8;
 			}
 			else {
 				t |= 2;
@@ -536,11 +456,11 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	//   Do we need to generate a random key at this point - 
 	//   This is only true if we both haven't done it and and we have a recipient to encrypt it.
 
-	if ((pRecipient->m_pkey!= NULL) && (pRecipient->m_encrypt.pbKey == NULL)) {
-		pRecipient->m_encrypt.pbKey = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
-		CHECK_CONDITION(pRecipient->m_encrypt.pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
-		pRecipient->m_encrypt.cbKey = cbitKey / 8;
-		rand_bytes(pRecipient->m_encrypt.pbKey, pRecipient->m_encrypt.cbKey);
+	if ((pRecipient->m_pkey!= NULL)) {
+		pbKey = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
+		CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+		cbKey = cbitKey / 8;
+		rand_bytes(pbKey, cbKey);
 	}
 
 	//  Build protected headers
@@ -618,7 +538,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	}
 
 	for (pri = pRecipient->m_encrypt.m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
-		if (!_COSE_Recipient_encrypt(pri, pRecipient->m_encrypt.pbKey, pRecipient->m_encrypt.cbKey, perr)) goto errorReturn;
+		if (!_COSE_Recipient_encrypt(pri, pbKey, cbKey, perr)) goto errorReturn;
 	}
 
 	//  Figure out the clean up
@@ -627,6 +547,10 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 
 errorReturn:
 	memset(rgbKey, 0, sizeof(rgbKey));
+	if (pbKey != NULL) {
+		memset(pbKey, 0, cbKey);
+		COSE_FREE(pbKey, context);
+	}
 	if (pbSecret != NULL) COSE_FREE(pbSecret, context);
 	if (pbContext != NULL) COSE_FREE(pbContext, context);
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
@@ -657,18 +581,11 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, int algI
 
 	switch (alg) {
 	case COSE_Algorithm_Direct:
-		if (pRecipient->m_pkey != NULL) {
+		CHECK_CONDITION(pRecipient->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 			pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
 			CHECK_CONDITION((pK != NULL) && (pK->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 			CHECK_CONDITION(pK->length == cbitKeySize / 8, COSE_ERR_INVALID_PARAMETER);
 			memcpy(pb, pK->v.bytes, cbitKeySize / 8);
-		}
-		else {
-			if (pRecipient->m_encrypt.cbKey != cbitKeySize / 8) return NULL;
-			pb = (byte *)malloc(cbitKeySize / 8);
-			if (pb == NULL) return NULL;
-			memcpy(pb, pRecipient->m_encrypt.pbKey, cbitKeySize / 8);
-		}
 	break;
 
 	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
@@ -719,27 +636,76 @@ errorReturn:
 	return NULL;
 }
 
-bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h, const byte * pbKey, int cbKey, cose_errback * perror)
+bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient, const byte * rgbKey, int cbKey, const byte * rgbKid, int cbKid, cose_errback * perr)
 {
 	COSE_RecipientInfo * p;
+	cn_cbor * cn_Temp = NULL;
+	cn_cbor * cnTemp = NULL;
+	cn_cbor_errback cbor_error;
+	byte * pbTemp = NULL;
+	byte * pbKey = NULL;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context * context;
+#endif
 
-	if (!IsValidRecipientHandle(h) || (pbKey == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_CBOR;
+	if (!IsValidRecipientHandle(hRecipient) || (rgbKey == NULL)) {
+		if (perr != NULL) perr->err = COSE_ERR_CBOR;
 		return false;
 	}
 
-	p = (COSE_RecipientInfo *)h;
+	p = (COSE_RecipientInfo *)hRecipient;
 
-	p->m_encrypt.pbKey = (byte *)COSE_CALLOC(cbKey, 1, &p->m_encrypt.m_message.m_allocContext);
-	if (p->m_encrypt.pbKey == NULL) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
-		return false;
+#ifdef USE_CBOR_CONTEXT
+	context = &p->m_encrypt.m_message.m_allocContext;
+#endif
+
+	cn_Temp = cn_cbor_int_create(COSE_Algorithm_Direct, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
+	if (!COSE_Recipient_map_put(hRecipient, COSE_Header_Algorithm, cn_Temp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+	cn_Temp = NULL;
+
+	if (cbKid > 0) {
+		pbTemp = (byte *)COSE_CALLOC(cbKid, 1, context);
+		CHECK_CONDITION(pbTemp != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+		memcpy(pbTemp, rgbKid, cbKid);
+		cnTemp = cn_cbor_data_create(pbTemp, cbKid, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
+		pbTemp = NULL;
+
+		if (!COSE_Recipient_map_put(hRecipient, COSE_Header_KID, cnTemp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
 	}
 
-	memcpy(p->m_encrypt.pbKey, pbKey, cbKey);
-	p->m_encrypt.cbKey = cbKey;
+	pbKey = (byte *)COSE_CALLOC(cbKey, 1, context);
+	CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	memcpy(pbKey, rgbKey, cbKey);
+
+	cn_Temp = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
+
+	cnTemp = cn_cbor_int_create(4, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(cn_Temp, COSE_Key_Type, cnTemp, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
+	cnTemp = NULL;
+
+	cnTemp = cn_cbor_data_create(pbKey, cbKey, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
+	pbKey = NULL;
+	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(cn_Temp, -1, cnTemp, CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error);
+	cnTemp = NULL;
+
+	if (!COSE_Recipient_SetKey(hRecipient, cn_Temp, perr)) goto errorReturn;
+	cn_Temp = NULL;
 
 	return true;
+
+errorReturn:
+	if (cn_Temp != NULL) CN_CBOR_FREE(cn_Temp, context);
+	if (cnTemp != NULL) CN_CBOR_FREE(cnTemp, context);
+	if (pbTemp != NULL) COSE_FREE(pbTemp, context);
+	if (pbKey != NULL) COSE_FREE(pbKey, context);
+	return false;
 }
 
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback * perror)
