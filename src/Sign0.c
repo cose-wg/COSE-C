@@ -15,7 +15,7 @@ bool IsValidSign0Handle(HCOSE_SIGN0 h)
 	COSE_Sign0Message * p = (COSE_Sign0Message *)h;
 
 	if (p == NULL) return false;
-	return _COSE_IsInList(Sign0Root, &p->m_message);
+	return _COSE_IsInList(Sign0Root, (COSE *) p);
 }
 
 
