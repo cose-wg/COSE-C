@@ -1,3 +1,7 @@
+/** \file Encrypt0.c
+* Contains implementation of the functions related to HCOSE_ENCRYPT handle objects.
+*/
+
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>

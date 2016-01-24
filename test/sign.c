@@ -41,8 +41,10 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 	for (; pSigners != NULL; iSigner--, pSigners = pSigners->next) {
 
 		hSig = (HCOSE_SIGN)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-		if (hSig == NULL) goto returnError;
-
+		if (hSig == NULL) {
+			if (fFailBody) 		return 0;  else goto returnError;
+		}
+		if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign_protected)) goto returnError;
 
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
 		if (pkey == NULL) {
@@ -55,6 +57,7 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 			fFail = true;
 			continue;
 		}
+		if (!SetReceivingAttributes((HCOSE)hSigner, pSigners, Attributes_Signer_protected)) goto returnError;
 
 		if (!COSE_Signer_SetKey(hSigner, pkey, NULL)) {
 			fFail = true;

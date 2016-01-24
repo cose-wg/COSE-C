@@ -105,7 +105,7 @@ errorReturn:
 
 byte RgbDontUse4[1024];
 
-bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, const cn_cbor * pcborProtectedSign, CBOR_CONTEXT_COMMA cose_errback * perr)
+bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, const cn_cbor * pcborProtectedSign, const byte * pbExternal, size_t cbExternal, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pArray = NULL;
 	cn_cbor_errback cbor_error;
@@ -122,17 +122,19 @@ bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcbo
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
 	cn = NULL;
 
-	cn = cn_cbor_data_create(pcborProtected->v.bytes, (int)pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	if (pcborProtected->length == 1 && (pcborProtected->v.bytes[0] == 0xa0)) cn = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	else cn = cn_cbor_data_create(pcborProtected->v.bytes, (int)pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
 	cn = NULL;
 
-	cn = cn_cbor_data_create(pcborProtectedSign->v.bytes, (int)pcborProtectedSign->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	if ((pcborProtectedSign->length == 1) && (pcborProtectedSign->v.bytes[0] == 0xa0)) cn = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	else cn = cn_cbor_data_create(pcborProtectedSign->v.bytes, (int)pcborProtectedSign->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
 	cn = NULL;
 
-	cn = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	cn = cn_cbor_data_create(pbExternal, (int) cbExternal, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
 	cn = NULL;
@@ -194,7 +196,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, perr);
 	if (pcborProtectedSign == NULL) goto errorReturn;
 
-	if (!BuildToBeSigned(&pbToSign, &cbToSign, pcborBody, pcborProtected, pcborProtectedSign, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!BuildToBeSigned(&pbToSign, &cbToSign, pcborBody, pcborProtected, pcborProtectedSign, pSigner->m_message.m_pbExternal, pSigner->m_message.m_cbExternal, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
 	case COSE_Algorithm_ECDSA_SHA_256:
@@ -296,7 +298,7 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 	CHECK_CONDITION((cnProtected != NULL) && (cnProtected->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
 	//  Build authenticated data
-	if (!BuildToBeSigned(&pbToBeSigned, &cbToBeSigned, pcborBody, pcborProtected, cnProtected, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!BuildToBeSigned(&pbToBeSigned, &cbToBeSigned, pcborBody, pcborProtected, cnProtected, pSigner->m_message.m_pbExternal, pSigner->m_message.m_cbExternal, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	cn_cbor * cnSignature = _COSE_arrayget_int(&pSigner->m_message, INDEX_SIGNATURE);
 	CHECK_CONDITION((cnSignature != NULL) && (cnSignature->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
