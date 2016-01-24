@@ -262,7 +262,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		case Attributes_Signer_protected:
-			f = COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Sign0_protected:

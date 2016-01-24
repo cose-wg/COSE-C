@@ -13,36 +13,30 @@ COSE * SignerRoot = NULL;
 bool IsValidSignerHandle(HCOSE_SIGNER h)
 {
 	COSE_SignerInfo * p = (COSE_SignerInfo *)h;
-	return _COSE_IsInList(SignerRoot, &p->m_message);
+	return _COSE_IsInList(SignerRoot, (COSE *) p);
 }
 
 
 bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner)
 {
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context context;
-#endif
-
 	//  Check ref counting
 	if (pSigner->m_message.m_refCount > 1) {
 		pSigner->m_message.m_refCount--;
 		return true;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-	context = pSigner->m_message.m_allocContext;
-#endif
-
 	_COSE_Release(&pSigner->m_message);
 
 	return true;
 }
 
+
 bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
 {
 	COSE_SignerInfo * pSigner = (COSE_SignerInfo *)hSigner;
+	bool fRet = false;
 
-	if (!IsValidSignerHandle(hSigner))  return false;
+	if (!IsValidSignerHandle(hSigner)) goto errorReturn;
 
 	if (pSigner->m_message.m_refCount > 1) {
 		pSigner->m_message.m_refCount--;
@@ -55,7 +49,9 @@ bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
 
 	COSE_FREE(pSigner, &pSigner->m_message.m_allocContext);
 
-	return true;
+	fRet = true;
+errorReturn:
+	return fRet;
 }
 
 
@@ -90,17 +86,16 @@ COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, COSE_SignerI
 
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
-	if (!_COSE_Init_From_Object(&pSigner->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		_COSE_SignerInfo_Free(pSigner);
-		if (pIn == NULL) COSE_FREE(pSigner, context);
-		return NULL;
-	}
+	if (!_COSE_Init_From_Object(&pSigner->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	_COSE_InsertInList(&SignerRoot, &pSigner->m_message);
 	return pSigner;
 
 errorReturn:
-	if (pSigner != NULL) COSE_FREE(pSigner, context);
+	if (pSigner != NULL) {
+		_COSE_SignerInfo_Free(pSigner);
+		if (pIn == NULL) COSE_FREE(pSigner, context);
+	}
 	return NULL;
 }
 
@@ -168,39 +163,28 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
 #endif
-	cn_cbor * pcborBody2 = NULL;
-	cn_cbor * pcborProtected2 = NULL;
 	cn_cbor * pcborProtectedSign = NULL;
 	cn_cbor * pArray = NULL;
-	cn_cbor * cnX = NULL;
-	cn_cbor * cn = NULL;
+	cn_cbor * cnAlgorithm = NULL;
 	size_t cbToSign;
 	byte * pbToSign = NULL;
 	bool f;
 	int alg;
+	bool fRet = false;
 
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (pArray == NULL) {
-		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
-	errorReturn:
-		if (cn != NULL) CN_CBOR_FREE(cn, context);
-		if (pcborBody2 != NULL) CN_CBOR_FREE(pcborBody2, context);
-		if (pcborProtected2 != NULL) CN_CBOR_FREE(pcborProtected2, context);
-		if (pArray != NULL) COSE_FREE(pArray, context);
-		if (pbToSign != NULL) COSE_FREE(pbToSign, context);
-		return false;
-	}
+	CHECK_CONDITION(pArray != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	cnX = _COSE_map_get_int(&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cnX == NULL) goto errorReturn;
+	cnAlgorithm = _COSE_map_get_int(&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
+	if (cnAlgorithm == NULL) goto errorReturn;
 
-	if (cnX->type == CN_CBOR_TEXT) {
+	if (cnAlgorithm->type == CN_CBOR_TEXT) {
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 	else {
-		CHECK_CONDITION((cnX->type == CN_CBOR_UINT || cnX->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION((cnAlgorithm->type == CN_CBOR_UINT || cnAlgorithm->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 
-		alg = (int)cnX->v.uint;
+		alg = (int)cnAlgorithm->v.sint;
 	}
 
 	pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, perr);
@@ -215,8 +199,6 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 
 	case COSE_Algorithm_ECDSA_SHA_384:
 		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 384, pbToSign, cbToSign, perr);
-		cn_cbor * cnProtected = _COSE_arrayget_int(&pSigner->m_message, INDEX_PROTECTED);
-		CHECK_CONDITION((cnProtected != NULL) && (cnProtected->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 		break;
 
 	case COSE_Algorithm_ECDSA_SHA_512:
@@ -227,10 +209,12 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
-	COSE_FREE(pbToSign, context);
-	CN_CBOR_FREE(pArray, context);
+	fRet = true;
 
-	return f;
+errorReturn:
+	if (pArray != NULL) COSE_FREE(pArray, context);
+	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
+	return fRet;
 }
 
 bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor * pKey, cose_errback * perror)
@@ -247,8 +231,6 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor * pKey, cose_errback * per
 
 	return true;
 }
-
-byte RgbDontUseSign[8 * 1024];
 
 bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr)
 {
@@ -274,7 +256,7 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 	else {
 		CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 
-		alg = (int)cn->v.uint;
+		alg = (int)cn->v.sint;
 	}
 
 	//  Build protected headers
@@ -315,7 +297,17 @@ errorReturn:
 	return fRet;
 }
 
-bool COSE_Signer_map_put(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perror)
+cn_cbor * COSE_Signer_map_get_int(HCOSE_SIGNER h, int key, int flags, cose_errback * perr)
+{
+	if (!IsValidSignerHandle(h)) {
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		return NULL;
+	}
+
+	return _COSE_map_get_int((COSE *)h, key, flags, perr);
+}
+
+bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perror)
 {
 	if (!IsValidSignerHandle(h) || (value == NULL)) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;

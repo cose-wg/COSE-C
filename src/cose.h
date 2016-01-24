@@ -263,7 +263,8 @@ bool COSE_Sign_map_put(HCOSE_SIGN cose, int key, cn_cbor * value, int flags, cos
 HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror);
 bool COSE_Signer_Free(HCOSE_SIGNER cose);
 bool COSE_Signer_SetKey(HCOSE_SIGNER hSigner, const cn_cbor * pkey, cose_errback * perr);
-bool COSE_Signer_map_put(HCOSE_SIGNER cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+extern cn_cbor * COSE_Signer_map_get_int(HCOSE_SIGNER h, int key, int flags, cose_errback * perr);
+extern bool COSE_Signer_map_put_int(HCOSE_SIGNER cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 /*
  *  Sign routines

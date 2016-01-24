@@ -28,6 +28,7 @@
 *.i*86
 *.x86_64
 *.hex
+a.bat
 
 # Debug files
 *.dSYM/
@@ -64,3 +65,8 @@ test/test.cbor
 
 # Coverity
 cov-int
+
+# Doxygen
+html
+latex
+doxygen.bat
