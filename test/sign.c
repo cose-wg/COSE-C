@@ -255,8 +255,11 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) goto returnError;
 
 	hSig = (HCOSE_SIGN0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hSig == NULL) goto returnError;
+	if (hSig == NULL) {
+		if (fFailBody) return 0; else goto returnError;
+	}
 
+	if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign0_protected)) goto returnError;
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
 	if (pkey == NULL) {
