@@ -171,7 +171,7 @@ int EncryptMessage()
 	size_t cb;
 	byte * rgb;
 	char * sz = "This is the content to be used";
-	HCOSE_RECIPIENT hRecip;
+	HCOSE_RECIPIENT hRecip = NULL;
 
 	if (hEncObj == NULL) goto errorReturn;
 	if (!COSE_Enveloped_map_put_int(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) goto errorReturn;

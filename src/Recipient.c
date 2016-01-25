@@ -383,8 +383,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	byte * pbContext = NULL;
 	byte rgbKey[256 / 8];
 	byte * pbSecret = NULL;
-	byte * pbKey;
-	size_t cbKey;
+	byte * pbKey = NULL;
+	size_t cbKey = 0;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pRecipient->m_encrypt.m_message.m_allocContext;
