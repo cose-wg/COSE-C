@@ -1,3 +1,7 @@
+/** \file Encrypt0.c
+* Contains implementation of the functions related to HCOSE_ENCRYPT handle objects.
+*/
+
 #include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
@@ -18,7 +22,7 @@ COSE * EncryptRoot = NULL;
 bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 {
 	COSE_Encrypt * p = (COSE_Encrypt *)h;
-	return _COSE_IsInList(EncryptRoot, &p->m_message);
+	return _COSE_IsInList(EncryptRoot, (COSE *)p);
 }
 
 
@@ -96,8 +100,6 @@ bool COSE_Encrypt_Free(HCOSE_ENCRYPT h)
 void _COSE_Encrypt_Release(COSE_Encrypt * p)
 {
 	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent, &p->m_message.m_allocContext);
-	//	if (p->pbIV != NULL) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
-	if (p->pbKey != NULL) COSE_FREE(p ->pbKey, &p->m_message.m_allocContext);
 
 	_COSE_Release(&p->m_message);
 }
@@ -370,6 +372,21 @@ bool _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgb, size_t cb, 
 
 	return true;
 }
+
+/*!
+* @brief Set the application external data for authentication
+*
+* Enveloped data objects support the authentication of external application
+* supplied data.  This function is provided to supply that data to the library.
+*
+* The external data is not copied, nor will be it freed when the handle is released.
+*
+* @param hcose  Handle for the COSE Enveloped data object
+* @param pbEternalData  point to the external data
+* @param cbExternalData size of the external data
+* @param perr  location to return errors
+* @return result of the operation.
+*/
 
 bool COSE_Encrypt_SetExternal(HCOSE_ENCRYPT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {

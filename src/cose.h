@@ -191,8 +191,9 @@ HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror);
 bool COSE_Recipient_Free(HCOSE_RECIPIENT cose);
 HCOSE_RECIPIENT COSE_Recipient_from_shared_secret(byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, CBOR_CONTEXT_COMMA cose_errback * perr);
 
-bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h, const byte * rgb, int cb, cose_errback * perr);
+bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h, const byte * rgb, int cb, const byte * rgbKid, int cbKid, cose_errback * perr);
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback * perror);
+bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror);
 cn_cbor * COSE_Recipient_map_get_string(HCOSE_RECIPIENT cose, const char * key, int flags, cose_errback * errp);
@@ -224,6 +225,7 @@ bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT, const byte * pbKey, size_t cbKey, cose_
 //
 
 bool COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Mac_SetExternal(HCOSE_MAC hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 cn_cbor * COSE_Mac_map_get_int(HCOSE_MAC h, int key, int flags, cose_errback * perror);
 bool COSE_Mac_map_put_int(HCOSE_MAC cose, int key, cn_cbor * value, int flags, cose_errback * errp);
@@ -240,6 +242,7 @@ HCOSE_MAC0 COSE_Mac0_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Mac0_Free(HCOSE_MAC0 cose);
 
 bool COSE_Mac0_SetContent(HCOSE_MAC0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Mac0_SetExternal(HCOSE_MAC0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 cn_cbor * COSE_Mac0_map_get_int(HCOSE_MAC0 h, int key, int flags, cose_errback * perror);
 bool COSE_Mac0_map_put_int(HCOSE_MAC0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
@@ -257,13 +260,16 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr);
 HCOSE_SIGNER COSE_Sign_GetSigner(HCOSE_SIGN cose, int iSigner, cose_errback * perr);
 bool COSE_Sign_validate(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * perr);
 cn_cbor * COSE_Sign_map_get_int(HCOSE_SIGN h, int key, int flags, cose_errback * perror);
-bool COSE_Sign_map_put(HCOSE_SIGN cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+bool COSE_Sign_map_put_int(HCOSE_SIGN cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 
 HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror);
 bool COSE_Signer_Free(HCOSE_SIGNER cose);
 bool COSE_Signer_SetKey(HCOSE_SIGNER hSigner, const cn_cbor * pkey, cose_errback * perr);
-bool COSE_Signer_map_put(HCOSE_SIGNER cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+extern cn_cbor * COSE_Signer_map_get_int(HCOSE_SIGNER h, int key, int flags, cose_errback * perr);
+extern bool COSE_Signer_map_put_int(HCOSE_SIGNER cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 /*
  *  Sign routines
@@ -271,7 +277,10 @@ bool COSE_Signer_map_put(HCOSE_SIGNER cose, int key, cn_cbor * value, int flags,
 
 HCOSE_SIGN0 COSE_Sign0_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
+
 bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
+
 bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
 bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback * perr);
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);

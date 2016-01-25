@@ -258,11 +258,11 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		case Attributes_Sign_protected:
-			f = COSE_Sign_map_put((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Signer_protected:
-			f = COSE_Signer_map_put((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Sign0_protected:
@@ -296,6 +296,22 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 		case Attributes_Enveloped_protected:
 			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+
+		case Attributes_MAC_protected:
+			if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_MAC0_protected:
+			if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Signer_protected:
+			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Sign0_protected:
+			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
 		}
 	}
 
@@ -321,6 +337,22 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 
 		case Attributes_Enveloped_protected:
 			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_MAC_protected:
+			if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_MAC0_protected:
+			if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Signer_protected:
+			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+			break;
+
+		case Attributes_Sign0_protected:
+			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 		}
 	}
@@ -434,11 +466,13 @@ bool Test_cn_cbor_array_replace()
 
 void RunCorners()
 {
-    	Test_cn_cbor_array_replace();
-        MAC_Corners();
-		MAC0_Corners();
-		Encrypt_Corners();
-		Enveloped_Corners();
+	Test_cn_cbor_array_replace();
+	MAC_Corners();
+	MAC0_Corners();
+	Encrypt_Corners();
+	Enveloped_Corners();
+	Sign_Corners();
+	Sign0_Corners();
 }
 
 void RunMemoryTest(const char * szFileName)

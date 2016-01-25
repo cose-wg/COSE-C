@@ -301,7 +301,7 @@ void DumpBytes(FILE * fp, const cn_cbor* cbor)
 	int fText = true;
 
 	for (i = 0; i < cbor->length; i++) {
-		if ((cbor->v.bytes[i] < 32) || (cbor->v.bytes[i] > 126)) fText = false;
+		if ((cbor->v.bytes[i] < 32) || (cbor->v.bytes[i] > 126) || (cbor->v.bytes[i] == '\'')) fText = false;
 	}
 
 	if (fText && (cbor->length > 0)) {

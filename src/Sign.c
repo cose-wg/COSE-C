@@ -1,3 +1,7 @@
+/** \file Sign.c
+* Contains implementation of the functions related to HCOSE_SIGN handle objects.
+*/
+
 #include <stdlib.h>
 
 #include "cose.h"
@@ -5,24 +9,45 @@
 
 COSE * SignRoot = NULL;
 
+/*! \private
+* @brief Test if a HCOSE_SIGN handle is valid
+*
+*  Internal function to test if a sign handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
+
 bool IsValidSignHandle(HCOSE_SIGN h)
 {
 	COSE_SignMessage * p = (COSE_SignMessage *)h;
 
 	if (p == NULL) return false;
-	return _COSE_IsInList(SignRoot, &p->m_message);
+	return _COSE_IsInList(SignRoot, (COSE *) p);
 }
 
 
-HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+/** Allocate a SIGN message structure.
+*
+* Allocate a new SIGN message structure for creation of a COSE_Sign object.
+* @param context is a cn_cbor context object
+* @param perr is a cose_errback return variable
+* @return HCOSE_SIGN a handle for the newly allocated object
+*/
+HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_SignMessage * pobj = (COSE_SignMessage *)COSE_CALLOC(1, sizeof(COSE_SignMessage), context);
 	if (pobj == NULL) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
+		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Sign_Release(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
@@ -173,7 +198,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 
 	cbor2 = cn_cbor_int_create(algId, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cbor2 != NULL, cbor_error);
-	if (!COSE_Signer_map_put(hSigner, COSE_Header_Algorithm, cbor2, COSE_PROTECT_ONLY, perr)) goto errorReturn;
+	if (!COSE_Signer_map_put_int(hSigner, COSE_Header_Algorithm, cbor2, COSE_PROTECT_ONLY, perr)) goto errorReturn;
 	cbor2 = NULL;
 
 	cbor = cn_cbor_mapget_int(pkey, COSE_Key_ID);
@@ -181,7 +206,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 		CHECK_CONDITION(cbor->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		cbor2 = cn_cbor_data_create(cbor->v.bytes, (int) cbor->length, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cbor2 != NULL, cbor_error);
-		if (!COSE_Signer_map_put(hSigner, COSE_Header_KID, cbor2, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+		if (!COSE_Signer_map_put_int(hSigner, COSE_Header_KID, cbor2, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
 		cbor2 = NULL;
 	}
 
@@ -307,7 +332,7 @@ cn_cbor * COSE_Sign_map_get_int(HCOSE_SIGN h, int key, int flags, cose_errback *
 	return _COSE_map_get_int(&((COSE_SignMessage *)h)->m_message, key, flags, perror);
 }
 
-bool COSE_Sign_map_put(HCOSE_SIGN h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Sign_map_put_int(HCOSE_SIGN h, int key, cn_cbor * value, int flags, cose_errback * perror)
 {
 	if (!IsValidSignHandle(h) || (value == NULL)) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
