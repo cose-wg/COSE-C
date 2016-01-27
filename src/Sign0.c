@@ -42,7 +42,7 @@ HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errba
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_Sign0Message * pobj = (COSE_Sign0Message *)COSE_CALLOC(1, sizeof(COSE_Sign0Message), context);
 	if (pobj == NULL) {
-		if (perror != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
+		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 		return NULL;
 	}
 
