@@ -1,4 +1,5 @@
 #ifndef _countof
+
 #define _countof(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
@@ -71,3 +72,28 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey);
 byte * FromHex(const char * rgch, int cch);
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
 bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
+
+//
+//  Internal macros to make testing easier
+//
+
+#define CHECK_RETURN(functionCall, errorReturn, onFailure) \
+{	\
+	if (!functionCall) onFailure; \
+}
+
+#define CHECK_FAILURE(functionCall, errorReturn, onFailure)       \
+    { \
+        bool bReturn = functionCall;  \
+        if (bReturn) { \
+            if (cose_error.err != errorReturn) onFailure; \
+        } else if (errorReturn != COSE_ERR_NONE) onFailure; \
+    }
+
+#define CHECK_FAILURE_PTR(functionCall, errorReturn, onFailure)       \
+    { \
+        void * bReturn = functionCall;  \
+        if (bReturn == NULL) { \
+            if (cose_error.err != errorReturn) onFailure; \
+        } else if (errorReturn != COSE_ERR_NONE) onFailure; \
+    }

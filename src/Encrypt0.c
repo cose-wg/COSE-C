@@ -18,6 +18,19 @@ void _COSE_Encrypt_Release(COSE_Encrypt * p);
 
 COSE * EncryptRoot = NULL;
 
+/*! \private
+* @brief Test if a HCOSE_ENCRYPT handle is valid
+*
+*  Internal function to test if an encrypt message handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
 
 bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 {
@@ -26,15 +39,13 @@ bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 }
 
 
-HCOSE_ENCRYPT COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
+	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_Encrypt * pobj = (COSE_Encrypt *)COSE_CALLOC(1, sizeof(COSE_Encrypt), context);
-	if (pobj == NULL) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
-		return NULL;
-	}
+	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(flags, &pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Encrypt_Release(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
@@ -43,6 +54,9 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	_COSE_InsertInList(&EncryptRoot, &pobj->m_message);
 
 	return (HCOSE_ENCRYPT) pobj;
+
+errorReturn:
+	return NULL;
 }
 
 HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)

@@ -15,18 +15,36 @@
 
 COSE * Mac0Root = NULL;
 
+/*! \private
+* @brief Test if a HCOSE_MAC0 handle is valid
+*
+*  Internal function to test if a MAC0 message handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
+
 bool IsValidMac0Handle(HCOSE_MAC0 h)
 {
 	COSE_Mac0Message * p = (COSE_Mac0Message *)h;
 	return _COSE_IsInList(Mac0Root, (COSE *) p);
 }
 
-HCOSE_MAC0 COSE_Mac0_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
+HCOSE_MAC0 COSE_Mac0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	COSE_Mac0Message * pobj = (COSE_Mac0Message *)COSE_CALLOC(1, sizeof(COSE_Mac0Message), context);
+	COSE_Mac0Message * pobj = NULL;
+
+	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
+
+	pobj = (COSE_Mac0Message *)COSE_CALLOC(1, sizeof(COSE_Mac0Message), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pobj->m_message, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_Init(flags, &pobj->m_message, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 

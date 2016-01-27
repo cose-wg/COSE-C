@@ -144,3 +144,19 @@ cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback 
 
 	return pOut;
 }
+
+cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr)
+{
+	cn_cbor * pcnTag = CN_CALLOC(context);
+	if (pcnTag == NULL) {
+		if (perr != NULL) perr->err = CN_CBOR_ERR_OUT_OF_MEMORY;
+		return NULL;
+	}
+
+	pcnTag->type = CN_CBOR_TAG;
+	pcnTag->v.sint = tag;
+	pcnTag->first_child = child;
+	child->parent = pcnTag;
+
+	return pcnTag;
+}

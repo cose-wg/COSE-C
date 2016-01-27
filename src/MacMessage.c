@@ -38,12 +38,16 @@ bool IsValidMacHandle(HCOSE_MAC h)
 }
 
 
-HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
+HCOSE_MAC COSE_Mac_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	COSE_MacMessage * pobj = (COSE_MacMessage *)COSE_CALLOC(1, sizeof(COSE_MacMessage), context);
+	COSE_MacMessage * pobj = NULL;
+
+	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
+
+	pobj = (COSE_MacMessage *)COSE_CALLOC(1, sizeof(COSE_MacMessage), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pobj->m_message, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_Init(flags, &pobj->m_message, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 

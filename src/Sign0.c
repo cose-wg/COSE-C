@@ -15,9 +15,9 @@ void _COSE_Sign0_Release(COSE_Sign0Message * p);
 COSE * Sign0Root = NULL;
 
 /*! \private
-* @brief Test if a HCOSE_SIGN handle is valid
+* @brief Test if a HCOSE_SIGN0 handle is valid
 *
-*  Internal function to test if a sign handle is valid.
+*  Internal function to test if a sign0 message handle is valid.
 *  This will start returning invalid results and cause the code to
 *  crash if handles are not released before the memory that underlies them
 *  is deallocated.  This is an issue of a block allocator is used since
@@ -37,15 +37,16 @@ bool IsValidSign0Handle(HCOSE_SIGN0 h)
 }
 
 
-HCOSE_SIGN0 COSE_Sign0_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
+	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_Sign0Message * pobj = (COSE_Sign0Message *)COSE_CALLOC(1, sizeof(COSE_Sign0Message), context);
 	if (pobj == NULL) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
+		if (perror != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(flags,&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Sign0_Release(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
@@ -54,6 +55,9 @@ HCOSE_SIGN0 COSE_Sign0_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	_COSE_InsertInList(&Sign0Root, &pobj->m_message);
 
 	return (HCOSE_SIGN0)pobj;
+
+errorReturn:
+	return NULL;
 }
 
 HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)

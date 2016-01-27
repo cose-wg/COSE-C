@@ -14,7 +14,7 @@ bool IsValidCOSEHandle(HCOSE h)
 }
 
 
-bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
+bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 		    cn_cbor_errback errState;;
 
@@ -22,13 +22,17 @@ bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 	if (context != NULL) pobj->m_allocContext = *context;
 #endif
 
+	CHECK_CONDITION((flags & ~(COSE_INIT_FLAGS_DETACHED_CONTENT | COSE_INIT_FLAGS_NO_CBOR_TAG)) == 0, COSE_ERR_INVALID_PARAMETER);
+
+	pobj->m_flags = flags;
+
 	pobj->m_protectedMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_protectedMap != NULL, errState);
 
 	pobj->m_dontSendMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, errState);
 
-	pobj->m_cbor = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &errState);
+	pobj->m_cborRoot = pobj->m_cbor = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
 	pobj->m_ownMsg = 1;
 
@@ -47,6 +51,13 @@ bool _COSE_Init(COSE* pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * perr)
 	CHECK_CONDITION_CBOR(pobj->m_unprotectMap != NULL, errState);
 	CHECK_CONDITION_CBOR(_COSE_array_replace(pobj, pobj->m_unprotectMap, INDEX_UNPROTECTED, CBOR_CONTEXT_PARAM_COMMA &errState), errState);
 	pobj->m_ownUnprotectedMap = false;
+
+	if (!(flags & COSE_INIT_FLAGS_NO_CBOR_TAG)) {
+		cn_cbor_errback cbor_error;
+		cn_cbor * cn = cn_cbor_tag_create(msgType, pobj->m_cborRoot, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
+		pobj->m_cborRoot = cn;
+	}
 
 	pobj->m_refCount = 1;
 
@@ -219,6 +230,15 @@ errorReturn:
 	COSE_FREE(cbor, context);
 	return NULL;
 }
+
+byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
+
+size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb)
+{
+	if (rgb == NULL) return cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), ((COSE *)msg)->m_cbor) + ib;
+	return cn_cbor_encoder_write(rgb, ib, cb, ((COSE*)msg)->m_cbor);
+}
+
 
 cn_cbor * COSE_get_cbor(HCOSE h)
 {

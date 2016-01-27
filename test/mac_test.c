@@ -106,7 +106,7 @@ int BuildMacMessage(const cn_cbor * pControl)
 	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
 
-	HCOSE_MAC hMacObj = COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_MAC hMacObj = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) goto returnError;
@@ -128,7 +128,7 @@ int BuildMacMessage(const cn_cbor * pControl)
 		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 		if (pkey == NULL) goto returnError;
 
-		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hRecip == NULL) goto returnError;
 
 		if (!SetSendingAttributes((HCOSE) hRecip, pRecipients, Attributes_Recipient_protected)) goto returnError;
@@ -160,7 +160,7 @@ returnError:
 
 int MacMessage()
 {
-	HCOSE_MAC hEncObj = COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_MAC hEncObj = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	char * sz = "This is the content to be used";
 	byte rgbSecret[256 / 8] = { 'a', 'b', 'c' };
 	byte  rgbKid[6] = { 'a', 'b', 'c', 'd', 'e', 'f' };
@@ -317,7 +317,7 @@ int BuildMac0Message(const cn_cbor * pControl)
 	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
 
-	HCOSE_MAC0 hMacObj = COSE_Mac0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_MAC0 hMacObj = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) goto returnError;
@@ -372,7 +372,7 @@ void MAC_Corners()
 
     //  Incorrect algorithm
     
-    hMAC = (HCOSE_MAC) COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+    hMAC = (HCOSE_MAC) COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
     //  Invalid Handle checks
 
@@ -386,7 +386,7 @@ void MAC_Corners()
 	if (COSE_Mac_SetExternal((HCOSE_MAC)hEncrypt, rgb, 0, NULL)) CFails++;
 	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
 
-    hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+    hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	if (COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
@@ -401,7 +401,7 @@ void MAC_Corners()
     //
 	//  Unsupported algorithm
 
-	hMAC = COSE_Mac_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hMAC = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) CFails++;
 	if (!COSE_Mac_SetContent(hMAC, (byte *) "Message", 7, NULL)) CFails++;
 	if (!COSE_Mac_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
@@ -424,7 +424,7 @@ void MAC0_Corners()
 	byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	//  Missing case - addref then release on item
 
@@ -438,7 +438,7 @@ void MAC0_Corners()
 	if (COSE_Mac0_SetExternal((HCOSE_MAC0)hEncrypt, rgb, 0, NULL)) CFails++;
 	if (COSE_Mac0_Free((HCOSE_MAC0)hEncrypt)) CFails++;
 
-	hEncrypt = COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	if (COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac0_map_get_int((HCOSE_MAC0)hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
@@ -452,7 +452,7 @@ void MAC0_Corners()
 	//
 	//  Unsupported algorithm
 
-	hMAC = COSE_Mac0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hMAC = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) CFails++;
 	if (!COSE_Mac0_SetContent(hMAC, (byte *) "Message", 7, NULL)) CFails++;
 	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
