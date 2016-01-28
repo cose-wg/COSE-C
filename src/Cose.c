@@ -34,7 +34,6 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
 
 	pobj->m_cborRoot = pobj->m_cbor = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
-	pobj->m_cborRoot = NULL;
 	pobj->m_ownMsg = 1;
 
 #ifdef TAG_IN_ARRAY
@@ -53,13 +52,13 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
 	CHECK_CONDITION_CBOR(_COSE_array_replace(pobj, pobj->m_unprotectMap, INDEX_UNPROTECTED, CBOR_CONTEXT_PARAM_COMMA &errState), errState);
 	pobj->m_ownUnprotectedMap = false;
 
-	/*
+	
 	if (!(flags & COSE_INIT_FLAGS_NO_CBOR_TAG)) {
 		cn_cbor_errback cbor_error;
 		cn_cbor * cn = cn_cbor_tag_create(msgType, pobj->m_cborRoot, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 		pobj->m_cborRoot = cn;
-	}*/
+	}
 
 	pobj->m_refCount = 1;
 

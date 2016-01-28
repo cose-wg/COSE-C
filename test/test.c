@@ -792,9 +792,15 @@ int main(int argc, char ** argv)
 		RunCorners();
 	}
 	else {
+#ifdef USE_CBOR_CONTEXT
+		allocator = CreateContext(-1);
+#endif
 		MacMessage();
 		SignMessage();
 		EncryptMessage();
+#ifdef USE_CBOR_CONTEXT
+		FreeContext(allocator);
+#endif
 	}
 
 	if (CFails > 0) fprintf(stderr, "Failed %d tests\n", CFails);
