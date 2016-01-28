@@ -400,7 +400,7 @@ void Enveloped_Corners()
 
         CHECK_FAILURE(COSE_Enveloped_SetContent(hEncryptNULL, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
         CHECK_FAILURE(COSE_Enveloped_SetContent(hEncryptBad, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-        CHECK_FAILURE(COSE_Enveloped_SetContent(hEncrypt, NULL, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+        CHECK_FAILURE(COSE_Enveloped_SetContent(hEncrypt, NULL, 10, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
 
 	CHECK_FAILURE(COSE_Enveloped_map_put_int(hEncryptNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
@@ -432,10 +432,10 @@ void Enveloped_Corners()
             
 	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncryptNULL, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncryptBad, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncrypt, NULL, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncrypt, NULL, 10, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
             
-	if (COSE_Enveloped_Free(hEncrypt)) CFails++;
-	if (COSE_Recipient_Free(hRecipient)) CFails++;
+	if (!COSE_Enveloped_Free(hEncrypt)) CFails++;
+	if (!COSE_Recipient_Free(hRecipient)) CFails++;
 
 
 	//

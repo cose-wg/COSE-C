@@ -85,7 +85,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
 #define CHECK_FAILURE(functionCall, errorReturn, onFailure)       \
     { \
         bool bReturn = functionCall;  \
-        if (bReturn) { \
+        if (!bReturn) { \
             if (cose_error.err != errorReturn) onFailure; \
         } else if (errorReturn != COSE_ERR_NONE) onFailure; \
     }
