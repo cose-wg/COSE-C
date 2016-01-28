@@ -20,6 +20,7 @@ typedef enum cose_error {
 	COSE_ERR_NONE,
 	/** An invalid parameter was passed to a function */
 	COSE_ERR_INVALID_PARAMETER,
+	COSE_ERR_INVALID_HANDLE,
 	/** Allocation failed */
 	COSE_ERR_OUT_OF_MEMORY,
 	/** Error in processing CBOR */
@@ -34,6 +35,12 @@ typedef enum cose_error {
 	COSE_ERR_CRYPTO_FAIL
 } cose_error;
 
+typedef enum cose_init_flags {
+	COSE_INIT_FLAGS_NONE=0,
+	COSE_INIT_FLAGS_DETACHED_CONTENT=1,
+	COSE_INIT_FLAGS_NO_CBOR_TAG=2,
+	COSE_INIT_FLAGS_ZERO_FORM=4
+} COSE_INIT_FLAGS;
 /**
 * Errors
 */
@@ -62,11 +69,7 @@ cn_cbor * COSE_get_cbor(HCOSE hmsg);
 
 //  Functions for the signing object
 
-HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
-bool COSE_Sign_Free(HCOSE_SIGN cose);
 
-HCOSE_MAC COSE_Mac_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
-bool COSE_Mac_Free(HCOSE_MAC cose);
 
 typedef enum {
 	COSE_PROTECT_ONLY = 1,
@@ -165,7 +168,7 @@ typedef enum {
  *  messages dealing with the Enveloped message type
  */
 
-HCOSE_ENVELOPED  COSE_Enveloped_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+HCOSE_ENVELOPED  COSE_Enveloped_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Enveloped_Free(HCOSE_ENVELOPED cose);
 
 cn_cbor * COSE_Enveloped_map_get_int(HCOSE_ENVELOPED cose, int key, int flags, cose_errback * errp);
@@ -187,7 +190,7 @@ HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient
 /*
  */
 
-HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror);
+HCOSE_RECIPIENT COSE_Recipient_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perror);
 bool COSE_Recipient_Free(HCOSE_RECIPIENT cose);
 HCOSE_RECIPIENT COSE_Recipient_from_shared_secret(byte * rgbKey, int cbKey, byte * rgbKid, int cbKid, CBOR_CONTEXT_COMMA cose_errback * perr);
 
@@ -204,7 +207,7 @@ cn_cbor * COSE_Recipient_map_get_int(HCOSE_RECIPIENT cose, int key, int flags, c
  *  Encrypt message API
  */
 
-HCOSE_ENCRYPT  COSE_Encrypt_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+HCOSE_ENCRYPT  COSE_Encrypt_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Encrypt_Free(HCOSE_ENCRYPT cose);
 
 cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
@@ -224,6 +227,9 @@ bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT, const byte * pbKey, size_t cbKey, cose_
 //
 //
 
+HCOSE_MAC COSE_Mac_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Mac_Free(HCOSE_MAC cose);
+
 bool COSE_Mac_SetContent(HCOSE_MAC cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 bool COSE_Mac_SetExternal(HCOSE_MAC hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
@@ -238,7 +244,7 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errba
 
 //  MAC0 calls
 
-HCOSE_MAC0 COSE_Mac0_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+HCOSE_MAC0 COSE_Mac0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Mac0_Free(HCOSE_MAC0 cose);
 
 bool COSE_Mac0_SetContent(HCOSE_MAC0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
@@ -253,7 +259,11 @@ bool COSE_Mac0_validate(HCOSE_MAC0, const byte * pbKey, size_t cbKey, cose_errba
 //
 //
 
+HCOSE_SIGN COSE_Sign_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Sign_Free(HCOSE_SIGN cose);
+
 bool COSE_Sign_SetContent(HCOSE_SIGN cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+
 HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN cose, const cn_cbor * pkey, int algId, cose_errback * perr);
 extern bool COSE_Sign_AddSigner(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * perr);
 bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr);
@@ -275,7 +285,7 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, si
  *  Sign routines
  */
 
-HCOSE_SIGN0 COSE_Sign0_Init(CBOR_CONTEXT_COMMA cose_errback * perr);
+HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
 
 bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
@@ -291,4 +301,5 @@ bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flag
 */
 
 extern cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
+extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
 

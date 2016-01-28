@@ -18,6 +18,20 @@ byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size 
 
 COSE * EnvelopedRoot = NULL;
 
+/*! \private
+* @brief Test if a HCOSE_ENVELOPED handle is valid
+*
+*  Internal function to test if a enveloped message handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
+
 bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h)
 {
 	COSE_Enveloped * p = (COSE_Enveloped *)h;
@@ -25,21 +39,29 @@ bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h)
 }
 
 
-size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb)
-{
-	if (rgb == NULL) return cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), ((COSE *)msg)->m_cbor) + ib;
-	return cn_cbor_encoder_write(rgb, ib, cb, ((COSE*)msg)->m_cbor);
-}
-
-HCOSE_ENVELOPED COSE_Enveloped_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+/*!
+* @brief Allocate and initialize an object for creation of an Enveloped message object
+*
+* Allocate and initialize the object used to create a COSE Enveloped message object.
+* Supported flags are:
+*  COSE_INIT_FLAG_DETACHED_CONTENT - content is not part of the message
+*  COSE_INIT_NO_CBOR_FLAG - Do not emit the leading CBOR tag on the message.
+* 
+*  See the notes on the memory model for the use of the context variable.
+*  Applications need to free the returned handle before deallocating the 
+*  memory block that it was wrapped in for correct handle checking.
+*
+* @param flags Set of initialization flags from the COSE_INIT_FLAGS enum
+* @param context CN_CBOR context allocator struture
+* @param perr Location to return error specific information
+* @returns handle to the newly allocated object
+*/
+HCOSE_ENVELOPED COSE_Enveloped_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_Enveloped * pobj = (COSE_Enveloped *)COSE_CALLOC(1, sizeof(COSE_Enveloped), context);
-	if (pobj == NULL) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
-		return NULL;
-	}
+	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(flags,&pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Enveloped_Release(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
@@ -48,6 +70,9 @@ HCOSE_ENVELOPED COSE_Enveloped_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	_COSE_InsertInList(&EnvelopedRoot, &pobj->m_message);
 
 	return (HCOSE_ENVELOPED) pobj;
+
+errorReturn:
+	return NULL;
 }
 
 HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
@@ -140,15 +165,15 @@ bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED h, HCOSE_RECIPIENT hRecip, cose_errb
 	COSE_Enveloped * pcose = (COSE_Enveloped *)h;
 	COSE_RecipientInfo * pRecip = (COSE_RecipientInfo *)hRecip;
 	cose_errback error = { 0 };
-	bool f;
+	bool f = false;
 
-	if (!IsValidEnvelopedHandle(h) || (!IsValidRecipientHandle(hRecip))) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_HANDLE);
 
 	f = _COSE_Enveloped_decrypt(pcose, pRecip, 0, NULL, &error);
 	if (perr != NULL) *perr = error;
+
+	errorReturn:
 	return f;
 }
 
@@ -311,7 +336,7 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	byte * pbKey = NULL;
 	size_t cbKey = 0;
 
-	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pcose->m_message.m_allocContext;
@@ -347,7 +372,7 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	case COSE_Algorithm_AES_GCM_256: cbitKey = 256; break;
 
 	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
 	//  If we are doing direct encryption - then recipient generates the key
@@ -415,7 +440,7 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 		break;
 
 	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
 	for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
@@ -435,14 +460,15 @@ errorReturn:
 	return fRet;
 }
 
-bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h, const byte * rgb, size_t cb, cose_errback * perror)
+bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h, const byte * rgb, size_t cb, cose_errback * perr)
 {
-	if (!IsValidEnvelopedHandle(h) || (rgb == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(rgb != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_Enveloped_SetContent((COSE_Enveloped *)h, rgb, cb, perror);
+	return _COSE_Enveloped_SetContent((COSE_Enveloped *)h, rgb, cb, perr);
+
+errorReturn:
+	return false;
 }
 
 /*!
@@ -462,12 +488,13 @@ bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h, const byte * rgb, size_t cb, c
 
 bool COSE_Enveloped_SetExternal(HCOSE_ENVELOPED hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
-	if (!IsValidEnvelopedHandle(hcose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	CHECK_CONDITION(IsValidEnvelopedHandle(hcose), COSE_ERR_INVALID_HANDLE)
+	CHECK_CONDITION((pbExternalData != NULL) || (cbExternalData == 0), COSE_ERR_INVALID_PARAMETER);
 
 	return _COSE_SetExternal(&((COSE_Enveloped *)hcose)->m_message, pbExternalData, cbExternalData, perr);
+
+errorReturn:
+	return false;
 }
 
 
@@ -488,7 +515,7 @@ bool _COSE_Enveloped_SetContent(COSE_Enveloped * cose, const byte * rgb, size_t 
 cn_cbor * COSE_Enveloped_map_get_int(HCOSE_ENVELOPED h, int key, int flags, cose_errback * perror)
 {
 	if (!IsValidEnvelopedHandle(h)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
 		return NULL;
 	}
 
@@ -496,14 +523,15 @@ cn_cbor * COSE_Enveloped_map_get_int(HCOSE_ENVELOPED h, int key, int flags, cose
 }
 
 
-bool COSE_Enveloped_map_put_int(HCOSE_ENVELOPED h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Enveloped_map_put_int(HCOSE_ENVELOPED h, int key, cn_cbor * value, int flags, cose_errback * perr)
 {
-	if (!IsValidEnvelopedHandle(h) || (value == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_map_put(&((COSE_Enveloped *)h)->m_message, key, value, flags, perror);
+	return _COSE_map_put(&((COSE_Enveloped *)h)->m_message, key, value, flags, perr);
+
+errorReturn:
+	return false;
 }
 
 bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, cose_errback * perr)
@@ -516,8 +544,8 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, c
 #endif
 	cn_cbor_errback cbor_error;
 
-	CHECK_CONDITION(IsValidEnvelopedHandle(hEnc), COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidEnvelopedHandle(hEnc), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_HANDLE);
 
 	pEncrypt = (COSE_Enveloped *)hEnc;
 	pRecip = (COSE_RecipientInfo *)hRecip;
@@ -612,7 +640,8 @@ HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient
 	int i;
 	COSE_RecipientInfo * p = NULL;
 
-	CHECK_CONDITION(IsValidEnvelopedHandle(cose), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidEnvelopedHandle(cose), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(iRecipient >= 0, COSE_ERR_INVALID_PARAMETER);
 
 	p = ((COSE_Enveloped *)cose)->m_recipientFirst;
 	for (i = 0; i < iRecipient; i++) {

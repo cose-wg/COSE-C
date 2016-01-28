@@ -108,7 +108,7 @@ int BuildSignedMessage(const cn_cbor * pControl)
 	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
 
-	HCOSE_SIGN hSignObj = COSE_Sign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_SIGN hSignObj = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) goto returnError;
@@ -163,7 +163,7 @@ returnError:
 
 int SignMessage()
 {
-	HCOSE_SIGN hEncObj = COSE_Sign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_SIGN hEncObj = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	char * sz = "This is the content to be used";
 	size_t cb;
 	byte * rgb;
@@ -310,7 +310,7 @@ int BuildSign0Message(const cn_cbor * pControl)
 	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
 
-	HCOSE_SIGN0 hSignObj = COSE_Sign0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_SIGN0 hSignObj = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) goto returnError;
@@ -355,7 +355,7 @@ void Sign_Corners()
 	byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	hSign2 = COSE_Sign_Init(CBOR_CONTEXT_PARAM_COMMA  NULL);
+	hSign2 = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA  NULL);
 	hSigner2 = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA  NULL);
 
 	//  Missing case - addref then release on item
@@ -382,8 +382,8 @@ void Sign_Corners()
 	if (COSE_Signer_SetExternal(hSigner, rgb, sizeof(rgb), NULL)) CFails++;
 
 
-	hSign = (HCOSE_SIGN) COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-	hSigner = (HCOSE_SIGNER) COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = (HCOSE_SIGN) COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSigner = (HCOSE_SIGNER) COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	if (COSE_Sign_SetContent(hSign, rgb, 10, NULL)) CFails++;
 	if (COSE_Sign_map_get_int(hSign, 1, COSE_BOTH, NULL)) CFails++;
@@ -405,7 +405,7 @@ void Sign_Corners()
 	//
 	//  Unsupported algorithm
 
-	hSign = COSE_Sign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) CFails++;
 	hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSigner == NULL) CFails++;
@@ -429,7 +429,7 @@ void Sign0_Corners()
 	byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	hSign2 = COSE_Sign0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign2 = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	//  Missing case - addref then release on item
 
 	//  Incorrect algorithm
@@ -445,7 +445,7 @@ void Sign0_Corners()
 	if (COSE_Sign0_validate(hSign2, NULL, NULL)) CFails++;
 	if (COSE_Sign0_SetExternal(hSign, rgb, sizeof(rgb), NULL)) CFails++;
 
-	hSign = (HCOSE_SIGN0)COSE_Encrypt_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = (HCOSE_SIGN0)COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	if (COSE_Sign0_SetContent(hSign, rgb, 10, NULL)) CFails++;
 	if (COSE_Sign0_map_get_int(hSign, 1, COSE_BOTH, NULL)) CFails++;
@@ -457,7 +457,7 @@ void Sign0_Corners()
 	//
 	//  Unsupported algorithm
 
-	hSign = COSE_Sign0_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) CFails++;
 
 	if (!COSE_Sign0_SetContent(hSign, (byte *) "Message", 7, NULL)) CFails++;

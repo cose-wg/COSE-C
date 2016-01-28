@@ -39,15 +39,17 @@ bool IsValidSignHandle(HCOSE_SIGN h)
 * @param perr is a cose_errback return variable
 * @return HCOSE_SIGN a handle for the newly allocated object
 */
-HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
+HCOSE_SIGN COSE_Sign_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
+	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_SignMessage * pobj = (COSE_SignMessage *)COSE_CALLOC(1, sizeof(COSE_SignMessage), context);
+	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 	if (pobj == NULL) {
 		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 		return NULL;
 	}
 
-	if (!_COSE_Init(&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_Init(flags, &pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Sign_Release(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
@@ -56,6 +58,9 @@ HCOSE_SIGN COSE_Sign_Init(CBOR_CONTEXT_COMMA cose_errback * perr)
 	_COSE_InsertInList(&SignRoot, &pobj->m_message);
 
 	return (HCOSE_SIGN)pobj;
+
+errorReturn:
+	return NULL;
 }
 
 HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor * cbor, COSE_SignMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)

@@ -4,7 +4,7 @@
 // interface, and they were quite confusing in cn-cbor.h
 
 typedef struct _COSE {
-	int m_flags;		//  Not sure what goes here yet
+	COSE_INIT_FLAGS m_flags;		//  Not sure what goes here yet
 	int m_ownMsg;		//  Do I own the pointer @ m_cbor?
 	int m_ownUnprotectedMap; //  Do I own the pointer @ m_unportectedMap?
 	int m_msgType;		//  What message type is this?
@@ -141,7 +141,7 @@ extern bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h);
 extern bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
 extern bool IsValidSignerHandle(HCOSE_SIGNER h);
 
-extern bool _COSE_Init(COSE * pcose, int msgType, CBOR_CONTEXT_COMMA cose_errback * errp);
+extern bool _COSE_Init(COSE_INIT_FLAGS flags, COSE * pcose, int msgType, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose_errback * perror);
 extern void _COSE_Release(COSE * pcose);
 

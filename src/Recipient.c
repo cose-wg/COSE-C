@@ -11,6 +11,19 @@ extern bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** p
 
 COSE* RecipientRoot = NULL;
 
+/*! \private
+* @brief Test if a HCOSE_RECIPIENT handle is valid
+*
+*  Internal function to test if a recipient handle is valid.
+*  This will start returning invalid results and cause the code to
+*  crash if handles are not released before the memory that underlies them
+*  is deallocated.  This is an issue of a block allocator is used since
+*  in that case it is common to allocate memory but never to de-allocate it
+*  and just do that in a single big block.
+*
+*  @param h handle to be validated
+*  @returns result of check
+*/
 bool IsValidRecipientHandle(HCOSE_RECIPIENT h)
 {
 	COSE_RecipientInfo * p = (COSE_RecipientInfo *)h;
@@ -19,21 +32,22 @@ bool IsValidRecipientHandle(HCOSE_RECIPIENT h)
 	return _COSE_IsInList(RecipientRoot, &p->m_encrypt.m_message);
 }
 
-HCOSE_RECIPIENT COSE_Recipient_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
+HCOSE_RECIPIENT COSE_Recipient_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
+	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_RecipientInfo * pobj = (COSE_RecipientInfo *)COSE_CALLOC(1, sizeof(COSE_RecipientInfo), context);
-	if (pobj == NULL) {
-		if (perror != NULL) perror->err = COSE_ERR_OUT_OF_MEMORY;
-		return NULL;
-	}
+	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(&pobj->m_encrypt.m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(flags, &pobj->m_encrypt.m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Recipient_Free(pobj);
 		return NULL;
 	}
 
 	_COSE_InsertInList(&RecipientRoot, &pobj->m_encrypt.m_message);
 	return (HCOSE_RECIPIENT)pobj;
+
+errorReturn:
+	return NULL;
 }
 
 bool COSE_Recipient_Free(HCOSE_RECIPIENT hRecipient)
@@ -53,7 +67,7 @@ HCOSE_RECIPIENT COSE_Recipient_from_shared_secret(byte * rgbKey, int cbKey, byte
 {
 	HCOSE_RECIPIENT hRecipient = NULL;
 
-	hRecipient = COSE_Recipient_Init(CBOR_CONTEXT_PARAM_COMMA perr);
+	hRecipient = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA perr);
 	if (hRecipient == NULL) goto errorReturn;
 
 	if (!COSE_Recipient_SetKey_secret(hRecipient, rgbKey, cbKey, rgbKid, cbKid, perr)) goto errorReturn;
@@ -383,8 +397,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	byte * pbContext = NULL;
 	byte rgbKey[256 / 8];
 	byte * pbSecret = NULL;
-	byte * pbKey;
-	size_t cbKey;
+	byte * pbKey = NULL;
+	size_t cbKey = 0;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pRecipient->m_encrypt.m_message.m_allocContext;
