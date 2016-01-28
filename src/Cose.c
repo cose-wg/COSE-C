@@ -34,6 +34,7 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
 
 	pobj->m_cborRoot = pobj->m_cbor = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
+	pobj->m_cborRoot = NULL;
 	pobj->m_ownMsg = 1;
 
 #ifdef TAG_IN_ARRAY
