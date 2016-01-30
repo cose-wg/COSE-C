@@ -67,7 +67,7 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		return NULL;
 	}
 
-	if (!_COSE_Init(0, &pobj->m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_Init(COSE_INIT_FLAGS_NO_CBOR_TAG, &pobj->m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
 		_COSE_SignerInfo_Free(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
@@ -212,7 +212,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 		break;
 
 	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
 	fRet = true;

@@ -150,6 +150,7 @@ typedef enum {
 
 	COSE_Header_KDF_PUB_other = -999,
 	COSE_Header_KDF_PRIV = -998,
+	COSE_Header_UseCompressedECDH = -997,
 
 	COSE_Header_ECDH_EPHEMERAL = -1,
 	COSE_Header_ECDH_STATIC = -2
@@ -302,4 +303,4 @@ bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flag
 
 extern cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
 extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
-
+extern cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);

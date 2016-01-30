@@ -234,6 +234,7 @@ cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index);
 ///  NEW CBOR FUNCTIONS
 
 bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
+cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 
 
 enum {

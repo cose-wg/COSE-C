@@ -281,6 +281,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 	cn_Alg = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) goto errorReturn;
 
+	CHECK_CONDITION(cn_Alg->type != CN_CBOR_TEXT, COSE_ERR_UNKNOWN_ALGORITHM);
 	CHECK_CONDITION((cn_Alg->type == CN_CBOR_UINT) || (cn_Alg->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 	alg = (int) cn_Alg->v.uint;
 
@@ -308,7 +309,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 	case COSE_Algorithm_AES_GCM_256: cbitKey = 256; break;
 
 	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
 	//  Build protected headers

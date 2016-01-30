@@ -367,6 +367,7 @@ void MAC_Corners()
 	HCOSE_RECIPIENT hRecipient = NULL;
     byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cose_errback cose_error;
 
     //  Missing case - addref then release on item
 
@@ -408,11 +409,22 @@ void MAC_Corners()
 	hRecipient = COSE_Recipient_from_shared_secret(rgb, sizeof(rgb), rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hRecipient == NULL) CFails++;
 	if (!COSE_Mac_AddRecipient(hMAC, hRecipient, NULL)) CFails++;
-	if (COSE_Mac_encrypt(hMAC, NULL)) CFails++;
-	if (COSE_Mac_GetRecipient(hMAC, 9, NULL)) CFails++;
+	CHECK_FAILURE(COSE_Mac_encrypt(hMAC, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	COSE_Mac_Free(hMAC);
+	COSE_Recipient_Free(hRecipient);
 
+	hMAC = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hMAC == NULL) CFails++;
+	if (!COSE_Mac_SetContent(hMAC, (byte *) "Message", 7, NULL)) CFails++;
 	if (!COSE_Mac_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
-	if (COSE_Mac_encrypt(hMAC, NULL)) CFails++;
+	hRecipient = COSE_Recipient_from_shared_secret(rgb, sizeof(rgb), rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hRecipient == NULL) CFails++;
+	if (!COSE_Mac_AddRecipient(hMAC, hRecipient, NULL)) CFails++;
+	CHECK_FAILURE(COSE_Mac_encrypt(hMAC, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	COSE_Recipient_Free(hRecipient);
+	COSE_Mac_Free(hMAC);
+
+	if (COSE_Mac_GetRecipient(hMAC, 9, NULL)) CFails++;
 
     return;
 }
@@ -423,6 +435,7 @@ void MAC0_Corners()
 	HCOSE_MAC0 hMAC;
 	byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cose_errback cose_error;
 
 	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
@@ -456,11 +469,15 @@ void MAC0_Corners()
 	if (hMAC == NULL) CFails++;
 	if (!COSE_Mac0_SetContent(hMAC, (byte *) "Message", 7, NULL)) CFails++;
 	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
-	if (COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), NULL)) CFails++;
+	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	COSE_Mac0_Free(hMAC);
 
+	hMAC = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hMAC == NULL) CFails++;
+	if (!COSE_Mac0_SetContent(hMAC, (byte *) "Message", 7, NULL)) CFails++;
 	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
-	if (COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), NULL)) CFails++;
-
+	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	COSE_Mac0_Free(hMAC);
 
 	return;
 }

@@ -34,7 +34,6 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
 
 	pobj->m_cborRoot = pobj->m_cbor = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
-	pobj->m_cborRoot = NULL;
 	pobj->m_ownMsg = 1;
 
 #ifdef TAG_IN_ARRAY
@@ -53,13 +52,13 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
 	CHECK_CONDITION_CBOR(_COSE_array_replace(pobj, pobj->m_unprotectMap, INDEX_UNPROTECTED, CBOR_CONTEXT_PARAM_COMMA &errState), errState);
 	pobj->m_ownUnprotectedMap = false;
 
-	/*
+	
 	if (!(flags & COSE_INIT_FLAGS_NO_CBOR_TAG)) {
 		cn_cbor_errback cbor_error;
 		cn_cbor * cn = cn_cbor_tag_create(msgType, pobj->m_cborRoot, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 		pobj->m_cborRoot = cn;
-	}*/
+	}
 
 	pobj->m_refCount = 1;
 
@@ -76,6 +75,7 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 #ifdef TAG_IN_ARRAY
 	cn_cbor * cbor;
 #endif // TAG_IN_ARRAY
+	cn_cbor_errback cbor_error;
 
 #ifdef USE_CBOR_CONTEXT
 	if (context != NULL) pobj->m_allocContext = *context;
@@ -116,6 +116,9 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 	pobj->m_unprotectMap = _COSE_arrayget_int(pobj, INDEX_UNPROTECTED);
 	CHECK_CONDITION((pobj->m_unprotectMap != NULL) && (pobj->m_unprotectMap->type == CN_CBOR_MAP), COSE_ERR_INVALID_PARAMETER);
 	pobj->m_ownUnprotectedMap = false;
+
+	pobj->m_dontSendMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, cbor_error);
 
 	pobj->m_ownMsg = true;
 	pobj->m_refCount = 1;
@@ -309,15 +312,11 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 	cn_cbor_context * context = &pCose->m_allocContext;
 #endif
 	cn_cbor_errback error;
-	bool f;
+	bool f = false;
 
-	if ((flags & COSE_BOTH) == COSE_BOTH) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-	errorReturn:
-		return false;
-	}
-
-	if (perr != NULL) perr->err = COSE_ERR_NONE;
+	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_protectedMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_unprotectMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_dontSendMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
 
 	switch (flags) {
 	case COSE_PROTECT_ONLY:
@@ -343,6 +342,7 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 
 	CHECK_CONDITION(f, _MapFromCBOR(error));
 
+errorReturn:
 	return f;
 }
 

@@ -38,7 +38,7 @@ HCOSE_RECIPIENT COSE_Recipient_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA co
 	COSE_RecipientInfo * pobj = (COSE_RecipientInfo *)COSE_CALLOC(1, sizeof(COSE_RecipientInfo), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(flags, &pobj->m_encrypt.m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_Init(flags | COSE_INIT_FLAGS_NO_CBOR_TAG, &pobj->m_encrypt.m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Recipient_Free(pobj);
 		return NULL;
 	}
@@ -673,10 +673,16 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient, const byte * rgbKe
 	context = &p->m_encrypt.m_message.m_allocContext;
 #endif
 
-	cn_Temp = cn_cbor_int_create(COSE_Algorithm_Direct, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
-	if (!COSE_Recipient_map_put(hRecipient, COSE_Header_Algorithm, cn_Temp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
-	cn_Temp = NULL;
+	cn_cbor * cnAlg = _COSE_map_get_int(&p->m_encrypt.m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
+	if (cnAlg != NULL) {
+		CHECK_CONDITION(cnAlg->type == CN_CBOR_INT && cnAlg->v.sint == COSE_Algorithm_Direct, COSE_ERR_INVALID_PARAMETER);
+	}
+	else {
+		cn_Temp = cn_cbor_int_create(COSE_Algorithm_Direct, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+		CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
+		if (!COSE_Recipient_map_put(hRecipient, COSE_Header_Algorithm, cn_Temp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+		cn_Temp = NULL;
+	}
 
 	if (cbKid > 0) {
 		pbTemp = (byte *)COSE_CALLOC(cbKid, 1, context);
