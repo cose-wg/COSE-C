@@ -322,7 +322,8 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	cn_Alg = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) goto errorReturn;
-	CHECK_CONDITION(((cn_Alg->type == CN_CBOR_UINT || cn_Alg->type == CN_CBOR_INT)), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cn_Alg->type != CN_CBOR_TEXT, COSE_ERR_UNKNOWN_ALGORITHM);
+	CHECK_CONDITION(((cn_Alg->type == CN_CBOR_UINT || cn_Alg->type == CN_CBOR_INT)), COSE_ERR_UNKNOWN_ALGORITHM);
 
 	alg = (int) cn_Alg->v.uint;
 
@@ -350,7 +351,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 		break;
 
 	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
 	//  If we are doing direct encryption - then recipient generates the key

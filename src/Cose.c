@@ -308,15 +308,11 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 	cn_cbor_context * context = &pCose->m_allocContext;
 #endif
 	cn_cbor_errback error;
-	bool f;
+	bool f = false;
 
-	if ((flags & COSE_BOTH) == COSE_BOTH) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-	errorReturn:
-		return false;
-	}
-
-	if (perr != NULL) perr->err = COSE_ERR_NONE;
+	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_protectedMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_unprotectMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_dontSendMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
 
 	switch (flags) {
 	case COSE_PROTECT_ONLY:
@@ -342,6 +338,7 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 
 	CHECK_CONDITION(f, _MapFromCBOR(error));
 
+errorReturn:
 	return f;
 }
 

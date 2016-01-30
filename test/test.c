@@ -793,7 +793,7 @@ int main(int argc, char ** argv)
 	}
 	else {
 #ifdef USE_CBOR_CONTEXT
-		allocator = CreateContext(-1);
+		allocator = CreateContext((unsigned int) -1);
 #endif
 		MacMessage();
 		SignMessage();

@@ -197,8 +197,8 @@ extern bool _COSE_Mac0_Release(COSE_Mac0Message * p);
 //
 //  Debugging Items
 
-#define DO_ASSERT assert(false);
-//#define DO_ASSERT
+//#define DO_ASSERT assert(false);
+#define DO_ASSERT
 #define CHECK_CONDITION(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}}
 #define FAIL_CONDITION(error) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}
 #define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = _MapFromCBOR(error);} goto errorReturn;}}
@@ -234,6 +234,7 @@ cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index);
 ///  NEW CBOR FUNCTIONS
 
 bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
+cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 
 
 enum {
