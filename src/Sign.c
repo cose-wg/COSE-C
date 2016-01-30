@@ -44,10 +44,6 @@ HCOSE_SIGN COSE_Sign_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_SignMessage * pobj = (COSE_SignMessage *)COSE_CALLOC(1, sizeof(COSE_SignMessage), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
-	if (pobj == NULL) {
-		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
-		return NULL;
-	}
 
 	if (!_COSE_Init(flags, &pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Sign_Release(pobj);
