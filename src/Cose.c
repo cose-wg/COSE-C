@@ -75,6 +75,7 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 #ifdef TAG_IN_ARRAY
 	cn_cbor * cbor;
 #endif // TAG_IN_ARRAY
+	cn_cbor_errback cbor_error;
 
 #ifdef USE_CBOR_CONTEXT
 	if (context != NULL) pobj->m_allocContext = *context;
@@ -115,6 +116,9 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 	pobj->m_unprotectMap = _COSE_arrayget_int(pobj, INDEX_UNPROTECTED);
 	CHECK_CONDITION((pobj->m_unprotectMap != NULL) && (pobj->m_unprotectMap->type == CN_CBOR_MAP), COSE_ERR_INVALID_PARAMETER);
 	pobj->m_ownUnprotectedMap = false;
+
+	pobj->m_dontSendMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, cbor_error);
 
 	pobj->m_ownMsg = true;
 	pobj->m_refCount = 1;
