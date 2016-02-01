@@ -60,6 +60,7 @@ struct _RecipientInfo {
 	COSE_Enveloped m_encrypt;
 	COSE_RecipientInfo * m_recipientNext;
 	const cn_cbor * m_pkey;
+	const cn_cbor * m_pkeyStatic;
 };
 
 typedef struct {

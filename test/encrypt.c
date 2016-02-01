@@ -141,6 +141,12 @@ int BuildEnvelopedMessage(const cn_cbor * pControl)
 
 		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL)) goto returnError;
 
+		cn_cbor * pSenderKey = cn_cbor_mapget_string(pRecipients, "sender_key");
+		if (pSenderKey != NULL) {
+			cn_cbor * pSendKey = BuildKey(pSenderKey, false);
+			if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, NULL)) goto returnError;
+		}
+
 		COSE_Recipient_Free(hRecip);
 	}
 

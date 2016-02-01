@@ -328,10 +328,6 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 		break;
 
 	case COSE_DONT_SEND:
-		if (pCose->m_dontSendMap == NULL) {
-			pCose->m_dontSendMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &error);
-			CHECK_CONDITION(pCose->m_dontSendMap != NULL, COSE_ERR_OUT_OF_MEMORY);
-		}
 		f = cn_cbor_mapput_int(pCose->m_dontSendMap, key, value, CBOR_CONTEXT_PARAM_COMMA &error);
 		break;
 
