@@ -187,11 +187,10 @@ static bool HKDF_X(COSE * pCose, bool fHMAC, bool fECDH, bool fStatic, bool fSen
 		}
 	}
 	else {
-		if (pKeyPrivate != NULL) {
+		CHECK_CONDITION(pKeyPrivate != NULL, COSE_ERR_INVALID_PARAMETER);
 			cn = cn_cbor_mapget_int(pKeyPrivate, COSE_Key_Type);
 			CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_UINT), COSE_ERR_INVALID_PARAMETER);
 			CHECK_CONDITION(cn->v.uint == COSE_Key_Type_OCTET, COSE_ERR_INVALID_PARAMETER);
-		}
 
 		CHECK_CONDITION(cn->v.sint == 4, COSE_ERR_INVALID_PARAMETER);
 
@@ -793,7 +792,7 @@ bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, int de
 	cn_cbor_errback cbor_err;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context;
-#endif;
+#endif
 
 	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
