@@ -1070,3 +1070,24 @@ errorReturn:
 	goto returnHere;
 }
 
+/*! brief Retrieve header parameter from a recipient structure
+*
+* Retrieve a header parameter from the message.
+* Retrieved object is the same as the one in the message - do not delete it
+*
+* @param[in]	h	Handle of recipient object
+* @param[in]    key	Key to look for
+* @param[in]	flags	What buckets should we look for the message
+* @param[out]	perror	Location to return error codes
+* @return	Object which is found or NULL
+*/
+
+cn_cbor * COSE_Recipient_map_get_int(HCOSE_RECIPIENT h, int key, int flags, cose_errback * perror)
+{
+	if (!IsValidRecipientHandle(h)) {
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
+		return NULL;
+	}
+
+	return _COSE_map_get_int(&((COSE_RecipientInfo *)h)->m_encrypt.m_message, key, flags, perror);
+}

@@ -65,6 +65,13 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 
 		if (!SetReceivingAttributes((HCOSE) hRecip, pRecipients, Attributes_Recipient_protected)) goto errorReturn;
 
+		cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipients, "sender_key");
+		if (cnStatic != NULL) {
+			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
+				COSE_Recipient_map_put(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
+			}
+		}
+
 		pFail = cn_cbor_mapget_string(pRecipients, "fail");
 		if (COSE_Enveloped_decrypt(hEnc, hRecip, NULL)) {
 			if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;

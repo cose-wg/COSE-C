@@ -61,6 +61,13 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 			continue;
 		}
 
+		cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipients, "sender_key");
+		if (cnStatic != NULL) {
+			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
+				COSE_Recipient_map_put(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
+			}
+		}
+
 		pFail = cn_cbor_mapget_string(pRecipients, "fail");
 		if (COSE_Mac_validate(hMAC, hRecip, NULL)) {
 			if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
