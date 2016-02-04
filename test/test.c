@@ -247,7 +247,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		case Attributes_Recipient_protected:
-			f = COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Enveloped_protected:
@@ -474,6 +474,7 @@ void RunCorners()
 	Enveloped_Corners();
 	Sign_Corners();
 	Sign0_Corners();
+	Recipient_Corners();
 }
 
 void RunMemoryTest(const char * szFileName)

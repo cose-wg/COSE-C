@@ -207,7 +207,7 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback
 bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, int destination, cose_errback * perror);
 bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
-bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror);
+bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror);
 cn_cbor * COSE_Recipient_map_get_string(HCOSE_RECIPIENT cose, const char * key, int flags, cose_errback * errp);
 cn_cbor * COSE_Recipient_map_get_int(HCOSE_RECIPIENT cose, int key, int flags, cose_errback * errp);
 

@@ -169,7 +169,7 @@ static bool HKDF_X(COSE * pCose, bool fHMAC, bool fECDH, bool fStatic, bool fSen
 
 		if (fSend) {
 			CHECK_CONDITION(pKeyPublic != NULL, COSE_ERR_INVALID_PARAMETER);
-			pkeyMessage = pKeyPrivate;
+			pkeyMessage = (cn_cbor *) pKeyPrivate;
 
 			if (!ECDH_ComputeSecret(pCose, &pkeyMessage, pKeyPublic, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 			if (pkeyMessage->parent == NULL) {
@@ -680,13 +680,11 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient, const byte * rgbKe
 	byte * pbTemp = NULL;
 	byte * pbKey = NULL;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context;
+	cn_cbor_context * context = NULL;
 #endif
 
-	if (!IsValidRecipientHandle(hRecipient) || (rgbKey == NULL)) {
-		if (perr != NULL) perr->err = COSE_ERR_CBOR;
-		return false;
-	}
+	CHECK_CONDITION(IsValidRecipientHandle(hRecipient), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(rgbKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	p = (COSE_RecipientInfo *)hRecipient;
 
@@ -701,7 +699,7 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient, const byte * rgbKe
 	else {
 		cn_Temp = cn_cbor_int_create(COSE_Algorithm_Direct, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 		CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
-		if (!COSE_Recipient_map_put(hRecipient, COSE_Header_Algorithm, cn_Temp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+		if (!COSE_Recipient_map_put_int(hRecipient, COSE_Header_Algorithm, cn_Temp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
 		cn_Temp = NULL;
 	}
 
@@ -714,7 +712,7 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient, const byte * rgbKe
 		CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
 		pbTemp = NULL;
 
-		if (!COSE_Recipient_map_put(hRecipient, COSE_Header_KID, cnTemp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+		if (!COSE_Recipient_map_put_int(hRecipient, COSE_Header_KID, cnTemp, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
 	}
 
 	pbKey = (byte *)COSE_CALLOC(cbKey, 1, context);
@@ -749,21 +747,20 @@ errorReturn:
 	return false;
 }
 
-bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback * perror)
+bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback * perr)
 {
 	COSE_RecipientInfo * p;
 
-	if (!IsValidRecipientHandle(h) || (pKey == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
-
-
+	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	p = (COSE_RecipientInfo *)h;
 	p->m_pkey = pKey;
 
 	return true;
+
+errorReturn:
+	return false;
 }
 
 /*!
@@ -791,7 +788,7 @@ bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, int de
 	cn_cbor * cn3 = NULL;
 	cn_cbor_errback cbor_err;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context;
+	cn_cbor_context * context = NULL;
 #endif
 
 	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
@@ -875,7 +872,7 @@ errorReturn:
 bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
 	if (!IsValidRecipientHandle(hcose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
 		return false;
 	}
 
@@ -883,14 +880,12 @@ bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose, const byte * pbExternalDa
 }
 
 
-bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perr)
 {
-	if (!IsValidRecipientHandle(h) || (value == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	if (!_COSE_map_put(&((COSE_RecipientInfo *)h)->m_encrypt.m_message, key, value, flags, perror)) return false;
+	if (!_COSE_map_put(&((COSE_RecipientInfo *)h)->m_encrypt.m_message, key, value, flags, perr)) return false;
 
 	if (key == COSE_Header_Algorithm) {
 		if (value->type == CN_CBOR_INT) {
@@ -918,6 +913,9 @@ bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int fla
 	}
 
 	return true;
+
+errorReturn:
+	return false;
 }
 
 

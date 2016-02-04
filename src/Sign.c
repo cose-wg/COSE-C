@@ -150,13 +150,10 @@ bool COSE_Sign_SetContent(HCOSE_SIGN h, const byte * rgb, size_t cb, cose_errbac
 #endif
 	cn_cbor * p = NULL;
 	COSE_SignMessage * pMessage = (COSE_SignMessage *)h;
+	bool f = false;
 
-	if (!IsValidSignHandle(h) || (rgb == NULL)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-	errorReturn:
-		if (p != NULL) CN_CBOR_FREE(p, context);
-		return false;
-	}
+	CHECK_CONDITION(IsValidSignHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(rgb != NULL, COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pMessage->m_message.m_allocContext;
@@ -166,8 +163,13 @@ bool COSE_Sign_SetContent(HCOSE_SIGN h, const byte * rgb, size_t cb, cose_errbac
 	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(_COSE_array_replace(&pMessage->m_message, p, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
+	p = NULL;
 
-	return true;
+	f = true;
+errorReturn:
+	if (p != NULL) CN_CBOR_FREE(p, context);
+
+	return f;
 }
 
 HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int algId, cose_errback * perr)
@@ -181,13 +183,8 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	HCOSE_SIGNER hSigner = NULL;
 	cn_cbor_errback cbor_error;
 
-	if (!IsValidSignHandle(hSign) || (pkey == NULL)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-	errorReturn:
-		if (cbor2 != NULL) CN_CBOR_FREE((void *) cbor2, context);
-		if (hSigner != NULL) COSE_Signer_Free(hSigner);
-		return NULL;
-	}
+	CHECK_CONDITION(IsValidSignHandle(hSign), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pMessage->m_message.m_allocContext;
@@ -216,6 +213,11 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign, const cn_cbor * pkey, int al
 	if (!COSE_Sign_AddSigner(hSign, hSigner, perr)) goto errorReturn;
 
 	return hSigner;
+
+errorReturn:
+	if (cbor2 != NULL) CN_CBOR_FREE((void *)cbor2, context);
+	if (hSigner != NULL) COSE_Signer_Free(hSigner);
+	return NULL;
 }
 
 bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr)
@@ -229,7 +231,7 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback * perr)
 	const cn_cbor * pcborProtected;
 
 	if (!IsValidSignHandle(h)) {
-		CHECK_CONDITION(false, COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(false, COSE_ERR_INVALID_HANDLE);
 	errorReturn:
 		return false;
 	}
@@ -258,8 +260,8 @@ bool COSE_Sign_validate(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * p
 	const cn_cbor * cnContent;
 	const cn_cbor * cnProtected;
 
-	CHECK_CONDITION(IsValidSignHandle(hSign), COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(IsValidSignerHandle(hSigner), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidSignHandle(hSign), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidSignerHandle(hSigner), COSE_ERR_INVALID_HANDLE);
 
 	pSign = (COSE_SignMessage *)hSign;
 	pSigner = (COSE_SignerInfo *)hSigner;
@@ -290,8 +292,8 @@ bool COSE_Sign_AddSigner(HCOSE_SIGN hSign, HCOSE_SIGNER hSigner, cose_errback * 
 #endif
 	cn_cbor_errback cbor_error;
 
-	CHECK_CONDITION(IsValidSignHandle(hSign), COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(IsValidSignerHandle(hSigner), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidSignHandle(hSign), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidSignerHandle(hSigner), COSE_ERR_INVALID_HANDLE);
 
 	pSign = (COSE_SignMessage *)hSign;
 	pSigner = (COSE_SignerInfo *)hSigner;
@@ -326,7 +328,7 @@ errorReturn:
 cn_cbor * COSE_Sign_map_get_int(HCOSE_SIGN h, int key, int flags, cose_errback * perror)
 {
 	if (!IsValidSignHandle(h)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
 		return NULL;
 	}
 
@@ -335,8 +337,8 @@ cn_cbor * COSE_Sign_map_get_int(HCOSE_SIGN h, int key, int flags, cose_errback *
 
 bool COSE_Sign_map_put_int(HCOSE_SIGN h, int key, cn_cbor * value, int flags, cose_errback * perror)
 {
-	if (!IsValidSignHandle(h) || (value == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+	if (!IsValidSignHandle(h)){
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
 		return false;
 	}
 
@@ -349,7 +351,7 @@ HCOSE_SIGNER COSE_Sign_GetSigner(HCOSE_SIGN cose, int iSigner, cose_errback * pe
 	COSE_SignerInfo * p;
 
 	if (!IsValidSignHandle(cose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
 		return NULL;
 	}
 
