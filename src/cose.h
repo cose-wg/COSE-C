@@ -211,6 +211,9 @@ bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h, int key, cn_cbor * value, int
 cn_cbor * COSE_Recipient_map_get_string(HCOSE_RECIPIENT cose, const char * key, int flags, cose_errback * errp);
 cn_cbor * COSE_Recipient_map_get_int(HCOSE_RECIPIENT cose, int key, int flags, cose_errback * errp);
 
+extern bool COSE_Recipient_AddRecipient(HCOSE_RECIPIENT hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
+HCOSE_RECIPIENT COSE_Recipient_GetRecipient(HCOSE_RECIPIENT cose, int iRecipient, cose_errback * perr);
+
 
 /*
  *  Encrypt message API
