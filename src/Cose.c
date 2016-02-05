@@ -281,6 +281,9 @@ cn_cbor * _COSE_map_get_int(COSE * pcose, int key, int flags, cose_errback * per
 	if ((pcose->m_dontSendMap != NULL) && ((flags & COSE_DONT_SEND) != 0)) {
 		p = cn_cbor_mapget_int(pcose->m_dontSendMap, key);
 	}
+
+	if ((p == NULL) && (perror != NULL)) perror->err = COSE_ERR_INVALID_PARAMETER;
+
 	return p;
 }
 
@@ -313,6 +316,7 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 #endif
 	cn_cbor_errback error;
 	bool f = false;
+	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_protectedMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_unprotectMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
@@ -328,10 +332,6 @@ bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errba
 		break;
 
 	case COSE_DONT_SEND:
-		if (pCose->m_dontSendMap == NULL) {
-			pCose->m_dontSendMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &error);
-			CHECK_CONDITION(pCose->m_dontSendMap != NULL, COSE_ERR_OUT_OF_MEMORY);
-		}
 		f = cn_cbor_mapput_int(pCose->m_dontSendMap, key, value, CBOR_CONTEXT_PARAM_COMMA &error);
 		break;
 

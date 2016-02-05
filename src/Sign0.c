@@ -126,13 +126,10 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 h, const byte * rgb, size_t cb, cose_errb
 #endif
 	cn_cbor * p = NULL;
 	COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;
+	bool fRet = false;
 
-	if (!IsValidSign0Handle(h) || (rgb == NULL)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
-	errorReturn:
-		if (p != NULL) CN_CBOR_FREE(p, context);
-		return false;
-	}
+	CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(rgb != NULL, COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pMessage->m_message.m_allocContext;
@@ -142,8 +139,13 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 h, const byte * rgb, size_t cb, cose_errb
 	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(_COSE_array_replace(&pMessage->m_message, p, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_OUT_OF_MEMORY);
+	p = NULL;
 
-	return true;
+	fRet = true;
+
+errorReturn:
+	if (p != NULL) CN_CBOR_FREE(p, context);
+	return fRet;
 }
 
 /*!
@@ -164,7 +166,7 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 h, const byte * rgb, size_t cb, cose_errb
 bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
 	if (!IsValidSign0Handle(hcose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
 		return false;
 	}
 
@@ -180,7 +182,7 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
 	const cn_cbor * pcborProtected;
 
 	if (!IsValidSign0Handle(h)) {
-		CHECK_CONDITION(false, COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(false, COSE_ERR_INVALID_HANDLE);
 	errorReturn:
 		return false;
 	}
@@ -203,7 +205,7 @@ bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pKey, cose_errback *
 	const cn_cbor * cnContent;
 	const cn_cbor * cnProtected;
 
-	CHECK_CONDITION(IsValidSign0Handle(hSign), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidSign0Handle(hSign), COSE_ERR_INVALID_HANDLE);
 
 	pSign = (COSE_Sign0Message *)hSign;
 
@@ -225,21 +227,22 @@ errorReturn:
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror)
 {
 	if (!IsValidSign0Handle(h)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+		if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
 		return NULL;
 	}
 
 	return _COSE_map_get_int(&((COSE_Sign0Message *)h)->m_message, key, flags, perror);
 }
 
-bool COSE_Sign0_map_put_int(HCOSE_SIGN0 h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Sign0_map_put_int(HCOSE_SIGN0 h, int key, cn_cbor * value, int flags, cose_errback * perr)
 {
-	if (!IsValidSign0Handle(h) || (value == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_map_put(&((COSE_Sign0Message *)h)->m_message, key, value, flags, perror);
+	return _COSE_map_put(&((COSE_Sign0Message *)h)->m_message, key, value, flags, perr);
+
+errorReturn:
+	return false;
 }
 
 

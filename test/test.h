@@ -21,6 +21,7 @@ int ValidateEncrypt(const cn_cbor * pControl);
 int BuildEncryptMessage(const cn_cbor * pControl);
 void Enveloped_Corners();
 void Encrypt_Corners();
+void Recipient_Corners();
 
 
 //  sign.c

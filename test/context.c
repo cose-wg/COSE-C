@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#ifdef _MSC_VER
+#endif
 #include <stdio.h>
 #include <memory.h>
 #include <assert.h>

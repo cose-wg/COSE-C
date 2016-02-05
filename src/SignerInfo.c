@@ -223,19 +223,20 @@ errorReturn:
 	return fRet;
 }
 
-bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor * pKey, cose_errback * perror)
+bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor * pKey, cose_errback * perr)
 {
 	COSE_SignerInfo * p;
+	bool fRet = false;
 
-	if (!IsValidSignerHandle(h) || (pKey == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	p = (COSE_SignerInfo *)h;
 	p->m_pkey = pKey;
 
-	return true;
+	fRet = true;
+errorReturn:
+	return fRet;
 }
 
 /*!
@@ -256,7 +257,7 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor * pKey, cose_errback * per
 bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
 	if (!IsValidSignerHandle(hcose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
 		return false;
 	}
 
@@ -332,19 +333,22 @@ errorReturn:
 cn_cbor * COSE_Signer_map_get_int(HCOSE_SIGNER h, int key, int flags, cose_errback * perr)
 {
 	if (!IsValidSignerHandle(h)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_PARAMETER;
+		if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
 		return NULL;
 	}
 
 	return _COSE_map_get_int((COSE *)h, key, flags, perr);
 }
 
-bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perr)
 {
-	if (!IsValidSignerHandle(h) || (value == NULL)) {
-		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
-		return false;
-	}
+	bool fRet = false;
 
-	return _COSE_map_put(&((COSE_SignerInfo *)h)->m_message, key, value, flags, perror);
+	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	return _COSE_map_put(&((COSE_SignerInfo *)h)->m_message, key, value, flags, perr);
+
+errorReturn:
+	return fRet;
 }

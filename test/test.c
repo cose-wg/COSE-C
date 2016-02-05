@@ -28,7 +28,7 @@ typedef struct _NameMap {
 	int    i;
 } NameMap;
 
-NameMap RgAlgorithmNames[46] = {
+NameMap RgAlgorithmNames[47] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -62,6 +62,7 @@ NameMap RgAlgorithmNames[46] = {
 	{"ECDH-ES", COSE_Algorithm_ECDH_ES_HKDF_256},
 {"ECDH-ES-512",COSE_Algorithm_ECDH_ES_HKDF_512},
 { "ECDH-SS", COSE_Algorithm_ECDH_SS_HKDF_256 },
+{ "ECDH-SS-256", COSE_Algorithm_ECDH_SS_HKDF_256}, 
 { "ECDH-SS-512",COSE_Algorithm_ECDH_SS_HKDF_512 },
 { "ECDH-ES+A128KW", COSE_Algorithm_ECDH_ES_A128KW },
 { "ECDH-ES+A192KW", COSE_Algorithm_ECDH_ES_A192KW },
@@ -246,7 +247,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		case Attributes_Recipient_protected:
-			f = COSE_Recipient_map_put((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 
 		case Attributes_Enveloped_protected:
@@ -473,6 +474,7 @@ void RunCorners()
 	Enveloped_Corners();
 	Sign_Corners();
 	Sign0_Corners();
+	Recipient_Corners();
 }
 
 void RunMemoryTest(const char * szFileName)

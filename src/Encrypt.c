@@ -513,6 +513,18 @@ bool _COSE_Enveloped_SetContent(COSE_Enveloped * cose, const byte * rgb, size_t 
 	return true;
 }
 
+/*! brief Retrieve header parameter from an enveloped message structure
+*
+* Retrieve a header parameter from the message.
+* Retrieved object is the same as the one in the message - do not delete it
+*
+* @param[in]	h	Handle of recipient object
+* @param[in]    key	Key to look for
+* @param[in]	flags	What buckets should we look for the message
+* @param[out]	perror	Location to return error codes
+* @return	Object which is found or NULL
+*/
+
 cn_cbor * COSE_Enveloped_map_get_int(HCOSE_ENVELOPED h, int key, int flags, cose_errback * perror)
 {
 	if (!IsValidEnvelopedHandle(h)) {

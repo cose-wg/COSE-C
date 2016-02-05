@@ -153,15 +153,22 @@ typedef enum {
 	COSE_Header_UseCompressedECDH = -997,
 
 	COSE_Header_ECDH_EPHEMERAL = -1,
-	COSE_Header_ECDH_STATIC = -2
+	COSE_Header_ECDH_STATIC = -2,
+	COSE_Header_ECDH_EPK = -1,
+	COSE_Header_ECDH_SPK = -2,
+	COSE_Header_ECDH_SPK_KID = -2,
 
 } COSE_Header;
 
 typedef enum {
 	COSE_Key_Type_EC2 = 2,
+	COSE_Key_Type_OCTET = 4,
 	COSE_Key_Type = 1,
 	COSE_Key_ID = 2,
 	COSE_Parameter_KID = 4,
+	COSE_Key_EC2_Curve=-1,
+	COSE_Key_EC2_X = -2,
+	COSE_Key_EC2_Y = -3
 } COSE_Constants;
 
 
@@ -197,9 +204,10 @@ HCOSE_RECIPIENT COSE_Recipient_from_shared_secret(byte * rgbKey, int cbKey, byte
 
 bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h, const byte * rgb, int cb, const byte * rgbKid, int cbKid, cose_errback * perr);
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, cose_errback * perror);
+bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h, const cn_cbor * pKey, int destination, cose_errback * perror);
 bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
-bool COSE_Recipient_map_put(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror);
+bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h, int key, cn_cbor * value, int flags, cose_errback * perror);
 cn_cbor * COSE_Recipient_map_get_string(HCOSE_RECIPIENT cose, const char * key, int flags, cose_errback * errp);
 cn_cbor * COSE_Recipient_map_get_int(HCOSE_RECIPIENT cose, int key, int flags, cose_errback * errp);
 

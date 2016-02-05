@@ -10,6 +10,11 @@
 #include "test.h"
 #include "context.h"
 
+#ifdef _MSC_VER
+#pragma warning (disable: 4127)
+#endif
+
+
 int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -59,6 +64,13 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
 			fFail = true;
 			continue;
+		}
+
+		cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipients, "sender_key");
+		if (cnStatic != NULL) {
+			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
+				COSE_Recipient_map_put_int(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
+			}
 		}
 
 		pFail = cn_cbor_mapget_string(pRecipients, "fail");
@@ -134,6 +146,12 @@ int BuildMacMessage(const cn_cbor * pControl)
 		if (!SetSendingAttributes((HCOSE) hRecip, pRecipients, Attributes_Recipient_protected)) goto returnError;
 
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL))goto returnError;
+
+		cn_cbor * pSenderKey = cn_cbor_mapget_string(pRecipients, "sender_key");
+		if (pSenderKey != NULL) {
+			cn_cbor * pSendKey = BuildKey(pSenderKey, false);
+			if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, NULL)) goto returnError;
+		}
 
 		if (!COSE_Mac_AddRecipient(hMacObj, hRecip, NULL)) goto returnError;
 
