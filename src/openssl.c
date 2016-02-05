@@ -774,6 +774,7 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * perr)
 {
 	EC_KEY * pNewKey = EC_KEY_new();
 	byte  rgbKey[512+1];
+	int cbKey;
 	const cn_cbor * p;
 	int nidGroup = -1;
 	EC_POINT * pPoint = NULL;
@@ -809,25 +810,29 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * perr)
 	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey+1, p->v.str, p->length);
+	
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Y);
 	CHECK_CONDITION((p != NULL), COSE_ERR_INVALID_PARAMETER);
 	if (p->type == CN_CBOR_BYTES) {
 		rgbKey[0] = POINT_CONVERSION_UNCOMPRESSED;
+		cbKey = (*cbGroup * 2) + 1;
 		CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
 		memcpy(rgbKey + p->length + 1, p->v.str, p->length);
 	}
 	else if (p->type == CN_CBOR_TRUE) {
+		cbKey = (*cbGroup) + 1;
 		rgbKey[0] = POINT_CONVERSION_COMPRESSED + 1;
 	}
 	else if (p->type == CN_CBOR_FALSE) {
+		cbKey = (*cbGroup) + 1;
 		rgbKey[0] = POINT_CONVERSION_COMPRESSED;
 	}
 	else FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 
 	pPoint = EC_POINT_new(ecgroup);
 	CHECK_CONDITION(pPoint != NULL, COSE_ERR_CRYPTO_FAIL);
-	CHECK_CONDITION(EC_POINT_oct2point(ecgroup, pPoint, rgbKey, p->length * 2 + 1, NULL) == 1, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EC_POINT_oct2point(ecgroup, pPoint, rgbKey, cbKey, NULL) == 1, COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(EC_KEY_set_public_key(pNewKey, pPoint) == 1, COSE_ERR_CRYPTO_FAIL);
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
