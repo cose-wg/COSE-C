@@ -725,7 +725,6 @@ void RunTestsInDirectory(const char * szDir)
 	while ((dp = readdir(dirp)) != NULL) {
 		int cch = strlen(dp->d_name);
 		if (cch < 4) continue;
-		if (strcmp(dp->d_name, "Triple-01.json") == 0) continue;
 		rgchFullName[ich] = 0;
 		if (ich + strlen(dp->d_name) >= sizeof(rgchFullName) - 2) {
 			fprintf(stderr, "Buffer overflow problem\n");

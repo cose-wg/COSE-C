@@ -16,6 +16,85 @@
 #pragma warning (disable: 4127)
 #endif
 
+bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, const cn_cbor * pEnveloped, const cn_cbor * pRecipient1, int iRecipient1, const cn_cbor * pRecipient2, int iRecipient2)
+{
+	HCOSE_ENVELOPED hEnc = NULL;
+	HCOSE_RECIPIENT hRecip = NULL;
+	HCOSE_RECIPIENT hRecip2 = NULL;
+	bool fRet = false;
+	int type;
+	cose_errback cose_err;
+	cn_cbor * pkey;
+
+	hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
+	if (hEnc == NULL) {
+		if (fFailBody && (cose_err.err == COSE_ERR_INVALID_PARAMETER)) return true;
+		goto errorReturn;
+	}
+
+	if (!SetReceivingAttributes((HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected)) goto errorReturn;
+
+	hRecip = COSE_Enveloped_GetRecipient(hEnc, iRecipient1, NULL);
+	if (hRecip == NULL) goto errorReturn;
+	if (!SetReceivingAttributes((HCOSE)hRecip, pRecipient1, Attributes_Recipient_protected)) goto errorReturn;
+
+	if (pRecipient2 != NULL) {
+		pkey = BuildKey(cn_cbor_mapget_string(pRecipient2, "key"), false);
+		if (pkey == NULL) goto errorReturn;
+
+		hRecip2 = COSE_Recipient_GetRecipient(hRecip, iRecipient2, NULL);
+		if (hRecip2 == NULL) goto errorReturn;
+
+		if (!SetReceivingAttributes((HCOSE)hRecip2, pRecipient2, Attributes_Recipient_protected)) goto errorReturn;
+		if (!COSE_Recipient_SetKey(hRecip2, pkey, NULL)) goto errorReturn;
+	}
+	else {
+		pkey = BuildKey(cn_cbor_mapget_string(pRecipient1, "key"), false);
+		if (pkey == NULL) goto errorReturn;
+		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) goto errorReturn;
+	}
+
+
+	cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipient1, "sender_key");
+	if (cnStatic != NULL) {
+		if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
+			COSE_Recipient_map_put_int(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
+		}
+	}
+
+	if (pRecipient2 != NULL) {
+		cnStatic = cn_cbor_mapget_string(pRecipient2, "sender_key");
+		if (cnStatic != NULL) {
+			if (COSE_Recipient_map_get_int(hRecip2, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
+				COSE_Recipient_map_put_int(hRecip2, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
+			}
+		}
+	}
+
+	if (!fFailBody) {
+		cn_cbor * cn = cn_cbor_mapget_string(pRecipient1, "fail");
+		if (cn != NULL && (cn->type == CN_CBOR_TRUE)) fFailBody = true;
+		if (fFailBody && (pRecipient2 != NULL)) {
+			cn = cn_cbor_mapget_string(pRecipient2, "fail");
+			if (cn != NULL && (cn->type == CN_CBOR_TRUE)) fFailBody = true;
+		}
+	}
+
+	if (COSE_Enveloped_decrypt(hEnc, hRecip, NULL)) {
+		fRet = !fFailBody;
+	}
+	else {
+		fRet = fFailBody;
+	}
+
+errorReturn:
+	if (hEnc != NULL) COSE_Enveloped_Free(hEnc);
+	if (hRecip != NULL) COSE_Recipient_Free(hRecip);
+	if (hRecip2 != NULL) COSE_Recipient_Free(hRecip2);
+
+
+	return fRet;
+}
 
 int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
@@ -23,10 +102,7 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 	const cn_cbor * pFail;
 	const cn_cbor * pEnveloped;
 	const cn_cbor * pRecipients;
-	HCOSE_ENVELOPED hEnc;
-	int type;
 	int iRecipient;
-	bool fFail = false;
 	bool fFailBody = false;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
@@ -44,56 +120,18 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 	iRecipient = (int) pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
 	for (; pRecipients != NULL; iRecipient--, pRecipients = pRecipients->next) {
-
-		hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-		if (hEnc == NULL) { if (fFailBody) return 0; else  goto errorReturn; }
-
-		if (!SetReceivingAttributes((HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected)) goto errorReturn;
-
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
-		if (pkey == NULL) {
-			fFail = true;
-			continue;
-		}
-
-		HCOSE_RECIPIENT hRecip = COSE_Enveloped_GetRecipient(hEnc, iRecipient, NULL);
-		if (hRecip == NULL) {
-			fFail = true;
-			continue;
-		}
-
-		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
-			fFail = true;
-			continue;
-		}
-
-		if (!SetReceivingAttributes((HCOSE) hRecip, pRecipients, Attributes_Recipient_protected)) goto errorReturn;
-
-		cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipients, "sender_key");
-		if (cnStatic != NULL) {
-			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
-				COSE_Recipient_map_put_int(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
-			}
-		}
-
-		pFail = cn_cbor_mapget_string(pRecipients, "fail");
-		if (COSE_Enveloped_decrypt(hEnc, hRecip, NULL)) {
-			if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+		cn_cbor * pRecip2 = cn_cbor_mapget_string(pRecipients, "recipients");
+		if (pRecip2 == NULL) {
+			if (!DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped, pRecipients, iRecipient, NULL, 0)) CFails++;
 		}
 		else {
-			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+			int iRecipient2 = (int)(pRecip2->length - 1);
+			pRecip2 = pRecip2->first_child;
+			for (; pRecip2 != NULL; pRecip2 = pRecip2->next, iRecipient2--) {
+				if (!DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped, pRecipients, iRecipient, pRecip2, iRecipient2)) CFails++;
+			}
 		}
-
-		COSE_Enveloped_Free(hEnc);
-		COSE_Recipient_Free(hRecip);
 	}
-
-	if (fFailBody) {
-		if (!fFail) fFail = true;
-		else fFail = false;
-	}
-
-	if (fFail) CFails += 1;
 	return 0;
 
 errorReturn:
@@ -107,6 +145,45 @@ int ValidateEnveloped(const cn_cbor * pControl)
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
 	return _ValidateEnveloped(pControl, pbEncoded, cbEncoded);
+}
+
+HCOSE_RECIPIENT BuildRecipient(const cn_cbor * pRecipient)
+{
+	HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hRecip == NULL) goto returnError;
+
+	if (!SetSendingAttributes((HCOSE)hRecip, pRecipient, Attributes_Recipient_protected)) goto returnError;
+
+	cn_cbor * cnKey = cn_cbor_mapget_string(pRecipient, "key");
+	if (cnKey != NULL) {
+		cn_cbor * pkey = BuildKey(cnKey, true);
+		if (pkey == NULL) goto returnError;
+
+		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) goto returnError;
+	}
+
+	cnKey = cn_cbor_mapget_string(pRecipient, "recipients");
+	if (cnKey != NULL) {
+		for (cnKey = cnKey->first_child; cnKey != NULL; cnKey = cnKey->next) {
+			HCOSE_RECIPIENT hRecip2 = BuildRecipient(cnKey);
+			if (hRecip2 == NULL) goto returnError;
+			if (!COSE_Recipient_AddRecipient(hRecip, hRecip2, NULL)) goto returnError;
+			COSE_Recipient_Free(hRecip2);
+		}
+	}
+
+
+	cn_cbor * pSenderKey = cn_cbor_mapget_string(pRecipient, "sender_key");
+	if (pSenderKey != NULL) {
+		cn_cbor * pSendKey = BuildKey(pSenderKey, false);
+		if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, NULL)) goto returnError;
+	}
+
+	return hRecip;
+
+returnError:
+	COSE_Recipient_Free(hRecip);
+	return NULL;
 }
 
 int BuildEnvelopedMessage(const cn_cbor * pControl)
@@ -140,23 +217,10 @@ int BuildEnvelopedMessage(const cn_cbor * pControl)
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL; iRecipient++, pRecipients = pRecipients->next) {
-		cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
-		if (pkey == NULL) goto returnError;
-
-		HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+		HCOSE_RECIPIENT hRecip = BuildRecipient(pRecipients);
 		if (hRecip == NULL) goto returnError;
 
-		if (!SetSendingAttributes((HCOSE)hRecip, pRecipients, Attributes_Recipient_protected)) goto returnError;
-
-		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) goto returnError;
-
 		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL)) goto returnError;
-
-		cn_cbor * pSenderKey = cn_cbor_mapget_string(pRecipients, "sender_key");
-		if (pSenderKey != NULL) {
-			cn_cbor * pSendKey = BuildKey(pSenderKey, false);
-			if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, NULL)) goto returnError;
-		}
 
 		COSE_Recipient_Free(hRecip);
 	}
