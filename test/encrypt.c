@@ -176,7 +176,8 @@ HCOSE_RECIPIENT BuildRecipient(const cn_cbor * pRecipient)
 	cn_cbor * pSenderKey = cn_cbor_mapget_string(pRecipient, "sender_key");
 	if (pSenderKey != NULL) {
 		cn_cbor * pSendKey = BuildKey(pSenderKey, false);
-		if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, NULL)) goto returnError;
+		cn_cbor * pKid = cn_cbor_mapget_string(pSenderKey, "kid");
+		if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, (pKid == NULL) ? 2 : 1, NULL)) goto returnError;
 	}
 
 	return hRecip;
@@ -636,6 +637,7 @@ void Recipient_Corners()
 	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecipBad, cn, 0, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecip, NULL, 0, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecip, cn, 3, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_RETURN(COSE_Recipient_SetSenderKey(hRecip, cn, 0, &cose_error), COSE_ERR_NONE, CFails++);
 
 	CHECK_FAILURE(COSE_Recipient_SetExternal(hRecipNULL, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Recipient_SetExternal(hRecipBad, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
@@ -648,4 +650,37 @@ void Recipient_Corners()
 	CHECK_FAILURE(COSE_Recipient_map_put_int(hRecipBad, 1, cn, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Recipient_map_put_int(hRecip, 1, NULL, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 	CHECK_FAILURE(COSE_Recipient_map_put_int(hRecip, 1, cn, COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+
+	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecipNULL, hRecip, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecipBad, hRecip, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecip, hRecipNULL, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecip, hRecipBad, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+
+	COSE_Recipient_Free(hRecip);
+
+	//  Unknown algorithms
+
+	HCOSE_ENVELOPED hEnv = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	CHECK_RETURN(COSE_Enveloped_map_put_int(hEnv, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_GCM_128, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_RETURN(COSE_Enveloped_SetContent(hEnv, (byte *)"This the body", 13, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_RETURN(COSE_Recipient_map_put_int(hRecip, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_UNPROTECT_ONLY, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_RETURN(COSE_Enveloped_AddRecipient(hEnv, hRecip, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_FAILURE(COSE_Enveloped_encrypt(hEnv, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+
+	COSE_Enveloped_Free(hEnv);
+	COSE_Recipient_Free(hRecip);
+
+	hEnv = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+
+	CHECK_RETURN(COSE_Enveloped_map_put_int(hEnv, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_GCM_128, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_RETURN(COSE_Enveloped_SetContent(hEnv, (byte *)"This the body", 13, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_RETURN(COSE_Recipient_map_put_int(hRecip, COSE_Header_Algorithm, cn_cbor_string_create("Unknown", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_UNPROTECT_ONLY, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_RETURN(COSE_Enveloped_AddRecipient(hEnv, hRecip, &cose_error), COSE_ERR_NONE, CFails++);
+	CHECK_FAILURE(COSE_Enveloped_encrypt(hEnv, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+
+	COSE_Enveloped_Free(hEnv);
+	COSE_Recipient_Free(hRecip);
 }

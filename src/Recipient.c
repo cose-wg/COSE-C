@@ -316,6 +316,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 		for (pRecip2 = pcose->m_recipientFirst; pRecip2 != NULL; pRecip2 = pRecip->m_recipientNext) {
 			if (_COSE_Recipient_decrypt(pRecip2, alg, cbitKeyX, pbKeyX, perr)) break;
 		}
+		CHECK_CONDITION(pRecip2 != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 	}
 
 	cnBody = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
@@ -448,6 +449,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	cn_Alg = _COSE_map_get_int(&pRecipient->m_encrypt.m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) goto errorReturn;
 
+	CHECK_CONDITION(cn_Alg->type != CN_CBOR_TEXT, COSE_ERR_UNKNOWN_ALGORITHM);
 	CHECK_CONDITION((cn_Alg->type == CN_CBOR_UINT) || (cn_Alg->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 	alg = (int)cn_Alg->v.uint;
 
@@ -487,7 +489,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 
 	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
 	//  If we are doing direct encryption - then recipient generates the key
