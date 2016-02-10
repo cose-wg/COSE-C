@@ -168,11 +168,11 @@ struct {
 	int operation;
 	int keyNew;
 } RgStringKeys[7] = {
-	{ "kty", 0, OPERATION_IGNORE, 0},
-	{ "kid", 0, OPERATION_NONE, 1},
-	{ "crv", 2, OPERATION_STRING, -1},
-	{ "x", 2, OPERATION_BASE64, -2},
-	{ "y", 2, OPERATION_BASE64, -3},
+	{ "kty", 0, OPERATION_IGNORE, COSE_Key_Type},
+	{ "kid", 0, OPERATION_NONE, COSE_Key_ID},
+	{ "crv", 2, OPERATION_STRING, COSE_Key_EC2_Curve},
+	{ "x", 2, OPERATION_BASE64, COSE_Key_EC2_X},
+	{ "y", 2, OPERATION_BASE64, COSE_Key_EC2_Y},
 	{ "d", 2, OPERATION_BASE64, -4},
 	{ "k", 4, OPERATION_BASE64, -1}
 };

@@ -227,25 +227,53 @@ bool COSE_Mac0_encrypt(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errb
 	//  Get the key size
 
 	switch (alg) {
+#ifdef USE_AES_CBC_MAC_128_64
 	case COSE_Algorithm_CBC_MAC_128_64:
+		cbitKey = 128;
+		break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_128_128
 	case COSE_Algorithm_CBC_MAC_128_128:
 		cbitKey = 128;
 		break;
+#endif
 
-	case COSE_Algorithm_CBC_MAC_256_64:
-	case COSE_Algorithm_CBC_MAC_256_128:
-	case COSE_Algorithm_HMAC_256_64:
-	case COSE_Algorithm_HMAC_256_256:
-		cbitKey = 256;
+#ifdef USE_AES_CBC_MAC_256_64
+	case COSE_Algorithm_CBC_MAC_256_64: 
+		cbitKey = 256; 
 		break;
+#endif
 
-	case COSE_Algorithm_HMAC_384_384:
-		cbitKey = 384;
+#ifdef USE_AES_CBC_MAC_256_128
+	case COSE_Algorithm_CBC_MAC_256_128: 
+		cbitKey = 256; 
 		break;
+#endif
 
-	case COSE_Algorithm_HMAC_512_512:
-		cbitKey = 512;
+#ifdef USE_HMAC_256_64
+	case COSE_Algorithm_HMAC_256_64: 
+		cbitKey = 256; 
 		break;
+#endif
+
+#ifdef USE_HMAC_256_256
+	case COSE_Algorithm_HMAC_256_256: 
+		cbitKey = 256; 
+		break;
+#endif
+
+#ifdef USE_HMAC_384_384
+	case COSE_Algorithm_HMAC_384_384: 
+		cbitKey = 384; 
+		break;
+#endif
+
+#ifdef USE_HMAC_512_512
+	case COSE_Algorithm_HMAC_512_512: 
+		cbitKey = 512; 
+		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
@@ -260,31 +288,53 @@ bool COSE_Mac0_encrypt(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errb
 	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC0", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
+#ifdef USE_AES_CBC_MAC_128_64
 	case COSE_Algorithm_CBC_MAC_128_64:
+		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_256_64
 	case COSE_Algorithm_CBC_MAC_256_64:
 		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_AES_CBC_MAC_128_128
 	case COSE_Algorithm_CBC_MAC_128_128:
+		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_256_128
 	case COSE_Algorithm_CBC_MAC_256_128:
 		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_HMAC_256_64
 	case COSE_Algorithm_HMAC_256_64:
 		if (!HMAC_Create((COSE_MacMessage *)pcose, 256, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_HMAC_256_256
 	case COSE_Algorithm_HMAC_256_256:
 		if (!HMAC_Create((COSE_MacMessage *)pcose, 256, 256, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_HMAC_384_384
 	case COSE_Algorithm_HMAC_384_384:
 		if (!HMAC_Create((COSE_MacMessage *)pcose, 384, 384, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_HMAC_512_512
 	case COSE_Algorithm_HMAC_512_512:
 		if (!HMAC_Create((COSE_MacMessage *)pcose, 512, 512, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
@@ -331,25 +381,53 @@ bool COSE_Mac0_validate(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_err
 		alg = (int)cn->v.uint;
 
 		switch (alg) {
+#ifdef USE_AES_CBC_MAC_128_64
 		case COSE_Algorithm_CBC_MAC_128_64:
+			cbitKey = 128;
+			break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_128_128
 		case COSE_Algorithm_CBC_MAC_128_128:
 			cbitKey = 128;
 			break;
+#endif
 
-		case COSE_Algorithm_CBC_MAC_256_64:
-		case COSE_Algorithm_CBC_MAC_256_128:
-		case COSE_Algorithm_HMAC_256_64:
-		case COSE_Algorithm_HMAC_256_256:
-			cbitKey = 256;
+#ifdef USE_AES_CBC_MAC_256_64
+		case COSE_Algorithm_CBC_MAC_256_64: 
+			cbitKey = 256; 
 			break;
+#endif
 
-		case COSE_Algorithm_HMAC_384_384:
-			cbitKey = 384;
+#ifdef USE_AES_CBC_MAC_256_128
+		case COSE_Algorithm_CBC_MAC_256_128: 
+			cbitKey = 256; 
 			break;
+#endif
 
-		case COSE_Algorithm_HMAC_512_512:
-			cbitKey = 512;
+#ifdef USE_HMAC_256_64
+		case COSE_Algorithm_HMAC_256_64: 
+			cbitKey = 256; 
 			break;
+#endif
+
+#ifdef USE_HMAC_256_256
+		case COSE_Algorithm_HMAC_256_256: 
+			cbitKey = 256; 
+			break;
+#endif
+
+#ifdef USE_HMAC_384_384
+		case COSE_Algorithm_HMAC_384_384: 
+			cbitKey = 384; 
+			break;
+#endif
+
+#ifdef USE_HMAC_512_512
+		case COSE_Algorithm_HMAC_512_512: 
+			cbitKey = 512; 
+			break;
+#endif
 
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
@@ -366,31 +444,53 @@ bool COSE_Mac0_validate(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_err
 	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC0", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
+#ifdef USE_HMAC_256_256
 	case COSE_Algorithm_HMAC_256_256:
 		if (!HMAC_Validate((COSE_MacMessage *)pcose, 256, 256, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_HMAC_256_64
 	case COSE_Algorithm_HMAC_256_64:
 		if (!HMAC_Validate((COSE_MacMessage *)pcose, 256, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_HMAC_384_384
 	case COSE_Algorithm_HMAC_384_384:
 		if (!HMAC_Validate((COSE_MacMessage *)pcose, 384, 384, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_HMAC_512_512
 	case COSE_Algorithm_HMAC_512_512:
 		if (!HMAC_Validate((COSE_MacMessage *)pcose, 512, 512, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_AES_CBC_MAC_128_64
 	case COSE_Algorithm_CBC_MAC_128_64:
+		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_256_64
 	case COSE_Algorithm_CBC_MAC_256_64:
 		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_AES_CBC_MAC_128_128
 	case COSE_Algorithm_CBC_MAC_128_128:
+		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_256_128
 	case COSE_Algorithm_CBC_MAC_256_128:
 		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);

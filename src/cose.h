@@ -95,10 +95,10 @@ typedef enum {
 
 	COSE_Algorithm_AES_CCM_16_64_128 = 10,
 	COSE_Algorithm_AES_CCM_16_64_256 = 11,
-	COSE_Algorithm_AES_CCM_64_64_128 = 30,
-	COSE_Algorithm_AES_CCM_64_64_256 = 31,
-	COSE_Algorithm_AES_CCM_16_128_128 = 12,
-	COSE_Algorithm_AES_CCM_16_128_256 = 13,
+	COSE_Algorithm_AES_CCM_64_64_128 = 12,
+	COSE_Algorithm_AES_CCM_64_64_256 = 13,
+	COSE_Algorithm_AES_CCM_16_128_128 = 30,
+	COSE_Algorithm_AES_CCM_16_128_256 = 31,
 	COSE_Algorithm_AES_CCM_64_128_128 = 32,
 	COSE_Algorithm_AES_CCM_64_128_256 = 33,
 
@@ -125,9 +125,9 @@ typedef enum {
 	COSE_Algorithm_Direct_HKDF_AES_128 = -12,
 	COSE_Algorithm_Direct_HKDF_AES_256 = -13,
 
-	COSE_Algorithm_PS256 = -8,
-	COSE_Algorithm_PS384 = -37,
-	COSE_Algorithm_PS512 = -38,
+//	COSE_Algorithm_PS256 = -8,
+//	COSE_Algorithm_PS384 = -37,
+//	COSE_Algorithm_PS512 = -38,
 
 	COSE_Algorithm_ECDSA_SHA_256 = -7,
 	COSE_Algorithm_ECDSA_SHA_384 = -35,
@@ -156,7 +156,7 @@ typedef enum {
 	COSE_Header_ECDH_STATIC = -2,
 	COSE_Header_ECDH_EPK = -1,
 	COSE_Header_ECDH_SPK = -2,
-	COSE_Header_ECDH_SPK_KID = -2,
+	COSE_Header_ECDH_SPK_KID = -3,
 
 } COSE_Header;
 
