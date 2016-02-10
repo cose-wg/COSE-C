@@ -156,7 +156,7 @@ typedef enum {
 	COSE_Header_ECDH_STATIC = -2,
 	COSE_Header_ECDH_EPK = -1,
 	COSE_Header_ECDH_SPK = -2,
-	COSE_Header_ECDH_SPK_KID = -2,
+	COSE_Header_ECDH_SPK_KID = -3,
 
 } COSE_Header;
 

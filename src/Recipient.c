@@ -172,7 +172,7 @@ static bool HKDF_X(COSE * pCose, bool fHMAC, bool fECDH, bool fStatic, bool fSen
 			pkeyMessage = (cn_cbor *) pKeyPrivate;
 
 			if (!ECDH_ComputeSecret(pCose, &pkeyMessage, pKeyPublic, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
-			if (pkeyMessage->parent == NULL) {
+			if (!fStatic && pkeyMessage->parent == NULL) {
 				if (!_COSE_map_put(pCose, COSE_Header_ECDH_EPHEMERAL, pkeyMessage, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
 			}
 		}
