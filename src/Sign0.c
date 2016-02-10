@@ -352,18 +352,23 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 	if (!CreateSign0AAD(pSigner, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
 
 	switch (alg) {
+#ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
 		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE+1, pKey, 256, pbToSign, cbToSign, perr);
 		break;
+#endif
 
+#ifdef USE_ECDSA_SHA_384
 	case COSE_Algorithm_ECDSA_SHA_384:
 		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE+1, pKey, 384, pbToSign, cbToSign, perr);
 		break;
+#endif
 
+#ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
 		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE+1, pKey, 512, pbToSign, cbToSign, perr);
 		break;
-
+#endif
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
@@ -409,17 +414,23 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
 	cnSignature = _COSE_arrayget_int(&pSign->m_message, INDEX_SIGNATURE);
 
 	switch (alg) {
+#ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
 		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 256, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_ECDSA_SHA_384
 	case COSE_Algorithm_ECDSA_SHA_384:
 		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 384, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
 		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 512, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);

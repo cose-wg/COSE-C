@@ -211,33 +211,71 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	alg = (int) cn->v.uint;
 
 	switch (alg) {
-#ifdef INCLUDE_AES_CCM
+#ifdef USE_AES_CCM_16_64_128
 	case COSE_Algorithm_AES_CCM_16_64_128:
+		cbitKey = 128;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_128_128
 	case COSE_Algorithm_AES_CCM_16_128_128:
+		cbitKey = 128;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_64_128
 	case COSE_Algorithm_AES_CCM_64_64_128:
+		cbitKey = 128;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_128_128
 	case COSE_Algorithm_AES_CCM_64_128_128:
 		cbitKey = 128;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_64_64_256
 	case COSE_Algorithm_AES_CCM_64_64_256:
+		cbitKey = 256;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_128_256
 	case COSE_Algorithm_AES_CCM_16_128_256:
+		cbitKey = 256;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_128_256
 	case COSE_Algorithm_AES_CCM_64_128_256:
+		cbitKey = 256;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_64_256
 	case COSE_Algorithm_AES_CCM_16_64_256:
 		cbitKey = 256;
 		break;
-#endif // INCLUDE_AES_CCM
+#endif
 
+#ifdef USE_AES_GCM_128
 	case COSE_Algorithm_AES_GCM_128:
 		cbitKey = 128;
 		break;
+#endif
 
+#ifdef USE_AES_GCM_192
 	case COSE_Algorithm_AES_GCM_192:
 		cbitKey = 192;
 		break;
+#endif USE_AES_GCM_192
 
+#ifdef USE_AES_GCM_256
 	case COSE_Algorithm_AES_GCM_256:
 		cbitKey = 256;
 		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
@@ -279,33 +317,67 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	CHECK_CONDITION(cn != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	switch (alg) {
-#ifdef INCLUDE_AES_CCM
+#ifdef USE_AES_CCM_16_64_128
 	case COSE_Algorithm_AES_CCM_16_64_128:
+		if (!AES_CCM_Decrypt(pcose, 64, 16, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_64_256
 	case COSE_Algorithm_AES_CCM_16_64_256:
 		if (!AES_CCM_Decrypt(pcose, 64, 16, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_16_128_128
 	case COSE_Algorithm_AES_CCM_16_128_128:
+		if (!AES_CCM_Decrypt(pcose, 128, 16, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_128_256
 	case COSE_Algorithm_AES_CCM_16_128_256:
 		if (!AES_CCM_Decrypt(pcose, 128, 16, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_64_64_128
 	case COSE_Algorithm_AES_CCM_64_64_128:
+		if (!AES_CCM_Decrypt(pcose, 64, 64, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_64_256
 	case COSE_Algorithm_AES_CCM_64_64_256:
 		if (!AES_CCM_Decrypt(pcose, 64, 64, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_64_128_128
 	case COSE_Algorithm_AES_CCM_64_128_128:
+		if (!AES_CCM_Decrypt(pcose, 128, 64, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_128_256
 	case COSE_Algorithm_AES_CCM_64_128_256:
 		if (!AES_CCM_Decrypt(pcose, 128, 64, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
-#endif // INCLUDE_AES_CCM
+#endif
 
+#ifdef USE_AES_GCM
+#ifdef USE_AES_GCM_128
 	case COSE_Algorithm_AES_GCM_128:
+#endif
+#ifdef USE_AES_GCM_192
 	case COSE_Algorithm_AES_GCM_192:
+#endif
+#ifdef USE_AES_GCM_256
 	case COSE_Algorithm_AES_GCM_256:
+#endif
 		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
@@ -352,25 +424,63 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	//  Get the key size
 
 	switch (alg) {
-#ifdef INCLUDE_AES_CCM
+#ifdef USE_AES_CCM_64_64_128
 	case COSE_Algorithm_AES_CCM_64_64_128:
+		cbitKey = 128;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_128_128
 	case COSE_Algorithm_AES_CCM_16_128_128:
+		cbitKey = 128;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_128_128
 	case COSE_Algorithm_AES_CCM_64_128_128:
+		cbitKey = 128;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_64_128
 	case COSE_Algorithm_AES_CCM_16_64_128:
 		cbitKey = 128;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_64_64_256
 	case COSE_Algorithm_AES_CCM_64_64_256:
+		cbitKey = 256;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_128_256
 	case COSE_Algorithm_AES_CCM_16_128_256:
+		cbitKey = 256;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_128_256
 	case COSE_Algorithm_AES_CCM_64_128_256:
+		cbitKey = 256;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_64_256
 	case COSE_Algorithm_AES_CCM_16_64_256:
 		cbitKey = 256;
 		break;
-#endif // INCLUDE_AES_CCM
+#endif
 
+#ifdef USE_AES_GCM_128
 	case COSE_Algorithm_AES_GCM_128: cbitKey = 128; break;
+#endif
+#ifdef USE_AES_GCM_192
 	case COSE_Algorithm_AES_GCM_192: cbitKey = 192; break;
+#endif
+#ifdef USE_AES_GCM_256
 	case COSE_Algorithm_AES_GCM_256: cbitKey = 256; break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
@@ -412,33 +522,67 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	if (!_COSE_Encrypt_Build_AAD(&pcose->m_message, &pbAuthData, &cbAuthData, "Enveloped", perr)) goto errorReturn;
 
 	switch (alg) {
-#ifdef INCLUDE_AES_CCM
+#ifdef USE_AES_CCM_16_64_128
 	case COSE_Algorithm_AES_CCM_16_64_128:
+		if (!AES_CCM_Encrypt(pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_64_256
 	case COSE_Algorithm_AES_CCM_16_64_256:
 		if (!AES_CCM_Encrypt(pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_16_128_128
 	case COSE_Algorithm_AES_CCM_16_128_128:
+		if (!AES_CCM_Encrypt(pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_16_128_256
 	case COSE_Algorithm_AES_CCM_16_128_256:
 		if (!AES_CCM_Encrypt(pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_64_64_128
 	case COSE_Algorithm_AES_CCM_64_64_128:
+		if (!AES_CCM_Encrypt(pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_64_256
 	case COSE_Algorithm_AES_CCM_64_64_256:
 		if (!AES_CCM_Encrypt(pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif
 
+#ifdef USE_AES_CCM_64_128_128
 	case COSE_Algorithm_AES_CCM_64_128_128:
+		if (!AES_CCM_Encrypt(pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_CCM_64_128_256
 	case COSE_Algorithm_AES_CCM_64_128_256:
 		if (!AES_CCM_Encrypt(pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
 #endif
 
+#ifdef USE_AES_GCM
+#ifdef USE_AES_GCM_128
 	case COSE_Algorithm_AES_GCM_128:
+#endif
+#ifdef USE_AES_GCM_192
 	case COSE_Algorithm_AES_GCM_192:
+#endif
+#ifdef USE_AES_GCM_256
 	case COSE_Algorithm_AES_GCM_256:
+#endif
 		if (!AES_GCM_Encrypt(pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
+#endif 
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
