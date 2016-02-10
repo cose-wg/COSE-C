@@ -454,7 +454,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 		break;
 #endif
 
-#ifdef USE_HMAC_384_348
+#ifdef USE_HMAC_384_384
 	case COSE_Algorithm_HMAC_384_384:
 		if (!HMAC_Create(pcose, 384, 384, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;

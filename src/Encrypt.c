@@ -269,7 +269,7 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	case COSE_Algorithm_AES_GCM_192:
 		cbitKey = 192;
 		break;
-#endif USE_AES_GCM_192
+#endif
 
 #ifdef USE_AES_GCM_256
 	case COSE_Algorithm_AES_GCM_256:
@@ -365,16 +365,20 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 		break;
 #endif
 
-#ifdef USE_AES_GCM
 #ifdef USE_AES_GCM_128
 	case COSE_Algorithm_AES_GCM_128:
+		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
+		break;
 #endif
+
 #ifdef USE_AES_GCM_192
 	case COSE_Algorithm_AES_GCM_192:
+		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
+		break;
 #endif
+
 #ifdef USE_AES_GCM_256
 	case COSE_Algorithm_AES_GCM_256:
-#endif
 		if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) goto error;
 		break;
 #endif
@@ -570,19 +574,23 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 		break;
 #endif
 
-#ifdef USE_AES_GCM
 #ifdef USE_AES_GCM_128
 	case COSE_Algorithm_AES_GCM_128:
-#endif
-#ifdef USE_AES_GCM_192
-	case COSE_Algorithm_AES_GCM_192:
-#endif
-#ifdef USE_AES_GCM_256
-	case COSE_Algorithm_AES_GCM_256:
-#endif
 		if (!AES_GCM_Encrypt(pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 		break;
-#endif 
+#endif
+
+#ifdef USE_AES_GCM_192
+	case COSE_Algorithm_AES_GCM_192:
+		if (!AES_GCM_Encrypt(pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_AES_GCM_256
+	case COSE_Algorithm_AES_GCM_256:
+		if (!AES_GCM_Encrypt(pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);

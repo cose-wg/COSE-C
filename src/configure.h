@@ -20,8 +20,8 @@
 #define USE_AES_CCM_64_64_256
 #define USE_AES_CCM_16_128_128
 #define USE_AES_CCM_16_128_256
-//#define USE_AES_CCM_64_64_128
-//#define USE_AES_CCM_64_64_256
+#define USE_AES_CCM_64_128_128
+#define USE_AES_CCM_64_128_256
 
 #define INCLUDE_AES_CCM
 
@@ -84,9 +84,9 @@
 //  Define which of the signature algorithms are to be used
 //
 
-//#define USE_ECDSA_SHA_256
-//#define USE_ECDSA_SHA_384
-//#define USE_ECDSA_SHA_512
+#define USE_ECDSA_SHA_256
+#define USE_ECDSA_SHA_384
+#define USE_ECDSA_SHA_512
 
 
 #define USE_OPEN_SSL 1
