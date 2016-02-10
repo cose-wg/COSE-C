@@ -268,19 +268,19 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 
 		return true;
 
-#ifdef AES_KW_128
+#ifdef USE_AES_KW_128
 	case COSE_Algorithm_AES_KW_128:
 		cbitKeyX = 128;
 		break;
 #endif
 
-#ifdef AES_KW_192
+#ifdef USE_AES_KW_192
 	case COSE_Algorithm_AES_KW_192:
 		cbitKeyX = 192;
 		break;
 #endif
 
-#ifdef AES_KW_256
+#ifdef USE_AES_KW_256
 	case COSE_Algorithm_AES_KW_256:
 		cbitKeyX = 192;
 		break;
@@ -375,7 +375,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 	CHECK_CONDITION(cnBody != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	switch (alg) {
-#ifdef AES_KW_128
+#ifdef USE_AES_KW_128
 	case COSE_Algorithm_AES_KW_128:
 		if (pbKeyX != NULL) {
 			int x = cbitKeyOut / 8;
@@ -392,7 +392,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 		break;
 #endif
 
-#ifdef AES_KW_192
+#ifdef USE_AES_KW_192
 	case COSE_Algorithm_AES_KW_192:
 		if (pbKeyX != NULL) {
 			int x = cbitKeyOut / 8;
@@ -409,7 +409,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 		break;
 #endif
 
-#ifdef AES_KW_256
+#ifdef USE_AES_KW_256
 	case COSE_Algorithm_AES_KW_256:
 		if (pbKeyX != NULL) {
 			int x = cbitKeyOut / 8;
@@ -601,7 +601,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		CHECK_CONDITION(pRecipient->m_encrypt.m_recipientFirst == NULL, COSE_ERR_INVALID_PARAMETER);
 		break;
 
-#ifdef AES_KW_128
+#ifdef USE_AES_KW_128
 	case COSE_Algorithm_AES_KW_128:
 		cbitKey = 128;
 		break;
@@ -619,7 +619,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 #endif
 
-#ifdef AES_KW_192
+#ifdef USE_AES_KW_192
 	case COSE_Algorithm_AES_KW_192:
 		cbitKey = 192;
 		break;
@@ -637,7 +637,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 #endif
 
-#ifdef AES_KW_256
+#ifdef USE_AES_KW_256
 	case COSE_Algorithm_AES_KW_256:
 		cbitKey = 256;
 		break;
@@ -731,7 +731,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 
 
-#ifdef AES_KW_128
+#ifdef USE_AES_KW_128
 	case COSE_Algorithm_AES_KW_128:
 		if (pRecipient->m_pkey != NULL) {
 			cn_cbor * pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
@@ -744,7 +744,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 #endif
 
-#ifdef AES_KW_192
+#ifdef USE_AES_KW_192
 	case COSE_Algorithm_AES_KW_192:
 		if (pRecipient->m_pkey != NULL) {
 			cn_cbor * pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
@@ -757,7 +757,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 		break;
 #endif
 
-#ifdef AES_KW_256
+#ifdef USE_AES_KW_256
 	case COSE_Algorithm_AES_KW_256:
 		if (pRecipient->m_pkey != NULL) {
 			cn_cbor * pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
