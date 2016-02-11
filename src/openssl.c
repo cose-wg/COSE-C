@@ -34,7 +34,6 @@ bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 
-	assert(perr != NULL);
 	EVP_CIPHER_CTX_init(&ctx);
 
 	//  Setup the IV/Nonce and put it into the message
@@ -214,7 +213,6 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 #endif
 	int TSize = 128 / 8;
 
-	assert(perr != NULL);
 	EVP_CIPHER_CTX_init(&ctx);
 
 	//  Setup the IV/Nonce and put it into the message

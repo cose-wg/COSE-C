@@ -32,7 +32,9 @@ typedef enum cose_error {
 	/** Decryption operation failed */
 	COSE_ERR_DECRYPT_FAILED,
 	/** Cryptographic failure */
-	COSE_ERR_CRYPTO_FAIL
+	COSE_ERR_CRYPTO_FAIL,
+	/** Internal Error */
+	COSE_ERR_INTERNAL
 } cose_error;
 
 typedef enum cose_init_flags {

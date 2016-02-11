@@ -220,7 +220,7 @@ errorReturn:
 	return fRet;
 }
 
-bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKeyOut, byte * pbKeyOut, cose_errback * perr)
+bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * pRecipUse, int algIn, int cbitKeyOut, byte * pbKeyOut, cose_errback * perr)
 {
 	int alg;
 	const cn_cbor * cn = NULL;
@@ -366,7 +366,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey
 		CHECK_CONDITION(pbKeyX != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 		for (pRecip2 = pcose->m_recipientFirst; pRecip2 != NULL; pRecip2 = pRecip->m_recipientNext) {
-			if (_COSE_Recipient_decrypt(pRecip2, alg, cbitKeyX, pbKeyX, perr)) break;
+			if (_COSE_Recipient_decrypt(pRecip2, NULL, alg, cbitKeyX, pbKeyX, perr)) break;
 		}
 		CHECK_CONDITION(pRecip2 != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 	}

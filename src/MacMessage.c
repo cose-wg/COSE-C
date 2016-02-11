@@ -585,7 +585,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	//  If there is a recipient - ask it for the key
 
 	for (pRecip = pcose->m_recipientFirst; pRecip != NULL; pRecip = pRecip->m_recipientNext) {
-		if (_COSE_Recipient_decrypt(pRecip, alg, cbitKey, pbKey, perr)) break;
+		if (_COSE_Recipient_decrypt(pRecip, NULL, alg, cbitKey, pbKey, perr)) break;
 	}
 	CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 
