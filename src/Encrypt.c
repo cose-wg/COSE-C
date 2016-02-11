@@ -176,7 +176,7 @@ bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED h, HCOSE_RECIPIENT hRecip, cose_errb
 	return f;
 }
 
-bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip, byte *pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
+bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip, const byte *pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
 {
 	int alg;
 	const cn_cbor * cn = NULL;
