@@ -200,232 +200,169 @@ bool COSE_Mac0_map_put_int(HCOSE_MAC0 h, int key, cn_cbor * value, int flags, co
 
 bool COSE_Mac0_encrypt(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errback * perr)
 {
-	int alg;
-	const cn_cbor * cn_Alg = NULL;
-	byte * pbAuthData = NULL;
-	size_t cbitKey;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = NULL;
-#endif
 	COSE_Mac0Message * pcose = (COSE_Mac0Message *)h;
-	bool fRet = false;
-	size_t cbAuthData;
 
-	CHECK_CONDITION(IsValidMac0Handle(h), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidMac0Handle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(pbKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
-#ifdef USE_CBOR_CONTEXT
-	context = &pcose->m_message.m_allocContext;
-#endif // USE_CBOR_CONTEXT
-
-	cn_Alg = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn_Alg == NULL) goto errorReturn;
-	CHECK_CONDITION(cn_Alg->type != CN_CBOR_TEXT, COSE_ERR_UNKNOWN_ALGORITHM);
-	CHECK_CONDITION(((cn_Alg->type == CN_CBOR_UINT || cn_Alg->type == CN_CBOR_INT)), COSE_ERR_INVALID_PARAMETER);
-
-	alg = (int) cn_Alg->v.uint;
-
-	//  Get the key size
-
-	switch (alg) {
-#ifdef USE_AES_CBC_MAC_128_64
-	case COSE_Algorithm_CBC_MAC_128_64:
-		cbitKey = 128;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_128_128
-	case COSE_Algorithm_CBC_MAC_128_128:
-		cbitKey = 128;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_256_64
-	case COSE_Algorithm_CBC_MAC_256_64: 
-		cbitKey = 256; 
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_256_128
-	case COSE_Algorithm_CBC_MAC_256_128: 
-		cbitKey = 256; 
-		break;
-#endif
-
-#ifdef USE_HMAC_256_64
-	case COSE_Algorithm_HMAC_256_64: 
-		cbitKey = 256; 
-		break;
-#endif
-
-#ifdef USE_HMAC_256_256
-	case COSE_Algorithm_HMAC_256_256: 
-		cbitKey = 256; 
-		break;
-#endif
-
-#ifdef USE_HMAC_384_384
-	case COSE_Algorithm_HMAC_384_384: 
-		cbitKey = 384; 
-		break;
-#endif
-
-#ifdef USE_HMAC_512_512
-	case COSE_Algorithm_HMAC_512_512: 
-		cbitKey = 512; 
-		break;
-#endif
-
-	default:
-		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
-	}
-
-	//  Build protected headers
-
-	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, perr);
-	if (cbProtected == NULL) goto errorReturn;
-
-	//  Build authenticated data
-	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC0", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
-
-	switch (alg) {
-#ifdef USE_AES_CBC_MAC_128_64
-	case COSE_Algorithm_CBC_MAC_128_64:
-		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_256_64
-	case COSE_Algorithm_CBC_MAC_256_64:
-		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_128_128
-	case COSE_Algorithm_CBC_MAC_128_128:
-		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_256_128
-	case COSE_Algorithm_CBC_MAC_256_128:
-		if (!AES_CBC_MAC_Create((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_HMAC_256_64
-	case COSE_Algorithm_HMAC_256_64:
-		if (!HMAC_Create((COSE_MacMessage *)pcose, 256, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_HMAC_256_256
-	case COSE_Algorithm_HMAC_256_256:
-		if (!HMAC_Create((COSE_MacMessage *)pcose, 256, 256, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_HMAC_384_384
-	case COSE_Algorithm_HMAC_384_384:
-		if (!HMAC_Create((COSE_MacMessage *)pcose, 384, 384, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_HMAC_512_512
-	case COSE_Algorithm_HMAC_512_512:
-		if (!HMAC_Create((COSE_MacMessage *)pcose, 512, 512, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-	}
-
-	//  Figure out the clean up
-
-	fRet = true;
+	return _COSE_Mac_compute(pcose, pbKey, cbKey, "MAC0", perr);
 
 errorReturn:
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	return fRet;
+	return false;
 }
 
 bool COSE_Mac0_validate(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_errback * perr)
 {
 	COSE_Mac0Message * pcose = (COSE_Mac0Message *)h;
-	byte * pbAuthData = NULL;
-	int cbitKey = 0;
-	bool fRet = false;
-	int alg;
-	const cn_cbor * cn = NULL;
+	CHECK_CONDITION(IsValidMac0Handle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(pbKey != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	return _COSE_Mac_validate(pcose, NULL, pbKey, cbKey, "MAC0", perr);
+
+errorReturn:
+	return false;
+}
+
+#if 0
+	int foo() {
+		COSE_Mac0Message * pcose = (COSE_Mac0Message *)h;
+		byte * pbAuthData = NULL;
+		int cbitKey = 0;
+		bool fRet = false;
+		int alg;
+		const cn_cbor * cn = NULL;
 
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = NULL;
+		cn_cbor_context * context = NULL;
 #endif
-	size_t cbAuthData;
+		size_t cbAuthData;
 
-	CHECK_CONDITION(IsValidMac0Handle(h), COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(IsValidMac0Handle(h), COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
-	context = &pcose->m_message.m_allocContext;
+		context = &pcose->m_message.m_allocContext;
 #endif
 
-	cn = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn == NULL) goto errorReturn;
+		cn = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
+		if (cn == NULL) goto errorReturn;
 
-	if (cn->type == CN_CBOR_TEXT) {
+		if (cn->type == CN_CBOR_TEXT) {
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
-	}
-	else {
-		CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
+		}
+		else {
+			CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 
-		alg = (int)cn->v.uint;
+			alg = (int)cn->v.uint;
+
+			switch (alg) {
+#ifdef USE_AES_CBC_MAC_128_64
+			case COSE_Algorithm_CBC_MAC_128_64:
+				cbitKey = 128;
+				break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_128_128
+			case COSE_Algorithm_CBC_MAC_128_128:
+				cbitKey = 128;
+				break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_256_64
+			case COSE_Algorithm_CBC_MAC_256_64:
+				cbitKey = 256;
+				break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_256_128
+			case COSE_Algorithm_CBC_MAC_256_128:
+				cbitKey = 256;
+				break;
+#endif
+
+#ifdef USE_HMAC_256_64
+			case COSE_Algorithm_HMAC_256_64:
+				cbitKey = 256;
+				break;
+#endif
+
+#ifdef USE_HMAC_256_256
+			case COSE_Algorithm_HMAC_256_256:
+				cbitKey = 256;
+				break;
+#endif
+
+#ifdef USE_HMAC_384_384
+			case COSE_Algorithm_HMAC_384_384:
+				cbitKey = 384;
+				break;
+#endif
+
+#ifdef USE_HMAC_512_512
+			case COSE_Algorithm_HMAC_512_512:
+				cbitKey = 512;
+				break;
+#endif
+
+			default:
+				FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
+				break;
+			}
+		}
+
+		//  Build protected headers
+
+		cn_cbor * cnProtected = _COSE_arrayget_int(&pcose->m_message, INDEX_PROTECTED);
+		CHECK_CONDITION((cnProtected != NULL) && (cnProtected->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
+
+		//  Build authenticated data
+		if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC0", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 		switch (alg) {
+#ifdef USE_HMAC_256_256
+		case COSE_Algorithm_HMAC_256_256:
+			if (!HMAC_Validate((COSE_MacMessage *)pcose, 256, 256, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+			break;
+#endif
+
+#ifdef USE_HMAC_256_64
+		case COSE_Algorithm_HMAC_256_64:
+			if (!HMAC_Validate((COSE_MacMessage *)pcose, 256, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+			break;
+#endif
+
+#ifdef USE_HMAC_384_384
+		case COSE_Algorithm_HMAC_384_384:
+			if (!HMAC_Validate((COSE_MacMessage *)pcose, 384, 384, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+			break;
+#endif
+
+#ifdef USE_HMAC_512_512
+		case COSE_Algorithm_HMAC_512_512:
+			if (!HMAC_Validate((COSE_MacMessage *)pcose, 512, 512, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+			break;
+#endif
+
 #ifdef USE_AES_CBC_MAC_128_64
 		case COSE_Algorithm_CBC_MAC_128_64:
-			cbitKey = 128;
+			if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
+			break;
+#endif
+
+#ifdef USE_AES_CBC_MAC_256_64
+		case COSE_Algorithm_CBC_MAC_256_64:
+			if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 			break;
 #endif
 
 #ifdef USE_AES_CBC_MAC_128_128
 		case COSE_Algorithm_CBC_MAC_128_128:
-			cbitKey = 128;
-			break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_256_64
-		case COSE_Algorithm_CBC_MAC_256_64: 
-			cbitKey = 256; 
+			if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 			break;
 #endif
 
 #ifdef USE_AES_CBC_MAC_256_128
-		case COSE_Algorithm_CBC_MAC_256_128: 
-			cbitKey = 256; 
-			break;
-#endif
-
-#ifdef USE_HMAC_256_64
-		case COSE_Algorithm_HMAC_256_64: 
-			cbitKey = 256; 
-			break;
-#endif
-
-#ifdef USE_HMAC_256_256
-		case COSE_Algorithm_HMAC_256_256: 
-			cbitKey = 256; 
-			break;
-#endif
-
-#ifdef USE_HMAC_384_384
-		case COSE_Algorithm_HMAC_384_384: 
-			cbitKey = 384; 
-			break;
-#endif
-
-#ifdef USE_HMAC_512_512
-		case COSE_Algorithm_HMAC_512_512: 
-			cbitKey = 512; 
+		case COSE_Algorithm_CBC_MAC_256_128:
+			if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
 			break;
 #endif
 
@@ -433,74 +370,13 @@ bool COSE_Mac0_validate(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_err
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 			break;
 		}
+
+		fRet = true;
+
+	errorReturn:
+		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
+
+		return fRet;
 	}
 
-	//  Build protected headers
-
-	cn_cbor * cnProtected = _COSE_arrayget_int(&pcose->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION((cnProtected != NULL) && (cnProtected->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-
-	//  Build authenticated data
-	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC0", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
-
-	switch (alg) {
-#ifdef USE_HMAC_256_256
-	case COSE_Algorithm_HMAC_256_256:
-		if (!HMAC_Validate((COSE_MacMessage *)pcose, 256, 256, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
 #endif
-
-#ifdef USE_HMAC_256_64
-	case COSE_Algorithm_HMAC_256_64:
-		if (!HMAC_Validate((COSE_MacMessage *)pcose, 256, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_HMAC_384_384
-	case COSE_Algorithm_HMAC_384_384:
-		if (!HMAC_Validate((COSE_MacMessage *)pcose, 384, 384, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_HMAC_512_512
-	case COSE_Algorithm_HMAC_512_512:
-		if (!HMAC_Validate((COSE_MacMessage *)pcose, 512, 512, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_128_64
-	case COSE_Algorithm_CBC_MAC_128_64:
-		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_256_64
-	case COSE_Algorithm_CBC_MAC_256_64:
-		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_128_128
-	case COSE_Algorithm_CBC_MAC_128_128:
-		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-#ifdef USE_AES_CBC_MAC_256_128
-	case COSE_Algorithm_CBC_MAC_256_128:
-		if (!AES_CBC_MAC_Validate((COSE_MacMessage *)pcose, 128, pbKey, cbKey, pbAuthData, cbAuthData, perr)) goto errorReturn;
-		break;
-#endif
-
-	default:
-		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
-		break;
-	}
-
-	fRet = true;
-
-errorReturn:
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-
-	return fRet;
-}

@@ -299,6 +299,19 @@ errorReturn:
 
 bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 {
+	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
+
+	CHECK_CONDITION(IsValidMacHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(pcose->m_recipientFirst != NULL, COSE_ERR_INVALID_PARAMETER);
+
+		return _COSE_Mac_compute(pcose, NULL, 0, "MAC", perr);
+
+	errorReturn:
+		return false;
+}
+
+bool _COSE_Mac_compute(COSE_MacMessage * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
+{
 	int alg;
 	int t;
 	COSE_RecipientInfo * pri;
@@ -306,24 +319,17 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	byte * pbAuthData = NULL;
 	size_t cbitKey;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = NULL;
+	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
-	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	bool fRet = false;
 	size_t cbAuthData = 0;
 	byte * pbKey = NULL;
 	size_t cbKey = 0;
 
-	CHECK_CONDITION(IsValidMacHandle(h), COSE_ERR_INVALID_PARAMETER);
-
-#ifdef USE_CBOR_CONTEXT
-	context = &pcose->m_message.m_allocContext;
-#endif // USE_CBOR_CONTEXT
-
 	cn_Alg = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) goto errorReturn;
 	CHECK_CONDITION(cn_Alg->type != CN_CBOR_TEXT, COSE_ERR_UNKNOWN_ALGORITHM);
-	CHECK_CONDITION(((cn_Alg->type == CN_CBOR_UINT || cn_Alg->type == CN_CBOR_INT)), COSE_ERR_UNKNOWN_ALGORITHM);
+	CHECK_CONDITION(((cn_Alg->type == CN_CBOR_UINT || cn_Alg->type == CN_CBOR_INT)), COSE_ERR_INVALID_PARAMETER);
 
 	alg = (int) cn_Alg->v.uint;
 
@@ -384,28 +390,35 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	//  If we are doing direct encryption - then recipient generates the key
 
-	if (pbKey == NULL) {
-		t = 0;
-		for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
-			if (pri->m_encrypt.m_message.m_flags & 1) {
-				t |= 1;
-				pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
-				cbKey = cbitKey / 8;
-				if (pbKey == NULL) goto errorReturn;
-			}
-			else {
-				t |= 2;
-			}
-		}
-		CHECK_CONDITION(t != 3, COSE_ERR_INVALID_PARAMETER);
+	if (pbKeyIn != NULL) {
+		CHECK_CONDITION(cbKeyIn == cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
+		pbKey = pbKeyIn;
+		cbKey = cbKeyIn;
 	}
+	else {
+			t = 0;
+			for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
+				if (pri->m_encrypt.m_message.m_flags & 1) {
+					CHECK_CONDITION(pbKey == NULL, COSE_ERR_INVALID_PARAMETER);
 
-	if (pbKey == NULL) {
-		pbKey = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
-		CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+					t |= 1;
+					pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
+					cbKey = cbitKey / 8;
+					CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+				}
+				else {
+					t |= 2;
+				}
+			}
+			CHECK_CONDITION(t != 3, COSE_ERR_INVALID_PARAMETER);
 
-		cbKey = cbitKey / 8;
-		rand_bytes(pbKey, cbKey);
+		if (t == 2) {
+			pbKey = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
+			CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+			cbKey = cbitKey / 8;
+			rand_bytes(pbKey, cbKey);
+		}
 	}
 
 	//  Build protected headers
@@ -415,7 +428,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 
 	//  Build authenticated data
 
-	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!_COSE_Mac_Build_AAD(&pcose->m_message, szContext, &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
 #ifdef USE_AES_CBC_MAC_128_64
@@ -479,7 +492,7 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	fRet = true;
 
 errorReturn:
-	if (pbKey != NULL) {
+	if ((pbKey != NULL) && (pbKeyIn != pbKey)) {
 		memset(pbKey, 0, cbKey);
 		COSE_FREE(pbKey, context);
 	}
@@ -491,6 +504,17 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
 	COSE_RecipientInfo * pRecip = (COSE_RecipientInfo *)hRecip;
+
+	CHECK_CONDITION(IsValidMacHandle(h) && IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
+
+	return _COSE_Mac_validate(pcose, pRecip, NULL, 0, "MAC", perr);
+
+errorReturn:
+	return false;
+}
+
+bool _COSE_Mac_validate(COSE_MacMessage * pcose, COSE_RecipientInfo * pRecip, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
+{
 	byte * pbAuthData = NULL;
 	int cbitKey = 0;
 	bool fRet = false;
@@ -500,15 +524,11 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 
 	byte * pbKey = NULL;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = NULL;
+	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 	size_t cbAuthData;
 
-	CHECK_CONDITION(IsValidMacHandle(h) && IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_PARAMETER);
-
-#ifdef USE_CBOR_CONTEXT
-	context = &pcose->m_message.m_allocContext;
-#endif
+	CHECK_CONDITION(!((pRecip != NULL) && (pbKeyIn != NULL)), COSE_ERR_INTERNAL);
 
 	cn = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn == NULL) goto errorReturn;
@@ -577,26 +597,43 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 
 	//  Allocate the key if we have not already done so
 
-	if (pbKey == NULL) {
-		pbKey = COSE_CALLOC(cbitKey / 8, 1, context);
-		CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+	if (pbKeyIn != NULL) {
+		CHECK_CONDITION(cbitKey / 8 == cbKeyIn, COSE_ERR_INVALID_PARAMETER);
+		pbKey = pbKeyIn;
 	}
+	else {
+		if (pbKey == NULL) {
+			pbKey = COSE_CALLOC(cbitKey / 8, 1, context);
+			CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+		}
 
-	//  If there is a recipient - ask it for the key
+		//  If there is a recipient - ask it for the key
 
-	for (pRecip = pcose->m_recipientFirst; pRecip != NULL; pRecip = pRecip->m_recipientNext) {
-		if (_COSE_Recipient_decrypt(pRecip, alg, cbitKey, pbKey, perr)) break;
+		if (pRecip != NULL) {
+			COSE_RecipientInfo * pRecipX;
+
+			for (pRecipX = pcose->m_recipientFirst; pRecipX != NULL; pRecipX = pRecipX->m_recipientNext) {
+				if (pRecip == pRecipX) {
+					if (!_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) goto errorReturn;
+					break;
+				}
+				else if (pRecipX->m_recipientNext != NULL) {
+					if (_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) break;
+				}
+			}
+			CHECK_CONDITION(pRecipX != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
+		}
+		else {
+			for (pRecip = pcose->m_recipientFirst; pRecip != NULL; pRecip = pRecip->m_recipientNext) {
+				if (_COSE_Recipient_decrypt(pRecip, NULL, alg, cbitKey, pbKey, perr)) break;
+			}
+			CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
+		}
 	}
-	CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
-
-	//  Build protected headers
-
-	cn_cbor * cnProtected = _COSE_arrayget_int(&pcose->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION((cnProtected != NULL) && (cnProtected->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
 	//  Build authenticated data
 
-	if (!_COSE_Mac_Build_AAD(&pcose->m_message, "MAC", &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+	if (!_COSE_Mac_Build_AAD(&pcose->m_message, szContext, &pbAuthData, &cbAuthData, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 	switch (alg) {
 #ifdef USE_HMAC_256_256
@@ -655,7 +692,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 	fRet = true;
 
 errorReturn:
-	if ((pbKey != NULL)) {
+	if ((pbKey != NULL) && (pbKey != pbKeyIn)) {
 		memset(pbKey, 0xff, cbitKey / 8);
 		COSE_FREE(pbKey, context);
 	}

@@ -43,11 +43,13 @@ struct _SignerInfo {
 struct _RecipientInfo;
 typedef struct _RecipientInfo COSE_RecipientInfo;
 
+#if 0
 typedef struct {
 	COSE m_message;		// The message object
 	const byte * pbContent;
 	size_t cbContent;
 } COSE_Encrypt;
+#endif 
 
 typedef struct {
 	COSE m_message;		// The message object
@@ -55,6 +57,8 @@ typedef struct {
 	size_t cbContent;
 	COSE_RecipientInfo * m_recipientFirst;
 } COSE_Enveloped;
+
+typedef COSE_Enveloped COSE_Encrypt;
 
 struct _RecipientInfo {
 	COSE_Enveloped m_encrypt;
@@ -68,9 +72,12 @@ typedef struct {
 	COSE_RecipientInfo * m_recipientFirst;
 } COSE_MacMessage;
 
+#if 0
 typedef struct {
 	COSE m_message;			// The message object
 } COSE_Mac0Message;
+#endif
+typedef COSE_MacMessage COSE_Mac0Message;
 
 #ifdef USE_CBOR_CONTEXT
 /**
@@ -155,19 +162,19 @@ bool _COSE_SetExternal(COSE * hcose, const byte * pbExternalData, size_t cbExter
 
 extern HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *, COSE_Enveloped * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Enveloped_Release(COSE_Enveloped * p);
-extern bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip, int cbitKey, byte *pbKeyIn, cose_errback * perr);
+extern bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip, const byte *pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr);
+extern bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr);
 extern bool _COSE_Enveloped_SetContent(COSE_Enveloped * cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 
 extern HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Encrypt_Release(COSE_Encrypt * p);
-extern bool _COSE_Encrypt_decrypt(COSE_Encrypt * pcose, const byte * pbKey, size_t cbKey, cose_errback * perr);
 extern bool _COSE_Encrypt_SetContent(COSE_Encrypt * cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 extern bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, const char * szContext, cose_errback * perr);
 
 
 extern COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor *, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern void _COSE_Recipient_Free(COSE_RecipientInfo *);
-extern bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, int algIn, int cbitKey, byte * pbKey, cose_errback * errp);
+extern bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * pRecipUse, int algIn, int cbitKey, byte * pbKey, cose_errback * errp);
 extern bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbContent, size_t cbContent, cose_errback * perr);
 extern byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, int algIn, size_t cbitKeySize, cose_errback * perr);
 
@@ -190,6 +197,8 @@ extern void _COSE_Sign0_Release(COSE_Sign0Message * p);
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern bool _COSE_Mac_Release(COSE_MacMessage * p);
 extern bool _COSE_Mac_Build_AAD(COSE * pCose, char * szContext, byte ** ppbAuthData, size_t * pcbAuthData, CBOR_CONTEXT_COMMA cose_errback * perr);
+extern bool _COSE_Mac_compute(COSE_MacMessage * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr);
+extern bool _COSE_Mac_validate(COSE_MacMessage * pcose, COSE_RecipientInfo * pRecip, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr);
 
 //  MAC0 Items
 extern HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *, COSE_Mac0Message * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
