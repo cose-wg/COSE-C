@@ -181,8 +181,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	int alg;
 	const cn_cbor * cn = NULL;
 
-	byte * pbKey = pbKeyIn;
-	size_t cbitKey = cbKeyIn * 8;
+	byte * pbKey = NULL;
+	size_t cbitKey = 0;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context;
 #endif
@@ -285,7 +285,11 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	//  We are doing the enveloped item - so look for the passed in recipient
 	//
 
-	if (pbKeyIn == NULL) {
+	if (pbKeyIn != NULL) {
+		CHECK_CONDITION(cbKeyIn == cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
+		pbKey = pbKeyIn;
+	}
+	else {
 		//  Allocate the key if we have not already done so
 
 		if (pbKey == NULL) {
@@ -303,7 +307,7 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 					if (!_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) goto errorReturn;
 					break;
 				}
-				else if (pRecipX->m_recipientNext != NULL) {
+				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
 					if (_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) break;
 				}
 			}
@@ -549,6 +553,11 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 
 	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, perr);
 	if (cbProtected == NULL) goto errorReturn;
+
+	//  Setup Counter Signatures
+	if (!_COSE_CountSign_create(&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+		goto errorReturn;
+	}
 
 	//  Build authenticated data
 
@@ -847,4 +856,22 @@ HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient
 
 errorReturn:
 	return (HCOSE_RECIPIENT)p;
+}
+
+bool COSE_Enveloped_AddCounterSigner(HCOSE_ENCRYPT hEnv, HCOSE_COUNTERSIGN hSign, cose_errback * perr)
+{
+	CHECK_CONDITION(IsValidEncryptHandle(hEnv), COSE_ERR_INVALID_HANDLE);
+	return _COSE_CounterSign_add(&((COSE_Enveloped *)hEnv)->m_message, hSign, perr);
+
+errorReturn:
+	return false;
+}
+
+HCOSE_COUNTERSIGN COSE_Enveloped_GetCounterSigner(HCOSE_ENCRYPT h, int iSigner, cose_errback * perr)
+{
+	CHECK_CONDITION(IsValidEncryptHandle(h), COSE_ERR_INVALID_HANDLE);
+	return _COSE_CounterSign_get(&((COSE_Enveloped *)h)->m_message, iSigner, perr);
+
+errorReturn:
+	return NULL;
 }

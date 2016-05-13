@@ -1,7 +1,7 @@
 
 # COSE-C Implementation [![Build Status](https://travis-ci.org/cose-wg/COSE-C.svg?branch=master)](https://travis-ci.org/cose-wg/COSE-C) [![Coverage Status](https://coveralls.io/repos/cose-wg/COSE-C/badge.svg?branch=master&service=github)](https://coveralls.io/github/cose-wg/COSE-C?branch=master) [![Coverity Status](https://scan.coverity.com/projects/7542/badge.svg)](https://scan.coverity.com/projects/jimsch-cose-c)
 
-This project is a C implementation of the IETF CBOR Encoded Mesage Syntax (COSE).
+This project is a C implementation of the IETF CBOR Encoded Message Syntax (COSE).
 There are currently two versions of the COSE document that can be read.
 The most current work in progress draft can be found on github in the [cose-wg/cose-spec](https://cose-wg.github.io/cose-spec/) project.
 The IETF also keeps a copy of the spec in the [COSE WG](https://tools.ietf.org/html/draft-ietf-cose-msg).
