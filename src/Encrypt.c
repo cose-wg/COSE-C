@@ -554,10 +554,12 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, perr);
 	if (cbProtected == NULL) goto errorReturn;
 
+#ifdef USE_COUNTER_SIGNATURES
 	//  Setup Counter Signatures
 	if (!_COSE_CountSign_create(&pcose->m_message, NULL, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
+#endif
 
 	//  Build authenticated data
 
@@ -858,6 +860,7 @@ errorReturn:
 	return (HCOSE_RECIPIENT)p;
 }
 
+#ifdef USE_COUNTER_SIGNATURES
 bool COSE_Enveloped_AddCounterSigner(HCOSE_ENCRYPT hEnv, HCOSE_COUNTERSIGN hSign, cose_errback * perr)
 {
 	CHECK_CONDITION(IsValidEncryptHandle(hEnv), COSE_ERR_INVALID_HANDLE);
@@ -875,3 +878,4 @@ HCOSE_COUNTERSIGN COSE_Enveloped_GetCounterSigner(HCOSE_ENCRYPT h, int iSigner, 
 errorReturn:
 	return NULL;
 }
+#endif
