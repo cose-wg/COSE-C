@@ -225,7 +225,7 @@ extern bool _COSE_Mac0_Release(COSE_Mac0Message * p);
 //  Counter Sign Items
 extern HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE * pMessage, int iSigner, cose_errback * perr);
 extern bool _COSE_CounterSign_add(COSE * pMessage, HCOSE_COUNTERSIGN hSigner, cose_errback * perr);
-extern bool _COSE_CountSign_create(COSE * pMessage, CBOR_CONTEXT_COMMA cose_errback * perr);
+extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONTEXT_COMMA cose_errback * perr);
 
 //
 //  Debugging Items

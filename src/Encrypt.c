@@ -170,7 +170,7 @@ bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED h, HCOSE_RECIPIENT hRecip, cose_errb
 	CHECK_CONDITION(IsValidRecipientHandle(hRecip), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pcose->m_recipientFirst != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	f = _COSE_Enveloped_decrypt(pcose, pRecip, NULL, 0, "Enveloped", perr);
+	f = _COSE_Enveloped_decrypt(pcose, pRecip, NULL, 0, "Encrypt", perr);
 
 	errorReturn:
 	return f;
@@ -414,7 +414,7 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pcose->m_recipientFirst != NULL, COSE_ERR_INVALID_HANDLE);
 
-	return _COSE_Enveloped_encrypt(pcose, NULL, 0, "Enveloped", perr);
+	return _COSE_Enveloped_encrypt(pcose, NULL, 0, "Encrypt", perr);
 
 errorReturn:
 	return false;
@@ -555,7 +555,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 	if (cbProtected == NULL) goto errorReturn;
 
 	//  Setup Counter Signatures
-	if (!_COSE_CountSign_create(&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_CountSign_create(&pcose->m_message, NULL, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 
