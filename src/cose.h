@@ -11,6 +11,7 @@ typedef struct _cose_enveloped * HCOSE_ENVELOPED;
 typedef struct _cose_recipient * HCOSE_RECIPIENT;
 typedef struct _cose_mac * HCOSE_MAC;
 typedef struct _cose_mac0 * HCOSE_MAC0;
+typedef struct _cose_counterSignature * HCOSE_COUNTERSIGN;
 
 /**
 * All of the different kinds of errors
@@ -138,9 +139,13 @@ typedef enum {
 
 typedef enum {
 	COSE_Header_Algorithm = 1,
+	COSE_Header_Critical = 2,
 	COSE_Header_Content_Type = 3,
 	COSE_Header_KID = 4,
 	COSE_Header_IV = 5,
+	COSE_Header_Partial_IV = 6,
+	COSE_Header_CounterSign = 7,
+	COSE_Header_Operation_Time = 8,
 
 	COSE_Header_HKDF_salt = -20,
 	COSE_Header_KDF_U_nonce = -21,
@@ -196,6 +201,9 @@ bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED, HCOSE_RECIPIENT, cose_errback * per
 
 extern bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr);
 HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient, cose_errback * perr);
+
+extern bool COSE_Enveloped_AddCounterSigner(HCOSE_ENCRYPT hEnv, HCOSE_COUNTERSIGN hSign, cose_errback * perr);
+HCOSE_COUNTERSIGN COSE_Enveloped_GetCounterSigner(HCOSE_ENCRYPT, int iSigner, cose_errback * perr);
 
 /*
  */
@@ -310,6 +318,15 @@ bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback *
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
 bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
+/*
+ * Counter Signature Routines
+ */
+
+HCOSE_COUNTERSIGN COSE_CounterSign_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_CounterSign_Free(HCOSE_COUNTERSIGN cose);
+
+cn_cbor * COSE_CounterSign_map_get_int(HCOSE_COUNTERSIGN h, int key, int flags, cose_errback * perror);
+bool COSE_CounterSign_map_put_int(HCOSE_COUNTERSIGN cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 /*
 */

@@ -20,6 +20,7 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 {
 	HCOSE_ENVELOPED hEnc = NULL;
 	HCOSE_RECIPIENT hRecip = NULL;
+	HCOSE_RECIPIENT hRecip1 = NULL;
 	HCOSE_RECIPIENT hRecip2 = NULL;
 	bool fRet = false;
 	int type;
@@ -34,42 +35,44 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 
 	if (!SetReceivingAttributes((HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected)) goto errorReturn;
 
-	hRecip = COSE_Enveloped_GetRecipient(hEnc, iRecipient1, NULL);
-	if (hRecip == NULL) goto errorReturn;
-	if (!SetReceivingAttributes((HCOSE)hRecip, pRecipient1, Attributes_Recipient_protected)) goto errorReturn;
+	hRecip1 = COSE_Enveloped_GetRecipient(hEnc, iRecipient1, NULL);
+	if (hRecip1 == NULL) goto errorReturn;
+	if (!SetReceivingAttributes((HCOSE)hRecip1, pRecipient1, Attributes_Recipient_protected)) goto errorReturn;
 
 	if (pRecipient2 != NULL) {
 		pkey = BuildKey(cn_cbor_mapget_string(pRecipient2, "key"), false);
 		if (pkey == NULL) goto errorReturn;
 
-		hRecip2 = COSE_Recipient_GetRecipient(hRecip, iRecipient2, NULL);
+		hRecip2 = COSE_Recipient_GetRecipient(hRecip1, iRecipient2, NULL);
 		if (hRecip2 == NULL) goto errorReturn;
 
 		if (!SetReceivingAttributes((HCOSE)hRecip2, pRecipient2, Attributes_Recipient_protected)) goto errorReturn;
 		if (!COSE_Recipient_SetKey(hRecip2, pkey, NULL)) goto errorReturn;
-	}
-	else {
-		pkey = BuildKey(cn_cbor_mapget_string(pRecipient1, "key"), false);
-		if (pkey == NULL) goto errorReturn;
-		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) goto errorReturn;
-	}
 
-
-	cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipient1, "sender_key");
-	if (cnStatic != NULL) {
-		if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
-			COSE_Recipient_map_put_int(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
-		}
-	}
-
-	if (pRecipient2 != NULL) {
-		cnStatic = cn_cbor_mapget_string(pRecipient2, "sender_key");
+		cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipient2, "sender_key");
 		if (cnStatic != NULL) {
 			if (COSE_Recipient_map_get_int(hRecip2, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
 				COSE_Recipient_map_put_int(hRecip2, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
 			}
 		}
+
+		hRecip = hRecip2;
 	}
+	else {
+		pkey = BuildKey(cn_cbor_mapget_string(pRecipient1, "key"), false);
+		if (pkey == NULL) goto errorReturn;
+		if (!COSE_Recipient_SetKey(hRecip1, pkey, NULL)) goto errorReturn;
+
+		cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipient1, "sender_key");
+		if (cnStatic != NULL) {
+			if (COSE_Recipient_map_get_int(hRecip1, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
+				COSE_Recipient_map_put_int(hRecip1, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
+			}
+		}
+
+		hRecip = hRecip1;
+	}
+
 
 	if (!fFailBody) {
 		cn_cbor * cn = cn_cbor_mapget_string(pRecipient1, "fail");
@@ -89,7 +92,7 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 
 errorReturn:
 	if (hEnc != NULL) COSE_Enveloped_Free(hEnc);
-	if (hRecip != NULL) COSE_Recipient_Free(hRecip);
+	if (hRecip1 != NULL) COSE_Recipient_Free(hRecip1);
 	if (hRecip2 != NULL) COSE_Recipient_Free(hRecip2);
 
 

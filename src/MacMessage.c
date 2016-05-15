@@ -617,7 +617,7 @@ bool _COSE_Mac_validate(COSE_MacMessage * pcose, COSE_RecipientInfo * pRecip, co
 					if (!_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) goto errorReturn;
 					break;
 				}
-				else if (pRecipX->m_recipientNext != NULL) {
+				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
 					if (_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) break;
 				}
 			}

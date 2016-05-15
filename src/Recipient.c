@@ -288,10 +288,12 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * p
 
 #ifdef USE_Direct_HKDF_AES_128
 	case COSE_Algorithm_Direct_HKDF_AES_128:
+		break;
 #endif
 
 #ifdef USE_Direct_HKDF_AES_256
 	case COSE_Algorithm_Direct_HKDF_AES_256:
+		break;
 #endif
 
 #ifdef USE_Direct_HKDF_HMAC_SHA_256

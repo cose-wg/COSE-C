@@ -34,7 +34,6 @@ bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner)
 	return true;
 }
 
-
 bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
 {
 	COSE_SignerInfo * pSigner = (COSE_SignerInfo *)hSigner;
@@ -67,7 +66,7 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 		return NULL;
 	}
 
-	if (!_COSE_Init(COSE_INIT_FLAGS_NO_CBOR_TAG, &pobj->m_message, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
+	if (!_COSE_SignerInfo_Init(COSE_INIT_FLAGS_NO_CBOR_TAG, pobj, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
 		_COSE_SignerInfo_Free(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
@@ -77,6 +76,10 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	return (HCOSE_SIGNER)pobj;
 }
 
+bool _COSE_SignerInfo_Init(COSE_INIT_FLAGS flags, COSE_SignerInfo * pobj, int msgType, CBOR_CONTEXT_COMMA cose_errback * errp)
+{
+	return _COSE_Init(flags, &pobj->m_message, msgType, CBOR_CONTEXT_PARAM_COMMA errp);
+}
 
 
 COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, COSE_SignerInfo * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
