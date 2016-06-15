@@ -1221,32 +1221,35 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	cnArrayT = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cnArrayT != NULL, cbor_error);
 
-	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_U_nonce, COSE_BOTH, perr);
-	if (cnParam != NULL) {
-		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
-		cnT = NULL;
-		cnParam = NULL;
-	}
-
 	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_U_name, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
-		cnT = NULL;
-		cnParam = NULL;
 	}
+	else cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
+	cnT = NULL;
+	cnParam = NULL;
+
+	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_U_nonce, COSE_BOTH, perr);
+	if (cnParam != NULL) {
+		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	}
+	else cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
+	cnT = NULL;
+	cnParam = NULL;
 
 	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_U_other, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
-		cnT = NULL;
-		cnParam = NULL;
 	}
+	else cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
+	cnT = NULL;
+	cnParam = NULL;
 
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cnArrayT, &cbor_error), cbor_error);
 	cnArrayT = NULL;
@@ -1254,32 +1257,35 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	cnArrayT = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(cnArrayT != NULL, cbor_error);
 
-	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_V_nonce, COSE_BOTH, perr);
-	if (cnParam != NULL) {
-		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
-		cnT = NULL;
-		cnParam = NULL;
-	}
-
 	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_V_name, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
-		cnT = NULL;
-		cnParam = NULL;
 	}
+	else cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
+	cnT = NULL;
+	cnParam = NULL;
+
+	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_V_nonce, COSE_BOTH, perr);
+	if (cnParam != NULL) {
+		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	}
+	else cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
+	cnT = NULL;
+	cnParam = NULL;
 
 	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_V_other, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-		CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
-		cnT = NULL;
-		cnParam = NULL;
 	}
+	else cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
+	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(cn_cbor_array_append(cnArrayT, cnT, &cbor_error), cbor_error);
+	cnT = NULL;
+	cnParam = NULL;
 
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cnArrayT, &cbor_error), cbor_error);
 	cnArrayT = NULL;

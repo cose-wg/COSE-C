@@ -180,7 +180,8 @@ FOO SignBody[5] = {
 FOO Sign0Body[4] = {
 	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
 	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
-	{ "payload", CN_CBOR_BYTES, 0, NULL, 0, 0 }
+	{ "payload", CN_CBOR_BYTES, 0, NULL, 0, 0 },
+	{ "signature", CN_CBOR_BYTES, 0, NULL, 0, 0}
 };
 
 FOO EnvelopedMessage = {

@@ -148,11 +148,11 @@ typedef enum {
 	COSE_Header_Operation_Time = 8,
 
 	COSE_Header_HKDF_salt = -20,
-	COSE_Header_KDF_U_nonce = -21,
-	COSE_Header_KDF_U_name = -22,
+	COSE_Header_KDF_U_name = -21,
+	COSE_Header_KDF_U_nonce = -22,
 	COSE_Header_KDF_U_other = -23,
-	COSE_Header_KDF_V_nonce = -24,
-	COSE_Header_KDF_V_name = -25,
+	COSE_Header_KDF_V_name = -24,
+	COSE_Header_KDF_V_nonce = -25,
 	COSE_Header_KDF_V_other = -26,
 
 	COSE_Header_KDF_PUB_other = -999,
