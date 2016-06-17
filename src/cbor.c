@@ -172,3 +172,14 @@ cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback 
 	pcn->type = CN_CBOR_FALSE + (boolValue != 0);
 	return pcn;
 }
+
+cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp)
+{
+	cn_cbor * pcn = CN_CALLOC(context);
+	if (pcn == NULL) {
+		if (errp != NULL) errp->err = CN_CBOR_ERR_OUT_OF_MEMORY;
+		return NULL;
+	}
+	pcn->type = CN_CBOR_NULL;
+	return pcn;
+}
