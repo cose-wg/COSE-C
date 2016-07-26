@@ -12,7 +12,7 @@ add_executable ( cose_test test.c json.c encrypt.c sign.c context.c mac_test.c)
 
 target_link_libraries (cose_test PRIVATE cose-c )
 if (use_embedtls)
-    target_link_libraries ( cose-c PRIVATE embedtls )
+    target_link_libraries ( cose_test PRIVATE embedtls )
 endif()
 
 ## OpenSSL
