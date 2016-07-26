@@ -101,4 +101,4 @@
 #define USE_OPEN_SSL
 #endif
 
-#define USE_COUNTER_SIGNATURES
+//#define USE_COUNTER_SIGNATURES
