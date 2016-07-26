@@ -7,8 +7,8 @@ before_install:
   - pip install cpp-coveralls --user
   - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
 env:
-  - USE_CONTEXT=ON
-  - USE_CONTEXT=OFF
+#  - USE_CONTEXT=ON
+#  - USE_CONTEXT=OFF
   - USE_CONTEXT=OFF USE_EMBEDTLS=ON
 matrix:
   exclude:

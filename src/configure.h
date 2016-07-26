@@ -1,7 +1,24 @@
 //
+//  Determine which cryptographic library we are goig to be usig
+//
+
+#if defined(USE_MBED_TLS)
+#if defined(USE_OPEN_SSL) || defined(USE_BCRYPT)
+#error Only Define One Crypto Package
+#endif
+#elif defined(USE_BCRYPT)
+#if defined(USE_OPENSSL)
+#error Only Define One Crypto Package
+#endif
+#elif !defined(USE_OPEN_SSL)
+#define USE_OPEN_SSL
+#endif
+
+//
 //  Define which AES GCM algorithms are being used
 //
 
+#if !defined(USE_MBED_TLS)
 #define USE_AES_GCM_128
 #define USE_AES_GCM_192
 #define USE_AES_GCM_256
@@ -9,6 +26,7 @@
 #if defined(USE_AES_GCM_128) || defined(USE_AES_GCM_192) || defined(USE_AES_GCM_256)
 #define USE_AES_GCM
 #endif
+#endif // !defined(USE_MBED_TLS)
 
 //
 //  Define which AES CCM algorithms are being used
@@ -41,64 +59,67 @@
 //  Define which AES CBC-MAC algorithms are to be used
 //
 
+#if !defined(USE_MBED_TLS)
+
 #define USE_AES_CBC_MAC_128_64
 #define USE_AES_CBC_MAC_128_128
 #define USE_AES_CBC_MAC_256_64
 #define USE_AES_CBC_MAC_256_128
 
+#endif // !defined(USE_MBED_TLS)
+
 //
 //  Define which ECDH algorithms are to be used
 //
 
+#if !defined(USE_MBED_TLS)
 #define USE_ECDH_ES_HKDF_256
 #define USE_ECDH_ES_HKDF_512
 #define USE_ECDH_SS_HKDF_256
 #define USE_ECDH_SS_HKDF_512
+#endif // !defined(USE_MBED_TLS)
 
+#if !defined(USE_MBED_TLS)
 #define USE_ECDH_ES_A128KW
 #define USE_ECDH_ES_A192KW
 #define USE_ECDH_ES_A256KW
 #define USE_ECDH_SS_A128KW
 #define USE_ECDH_SS_A192KW
 #define USE_ECDH_SS_A256KW
+#endif // !defined(USE_MBED_TLS)
 
 //
 //  Define which Key Wrap functions are to be used
 //
 
+#if !defined(USE_MBED_TLS)
 #define USE_AES_KW_128
 #define USE_AES_KW_192
 #define USE_AES_KW_256
+#endif // !defined(USE_MBED_TLS)
 
 //
 //  Define which of the DIRECT + KDF algorithms are to be used
 //
 
+#if !defined(USE_MBED_TLS)
 #define USE_Direct_HKDF_HMAC_SHA_256
 #define USE_Direct_HKDF_HMAC_SHA_512
 #define USE_Direct_HKDF_AES_128
 #define USE_Direct_HKDF_AES_256
+#endif // !defined(USE_MBED_TLS)
 
 
 //
 //  Define which of the signature algorithms are to be used
 //
 
+#if !defined(USE_MBED_TLS)
 #define USE_ECDSA_SHA_256
 #define USE_ECDSA_SHA_384
 #define USE_ECDSA_SHA_512
+#endif // !defined(USE_MBED_TLS)
 
 
-#if defined(USE_MBED_TLS)
-#if defined(USE_OPEN_SSL) || defined(USE_BCRYPT)
-#error Only Define One Crypto Package
-#endif
-#elif defined(USE_BCRYPT)
-#if defined(USE_OPENSSL)
-#error Only Define One Crypto Package
-#endif
-#elif !defined(USE_OPEN_SSL)
-#define USE_OPEN_SSL
-#endif
 
 //#define USE_COUNTER_SIGNATURES
