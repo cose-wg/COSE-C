@@ -124,8 +124,6 @@ int BuildSignedMessage(const cn_cbor * pControl)
 
 	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Sign_protected)) goto returnError;
 
-	const cn_cbor * pAlg = COSE_Sign_map_get_int(hSignObj, 1, COSE_BOTH, NULL);
-
 	const cn_cbor * pSigners = cn_cbor_mapget_string(pSign, "signers");
 	if ((pSigners == NULL) || (pSigners->type != CN_CBOR_ARRAY)) goto returnError;
 
@@ -325,8 +323,6 @@ int BuildSign0Message(const cn_cbor * pControl)
 	if (!COSE_Sign0_SetContent(hSignObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
 	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Sign0_protected)) goto returnError;
-
-	const cn_cbor * pAlg = COSE_Sign0_map_get_int(hSignObj, 1, COSE_BOTH, NULL);
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
 	if (pkey == NULL) goto returnError;

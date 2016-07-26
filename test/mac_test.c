@@ -130,8 +130,6 @@ int BuildMacMessage(const cn_cbor * pControl)
 
 	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC_protected)) goto returnError;
 
-	const cn_cbor * pAlg = COSE_Mac_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
-
 	const cn_cbor * pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
@@ -346,8 +344,6 @@ int BuildMac0Message(const cn_cbor * pControl)
 	if (!COSE_Mac0_SetContent(hMacObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
 	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC0_protected)) goto returnError;
-
-	const cn_cbor * pAlg = COSE_Mac0_map_get_int(hMacObj, 1, COSE_BOTH, NULL);
 
 	const cn_cbor * pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;

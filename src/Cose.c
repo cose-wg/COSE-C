@@ -406,14 +406,14 @@ errorReturn:
 
 HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE * pMessage, int iSigner, cose_errback * perr)
 {
-	COSE_SignerInfo * pSigner = pMessage->m_counterSigners;
+	COSE_CounterSign * pSigner = pMessage->m_counterSigners;
 	int i;
 
-	for (i = 0; i < iSigner; i++, pSigner = pSigner->m_signerNext) {
+	for (i = 0; i < iSigner; i++, pSigner = pSigner->m_next) {
 		CHECK_CONDITION(pSigner != NULL, COSE_ERR_INVALID_PARAMETER);
 	}
 
-	return pSigner;
+	return (HCOSE_COUNTERSIGN) pSigner;
 
 errorReturn:
 	return false;
@@ -425,8 +425,8 @@ bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONTEXT_COM
 	cn_cbor_errback cbor_err;
 	COSE_CounterSign * pSigner = NULL;
 	cn_cbor * pcnProtected = NULL;
-	cn_cbor * pcn;
-	cn_cbor * pcn2;
+	cn_cbor * pcn = NULL;
+	cn_cbor * pcn2 = NULL;
 
 	if (pMessage->m_counterSigners == NULL) return true;
 
@@ -439,14 +439,16 @@ bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONTEXT_COM
 	pcnProtected = _COSE_arrayget_int(pMessage, INDEX_PROTECTED);
 	CHECK_CONDITION(pcnProtected != NULL, COSE_ERR_INTERNAL);
 
-	for (pSigner = pMessage->m_counterSigners; pSigner != NULL; pSigner = pSigner->m_signer.m_signerNext) {
+	for (pSigner = pMessage->m_counterSigners; pSigner != NULL; pSigner = pSigner->m_next) {
+		CHECK_CONDITION(pSigner->m_signer.m_signerNext == NULL, COSE_ERR_INTERNAL);
+
 		pcn = cn_cbor_data_create(pcnProtected->v.bytes, pcnProtected->v.count, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 		CHECK_CONDITION_CBOR(pcnProtected != NULL, cbor_err);
 
 		pcn2 = cn_cbor_clone(pcnBody, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 		CHECK_CONDITION_CBOR(pcnBody != NULL, cbor_err);
 
-		if (!_COSE_Signer_sign(pSigner, pcnBody, pcn2, perr)) goto errorReturn;
+		if (!_COSE_Signer_sign(&pSigner->m_signer, pcnBody, pcn2, perr)) goto errorReturn;
 		pcn = NULL;
 		pcn2 = NULL;
 
