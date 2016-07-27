@@ -123,7 +123,7 @@ if (use_embedtls)
    ExternalProject_Add(
      project_embedtls
      GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-     CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${build_shared_libs} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF
+     CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${build_shared_libs} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
      INTALL_DIR "${dist_dir}"
      UPDATE_DISCONNECTED 1
    )
