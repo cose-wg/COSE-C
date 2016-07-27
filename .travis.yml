@@ -14,8 +14,8 @@ matrix:
   exclude:
     - compiler: gcc
       env: USE_CONTEXT=OFF
-    - compiler: gcc
-      env: USE_CONTEXT=OFF USE_EMBEDTLS=ON
+#    - compiler: gcc
+#      env: USE_CONTEXT=OFF USE_EMBEDTLS=ON
 addons:
   apt:
     sources:
