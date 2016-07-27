@@ -25,6 +25,10 @@ if ( MSVC )
 
 target_link_libraries( cose_dumper PRIVATE ws2_32 )
 endif ()
+if (use_embedtls)
+    target_include_directories ( cose-c PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include )
+    target_link_libraries ( cose-c PRIVATE embedtls )
+endif()
 
 target_include_directories ( cose_dumper PRIVATE ../include )
 target_include_directories ( cose_dumper PRIVATE ../src )
