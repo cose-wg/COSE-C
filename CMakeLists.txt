@@ -123,7 +123,7 @@ if (use_embedtls)
    ExternalProject_Add(
      project_embedtls
      GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-     CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF
+     CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${build_shared_libs} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF
      INTALL_DIR "${dist_dir}"
      UPDATE_DISCONNECTED 1
    )
@@ -131,7 +131,7 @@ if (use_embedtls)
    ExternalProject_Get_Property(project_embedtls install_dir)
    include_directories( "${install_dir}/include" )
    add_library( embedtls STATIC IMPORTED)
-   set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}")
+   set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
    add_dependencies(embedtls project_embedtls)
 endif ()
 

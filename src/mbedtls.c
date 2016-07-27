@@ -8,10 +8,10 @@
 
 #ifdef USE_MBED_TLS
 
-#include "include/mbedtls/ccm.h"
-#include "include/mbedtls/md.h"
-#include "include/mbedtls/ctr_drbg.h"
-#include "include/mbedtls/entropy.h"
+#include "mbedtls/ccm.h"
+#include "mbedtls/md.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
 
 bool FUseCompressed = true;
 
