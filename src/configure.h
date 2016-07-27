@@ -77,6 +77,10 @@
 #define USE_ECDH_ES_HKDF_512
 #define USE_ECDH_SS_HKDF_256
 #define USE_ECDH_SS_HKDF_512
+#if defined(USE_ECDH_ES_HKDF_256) || defined(USE_ECDH_ES_HKDF_512) || defined(USE_ECDH_SS_HKDF_256) || defined(USE_ECDH_SS_HKDF_512)
+#define USE_ECDH 1
+#define USE_HKDF_SHA2 1
+#endif
 #endif // !defined(USE_MBED_TLS)
 
 #if !defined(USE_MBED_TLS)
@@ -86,6 +90,10 @@
 #define USE_ECDH_SS_A128KW
 #define USE_ECDH_SS_A192KW
 #define USE_ECDH_SS_A256KW
+#if defined(USE_ECDH_ES_A128KW) || defined(USE_ECDH_ES_A192KW) || defined(USE_ECDH_ES_A256KW) || defined(USE_ECDH_SS_A128KW) || defined(USE_ECDH_SS_A192KW) || defined(USE_ECDH_SS_A256KW)
+#define USE_ECDH 1
+#define USE_HKDF_AES 1
+#endif
 #endif // !defined(USE_MBED_TLS)
 
 //
@@ -107,6 +115,12 @@
 #define USE_Direct_HKDF_HMAC_SHA_512
 #define USE_Direct_HKDF_AES_128
 #define USE_Direct_HKDF_AES_256
+#if defined(USE_Direct_HKDF_HMAC_SHA_256) || defined(USE_Direct_HKDF_HMAC_SHA_512)
+#define USE_HKDF_SHA2 1
+#endif
+#if defined(USE_Direct_HKDF_AES_128) || defined(USE_Direct_KDF_AES_256)
+#define USE_HKDF_AES 1
+#endif
 #endif // !defined(USE_MBED_TLS)
 
 

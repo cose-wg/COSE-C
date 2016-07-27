@@ -123,6 +123,7 @@ void _COSE_Recipient_Free(COSE_RecipientInfo * pRecipient)
 	return;
 }
 
+#if defined(USE_HKDF_SHA2) || defined(USE_HKDF_AES)
 /**
 * Perform an AES-CCM Decryption operation
 *
@@ -153,6 +154,7 @@ static bool HKDF_X(COSE * pCose, bool fHMAC, bool fECDH, bool fStatic, bool fSen
 
 
 	if (fECDH) {
+#ifdef USE_ECDH
 		cn_cbor * pkeyMessage;
 
 		if (pKeyPrivate != NULL) {
@@ -185,6 +187,9 @@ static bool HKDF_X(COSE * pCose, bool fHMAC, bool fECDH, bool fStatic, bool fSen
 
 			if (!ECDH_ComputeSecret(pCose, (cn_cbor **)&pKeyPrivate, pkeyMessage, &pbSecret, &cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 		}
+#else
+                goto errorReturn;
+#endif
 	}
 	else {
 		CHECK_CONDITION(pKeyPrivate != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -201,12 +206,20 @@ static bool HKDF_X(COSE * pCose, bool fHMAC, bool fECDH, bool fStatic, bool fSen
 	}
 
 	if (fHMAC) {
+#ifdef USE_HKDF_SHA2
 		if (!HKDF_Extract(pCose, pbSecret, cbSecret, cbitHash, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
 		if (!HKDF_Expand(pCose, cbitHash, rgbDigest, cbDigest, pbContext, cbContext, pbKey, cbitKey / 8, perr)) goto errorReturn;
+#else
+                goto errorReturn;
+#endif
 	}
 	else {
+#ifdef USE_HKDF_AES
 		if (!HKDF_AES_Expand(pCose, cbitHash, pbSecret, cbSecret, pbContext, cbContext, pbKey, cbitKey / 8, perr)) goto errorReturn;
+#else
+                goto errorReturn;
+#endif
 	}
 	fRet = true;
 
@@ -219,6 +232,7 @@ errorReturn:
 	if (pbContext != NULL) COSE_FREE(pbContext, context);
 	return fRet;
 }
+#endif // defined(USE_HKDF_SHA2) || defined(USE_HKDF_AES)
 
 bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * pRecipUse, int algIn, int cbitKeyOut, byte * pbKeyOut, cose_errback * perr)
 {
