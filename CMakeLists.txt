@@ -131,7 +131,7 @@ if (use_embedtls)
    ExternalProject_Get_Property(project_embedtls install_dir)
    include_directories( "${install_dir}/include" )
    add_library( embedtls STATIC IMPORTED)
-   set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
+   set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
    add_dependencies(embedtls project_embedtls)
 endif ()
 
