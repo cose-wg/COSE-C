@@ -7,9 +7,9 @@ before_install:
   - pip install cpp-coveralls --user
   - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
 env:
-#  - USE_CONTEXT=ON
-#  - USE_CONTEXT=OFF
-  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
+  - USE_CONTEXT=ON
+  - USE_CONTEXT=OFF
+#  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
 matrix:
   exclude:
     - compiler: gcc
@@ -28,6 +28,6 @@ script:
   - git clone git://github.com/cose-wg/Examples Examples
   - mkdir build
   - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON -Duse_embedtls=$USE_EMBEDTLS .. && make all test
-#  - make coveralls
+  - make coveralls
 
 
