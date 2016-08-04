@@ -5,7 +5,7 @@
 
 #ifdef USE_COUNTER_SIGNATURES
 struct _COSE_COUNTER_SIGN;
-typedef struct _COSE_COUNTER_SIGN COSE_Counter_Sign;
+typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
 #endif
 
 typedef struct _COSE {
@@ -26,7 +26,7 @@ typedef struct _COSE {
 #endif
 	struct _COSE * m_handleList;
 #ifdef USE_COUNTER_SIGNATURES
-	COSE_Counter_Sign * m_counterSigners;
+	COSE_CounterSign * m_counterSigners;
 #endif
 } COSE;
 
@@ -90,6 +90,7 @@ typedef COSE_MacMessage COSE_Mac0Message;
 #ifdef USE_COUNTER_SIGNATURES
 typedef struct _COSE_COUNTER_SIGN {
 	COSE_SignerInfo m_signer;
+	COSE_CounterSign * m_next;
 } COSE_CounterSign;
 #endif
 

@@ -6,6 +6,7 @@ set ( cose_sources
 	Cose.c
 	MacMessage.c
         MacMessage0.c
+        mbedtls.c
 	openssl.c
 	Sign.c
         Sign0.c
@@ -29,6 +30,10 @@ target_include_directories ( cose-c PRIVATE ../src )
 
 target_link_libraries ( cose-c PRIVATE ${OPENSSL_LIBRARIES} )
 target_link_libraries ( cose-c PRIVATE cn-cbor )
+if (use_embedtls)
+    target_include_directories ( cose-c PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include )
+    target_link_libraries ( cose-c PRIVATE embedtls )
+endif()
 
 install ( TARGETS cose-c
 	LIBRARY DESTINATION lib

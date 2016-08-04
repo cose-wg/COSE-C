@@ -55,9 +55,12 @@ build
 *.vcxproj
 *.vcxproj.filters
 *.opensdf
+*.VC.db
+*.VC.opendb
 
 # CMake and CTest directories
 project_cn-cbor-prefix
+project_embedtls-prefix
 Testing
 dist
 test/test.cbor

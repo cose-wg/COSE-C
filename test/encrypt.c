@@ -213,6 +213,15 @@ int BuildEnvelopedMessage(const cn_cbor * pControl)
 
 	if (!SetSendingAttributes((HCOSE)hEncObj, pEnveloped, Attributes_Enveloped_protected)) goto returnError;
 
+#if 0
+	const cn_cbor * pCounterSign = cn_cbor_mapget_string(pEnveloped, "countersign");
+	if (pCounterSign != NULL) {
+		HCOSE_COUNTERSIGN hCSign = BuildCounterSign(pCounterSign);
+		if (hCSign == NULL) goto returnError;
+		if (!COSE_Enveloped_AddCounterSigner(hEncObj, hCSign, NULL)) goto returnError;
+	}
+#endif
+
 	const cn_cbor * pAlg = COSE_Enveloped_map_get_int(hEncObj, 1, COSE_BOTH, NULL);
 	if (pAlg == NULL) goto returnError;
 
