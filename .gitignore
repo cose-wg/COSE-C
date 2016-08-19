@@ -54,6 +54,7 @@ build
 *.suo
 *.vcxproj
 *.vcxproj.filters
+*.vcxproj.user
 *.opensdf
 *.VC.db
 *.VC.opendb

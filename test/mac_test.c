@@ -26,6 +26,8 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	int iRecipient;
 	bool fFail = false;
 	bool fFailBody = false;
+	bool fAlgNoSupport = false;
+	int returnCode = 1;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -33,7 +35,9 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	}
 
 	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) if (fFailBody) return 0; else goto failTest;
+	if (hMAC == NULL) {
+            if (fFailBody) return 0; else goto failTest;
+        }
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto failTest;
 	pMac = cn_cbor_mapget_string(pInput, "mac");
@@ -74,11 +78,24 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 		}
 
 		pFail = cn_cbor_mapget_string(pRecipients, "fail");
+
+		cn_cbor * alg = COSE_Mac_map_get_int(hMAC, COSE_Header_Algorithm, COSE_BOTH, NULL);
+		if (!IsAlgorithmSupported(alg->v.sint)) fAlgNoSupport = true;
+
+		alg = COSE_Recipient_map_get_int(hRecip, COSE_Header_Algorithm, COSE_BOTH, NULL);
+		if (!IsAlgorithmSupported(alg->v.sint)) fAlgNoSupport = true;
+
 		if (COSE_Mac_validate(hMAC, hRecip, NULL)) {
-			if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+			if (fAlgNoSupport) {
+				fFail = true;
+			}
+			else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
 		}
 		else {
-			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+			if (fAlgNoSupport) {
+				returnCode = 0;
+			}
+			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 		}
 
 		COSE_Recipient_Free(hRecip);
@@ -92,7 +109,7 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	}
 
 	if (fFail) CFails += 1;
-	return 0;
+	return returnCode;
 
 failTest:
 	CFails += 1;
@@ -263,6 +280,7 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
+	bool fUnsuportedAlg = false;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -270,7 +288,9 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	}
 
 	hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) if (fFailBody) return 0; else goto errorReturn;
+	if (hMAC == NULL) {
+		if (fFailBody) return 0; else goto errorReturn;
+	}
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto errorReturn;
 	pMac = cn_cbor_mapget_string(pInput, "mac0");
@@ -284,20 +304,30 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	pRecipients = pRecipients->first_child;
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
-		if (pkey == NULL) {
+	if (pkey == NULL) {
+		fFail = true;
+		goto exitHere;
+	}
+
+	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
+
+	cn_cbor * alg = COSE_Mac0_map_get_int(hMAC, COSE_Header_Algorithm, COSE_BOTH, NULL);
+	if (!IsAlgorithmSupported(alg->v.sint)) fUnsuportedAlg = true;
+
+	pFail = cn_cbor_mapget_string(pRecipients, "fail");
+	if (COSE_Mac0_validate(hMAC, k->v.bytes, k->length, NULL)) {
+		if (fUnsuportedAlg) {
 			fFail = true;
-			goto exitHere;
+			fUnsuportedAlg = false;
 		}
+		else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+	}
+	else {
 
-		cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
+		if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+		if (fUnsuportedAlg) fFail = false;
+	}
 
-		pFail = cn_cbor_mapget_string(pRecipients, "fail");
-		if (COSE_Mac0_validate(hMAC, k->v.bytes, k->length, NULL)) {
-			if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
-		}
-		else {
-			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
-		}
 
 
 	COSE_Mac0_Free(hMAC);
@@ -306,13 +336,13 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 		if (!fFail) fFail = true;
 		else fFail = false;
 	}
-	exitHere:
+exitHere:
 	if (fFail) CFails += 1;
 	return 0;
 
 errorReturn:
 	CFails += 1;
-	return 0;
+	return (fFail || fUnsuportedAlg) ? 0 : 1;
 }
 
 int ValidateMac0(const cn_cbor * pControl)

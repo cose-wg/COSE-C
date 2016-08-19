@@ -673,12 +673,14 @@ void RunFileTest(const char * szFileName)
 	}
 
 	if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
-		ValidateMAC(pControl);
-		BuildMacMessage(pControl);
+		if (ValidateMAC(pControl)) {
+			BuildMacMessage(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
-		ValidateMac0(pControl);
-		BuildMac0Message(pControl);
+		if (ValidateMac0(pControl)) {
+			BuildMac0Message(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
 		if (ValidateEnveloped(pControl)) {
