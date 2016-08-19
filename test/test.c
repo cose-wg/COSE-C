@@ -127,7 +127,7 @@ byte * FromHex(const char * rgch, int cch)
 	return pb;
 }
 
-bool IsAlgorithmSupported(int alg)
+int IsAlgorithmSupported(int alg)
 {
 	switch (alg)
 	{
