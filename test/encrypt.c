@@ -90,7 +90,7 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 
 		if (pRecipient2 != NULL) {
 			alg = COSE_Recipient_map_get_int(pRecipient2, COSE_Header_Algorithm, COSE_BOTH, NULL);
-			if (!IsAlgorithmSupported(alg->v.sint)) fNoSupport = true;
+			if ((alg != NULL) && !IsAlgorithmSupported(alg->v.sint)) fNoSupport = true;
 		}
 		alg = COSE_Recipient_map_get_int(pRecipient1, COSE_Header_Algorithm, COSE_BOTH, NULL);
 		if ((alg != NULL) && !IsAlgorithmSupported(alg->v.sint)) fNoSupport = true;

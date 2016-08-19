@@ -134,6 +134,30 @@ bool IsAlgorithmSupported(int alg)
 	default:
 		return false;
 
+#ifdef USE_AES_CCM_16_64_128
+	case COSE_Algorithm_AES_CCM_16_64_128:
+#endif
+#ifdef USE_AES_CCM_16_64_256
+		case COSE_Algorithm_AES_CCM_16_64_256:
+#endif
+#ifdef USE_AES_CCM_64_64_128
+		case COSE_Algorithm_AES_CCM_64_64_128:
+#endif
+#ifdef USE_AES_CCM_64_64_256
+		case COSE_Algorithm_AES_CCM_64_64_256:
+#endif
+#ifdef USE_AES_CCM_16_128_128
+		case COSE_Algorithm_AES_CCM_16_128_128:
+#endif
+#ifdef USE_AES_CCM_16_128_256
+		case COSE_Algorithm_AES_CCM_16_128_256:
+#endif
+#ifdef USE_AES_CCM_64_128_128
+		case COSE_Algorithm_AES_CCM_64_128_128:
+#endif
+#ifdef USE_AES_CCM_64_128_256
+		case COSE_Algorithm_AES_CCM_64_128_256:
+#endif
 #ifdef USE_AES_GCM_128
 	case COSE_Algorithm_AES_GCM_128:
 #endif
