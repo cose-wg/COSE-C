@@ -127,6 +127,27 @@ byte * FromHex(const char * rgch, int cch)
 	return pb;
 }
 
+bool IsAlgorithmSupported(int alg)
+{
+	switch (alg)
+	{
+	default:
+		return false;
+
+#ifdef USE_AES_GCM_128
+	case COSE_Algorithm_AES_GCM_128:
+#endif
+#ifdef USE_AES_GCM_192
+	case COSE_Algorithm_AES_GCM_192:
+#endif
+#ifdef USE_AES_GCM_256
+	case COSE_Algorithm_AES_GCM_256:
+#endif
+		return true;
+	}
+	return true;
+}
+
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 {
 	const cn_cbor * pOutputs = cn_cbor_mapget_string(pControl, "output");
@@ -636,8 +657,9 @@ void RunFileTest(const char * szFileName)
 		BuildMac0Message(pControl);
 	}
 	else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
-		ValidateEnveloped(pControl);
-		BuildEnvelopedMessage(pControl);
+		if (ValidateEnveloped(pControl)) {
+			BuildEnvelopedMessage(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 		ValidateSigned(pControl);
@@ -648,8 +670,9 @@ void RunFileTest(const char * szFileName)
 		BuildSign0Message(pControl);
 	}
 	else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
-		ValidateEncrypt(pControl);
-		BuildEncryptMessage(pControl);
+		if (ValidateEncrypt(pControl)) {
+			BuildEncryptMessage(pControl);
+		}
 	}
 
 	return;
