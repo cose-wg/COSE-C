@@ -293,7 +293,8 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	}
 	else {
 		if (fNoAlgSupport) {
-			;
+			fFailBody = false;
+			fFail = false;
 		}
 		else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 	}
