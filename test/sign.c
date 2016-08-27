@@ -81,7 +81,8 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 		}
 		else {
 			if (fNoSupportAlg) {
-				;
+				fFailBody = false;
+				fFail = false;
 			}
 			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 		}
