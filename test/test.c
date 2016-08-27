@@ -146,8 +146,8 @@ int IsAlgorithmSupported(const cn_cbor * alg)
 #ifdef USE_AES_CBC_MAC_256_64
 	case COSE_Algorithm_CBC_MAC_256_64:
 #endif
-#ifdef USE_AES_CBC_MAC_256_256
-	case COSE_Algorithm_CBC_MAC_256_256:
+#ifdef USE_AES_CBC_MAC_256_128
+	case COSE_Algorithm_CBC_MAC_256_128:
 #endif
 #ifdef USE_AES_CCM_16_64_128
 	case COSE_Algorithm_AES_CCM_16_64_128:
