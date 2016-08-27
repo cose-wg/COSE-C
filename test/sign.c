@@ -27,6 +27,7 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 	int iSigner;
 	bool fFail = false;
 	bool fFailBody = false;
+	bool fNoSupportAlg = false;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -68,12 +69,21 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 			continue;
 		}
 
+		cn_cbor * alg = COSE_Signer_map_get_int(hSigner, COSE_Header_Algorithm, COSE_BOTH, 0);
+		if (!IsAlgorithmSupported(alg)) fNoSupportAlg = true;
+
 		pFail = cn_cbor_mapget_string(pSigners, "fail");
 		if (COSE_Sign_validate(hSig, hSigner, NULL)) {
-			if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+			if (fNoSupportAlg) {
+				fFail = true;
+			}
+			else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
 		}
 		else {
-			if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+			if (fNoSupportAlg) {
+				;
+			}
+			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 		}
 
 		COSE_Sign_Free(hSig);
@@ -86,7 +96,7 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 	}
 
 	if (fFail) CFails += 1;
-	return 0;
+	return fNoSupportAlg ? 0 : 1;
 
 returnError:
 	CFails += 1;
@@ -246,6 +256,7 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
+	bool fNoAlgSupport = false;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -269,13 +280,21 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 		goto exitHere;
 	}
 
+	cn_cbor * alg = COSE_Sign0_map_get_int(hSig, COSE_Header_Algorithm, COSE_BOTH, NULL);
+	if (!IsAlgorithmSupported(alg)) fNoAlgSupport = true;
 
 	pFail = cn_cbor_mapget_string(pInput, "fail");
 	if (COSE_Sign0_validate(hSig, pkey, NULL)) {
-		if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+		if (fNoAlgSupport) {
+			fFail = true;
+		}
+		else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
 	}
 	else {
-		if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+		if (fNoAlgSupport) {
+			;
+		}
+		else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 	}
 
 	COSE_Sign0_Free(hSig);
@@ -288,7 +307,7 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 exitHere:
 
 	if (fFail) CFails += 1;
-	return 0;
+	return fNoAlgSupport ? 0 : 1;
 
 returnError:
 	CFails += 1;

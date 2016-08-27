@@ -777,12 +777,14 @@ void RunFileTest(const char * szFileName)
 		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
-		ValidateSigned(pControl);
-		BuildSignedMessage(pControl);
+		if (ValidateSigned(pControl)) {
+			BuildSignedMessage(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-		ValidateSign0(pControl);
-		BuildSign0Message(pControl);
+		if (ValidateSign0(pControl)) {
+			BuildSign0Message(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
 		if (ValidateEncrypt(pControl)) {
