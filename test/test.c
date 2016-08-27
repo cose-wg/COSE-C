@@ -127,13 +127,28 @@ byte * FromHex(const char * rgch, int cch)
 	return pb;
 }
 
-int IsAlgorithmSupported(int alg)
+int IsAlgorithmSupported(const cn_cbor * alg)
 {
-	switch (alg)
+	//  Pretend we support any algorithm which is not an integer - this is a fail test case
+
+	if ((alg->type != CN_CBOR_INT) && (alg->type != CN_CBOR_UINT)) return true;
+	switch (alg->v.sint)
 	{
 	default:
 		return false;
 
+#ifdef USE_AES_CBC_MAC_128_64
+	case COSE_Algorithm_CBC_MAC_128_64:
+#endif
+#ifdef USE_AES_CBC_MAC_128_128
+	case COSE_Algorithm_CBC_MAC_128_128:
+#endif
+#ifdef USE_AES_CBC_MAC_256_64
+	case COSE_Algorithm_CBC_MAC_256_64:
+#endif
+#ifdef USE_AES_CBC_MAC_256_256
+	case COSE_Algorithm_CBC_MAC_256_256:
+#endif
 #ifdef USE_AES_CCM_16_64_128
 	case COSE_Algorithm_AES_CCM_16_64_128:
 #endif
@@ -167,6 +182,80 @@ int IsAlgorithmSupported(int alg)
 #ifdef USE_AES_GCM_256
 	case COSE_Algorithm_AES_GCM_256:
 #endif
+#ifdef USE_AES_KW_128
+	case COSE_Algorithm_AES_KW_128:
+#endif
+#ifdef USE_AES_KW_192
+	case COSE_Algorithm_AES_KW_192:
+#endif
+#ifdef USE_AES_KW_256
+	case COSE_Algorithm_AES_KW_256:
+#endif
+#ifdef USE_Direct_HKDF_AES_128
+	case COSE_Algorithm_Direct_HKDF_AES_128:
+#endif
+#ifdef USE_Direct_HKDF_AES_256
+	case COSE_Algorithm_Direct_HKDF_AES_256:
+#endif
+#ifdef USE_Direct_HKDF_HMAC_SHA_256
+	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
+#endif
+#ifdef USE_Direct_HKDF_HMAC_SHA_512
+	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_512:
+#endif
+#ifdef USE_ECDH_ES_A128KW
+	case COSE_Algorithm_ECDH_ES_A128KW:
+#endif
+#ifdef USE_ECDH_ES_A192KW
+	case COSE_Algorithm_ECDH_ES_A192KW:
+#endif
+#ifdef USE_ECDH_ES_A256KW
+	case COSE_Algorithm_ECDH_ES_A256KW:
+#endif
+#ifdef USE_ECDH_ES_HKDF_256
+	case COSE_Algorithm_ECDH_ES_HKDF_256:
+#endif
+#ifdef USE_ECDH_ES_HKDF_512
+	case COSE_Algorithm_ECDH_ES_HKDF_512:
+#endif
+#ifdef USE_ECDH_SS_A128KW
+	case COSE_Algorithm_ECDH_SS_A128KW:
+#endif
+#ifdef USE_ECDH_SS_A192KW
+	case COSE_Algorithm_ECDH_SS_A192KW:
+#endif
+#ifdef USE_ECDH_SS_A256KW
+	case COSE_Algorithm_ECDH_SS_A256KW:
+#endif
+#ifdef USE_ECDH_SS_HKDF_256
+	case COSE_Algorithm_ECDH_SS_HKDF_256:
+#endif
+#ifdef USE_ECDH_SS_HKDF_512
+	case COSE_Algorithm_ECDH_SS_HKDF_512:
+#endif
+#ifdef USE_ECDSA_SHA_256
+	case COSE_Algorithm_ECDSA_SHA_256:
+#endif
+#ifdef USE_ECDSA_SHA_384
+	case COSE_Algorithm_ECDSA_SHA_384:
+#endif
+#ifdef USE_ECDSA_SHA_512
+	case COSE_Algorithm_ECDSA_SHA_512:
+#endif
+#ifdef USE_HMAC_256_64
+	case COSE_Algorithm_HMAC_256_64:
+#endif
+#ifdef USE_HMAC_256_256
+	case COSE_Algorithm_HMAC_256_256:
+#endif
+#ifdef USE_HMAC_384_384
+	case COSE_Algorithm_HMAC_384_384:
+#endif
+#ifdef USE_HMAC_512_512
+	case COSE_Algorithm_HMAC_512_512:
+#endif
+	case COSE_Algorithm_Direct:
+	case -999: // Unsupported algorithm for testing.
 		return true;
 	}
 	return true;

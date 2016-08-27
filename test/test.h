@@ -73,7 +73,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey);
 byte * FromHex(const char * rgch, int cch);
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
 bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
-int IsAlgorithmSupported(int alg);
+int IsAlgorithmSupported(const cn_cbor * alg);
 
 //
 //  Internal macros to make testing easier

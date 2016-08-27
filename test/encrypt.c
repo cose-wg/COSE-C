@@ -37,7 +37,7 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 	if (!SetReceivingAttributes((HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected)) goto errorReturn;
 
 	cn_cbor * alg = COSE_Enveloped_map_get_int(hEnc, COSE_Header_Algorithm, COSE_BOTH, NULL);
-	if (!IsAlgorithmSupported(alg->v.sint)) {
+	if (!IsAlgorithmSupported(alg)) {
 		fNoSupport = true;
 	}
 
@@ -90,10 +90,10 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 
 		if (hRecip2 != NULL) {
 			alg = COSE_Recipient_map_get_int(hRecip2, COSE_Header_Algorithm, COSE_BOTH, NULL);
-			if (!IsAlgorithmSupported(alg->v.sint)) fNoSupport = true;
+			if (!IsAlgorithmSupported(alg)) fNoSupport = true;
 		}
 		alg = COSE_Recipient_map_get_int(hRecip, COSE_Header_Algorithm, COSE_BOTH, NULL);
-		if (!IsAlgorithmSupported(alg->v.sint)) fNoSupport = true;
+		if (!IsAlgorithmSupported(alg)) fNoSupport = true;
 	}
 
 	if (COSE_Enveloped_decrypt(hEnc, hRecip, NULL)) {
@@ -399,7 +399,7 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	}
 
 	cn_cbor * alg = COSE_Encrypt_map_get_int(hEnc, COSE_Header_Algorithm, COSE_BOTH, NULL);
-	if (!IsAlgorithmSupported(alg->v.sint)) fAlgSupport = false;
+	if (!IsAlgorithmSupported(alg)) fAlgSupport = false;
 
 	pFail = cn_cbor_mapget_string(pRecipients, "fail");
 	if (COSE_Encrypt_decrypt(hEnc, k->v.bytes, k->length, NULL)) {
