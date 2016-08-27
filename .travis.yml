@@ -28,6 +28,6 @@ script:
   - git clone git://github.com/cose-wg/Examples Examples
   - mkdir build
   - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON -Duse_embedtls=$USE_EMBEDTLS .. && make all test
-#  - make coveralls
+  - make coveralls
 
 
