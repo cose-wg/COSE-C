@@ -116,6 +116,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 	
 	TSize /= 8; // Comes in in bits not bytes.
 
+        cbOut = pcose->cbContent; // M00BUG - This is a missing call?
 	rgbOut = (byte *)COSE_CALLOC(cbOut+TSize, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 

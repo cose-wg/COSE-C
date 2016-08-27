@@ -26,6 +26,7 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 	int type;
 	cose_errback cose_err;
 	cn_cbor * pkey;
+	bool fNoSupport = false;
 
 	hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
 	if (hEnc == NULL) {
@@ -34,6 +35,11 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 	}
 
 	if (!SetReceivingAttributes((HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected)) goto errorReturn;
+
+	cn_cbor * alg = COSE_Enveloped_map_get_int(hEnc, COSE_Header_Algorithm, COSE_BOTH, NULL);
+	if (!IsAlgorithmSupported(alg)) {
+		fNoSupport = true;
+	}
 
 	hRecip1 = COSE_Enveloped_GetRecipient(hEnc, iRecipient1, NULL);
 	if (hRecip1 == NULL) goto errorReturn;
@@ -81,14 +87,24 @@ bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, co
 			cn = cn_cbor_mapget_string(pRecipient2, "fail");
 			if (cn != NULL && (cn->type == CN_CBOR_TRUE)) fFailBody = true;
 		}
+
+		if (hRecip2 != NULL) {
+			alg = COSE_Recipient_map_get_int(hRecip2, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) fNoSupport = true;
+		}
+		alg = COSE_Recipient_map_get_int(hRecip, COSE_Header_Algorithm, COSE_BOTH, NULL);
+		if (!IsAlgorithmSupported(alg)) fNoSupport = true;
 	}
 
 	if (COSE_Enveloped_decrypt(hEnc, hRecip, NULL)) {
 		fRet = !fFailBody;
 	}
 	else {
-		fRet = fFailBody;
+		if (fNoSupport) fRet = false;
+		else fRet = fFailBody;
 	}
+
+	if (!fRet && !fNoSupport) CFails++;
 
 errorReturn:
 	if (hEnc != NULL) COSE_Enveloped_Free(hEnc);
@@ -107,6 +123,7 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 	const cn_cbor * pRecipients;
 	int iRecipient;
 	bool fFailBody = false;
+	int passCount = 0;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -125,17 +142,17 @@ int _ValidateEnveloped(const cn_cbor * pControl, const byte * pbEncoded, size_t 
 	for (; pRecipients != NULL; iRecipient--, pRecipients = pRecipients->next) {
 		cn_cbor * pRecip2 = cn_cbor_mapget_string(pRecipients, "recipients");
 		if (pRecip2 == NULL) {
-			if (!DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped, pRecipients, iRecipient, NULL, 0)) CFails++;
+			if (DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped, pRecipients, iRecipient, NULL, 0)) passCount++;
 		}
 		else {
 			int iRecipient2 = (int)(pRecip2->length - 1);
 			pRecip2 = pRecip2->first_child;
 			for (; pRecip2 != NULL; pRecip2 = pRecip2->next, iRecipient2--) {
-				if (!DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped, pRecipients, iRecipient, pRecip2, iRecipient2)) CFails++;
+				if (DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped, pRecipients, iRecipient, pRecip2, iRecipient2))passCount++;
 			}
 		}
 	}
-	return 0;
+	return passCount > 0;
 
 errorReturn:
 	CFails += 1;
@@ -252,7 +269,7 @@ int BuildEnvelopedMessage(const cn_cbor * pControl)
 
 returnError:
 	CFails += 1;
-	return 1;
+	return 0;
 }
 
 int EncryptMessage()
@@ -351,6 +368,7 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
+	bool fAlgSupport = true;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -380,12 +398,23 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 		goto exitHere;
 	}
 
+	cn_cbor * alg = COSE_Encrypt_map_get_int(hEnc, COSE_Header_Algorithm, COSE_BOTH, NULL);
+	if (!IsAlgorithmSupported(alg)) fAlgSupport = false;
+
 	pFail = cn_cbor_mapget_string(pRecipients, "fail");
 	if (COSE_Encrypt_decrypt(hEnc, k->v.bytes, k->length, NULL)) {
-		if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
+		if (!fAlgSupport) {
+			fFail = true;
+			fAlgSupport = false;
+		}
+		else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
 	}
 	else {
-		if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
+		if (fAlgSupport) {
+			fFail = true;
+			fAlgSupport = false;
+		}
+		else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 	}
 
 	COSE_Encrypt_Free(hEnc);
@@ -397,8 +426,8 @@ exitHere:
 		else fFail = false;
 	}
 
-	if (fFail) CFails += 1;
-	return 0;
+	if (fFail && fAlgSupport) CFails += 1;
+	return fAlgSupport ? 1 : 0;
 
 returnError:
 	CFails += 1;

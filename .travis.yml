@@ -9,13 +9,13 @@ before_install:
 env:
   - USE_CONTEXT=ON
   - USE_CONTEXT=OFF
-#  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
+  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
 matrix:
   exclude:
     - compiler: gcc
       env: USE_CONTEXT=OFF
-#    - compiler: gcc
-#      env: USE_CONTEXT=OFF USE_EMBEDTLS=ON
+    - compiler: gcc
+      env: USE_CONTEXT=OFF USE_EMBEDTLS=ON
 addons:
   apt:
     sources:

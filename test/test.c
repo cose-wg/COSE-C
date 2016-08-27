@@ -127,6 +127,140 @@ byte * FromHex(const char * rgch, int cch)
 	return pb;
 }
 
+int IsAlgorithmSupported(const cn_cbor * alg)
+{
+	//  Pretend we support any algorithm which is not an integer - this is a fail test case
+
+	if ((alg->type != CN_CBOR_INT) && (alg->type != CN_CBOR_UINT)) return true;
+	switch (alg->v.sint)
+	{
+	default:
+		return false;
+
+#ifdef USE_AES_CBC_MAC_128_64
+	case COSE_Algorithm_CBC_MAC_128_64:
+#endif
+#ifdef USE_AES_CBC_MAC_128_128
+	case COSE_Algorithm_CBC_MAC_128_128:
+#endif
+#ifdef USE_AES_CBC_MAC_256_64
+	case COSE_Algorithm_CBC_MAC_256_64:
+#endif
+#ifdef USE_AES_CBC_MAC_256_128
+	case COSE_Algorithm_CBC_MAC_256_128:
+#endif
+#ifdef USE_AES_CCM_16_64_128
+	case COSE_Algorithm_AES_CCM_16_64_128:
+#endif
+#ifdef USE_AES_CCM_16_64_256
+		case COSE_Algorithm_AES_CCM_16_64_256:
+#endif
+#ifdef USE_AES_CCM_64_64_128
+		case COSE_Algorithm_AES_CCM_64_64_128:
+#endif
+#ifdef USE_AES_CCM_64_64_256
+		case COSE_Algorithm_AES_CCM_64_64_256:
+#endif
+#ifdef USE_AES_CCM_16_128_128
+		case COSE_Algorithm_AES_CCM_16_128_128:
+#endif
+#ifdef USE_AES_CCM_16_128_256
+		case COSE_Algorithm_AES_CCM_16_128_256:
+#endif
+#ifdef USE_AES_CCM_64_128_128
+		case COSE_Algorithm_AES_CCM_64_128_128:
+#endif
+#ifdef USE_AES_CCM_64_128_256
+		case COSE_Algorithm_AES_CCM_64_128_256:
+#endif
+#ifdef USE_AES_GCM_128
+	case COSE_Algorithm_AES_GCM_128:
+#endif
+#ifdef USE_AES_GCM_192
+	case COSE_Algorithm_AES_GCM_192:
+#endif
+#ifdef USE_AES_GCM_256
+	case COSE_Algorithm_AES_GCM_256:
+#endif
+#ifdef USE_AES_KW_128
+	case COSE_Algorithm_AES_KW_128:
+#endif
+#ifdef USE_AES_KW_192
+	case COSE_Algorithm_AES_KW_192:
+#endif
+#ifdef USE_AES_KW_256
+	case COSE_Algorithm_AES_KW_256:
+#endif
+#ifdef USE_Direct_HKDF_AES_128
+	case COSE_Algorithm_Direct_HKDF_AES_128:
+#endif
+#ifdef USE_Direct_HKDF_AES_256
+	case COSE_Algorithm_Direct_HKDF_AES_256:
+#endif
+#ifdef USE_Direct_HKDF_HMAC_SHA_256
+	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
+#endif
+#ifdef USE_Direct_HKDF_HMAC_SHA_512
+	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_512:
+#endif
+#ifdef USE_ECDH_ES_A128KW
+	case COSE_Algorithm_ECDH_ES_A128KW:
+#endif
+#ifdef USE_ECDH_ES_A192KW
+	case COSE_Algorithm_ECDH_ES_A192KW:
+#endif
+#ifdef USE_ECDH_ES_A256KW
+	case COSE_Algorithm_ECDH_ES_A256KW:
+#endif
+#ifdef USE_ECDH_ES_HKDF_256
+	case COSE_Algorithm_ECDH_ES_HKDF_256:
+#endif
+#ifdef USE_ECDH_ES_HKDF_512
+	case COSE_Algorithm_ECDH_ES_HKDF_512:
+#endif
+#ifdef USE_ECDH_SS_A128KW
+	case COSE_Algorithm_ECDH_SS_A128KW:
+#endif
+#ifdef USE_ECDH_SS_A192KW
+	case COSE_Algorithm_ECDH_SS_A192KW:
+#endif
+#ifdef USE_ECDH_SS_A256KW
+	case COSE_Algorithm_ECDH_SS_A256KW:
+#endif
+#ifdef USE_ECDH_SS_HKDF_256
+	case COSE_Algorithm_ECDH_SS_HKDF_256:
+#endif
+#ifdef USE_ECDH_SS_HKDF_512
+	case COSE_Algorithm_ECDH_SS_HKDF_512:
+#endif
+#ifdef USE_ECDSA_SHA_256
+	case COSE_Algorithm_ECDSA_SHA_256:
+#endif
+#ifdef USE_ECDSA_SHA_384
+	case COSE_Algorithm_ECDSA_SHA_384:
+#endif
+#ifdef USE_ECDSA_SHA_512
+	case COSE_Algorithm_ECDSA_SHA_512:
+#endif
+#ifdef USE_HMAC_256_64
+	case COSE_Algorithm_HMAC_256_64:
+#endif
+#ifdef USE_HMAC_256_256
+	case COSE_Algorithm_HMAC_256_256:
+#endif
+#ifdef USE_HMAC_384_384
+	case COSE_Algorithm_HMAC_384_384:
+#endif
+#ifdef USE_HMAC_512_512
+	case COSE_Algorithm_HMAC_512_512:
+#endif
+	case COSE_Algorithm_Direct:
+	case -999: // Unsupported algorithm for testing.
+		return true;
+	}
+	return true;
+}
+
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 {
 	const cn_cbor * pOutputs = cn_cbor_mapget_string(pControl, "output");
@@ -628,28 +762,34 @@ void RunFileTest(const char * szFileName)
 	}
 
 	if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
-		ValidateMAC(pControl);
-		BuildMacMessage(pControl);
+		if (ValidateMAC(pControl)) {
+			BuildMacMessage(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
-		ValidateMac0(pControl);
-		BuildMac0Message(pControl);
+		if (ValidateMac0(pControl)) {
+			BuildMac0Message(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
-		ValidateEnveloped(pControl);
-		BuildEnvelopedMessage(pControl);
+		if (ValidateEnveloped(pControl)) {
+			BuildEnvelopedMessage(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
-		ValidateSigned(pControl);
-		BuildSignedMessage(pControl);
+		if (ValidateSigned(pControl)) {
+			BuildSignedMessage(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-		ValidateSign0(pControl);
-		BuildSign0Message(pControl);
+		if (ValidateSign0(pControl)) {
+			BuildSign0Message(pControl);
+		}
 	}
 	else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
-		ValidateEncrypt(pControl);
-		BuildEncryptMessage(pControl);
+		if (ValidateEncrypt(pControl)) {
+			BuildEncryptMessage(pControl);
+		}
 	}
 
 	return;

@@ -35,6 +35,10 @@ if (use_embedtls)
     target_link_libraries ( cose-c PRIVATE embedtls )
 endif()
 
+if ( MSVC )
+    target_link_libraries( cose-c PRIVATE ws2_32 )
+endif ()
+
 install ( TARGETS cose-c
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
