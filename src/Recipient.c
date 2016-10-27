@@ -88,15 +88,7 @@ COSE_RecipientInfo * _COSE_Recipient_Init_From_Object(cn_cbor * cbor, CBOR_CONTE
 	pRecipient = (COSE_RecipientInfo *)COSE_CALLOC(1, sizeof(COSE_RecipientInfo), context);
 	CHECK_CONDITION(pRecipient != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-#ifdef USE_ARRAY
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
-#else
-	if (cbor->type != CN_CBOR_MAP) {
-		if (errp != NULL) errp->err = COSE_ERR_INVALID_PARAMETER;
-		COSE_FREE(pRecipient, context);
-		return NULL;
-	}
-#endif
 
 	if (_COSE_Enveloped_Init_From_Object(cbor, &pRecipient->m_encrypt, CBOR_CONTEXT_PARAM_COMMA perr) == NULL) {
 		goto errorReturn;
