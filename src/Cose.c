@@ -36,16 +36,7 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
 	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
 	pobj->m_ownMsg = 1;
 
-#ifdef TAG_IN_ARRAY
-	if (msgType > 0) {
-		cn_cbor * cn = cn_cbor_int_create(msgType, CBOR_CONTEXT_PARAM_COMMA &errState);
-		CHECK_CONDITION_CBOR(cn != NULL, errState);
-		CHECK_CONDITION_CBOR(cn_cbor_array_append(pobj->m_cbor, cn, &errState), errState);
-		pobj->m_msgType = msgType;
-	}
-#else
 	pobj->m_msgType = msgType;
-#endif
 
 	pobj->m_unprotectMap = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &errState);
 	CHECK_CONDITION_CBOR(pobj->m_unprotectMap != NULL, errState);
@@ -72,9 +63,6 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 {
 	const cn_cbor * pmap = NULL;
 	cn_cbor_errback errState; // = { 0 };
-#ifdef TAG_IN_ARRAY
-	cn_cbor * cbor;
-#endif // TAG_IN_ARRAY
 	cn_cbor_errback cbor_error;
 
 #ifdef USE_CBOR_CONTEXT
@@ -83,19 +71,10 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
 	pobj->m_cborRoot = pcbor;
 	pobj->m_cbor = pcbor;
 
-#ifdef TAG_IN_ARRAY
-	cbor = cn_cbor_index(pobj->m_cbor, 0);
-	CHECK_CONDITION(cbor != NULL, COSE_ERR_INVALID_PARAMETER);
-
-	if (cbor->type == CN_CBOR_UINT) {
-		pobj->m_msgType = (int) cbor->v.uint;
-	}
-#else
 	//  Check if we have a tag
 	if (pcbor->type == CN_CBOR_TAG) {
 		pcbor = pobj->m_cbor = pcbor->first_child;
 	}
-#endif
 
 	pmap = _COSE_arrayget_int(pobj, INDEX_PROTECTED);
 
@@ -146,9 +125,6 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 {
 	cn_cbor * cbor = NULL;
 	cn_cbor * cborRoot = NULL;
-#ifdef TAG_IN_ARRAY
-	const cn_cbor * pType = NULL;
-#endif
 	cn_cbor_errback cbor_err;
 	HCOSE h;
 
@@ -156,14 +132,6 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 
 	cbor = cborRoot = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 	CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
-
-#ifdef TAG_IN_ARRAY
-	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
-
-	pType = cn_cbor_index(cbor, 0);
-	CHECK_CONDITION(((pType != NULL) && (pType->type == CN_CBOR_UINT)), COSE_ERR_INVALID_PARAMETER);
-    *ptype = pType->v.sint;
-#else // ! TAG_IN_ARRAY
 
 	if (cbor->type == CN_CBOR_TAG) {
 		if (struct_type != 0) {
@@ -180,7 +148,6 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 	}
 
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
-#endif // TAG_IN_ARRAY
 
 	switch (*ptype) {
 	case COSE_enveloped_object:
@@ -357,11 +324,7 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 	cn_cbor_context * context = &pMessage->m_allocContext;
 #endif // USE_CBOR_CONTEXT
 
-#ifdef TAG_IN_ARRAY
-	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED + (pMessage->m_msgType == 0 ? 0 : 1));
-#else
 	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED);
-#endif
 	if ((pProtected != NULL) &&(pProtected->type != CN_CBOR_INVALID)) {
 	errorReturn:
 		if (pbProtected != NULL) COSE_FREE(pbProtected, context);
@@ -476,17 +439,11 @@ errorReturn:
 
 bool _COSE_array_replace(COSE * pMessage, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback * errp)
 {
-#ifdef TAG_IN_ARRAY
-	if (pMessage->m_msgType != 0) index += 1;
-#endif
 	return cn_cbor_array_replace(pMessage->m_cbor, cb_value, index, CBOR_CONTEXT_PARAM_COMMA errp);
 }
 
 cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index)
 {
-#ifdef TAG_IN_ARRAY
-	if (pMessage->m_msgType != 0) index += 1;
-#endif
 	return cn_cbor_index(pMessage->m_cbor, index);
 }
 
