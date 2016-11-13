@@ -18,8 +18,13 @@ matrix:
       env: USE_CONTEXT=OFF USE_EMBEDTLS=ON
 addons:
   apt:
+    sources:
+      - george-edison55-precise-backports/cmake
+      - george-edison55-precise-backports/cmake-data
     packages:
     - libssl-dev
+    - cmake
+    - cmake-data
 script:
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
