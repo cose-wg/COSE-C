@@ -29,9 +29,9 @@ addons:
     - libclang1-3.8
     - libllvm3.8
     - libstdc++6
-    - libstdc++-4.9-dev
-    - libgcc-4.9-dev
-    - libobjc-4.9-dev
+    - libstdc++-dev
+    - libgcc-dev
+    - libobjc-dev
     - libclang-common-3.8-dev
 script:
   - cmake --version
