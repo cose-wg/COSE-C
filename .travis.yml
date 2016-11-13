@@ -1,6 +1,6 @@
 language: c
 compiler:
-  - clang-3.6
+  - clang
   - gcc
 sudo: false
 before_install:
@@ -20,12 +20,12 @@ addons:
   apt:
     sources:
       - george-edison55-precise-backports
-      - llvm-toolchain-precise-3.6
+      - llvm-toolchain-precise
     packages:
     - libssl-dev
     - cmake
     - cmake-data
-    - clang-3.6
+    - clang
 script:
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
