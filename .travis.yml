@@ -18,16 +18,15 @@ matrix:
       env: USE_CONTEXT=OFF USE_EMBEDTLS=ON
 addons:
   apt:
-    sources:
-      - george-edison55-precise-backports
     packages:
     - libssl-dev
-    - cmake
-    - cmake-data
 script:
-  - git clone git://github.com/cose-wg/Examples Examples
+  - cmake --version
+  - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
   - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON -Duse_embedtls=$USE_EMBEDTLS .. && make all test
+
+after_success:
   - make coveralls
 
 
