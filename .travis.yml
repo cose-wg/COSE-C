@@ -6,10 +6,11 @@ sudo: false
 before_install:
   - pip install cpp-coveralls --user
   - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
+  - apt-get update && apt-get upgrade
 env:
-  - USE_CONTEXT=ON
+#  - USE_CONTEXT=ON
   - USE_CONTEXT=OFF
-  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
+#  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
 matrix:
   exclude:
     - compiler: gcc
@@ -19,8 +20,7 @@ matrix:
 addons:
   apt:
     sources:
-      - george-edison55-precise-backports/cmake
-      - george-edison55-precise-backports/cmake-data
+      - george-edison55-precise-backports
     packages:
     - libssl-dev
     - cmake
