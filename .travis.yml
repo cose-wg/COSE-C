@@ -1,12 +1,11 @@
 language: c
 compiler:
-  - clang
+  - clang-3.6
   - gcc
 sudo: false
 before_install:
   - pip install cpp-coveralls --user
   - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
-  - apt-get update && apt-get upgrade
 env:
 #  - USE_CONTEXT=ON
   - USE_CONTEXT=OFF
@@ -21,10 +20,12 @@ addons:
   apt:
     sources:
       - george-edison55-precise-backports
+      - llvm-toolchain-precise-3.6
     packages:
     - libssl-dev
     - cmake
     - cmake-data
+    - clang-3.6
 script:
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
