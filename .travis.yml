@@ -1,33 +1,45 @@
 language: c
 compiler:
-  - clang
+  - clang-3.8
   - gcc
 sudo: false
 before_install:
   - pip install cpp-coveralls --user
   - export LD_LIBRARY_PATH=$PWD/build/dist/lib:$LD_LIBRARY_PATH
 env:
-  - USE_CONTEXT=ON
-  - USE_CONTEXT=OFF
-  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
+  - USE_CONTEXT=ON COVERALL_SEND=OFF
+  - USE_CONTEXT=ON COVERALL_SEND=ON
+  - USE_CONTEXT=OFF COVERALL_SEND=ON
+  - USE_CONTEXT=OFF USE_EMBEDTLS=ON COVERALL_SEND=ON
 matrix:
   exclude:
     - compiler: gcc
-      env: USE_CONTEXT=OFF
-    - compiler: gcc
-      env: USE_CONTEXT=OFF USE_EMBEDTLS=ON
+      env: USE_CONTEXT=ON COVERALL_SEND=OFF
+    - compiler: clang-3.8
+      env: USE_CONTEXT=OFF USE_EMBEDTLS=ON COVERALL_SEND=ON
+    - compiler: clang-3.8
+      env: USE_CONTEXT=ON COVERALL_SEND=ON
+    - compiler: clang-3.8
+      env: USE_CONTEXT=OFF COVERALL_SEND=ON
+
 addons:
   apt:
     sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.8
       - george-edison55-precise-backports
     packages:
     - libssl-dev
     - cmake
     - cmake-data
+    - clang-3.8
 script:
-  - git clone git://github.com/cose-wg/Examples Examples
+  - cmake --version
+  - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
-  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON -Duse_embedtls=$USE_EMBEDTLS .. && make all test
+  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=$COVERALL_SEND  -Duse_embedtls=$USE_EMBEDTLS .. && make all test
+
+after_success:
   - make coveralls
 
 

@@ -54,12 +54,12 @@ typedef struct _cose_errback {
 
 typedef enum {
 	COSE_unknown_object = 0,
-	COSE_sign_object = 991,
-	COSE_sign0_object = 997,
-	COSE_enveloped_object = 992,
-	COSE_encrypt_object = 993,
-	COSE_mac_object = 994,
-	COSE_mac0_object = 996,
+	COSE_sign_object = 98,
+	COSE_sign0_object = 18,
+	COSE_enveloped_object = 96,
+	COSE_encrypt_object = 16,
+	COSE_mac_object = 97,
+	COSE_mac0_object = 17,
 	COSE_recipient_object = -1
 } COSE_object_type;
 
