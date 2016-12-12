@@ -600,12 +600,12 @@ int main(int argc, char ** argv)
 	if (root == NULL) {
 		if (cbor->type == CN_CBOR_TAG) {
 			switch (cbor->v.sint) {
-			case 991: root = &SignedMessageWithTag; break;
-			case 992: root = &EnvelopedMessageWithTag; break;
-			case 993: root = &EncryptedMessageWithTag; break;
-			case 994: root = &MacMessageWithTag; break;
-			case 996: root = &Mac0MessageWithTag; break;
-			case 997: root = &Sign0MessageWithTag; break;
+			case 98: root = &SignedMessageWithTag; break;
+			case 96: root = &EnvelopedMessageWithTag; break;
+			case 16: root = &EncryptedMessageWithTag; break;
+			case 97: root = &MacMessageWithTag; break;
+			case 17: root = &Mac0MessageWithTag; break;
+			case 18: root = &Sign0MessageWithTag; break;
 			}
 		}
 	}
