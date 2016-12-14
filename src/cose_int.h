@@ -215,7 +215,7 @@ extern void _COSE_Sign0_Release(COSE_Sign0Message * p);
 //  Mac-ed items
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern bool _COSE_Mac_Release(COSE_MacMessage * p);
-extern bool _COSE_Mac_Build_AAD(COSE * pCose, char * szContext, byte ** ppbAuthData, size_t * pcbAuthData, CBOR_CONTEXT_COMMA cose_errback * perr);
+extern bool _COSE_Mac_Build_AAD(COSE * pCose, const char * szContext, byte ** ppbAuthData, size_t * pcbAuthData, CBOR_CONTEXT_COMMA cose_errback * perr);
 extern bool _COSE_Mac_compute(COSE_MacMessage * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr);
 extern bool _COSE_Mac_validate(COSE_MacMessage * pcose, COSE_RecipientInfo * pRecip, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr);
 
