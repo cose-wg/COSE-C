@@ -185,7 +185,7 @@ cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp)
 }
 
 
-byte RgbDontUse4[8 * 1024];
+unsigned char RgbDontUse4[8 * 1024];
 
 size_t cn_cbor_encode_size(cn_cbor * object)
 {
