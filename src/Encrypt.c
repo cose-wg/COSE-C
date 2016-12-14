@@ -14,8 +14,6 @@
 
 void _COSE_Enveloped_Release(COSE_Enveloped * p);
 
-byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
-
 COSE * EnvelopedRoot = NULL;
 
 /*! \private
@@ -824,7 +822,7 @@ bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, c
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
 	ptmp = NULL;
 
-	cbAuthData = cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), pAuthData);
+	cbAuthData = cn_cbor_encode_size(pAuthData);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
 	CHECK_CONDITION((size_t)cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
