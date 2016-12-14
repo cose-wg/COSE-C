@@ -243,6 +243,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * p
 	int cbKey2;
 	byte * pbKeyX = NULL;
 	int cbitKeyX = 0;
+	byte rgbKey[256 / 8];
 
 	UNUSED(pcose);
 
