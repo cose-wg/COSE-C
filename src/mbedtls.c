@@ -138,7 +138,6 @@ errorReturn:
 	if (cbor_iv_t != NULL) COSE_FREE(cbor_iv_t, context);
 	if (rgbOut != NULL) COSE_FREE(rgbOut, context);
 	if (cnTmp != NULL) COSE_FREE(cnTmp, context);
-	printf("errorReturn from OPENSSL\n");
 	mbedtls_ccm_free(&ctx);
 	return false;
 }
@@ -702,7 +701,7 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbK
 	rgbOut = COSE_CALLOC(mbedtls_md_get_size(info), 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(!(mbedtls_md_hmac_starts (&contx, (char*)pbKey, cbKey)), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(!(mbedtls_md_hmac_starts (&contx, pbKey, cbKey)), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(!(mbedtls_md_hmac_update (&contx, pbAuthData, cbAuthData)), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(!(mbedtls_md_hmac_finish (&contx, rgbOut)), COSE_ERR_CRYPTO_FAIL);
 
@@ -741,7 +740,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	rgbOut = COSE_CALLOC(cbOut, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(!(mbedtls_md_hmac_starts (&contx, (char*)pbKey, cbKey)), COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(!(mbedtls_md_hmac_starts (&contx, pbKey, cbKey)), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(!(mbedtls_md_hmac_update (&contx, pbAuthData, cbAuthData)), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(!(mbedtls_md_hmac_finish (&contx, rgbOut)), COSE_ERR_CRYPTO_FAIL);
 

@@ -516,7 +516,7 @@ errorReturn:
 bool _COSE_Mac_validate(COSE_MacMessage * pcose, COSE_RecipientInfo * pRecip, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
 {
 	byte * pbAuthData = NULL;
-	int cbitKey = 0;
+	size_t cbitKey = 0;
 	bool fRet = false;
 
 	int alg;
