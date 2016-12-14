@@ -13,7 +13,6 @@ set ( cose_sources
 	cbor.c
 	Encrypt.c
         Encrypt0.c
-	Message.c
 	Recipient.c
 	SignerInfo.c
 )
