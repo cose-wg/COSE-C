@@ -12,8 +12,6 @@
 #include "configure.h"
 #include "crypto.h"
 
-byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
-
 void _COSE_Encrypt_Release(COSE_Encrypt * p);
 
 COSE * EncryptRoot = NULL;

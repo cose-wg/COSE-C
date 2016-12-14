@@ -1203,8 +1203,6 @@ errorReturn:
 }
 
 
-byte RgbDontUse4[8 * 1024];
-
 bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pArray;
@@ -1335,7 +1333,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 		cnParam = NULL;
 	}
 
-	cbContext = cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), pArray);
+	cbContext = cn_cbor_encode_size(pArray);
 	CHECK_CONDITION(cbContext > 0, COSE_ERR_CBOR);
 	pbContext = (byte *)COSE_CALLOC(cbContext, 1, context);
 	CHECK_CONDITION(pbContext != NULL, COSE_ERR_OUT_OF_MEMORY);

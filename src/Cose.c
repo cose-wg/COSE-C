@@ -203,11 +203,10 @@ errorReturn:
 	return NULL;
 }
 
-byte RgbDontUse[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
 
 size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb)
 {
-	if (rgb == NULL) return cn_cbor_encoder_write(RgbDontUse, 0, sizeof(RgbDontUse), ((COSE *)msg)->m_cbor) + ib;
+	if (rgb == NULL) return cn_cbor_encode_size(((COSE *)msg)->m_cbor) + ib;
 	return cn_cbor_encoder_write(rgb, ib, cb, ((COSE*)msg)->m_cbor);
 }
 
@@ -313,8 +312,6 @@ errorReturn:
 	return f;
 }
 
-byte RgbDontUse3[1024];
-
 cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 {
 	cn_cbor * pProtected;
@@ -332,7 +329,7 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 	}
 
 	if (pMessage->m_protectedMap->length > 0) {
-		cbProtected = cn_cbor_encoder_write(RgbDontUse3, 0, sizeof(RgbDontUse3), pMessage->m_protectedMap);
+		cbProtected = cn_cbor_encode_size(pMessage->m_protectedMap);
 		pbProtected = (byte *)COSE_CALLOC(cbProtected, 1, context);
 		CHECK_CONDITION(pbProtected != NULL, COSE_ERR_OUT_OF_MEMORY);
 

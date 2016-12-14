@@ -246,9 +246,6 @@ errorReturn:
 }
 
 
-byte RgbDontUse4[8 * 1024];
-byte RgbDontUseSign[8 * 1024];
-
 static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size_t * pcbToSign, char * szContext, cose_errback * perr)
 {
 	cn_cbor * pArray = NULL;
@@ -290,7 +287,7 @@ static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size
 	cn = NULL;
 
 
-	cbToSign = cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), pArray);
+	cbToSign = cn_cbor_encode_size(pArray);
 	CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
 	pbToSign = (byte *)COSE_CALLOC(cbToSign, 1, context);
 	CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);

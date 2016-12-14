@@ -13,8 +13,6 @@
 #include "configure.h"
 #include "crypto.h"
 
-byte RgbDontUse2[8 * 1024];   //  Remove this array when we can compute the size of a cbor serialization without this hack.
-
 COSE * MacRoot = NULL;
 
 /*! \private
@@ -279,7 +277,7 @@ bool _COSE_Mac_Build_AAD(COSE * pCose, char * szContext, byte ** ppbAuthData, si
 	ptmp = NULL;
 
 	//  Turn it into bytes
-	cbAuthData = cn_cbor_encoder_write(RgbDontUse2, 0, sizeof(RgbDontUse2), pAuthData);
+	cbAuthData = cn_cbor_encode_size(pAuthData);
 	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
