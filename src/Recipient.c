@@ -226,7 +226,7 @@ errorReturn:
 }
 #endif // defined(USE_HKDF_SHA2) || defined(USE_HKDF_AES)
 
-bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * pRecipUse, int algIn, int cbitKeyOut, byte * pbKeyOut, cose_errback * perr)
+bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * pRecipUse, int algIn, size_t cbitKeyOut, byte * pbKeyOut, cose_errback * perr)
 {
 	int alg;
 	const cn_cbor * cn = NULL;
@@ -239,14 +239,18 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * p
 	COSE_Enveloped * pcose = &pRecip->m_encrypt;
 	cn_cbor * cnBody = NULL;
 	byte * pbContext = NULL;
-	byte rgbKey[256 / 8];
 	byte * pbSecret = NULL;
 	int cbKey2;
 	byte * pbKeyX = NULL;
 	int cbitKeyX = 0;
+	byte rgbKey[256 / 8];
+
+	UNUSED(pcose);
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pcose->m_message.m_allocContext;
+#else
+	UNUSED(pcose);
 #endif
 
 	cn = _COSE_map_get_int(&pRecip->m_encrypt.m_message, COSE_Header_Algorithm, COSE_BOTH, perr);

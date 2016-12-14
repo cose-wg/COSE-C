@@ -178,8 +178,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 {
 	int alg;
 	const cn_cbor * cn = NULL;
-
-	byte * pbKey = NULL;
+	byte * pbKeyNew = NULL;
+	const byte * pbKey = NULL;
 	size_t cbitKey = 0;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context;
@@ -198,9 +198,9 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	error:
 	errorReturn:
 		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-		if ((pbKey != NULL) && (pbKeyIn == NULL)) {
-			memset(pbKey, 0xff, cbitKey / 8);
-			COSE_FREE(pbKey, context);
+		if (pbKeyNew != NULL) {
+			memset(pbKeyNew, 0xff, cbitKey / 8);
+			COSE_FREE(pbKeyNew, context);
 		}
 		return false;
 	}
@@ -290,9 +290,10 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	else {
 		//  Allocate the key if we have not already done so
 
-		if (pbKey == NULL) {
-			pbKey = COSE_CALLOC(cbitKey / 8, 1, context);
-			CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+		if (pbKeyNew == NULL) {
+			pbKeyNew = COSE_CALLOC(cbitKey / 8, 1, context);
+			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
+			pbKey = pbKeyNew;
 		}
 
 		//  If there is a recipient - ask it for the key
@@ -302,18 +303,18 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 
 			for (pRecipX = pcose->m_recipientFirst; pRecipX != NULL; pRecipX = pRecipX->m_recipientNext) {
 				if (pRecipX == pRecip) {
-					if (!_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) goto errorReturn;
+					if (!_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) goto errorReturn;
 					break;
 				}
 				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
-					if (_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKey, perr)) break;
+					if (_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) break;
 				}
 			}
 			CHECK_CONDITION(pRecipX != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		}
 		else {
 			for (pRecip = pcose->m_recipientFirst; pRecip != NULL; pRecip = pRecip->m_recipientNext) {
-				if (_COSE_Recipient_decrypt(pRecip, NULL, alg, cbitKey, pbKey, perr)) break;
+				if (_COSE_Recipient_decrypt(pRecip, NULL, alg, cbitKey, pbKeyNew, perr)) break;
 			}
 			CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		}
@@ -399,7 +400,7 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	}
 
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if ((pbKey != NULL) && (pbKeyIn == NULL)) COSE_FREE(pbKey, context);
+	if (pbKeyNew != NULL) COSE_FREE(pbKeyNew, context);
 	if (perr != NULL) perr->err = COSE_ERR_NONE;
 
 	return true;
@@ -430,7 +431,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 	bool fRet = false;
-	byte * pbKey = NULL;
+	byte * pbKeyNew = NULL;
+	const byte * pbKey = NULL;
 	size_t cbKey = 0;
 
 	cn_Alg = _COSE_map_get_int(&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
@@ -529,9 +531,9 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 				CHECK_CONDITION(pbKey == NULL, COSE_ERR_INVALID_PARAMETER);
 
 				t |= 1;
-				pbKey = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
+				pbKeyNew = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
 				cbKey = cbitKey / 8;
-				if (pbKey == NULL) goto errorReturn;
+				if (pbKeyNew == NULL) goto errorReturn;
 			}
 			else {
 				t |= 2;
@@ -540,11 +542,12 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 		CHECK_CONDITION(t != 3, COSE_ERR_INVALID_PARAMETER);
 
 		if (t == 2) {
-			pbKey = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
-			CHECK_CONDITION(pbKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+			pbKeyNew = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
+			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
 			cbKey = cbitKey / 8;
-			rand_bytes(pbKey, cbKey);
+			rand_bytes(pbKeyNew, cbKey);
 		}
+		pbKey = pbKeyNew;
 	}
 
 	//  Build protected headers
@@ -645,9 +648,9 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 
 errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if ((pbKey != NULL) && (pbKey != pbKeyIn)) {
-		memset(pbKey, 0, cbKey);
-		COSE_FREE(pbKey, context);
+	if (pbKeyNew != NULL) {
+		memset(pbKeyNew, 0, cbKey);
+		COSE_FREE(pbKeyNew, context);
 	}
 	return fRet;
 }

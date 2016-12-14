@@ -385,7 +385,6 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
 	cn_cbor_context * context = NULL;
 #endif
 	size_t cbToSign;
-	cn_cbor * cnSignature = NULL;
 	bool fRet = false;
 
 #ifdef USE_CBOR_CONTEXT
@@ -407,8 +406,6 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
 	//  Build protected headers
 
 	if (!CreateSign0AAD(pSign, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
-
-	cnSignature = _COSE_arrayget_int(&pSign->m_message, INDEX_SIGNATURE);
 
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256

@@ -221,6 +221,7 @@ cn_cbor * COSE_get_cbor(HCOSE h)
 
 bool _COSE_SetExternal(COSE * pcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
+	(void) perr;
 	pcose->m_pbExternal = pbExternalData;
 	pcose->m_cbExternal = cbExternalData;
 

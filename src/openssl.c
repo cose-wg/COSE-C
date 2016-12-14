@@ -554,6 +554,8 @@ bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cb
 	int cbDigest = 0;
 	byte rgbOut[16];
 
+	UNUSED(pcose);
+
 	EVP_CIPHER_CTX_init(&ctx);
 
 	switch (cbitKey) {
@@ -644,10 +646,11 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
 	HMAC_CTX ctx;
 	const EVP_MD * pmd = NULL;
 	size_t ib;
-	int cbSalt;
 	unsigned int cbDigest = 0;
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	byte bCount = 1;
+
+	UNUSED(pcose);
 
 	HMAC_CTX_init(&ctx);
 
@@ -658,9 +661,9 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
 	}
 
 	switch (cbitDigest) {
-	case 256: pmd = EVP_sha256(); cbSalt = 256 / 8;  break;
-	case 384: pmd = EVP_sha384(); cbSalt = 384 / 8; break;
-	case 512: pmd = EVP_sha512(); cbSalt = 512 / 8; break;
+	case 256: pmd = EVP_sha256(); break;
+	case 384: pmd = EVP_sha384(); break;
+	case 512: pmd = EVP_sha512(); break;
 	default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
 	}
 
@@ -1064,6 +1067,8 @@ bool AES_KW_Decrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbitKey
 {
 	byte rgbOut[512 / 8];
 	AES_KEY key;
+
+	UNUSED(pcose);
 
 	CHECK_CONDITION(AES_set_decrypt_key(pbKeyIn, (int)cbitKey, &key) == 0, COSE_ERR_CRYPTO_FAIL);
 
