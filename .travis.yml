@@ -37,7 +37,7 @@ script:
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
-  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls=$COVERALL_SEND  -Duse_embedtls=$USE_EMBEDTLS .. && make all test
+  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls=$COVERALL_SEND $coveralls_send=$COVERALL_SEND  -Duse_embedtls=$USE_EMBEDTLS .. && make all test
 
 after_success:
   - make coveralls
