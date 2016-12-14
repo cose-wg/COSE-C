@@ -2,12 +2,16 @@
 #  compiling/installing sources for COSE-C
 #
 
+if (use_embedtls)
+  set (cose_crypto mbedtls.c)
+else ()
+  set (cose_crypto openssl.c)
+endif()
+
 set ( cose_sources 
 	Cose.c
 	MacMessage.c
         MacMessage0.c
-        mbedtls.c
-	openssl.c
 	Sign.c
         Sign0.c
 	cbor.c
@@ -15,7 +19,9 @@ set ( cose_sources
         Encrypt0.c
 	Recipient.c
 	SignerInfo.c
+        ${cose_crypto}
 )
+
 
 if (use_context)
     add_definitions(-DUSE_CBOR_CONTEXT)
