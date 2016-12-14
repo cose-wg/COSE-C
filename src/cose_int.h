@@ -270,6 +270,7 @@ cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index);
 bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
 cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 
+extern size_t cn_cbor_encode_size(cn_cbor * object);
 
 enum {
 	COSE_Int_Alg_AES_CBC_MAC_256_64 = -22

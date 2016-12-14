@@ -106,8 +106,6 @@ errorReturn:
 	return NULL;
 }
 
-byte RgbDontUse4[1024];
-
 bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, const cn_cbor * pcborProtectedSign, const byte * pbExternal, size_t cbExternal, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pArray = NULL;
@@ -147,7 +145,7 @@ bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcbo
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
 	cn = NULL;
 
-	cbToSign = cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), pArray);
+	cbToSign = cn_cbor_encode_size(pArray);
 	CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
 	pbToSign = (byte *)COSE_CALLOC(cbToSign, 1, context);
 	CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);
