@@ -2,7 +2,6 @@
 #include "configure.h"
 #include "cose_int.h"
 #include "crypto.h"
-#include "../build/dist/include/cn-cbor/cn-cbor.h"
 
 #include <assert.h>
 #include <memory.h>
@@ -24,8 +23,7 @@ bool FUseCompressed = true;
 
 bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, size_t cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
-	// EVP_CIPHER_CTX ctx; // OpenSSL-1.0.1
-	EVP_CIPHER_CTX *ctx; // OpenSSL-1.1.0
+	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte * rgbOut = NULL;
 	int NSize = 15 - (LSize/8);
@@ -37,8 +35,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 
-	// EVP_CIPHER_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = EVP_CIPHER_CTX_new(); // OpenSSL-1.1.0
+	ctx = EVP_CIPHER_CTX_new();
 
 	//  Setup the IV/Nonce and put it into the message
 
@@ -48,8 +45,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 
 	errorReturn:
 		if (rgbOut != NULL) COSE_FREE(rgbOut, context);
-		// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-		EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+		EVP_CIPHER_CTX_free(ctx);
 		return false;
 	}
 
@@ -95,8 +91,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 
 	CHECK_CONDITION(EVP_DecryptUpdate(ctx, rgbOut, &cbOut, pbCrypto, (int) cbCrypto - TSize), COSE_ERR_DECRYPT_FAILED);
 
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 
 	pcose->pbContent = rgbOut;
 	pcose->cbContent = cbOut;
@@ -107,8 +102,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 
 bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
-	// EVP_CIPHER_CTX ctx; // OpenSSL-1.0.1
-	EVP_CIPHER_CTX *ctx; // OpenSSL-1.1.0
+	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte * rgbOut = NULL;
 	int NSize = 15 - (LSize/8);
@@ -124,8 +118,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 	byte * pbIV = NULL;
 	cn_cbor_errback cbor_error;
 
-	 //EVP_CIPHER_CTX_init(ctx); // OpenSSl-1.0.1
-	ctx = EVP_CIPHER_CTX_new(); // OpenSSL-1.1.0
+	ctx = EVP_CIPHER_CTX_new();
 
 	switch (cbKey*8) {
 	case 128:
@@ -195,8 +188,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cnTmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 	cnTmp = NULL;
-	//EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return true;
 
 errorReturn:
@@ -204,15 +196,13 @@ errorReturn:
 	if (cbor_iv_t != NULL) COSE_FREE(cbor_iv_t, context);
 	if (rgbOut != NULL) COSE_FREE(rgbOut, context);
 	if (cnTmp != NULL) COSE_FREE(cnTmp, context);
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
 
 bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
-	// EVP_CIPHER_CTX ctx; // OpenSSL-1.0.1
-	EVP_CIPHER_CTX *ctx; // OpenSSL-1.1.0
+	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte * rgbOut = NULL;
 	int outl = 0;
@@ -224,8 +214,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 #endif
 	int TSize = 128 / 8;
 
-	// EVP_CIPHER_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = EVP_CIPHER_CTX_new(); // OpenSSL-1.1.0
+	ctx = EVP_CIPHER_CTX_new();
 
 	//  Setup the IV/Nonce and put it into the message
 
@@ -235,8 +224,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 
 	errorReturn:
 		if (rgbOut != NULL) COSE_FREE(rgbOut, context);
-		// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-		EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+		EVP_CIPHER_CTX_free(ctx);
 		return false;
 	}
 
@@ -293,8 +281,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 
 	CHECK_CONDITION(EVP_DecryptFinal(ctx, rgbOut + cbOut, &cbOut), COSE_ERR_DECRYPT_FAILED);
 
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 
 	pcose->pbContent = rgbOut;
 	pcose->cbContent = cbOut;
@@ -304,8 +291,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 
 bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
-	// EVP_CIPHER_CTX ctx; // OpenSSL-1.0.1
-	EVP_CIPHER_CTX *ctx; // OpenSSL-1.1.0
+	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte * rgbOut = NULL;
 	int outl = 0;
@@ -320,8 +306,7 @@ bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 	cn_cbor_errback cbor_error;
 
 	// Make it first so we can clean it up
-	// EVP_CIPHER_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = EVP_CIPHER_CTX_new(); // OpenSSL-1.1.0
+	ctx = EVP_CIPHER_CTX_new();
 
 	//  Setup the IV/Nonce and put it into the message
 
@@ -385,16 +370,14 @@ bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 	rgbOut = NULL;
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cnTmp, INDEX_BODY, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSl-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return true;
 
 errorReturn:
 	if (pbIV != NULL) COSE_FREE(pbIV, context);
 	if (cbor_iv_t != NULL) COSE_FREE(cbor_iv_t, context);
 	if (rgbOut != NULL) COSE_FREE(rgbOut, context);
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
 
@@ -402,8 +385,7 @@ errorReturn:
 bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
-	// EVP_CIPHER_CTX ctx; // OpenSSL-1.0.1
-	EVP_CIPHER_CTX *ctx; // OpenSSL-1.1.0
+	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte rgbIV[16] = { 0 };
 	byte * rgbOut = NULL;
@@ -414,8 +396,7 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey, 
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 
-	// EVP_CIPHER_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = EVP_CIPHER_CTX_new(); // OpenSSL-1.1.0
+	ctx = EVP_CIPHER_CTX_new();
 
 	rgbOut = COSE_CALLOC(16, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
@@ -452,23 +433,20 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey, 
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cn, INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 	cn = NULL;
 
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return !f;
 
 errorReturn:
 	if (rgbOut != NULL) COSE_FREE(rgbOut, context);
 	if (cn != NULL) CN_CBOR_FREE(cn, context);
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
 
 bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
-	// EVP_CIPHER_CTX ctx; // OpenSSL-1.0.1
-	EVP_CIPHER_CTX *ctx; // OpenSSL-1.1.0
+	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte rgbIV[16] = { 0 };
 	byte rgbTag[16] = { 0 };
@@ -490,8 +468,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey
 
 	//  Setup and run the OpenSSL code
 
-	// EVP_CIPHER_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = EVP_CIPHER_CTX_new(); // OpenSSL-1.1.0
+	ctx = EVP_CIPHER_CTX_new();
 	CHECK_CONDITION(EVP_EncryptInit_ex(ctx, pcipher, NULL, pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
 
 	TSize /= 8;
@@ -509,13 +486,11 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey
 
 	for (i = 0; i < (unsigned int)TSize; i++) f |= (cn->v.bytes[i] != rgbTag[i]);
 
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return !f;
 
 errorReturn:
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
 
@@ -571,8 +546,7 @@ errorReturn:
 bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
-	// EVP_CIPHER_CTX ctx; // OpenSSL-1.0.1
-	EVP_CIPHER_CTX *ctx; // OpenSSL-1.1.0
+	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte rgbIV[16] = { 0 };
 	byte bCount = 1;
@@ -583,8 +557,7 @@ bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cb
 
 	UNUSED(pcose);
 
-	// EVP_CIPHER_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = EVP_CIPHER_CTX_new(); // OpenSSL-1.1.0
+	ctx = EVP_CIPHER_CTX_new();
 
 	switch (cbitKey) {
 	case 128:
@@ -621,13 +594,11 @@ bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cb
 		memcpy(pbOutput + ib, rgbDigest, MIN(16, cbOutput - ib));
 	}
 
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return true;
 
 errorReturn:
-	// EVP_CIPHER_CTX_cleanup(&ctx); // OpenSSL-1.0.1
-	EVP_CIPHER_CTX_free(ctx); // OpenSSL-1.1.0
+	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
 
@@ -637,18 +608,15 @@ bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDig
 	byte rgbSalt[EVP_MAX_MD_SIZE] = { 0 };
 	int cbSalt;
 	cn_cbor * cnSalt;
-	// HMAC_CTX ctx; // OpenSSL-1.0.1
-	HMAC_CTX *ctx; // OpenSSL-1.1.0
+	HMAC_CTX *ctx;
 	const EVP_MD * pmd = NULL;
 	unsigned int cbDigest;
 
-	// HMAC_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = HMAC_CTX_new(); // OpenSSL-1.1.0
+	ctx = HMAC_CTX_new();
 
 	if (0) {
 	errorReturn:
-		// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-		HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+		HMAC_CTX_free(ctx);
 		return false;
 	}
 
@@ -662,23 +630,21 @@ bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDig
 	cnSalt = _COSE_map_get_int(pcose, COSE_Header_HKDF_salt, COSE_BOTH, perr);
 
 	if (cnSalt != NULL) {
-		CHECK_CONDITION(HMAC_Init_ex(ctx, cnSalt->v.bytes, (int) cnSalt->length, pmd, NULL), COSE_ERR_CRYPTO_FAIL); // OpenSSL-1.1.0
+		CHECK_CONDITION(HMAC_Init_ex(ctx, cnSalt->v.bytes, (int) cnSalt->length, pmd, NULL), COSE_ERR_CRYPTO_FAIL);
 	}
 	else {
-		CHECK_CONDITION(HMAC_Init_ex(ctx, rgbSalt, cbSalt, pmd, NULL), COSE_ERR_CRYPTO_FAIL); // OpenSSL-1.1.0
+		CHECK_CONDITION(HMAC_Init_ex(ctx, rgbSalt, cbSalt, pmd, NULL), COSE_ERR_CRYPTO_FAIL);
 	}
 	CHECK_CONDITION(HMAC_Update(ctx, pbKey, (int)cbKey), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(ctx, rgbDigest, &cbDigest), COSE_ERR_CRYPTO_FAIL);
 	*pcbDigest = cbDigest;
-	// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-	HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+	HMAC_CTX_free(ctx);
 	return true;
 }
 
 bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
 {
-	// HMAC_CTX ctx; // OpenSSL-1.0.1
-	HMAC_CTX *ctx; // OpenSSL-1.1.0
+	HMAC_CTX *ctx;
 	const EVP_MD * pmd = NULL;
 	size_t ib;
 	unsigned int cbDigest = 0;
@@ -687,13 +653,11 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
 
 	UNUSED(pcose);
 
-	// HMAC_CTX_init(&ctx); // OpenSSL-1.1.0
 	ctx = HMAC_CTX_new();
 
 	if (0) {
 	errorReturn:
-		// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-		HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+		HMAC_CTX_free(ctx);
 		return false;
 	}
 
@@ -715,16 +679,14 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
 		memcpy(pbOutput + ib, rgbDigest, MIN(cbDigest, cbOutput - ib));
 	}
 
-	// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-	HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+	HMAC_CTX_free(ctx);
 	return true;
 
 }
 
 bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
-	// HMAC_CTX ctx; // OpenSSL-1.0.1
-	HMAC_CTX *ctx; // OpenSSL-1.1.0
+	HMAC_CTX *ctx;
 	const EVP_MD * pmd = NULL;
 	byte * rgbOut = NULL;
 	unsigned int cbOut;
@@ -732,14 +694,12 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbK
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 
-	// HMAC_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = HMAC_CTX_new(); // OpenSSL-1.1.0
+	ctx = HMAC_CTX_new();
 
 	if (0) {
 	errorReturn:
 		COSE_FREE(rgbOut, context);
-		// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-		HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+		HMAC_CTX_free(ctx);
 		return false;
 	}
 
@@ -753,21 +713,19 @@ bool HMAC_Create(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbK
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(HMAC_Init_ex(ctx, pbKey, (int) cbKey, pmd, NULL), COSE_ERR_CRYPTO_FAIL); // OpenSSL-1.1.0
+	CHECK_CONDITION(HMAC_Init_ex(ctx, pbKey, (int) cbKey, pmd, NULL), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Update(ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cn_cbor_data_create(rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL), INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
 
-	// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-	HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+	HMAC_CTX_free(ctx);
 	return true;
 }
 
 bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
-	// HMAC_CTX ctx; // OpenSSL-1.0.1
-	HMAC_CTX *ctx; // OpenSSL-1.1.0
+	HMAC_CTX *ctx;
 	const EVP_MD * pmd = NULL;
 	byte * rgbOut = NULL;
 	unsigned int cbOut;
@@ -777,8 +735,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 
-	// HMAC_CTX_init(&ctx); // OpenSSL-1.0.1
-	ctx = HMAC_CTX_new(); // OpenSSL-1.1.0
+	ctx = HMAC_CTX_new();
 
 	switch (HSize) {
 	case 256: pmd = EVP_sha256(); break;
@@ -790,7 +747,7 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	rgbOut = COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(HMAC_Init_ex(ctx, pbKey, (int) cbKey, pmd, NULL), COSE_ERR_CRYPTO_FAIL); // OpenSSL-1.1.0
+	CHECK_CONDITION(HMAC_Init_ex(ctx, pbKey, (int) cbKey, pmd, NULL), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Update(ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
@@ -800,14 +757,12 @@ bool HMAC_Validate(COSE_MacMessage * pcose, int HSize, int TSize, const byte * p
 	if (cn->length > (int) cbOut) return false;
 	for (i = 0; i < (unsigned int) TSize/8; i++) f |= (cn->v.bytes[i] != rgbOut[i]);
 
-	// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-	HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+	HMAC_CTX_free(ctx);
 	return !f;
 
 errorReturn:
 	COSE_FREE(rgbOut, context);
-	// HMAC_cleanup(&ctx); // OpenSSL-1.0.1
-	HMAC_CTX_free(ctx); // OpenSSL-1.1.0
+	HMAC_CTX_free(ctx);
 	return false;
 }
 
@@ -913,7 +868,7 @@ cn_cbor * EC_FromKey(const EC_KEY * pKey, CBOR_CONTEXT_COMMA cose_errback * perr
 	CHECK_CONDITION(pgroup != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	switch (EC_GROUP_get_curve_name(pgroup)) {
-	case NID_X9_62_prime256v1:		cose_group = 1;		break;
+	case NID_X9_62_prime256v1:		cose_group = 1;	break;
 	case NID_secp384r1: cose_group = 2; break;
 	case NID_secp521r1: cose_group = 3; break;
 
@@ -1038,17 +993,15 @@ bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest,
 	pbSig = COSE_CALLOC(cbR, 2, context);
 	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	// cb = BN_bn2bin(psig->r, rgbSig); // OpenSSL-1.0.1
-	const BIGNUM *r; // OpenSSL-1.1.0
-	ECDSA_SIG_get0(psig, &r, NULL); // OpenSSL-1.1.0
-	cb = BN_bn2bin(r, rgbSig); // OpenSSL-1.1.0
+	const BIGNUM *r;
+	ECDSA_SIG_get0(psig, &r, NULL);
+	cb = BN_bn2bin(r, rgbSig);
 	CHECK_CONDITION(cb <= cbR, COSE_ERR_INVALID_PARAMETER);
 	memcpy(pbSig + cbR - cb, rgbSig, cb);
 
-	// cb = BN_bn2bin(psig->s, rgbSig); // OpenSSL-1.0.1
-	const BIGNUM *s; // OpenSSL-1.1.0
-	ECDSA_SIG_get0(psig, NULL, &s); // OpenSSL-1.1.0
-	cb = BN_bn2bin(s, rgbSig); // OpenSSL-1.1.0
+	const BIGNUM *s;
+	ECDSA_SIG_get0(psig, NULL, &s);
+	cb = BN_bn2bin(s, rgbSig);
 	CHECK_CONDITION(cb <= cbR, COSE_ERR_INVALID_PARAMETER);
 	memcpy(pbSig + 2*cbR - cb, rgbSig, cb);
 
@@ -1074,23 +1027,20 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	cn_cbor_context * context = &pSigner->m_allocContext;
 #endif
 	cn_cbor * p = NULL;
-	// ECDSA_SIG sig = { NULL, NULL }; // OpenSSL-1.0.1
-	ECDSA_SIG *sig = NULL; // OpenSSL-1.1.0
-	sig = ECDSA_SIG_new(); // OpenSSL-1.1.0
+	ECDSA_SIG *sig = NULL;
+	sig = ECDSA_SIG_new();
 	int cbR;
 	cn_cbor * pSig;
 	size_t cbSignature;
 
-	const BIGNUM *r, *s; // OpenSSl-1.1.0
-	ECDSA_SIG_get0(sig, &r, &s); // OpenSSL-1.1.0
+	const BIGNUM *r, *s;
+	ECDSA_SIG_get0(sig, &r, &s);
 
 	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
-		// if (sig.r != NULL) BN_free(sig.r); // OpenSSL-1.0.1
-		if (r != NULL) BN_free(r); // OpenSSL-1.1.0
-		// if (sig.s != NULL) BN_free(sig.s); // OpenSSL-1.0.1
-		if (s != NULL) BN_free(s); // OpenSSL-1.1.0
+		if (r != NULL) BN_free(r);
+		if (s != NULL) BN_free(s);
 		if (p != NULL) CN_CBOR_FREE(p, context);
 		if (eckey != NULL) EC_KEY_free(eckey);
 		return false;
@@ -1110,18 +1060,13 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	cbSignature = pSig->length;
 
 	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);
-	//sig.r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL); // OpenSSL-1.0.1
-	r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL); // OpenSSL-1.1.0
-	//sig.s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL); //OpenSSL-1.0.1
-	s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL); // OpenSSL-1.1.0
+	r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL);
+	s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL);
 
-	// CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, &sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL); // OpenSSL-1.0.1
-	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL); // OpenSSL-1.1.0
+	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL);
 
-	// BN_free(sig.r); // OpenSSL-1.0.1
-	BN_free(r); // OpenSSL-1.1.0
-	// BN_free(sig.s); // OpenSSL-1.0.1
-	BN_free(s); // OpenSSL-1.1.0
+	BN_free(r);
+	BN_free(s);
 	if (eckey != NULL) EC_KEY_free(eckey);
 
 	return true;
