@@ -1050,6 +1050,7 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 		if (s != NULL) BN_free(s);
 		if (p != NULL) CN_CBOR_FREE(p, context);
 		if (eckey != NULL) EC_KEY_free(eckey);
+		if (sig != NULL) ECDSA_SIG_free(sig);
 		return false;
 	}
 
@@ -1075,6 +1076,7 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	BN_free(r);
 	BN_free(s);
 	if (eckey != NULL) EC_KEY_free(eckey);
+	if (sig != NULL) ECDSA_SIG_free(sig);
 
 	return true;
 }
