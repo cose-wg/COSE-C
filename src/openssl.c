@@ -36,6 +36,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 #endif
 
 	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL) goto errorReturn;
 
 	//  Setup the IV/Nonce and put it into the message
 
@@ -119,6 +120,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * 
 	cn_cbor_errback cbor_error;
 
 	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL) goto errorReturn;
 
 	switch (cbKey*8) {
 	case 128:
@@ -215,6 +217,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 	int TSize = 128 / 8;
 
 	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL) goto errorReturn;
 
 	//  Setup the IV/Nonce and put it into the message
 
@@ -307,6 +310,7 @@ bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 
 	// Make it first so we can clean it up
 	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL) goto errorReturn;
 
 	//  Setup the IV/Nonce and put it into the message
 
@@ -397,6 +401,7 @@ bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey, 
 #endif
 
 	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL) goto errorReturn;
 
 	rgbOut = COSE_CALLOC(16, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
@@ -469,6 +474,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey
 	//  Setup and run the OpenSSL code
 
 	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL) goto errorReturn;
 	CHECK_CONDITION(EVP_EncryptInit_ex(ctx, pcipher, NULL, pbKey, rgbIV), COSE_ERR_CRYPTO_FAIL);
 
 	TSize /= 8;
@@ -558,6 +564,7 @@ bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cb
 	UNUSED(pcose);
 
 	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL) goto errorReturn;
 
 	switch (cbitKey) {
 	case 128:
