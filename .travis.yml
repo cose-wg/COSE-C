@@ -23,11 +23,12 @@ addons:
       - george-edison55-precise-backports
     packages:
 #    - libssl-dev
+    - libssl1.1.0
     - cmake
     - cmake-data
     - clang-3.8
 script:
-  - apt-get install libssl1.1.0
+#  - apt-get install libssl1.1.0
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
