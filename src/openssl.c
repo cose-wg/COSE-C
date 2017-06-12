@@ -481,7 +481,7 @@ errorReturn:
 bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	const EVP_CIPHER * pcipher = NULL;
-	EVP_CIPHER_CTX *ctx;
+	EVP_CIPHER_CTX *ctx = NULL;
 	int cbOut;
 	byte rgbIV[16] = { 0 };
 	byte rgbTag[16] = { 0 };

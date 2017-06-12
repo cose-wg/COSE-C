@@ -34,7 +34,7 @@ enable_testing()
 
 add_test ( NAME cose_test COMMAND cose_test )
 
-add_test ( NAME RFC8152 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/spec-examples )
+add_test ( NAME RFC8152 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/RFC8152 )
 
 add_test ( NAME aes-ccm WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/aes-ccm-examples )
 
