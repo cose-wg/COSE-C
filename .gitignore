@@ -58,6 +58,7 @@ build
 *.opensdf
 *.VC.db
 *.VC.opendb
+.vs
 
 # CMake and CTest directories
 project_cn-cbor-prefix
