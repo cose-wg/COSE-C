@@ -21,6 +21,8 @@ bool FUseCompressed = true;
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 
+#if (OPENSSL_VERSION_NUMBER < 0x10100000)
+
 HMAC_CTX * HMAC_CTX_new()
 {
 	HMAC_CTX * foo = malloc(sizeof(HMAC_CTX));
@@ -50,6 +52,7 @@ int ECDSA_SIG_set0(ECDSA_SIG * sig, BIGNUM * r, BIGNUM *s)
 	sig->s = s;
 	return 1;
 }
+#endif
 
 bool AES_CCM_Decrypt(COSE_Enveloped * pcose, int TSize, int LSize, const byte * pbKey, size_t cbKey, const byte * pbCrypto, size_t cbCrypto, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
