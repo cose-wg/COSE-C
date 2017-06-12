@@ -1072,7 +1072,7 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	cn_cbor * pSig;
 	size_t cbSignature;
 
-	const BIGNUM *r, *s;
+	BIGNUM *r, *s;
 
 	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
@@ -1098,10 +1098,12 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 
 	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);
 	r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL);
+	CHECK_CONDITION(NULL != r, COSE_ERR_OUT_OF_MEMORY);
 	s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL);
+	CHECK_CONDITION(NULL != s, COSE_ERR_OUT_OF_MEMORY);
 
 	sig = ECDSA_SIG_new();
-	CHECK_CONDITION(sig == NULL, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(sig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	ECDSA_SIG_set0(sig, r, s);
 
