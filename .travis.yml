@@ -1,6 +1,6 @@
 language: c
 compiler:
-  - clang-3.8
+  - clang
   - gcc
 sudo: false
 before_install:
@@ -12,7 +12,7 @@ env:
   - USE_CONTEXT=OFF USE_EMBEDTLS=ON
 matrix:
   exclude:
-    - compiler: clang-3.8
+    - compiler: clang
       env: USE_CONTEXT=OFF
 
 addons:
@@ -22,11 +22,10 @@ addons:
       - llvm-toolchain-precise-3.8
       - george-edison55-precise-backports
     packages:
-#    - libssl-dev
-    - libssl1.1.0
+    - libssl-dev
+#    - libssl1.1.0
     - cmake
     - cmake-data
-    - clang-3.8
 script:
 #  - apt-get install libssl1.1.0
   - cmake --version
