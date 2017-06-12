@@ -22,11 +22,12 @@ addons:
       - llvm-toolchain-precise-3.8
       - george-edison55-precise-backports
     packages:
-    - libssl-dev
+#    - libssl-dev
     - cmake
     - cmake-data
     - clang-3.8
 script:
+  - apt-get install libssl1.1.0
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
