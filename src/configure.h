@@ -1,5 +1,5 @@
 //
-//  Determine which cryptographic library we are goig to be usig
+//  Determine which cryptographic library we are going to be using
 //
 
 #if defined(USE_MBED_TLS)
