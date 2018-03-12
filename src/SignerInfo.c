@@ -202,19 +202,19 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
-		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 256, pbToSign, cbToSign, perr);
+		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 256, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_384
 	case COSE_Algorithm_ECDSA_SHA_384:
-		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 384, pbToSign, cbToSign, perr);
+		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 384, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
-		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 512, pbToSign, cbToSign, perr);
+		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 512, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
