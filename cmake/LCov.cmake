@@ -1,4 +1,9 @@
-FIND_PROGRAM( LCOV_PATH lcov )
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+    FIND_PROGRAM( LCOV_PATH  llvm-clang )
+else ()
+   FIND_PROGRAM( LCOV_PATH lcov )
+endif ()
+
 FIND_PROGRAM( GENHTML_PATH genhtml )
 
 if (LCOV_PATH)
