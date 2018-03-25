@@ -1,0 +1,28 @@
+platform:
+  - x64
+
+image: Visual Studio 2015
+  
+configuration:
+  - Release
+  - Debug
+
+matrix:
+  fast_finish: true
+  
+  - USE_CONTEXT=OFF
+  - USE_EMBEDTLS=OFF
+    USE_CONTEXT=ON
+  - USE_CONTEXT=ON
+
+install:
+  - git clone --depth 1 git://github.com/cose-wg/Examples Examples
+
+before_build:
+  - cmake --version
+  - cmake -Duse_context=%USE_CONTEXT% -Duse_embedtls=%USE_EMBEDTLS  -G "Visual Studio 15 2017 Win64" .
+
+build:
+  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+
+test_script:
