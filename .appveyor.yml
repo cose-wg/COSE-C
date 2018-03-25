@@ -7,13 +7,17 @@ configuration:
   - Release
   - Debug
 
+environment:
+  matrix:
+    - USE_CONTEXT: OFF
+    
+    - USE_EMBEDTLS: OFF
+      USE_CONTEXT: ON
+      
+    - USE_CONTEXT: ON
+
 matrix:
   fast_finish: true
-  
-  - USE_CONTEXT=OFF
-  - USE_EMBEDTLS=OFF
-    USE_CONTEXT=ON
-  - USE_CONTEXT=ON
 
 install:
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
@@ -24,5 +28,3 @@ before_build:
 
 build:
   project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
-
-test_script:
