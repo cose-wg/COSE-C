@@ -114,8 +114,15 @@ ExternalProject_Add(
 
 ExternalProject_Get_Property(project_cn-cbor install_dir)
 include_directories ( "${install_dir}/include" )
-add_library (cn-cbor STATIC IMPORTED)
-set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+if (MSVC)
+   add_library (cn-cbor STATIC IMPORTED)
+   set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
+else ()
+   add_library (cn-cbor STATIC IMPORTED)
+   set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
+endif ()
+
 add_dependencies(cn-cbor project_cn-cbor)
 
 if (use_embedtls)
