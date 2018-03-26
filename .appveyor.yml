@@ -1,0 +1,35 @@
+platform:
+  - x64
+
+image: Visual Studio 2017
+  
+configuration:
+  - Release
+#  - Debug   suppress this for now
+
+environment:
+  matrix:
+    - USE_CONTEXT: ON      
+      USE_EMBEDTLS: OFF
+
+    - USE_CONTEXT: OFF
+      USE_EMBEDTLS: OFF
+
+    - USE_CONTEXT: OFF
+      USE_EMBEDTLS: ON
+
+
+matrix:
+  fast_finish: true
+
+install:
+  - git submodule update --init --recursive
+  - git clone --depth 1 git://github.com/cose-wg/Examples Examples
+
+before_build:
+  - cmake --version
+  - cmake -Duse_context=%USE_CONTEXT% -Duse_embedtls=%USE_EMBEDTLS% -Dbuild_shared_libs=OFF  -G "Visual Studio 15 2017 Win64" .
+
+build_script:
+  - msbuild cose-c.sln
+  - ctest -C %CONFIGURATION%
