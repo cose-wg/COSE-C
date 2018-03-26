@@ -9,10 +9,10 @@ configuration:
 
 environment:
   matrix:
-    - USE_EMBEDTLS: OFF
-      USE_CONTEXT: ON
-      
-    - USE_CONTEXT: ON
+    - USE_CONTEXT: ON      
+      USE_EMBEDTLS: OFF
+
+    - USE_CONTEXT: OFF
       USE_EMBEDTLS: OFF
 
     - USE_CONTEXT: OFF
@@ -32,4 +32,4 @@ before_build:
 
 build_script:
   - msbuild cose-c.sln
-  - ctest
+  - ctest -C %CONFIGURATION%
