@@ -31,5 +31,5 @@ before_build:
   - cmake -Duse_context=%USE_CONTEXT% -Duse_embedtls=%USE_EMBEDTLS% -Dbuild_shared_libs=OFF  -G "Visual Studio 15 2017 Win64" .
 
 build_script:
-  - msbuild $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+  - msbuild cose-c.sln
   - ctest
