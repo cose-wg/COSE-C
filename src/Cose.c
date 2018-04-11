@@ -207,7 +207,8 @@ errorReturn:
 size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb)
 {
 	if (rgb == NULL) return cn_cbor_encode_size(((COSE *)msg)->m_cbor) + ib;
-	return cn_cbor_encoder_write(rgb, ib, cb, ((COSE*)msg)->m_cbor);
+	ssize_t size = cn_cbor_encoder_write(rgb, ib, cb, ((COSE*)msg)->m_cbor);
+	return size >= 0 ? size : 0;
 }
 
 

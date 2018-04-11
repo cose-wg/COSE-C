@@ -189,5 +189,6 @@ unsigned char RgbDontUse4[8 * 1024];
 
 size_t cn_cbor_encode_size(cn_cbor * object)
 {
-	return cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), object);
+	ssize_t size = cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), object);
+	return size >= 0 ? size : 0;
 }
