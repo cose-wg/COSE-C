@@ -997,7 +997,7 @@ bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest,
 	result = true;
 
 errorReturn:
-	cn_cbor_free(p, context);
+	cn_cbor_free(p CBOR_CONTEXT_PARAM);
 	COSE_FREE(pbSig, context);
 	mbedtls_mpi_free(&r);
 	mbedtls_mpi_free(&s);
