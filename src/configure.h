@@ -128,11 +128,9 @@
 //  Define which of the signature algorithms are to be used
 //
 
-#if !defined(USE_MBED_TLS)
 #define USE_ECDSA_SHA_256
 #define USE_ECDSA_SHA_384
 #define USE_ECDSA_SHA_512
-#endif // !defined(USE_MBED_TLS)
 
 
 
