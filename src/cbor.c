@@ -185,10 +185,131 @@ cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp)
 }
 
 
-unsigned char RgbDontUse4[8 * 1024];
+#ifndef CBOR_NO_FLOAT
+static size_t _size_double(double val)
+{
+	size_t size = 9;
+	float floatVal = val;
+	if (floatVal == val) {
+		bool half = false;
+		union {
+			float f;
+			uint32_t u;
+		} u32;
+		u32.f = floatVal;
+		/* Check for half */
+		if ((u32.u & 0x1FFF) == 0) {
+			int exp = (u32.u >> 23) & 0xff;
+			int mant = u32.u & 0x7fffff;
+			half = (mant == 0 && (exp == 0 || exp == 255)) || 
+			          (exp >= 113 && exp <= 142)  || 
+			          ((exp >= 103 && exp < 113) && !(mant & ((1 << (126 - exp)) - 1)));
+		}
+		if(half) {
+			size = 3;
+		} else {
+			size = 5;
+		}
+	} else if (val != val) {
+		size = 3;
+	}
+
+	return size;
+}
+#endif /* CBOR_NO_FLOAT */
+
+static size_t _size_positive(uint64_t val)
+{
+	size_t size;
+
+	if (val < 24) {
+		size = 1;
+	} else if (val < 256) {
+		size = 2;
+	} else if (val < 65536) {
+		size = 3;
+	} else if (val < 0x100000000) {
+		size = 5;
+	} else {
+		size = 9;
+	}
+
+	return size;
+}
 
 size_t cn_cbor_encode_size(cn_cbor * object)
 {
-	ssize_t size = cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), object);
-	return size >= 0 ? size : 0;
+	size_t size = 0;
+	size_t size2;
+
+	if(object)
+	{
+		do
+		{
+			/* Indefinite now allowed for COSE. */
+			if((object->flags & CN_CBOR_FL_INDEF) == 0) {
+				switch (object->type) {
+				case CN_CBOR_ARRAY:
+					size += _size_positive(object->length);
+					if(object->length > 0) {
+						size2 = cn_cbor_encode_size(object->first_child);
+						if(size2 > 0) {
+							size += size2;
+						} else {
+							size = 0;
+						}
+					}
+					break;
+
+				case CN_CBOR_MAP:
+					size += _size_positive(object->length / 2);
+					if(object->length > 0) {
+						size2 = cn_cbor_encode_size(object->first_child);
+						if(size2 > 0) {
+							size += size2;
+						} else {
+							size = 0;
+						}
+					}
+					break;
+
+				case CN_CBOR_TEXT:
+				case CN_CBOR_BYTES:
+					size += _size_positive(object->length) + object->length;
+					break;
+
+				case CN_CBOR_FALSE:
+				case CN_CBOR_TRUE:
+				case CN_CBOR_NULL:
+				case CN_CBOR_UNDEF:
+					size += 1;
+					break;
+
+				case CN_CBOR_TAG:
+				case CN_CBOR_UINT:
+				case CN_CBOR_SIMPLE:
+					size += _size_positive(object->v.uint);
+					break;
+
+				case CN_CBOR_INT:
+					size += _size_positive(~object->v.sint);
+					break;
+
+#ifndef CBOR_NO_FLOAT
+				case CN_CBOR_DOUBLE:
+					size += _size_double(object->v.dbl);
+					break;
+#endif /* CBOR_NO_FLOAT */
+
+				default:
+					/* Unsupported type */
+					size = 0;
+					break;
+				}
+			}
+			object = object->next;
+		} while(object && size);
+	}
+
+	return size;
 }
