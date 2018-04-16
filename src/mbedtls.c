@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <memory.h>
+#include <stdlib.h>
 
 #ifdef USE_MBED_TLS
 
@@ -12,6 +13,7 @@
 #include "mbedtls/md.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/entropy.h"
+#include "mbedtls/ecdsa.h"
 
 bool FUseCompressed = true;
 
@@ -758,94 +760,89 @@ errorReturn:
 	mbedtls_md_free(&contx); 
 	return false;
 }
-/*
 
 #define COSE_Key_EC_Curve -1
 #define COSE_Key_EC_X -2
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * perr)
+bool ECKey_From(const cn_cbor * pKey, mbedtls_ecp_keypair *keypair, cose_errback * perr)
 {
-	EC_KEY * pNewKey = EC_KEY_new();
-	byte  rgbKey[512+1];
+	byte  rgbKey[MBEDTLS_ECP_MAX_PT_LEN];
 	int cbKey;
+	int cbGroup;
 	const cn_cbor * p;
-	int nidGroup = -1;
-	EC_POINT * pPoint = NULL;
+	mbedtls_ecp_group_id groupId;
+
+	p = cn_cbor_mapget_int(pKey, COSE_Key_Type);
+	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
+	if(p->type == CN_CBOR_UINT) {
+		CHECK_CONDITION(p->v.uint == COSE_Key_Type_EC2, COSE_ERR_INVALID_PARAMETER);
+	}
+	else {
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Curve);
-	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_UINT), COSE_ERR_INVALID_PARAMETER);
 
-	switch (p->v.sint) {
+	switch (p->v.uint) {
 	case 1: // P-256
-		nidGroup = NID_X9_62_prime256v1;
-		*cbGroup = 256 / 8;
+		groupId = MBEDTLS_ECP_DP_SECP256R1;
 		break;
 
 	case 2: // P-384
-		nidGroup = NID_secp384r1;
-		*cbGroup = 384 / 8;
+		groupId = MBEDTLS_ECP_DP_SECP384R1;
 		break;
 
 	case 3: // P-521
-		nidGroup = NID_secp521r1;
-		*cbGroup = (521 + 7) / 8;
+		groupId = MBEDTLS_ECP_DP_SECP521R1;
 		break;
 
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
-
-	EC_GROUP * ecgroup = EC_GROUP_new_by_curve_name(nidGroup);
-	CHECK_CONDITION(ecgroup != NULL, COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(EC_KEY_set_group(pNewKey, ecgroup) == 1, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(mbedtls_ecp_group_load(&keypair->grp, groupId) == 0, COSE_ERR_INVALID_PARAMETER);
+	cbGroup = (keypair->grp.nbits + 7) / 8;
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_X);
 	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(p->length == cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey+1, p->v.str, p->length);
 	
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Y);
 	CHECK_CONDITION((p != NULL), COSE_ERR_INVALID_PARAMETER);
 	if (p->type == CN_CBOR_BYTES) {
-		rgbKey[0] = POINT_CONVERSION_UNCOMPRESSED;
-		cbKey = (*cbGroup * 2) + 1;
-		CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
+		rgbKey[0] = 0x04;
+		cbKey = cbGroup * 2 + 1;
+		CHECK_CONDITION(p->length == cbGroup, COSE_ERR_INVALID_PARAMETER);
 		memcpy(rgbKey + p->length + 1, p->v.str, p->length);
 	}
 	else if (p->type == CN_CBOR_TRUE) {
-		cbKey = (*cbGroup) + 1;
-		rgbKey[0] = POINT_CONVERSION_COMPRESSED + 1;
+		cbKey = cbGroup + 1;
+		rgbKey[0] = 0x03;
 	}
 	else if (p->type == CN_CBOR_FALSE) {
-		cbKey = (*cbGroup) + 1;
-		rgbKey[0] = POINT_CONVERSION_COMPRESSED;
+		cbKey = cbGroup + 1;
+		rgbKey[0] = 0x02;
 	}
 	else FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 
-	pPoint = EC_POINT_new(ecgroup);
-	CHECK_CONDITION(pPoint != NULL, COSE_ERR_CRYPTO_FAIL);
-	CHECK_CONDITION(EC_POINT_oct2point(ecgroup, pPoint, rgbKey, cbKey, NULL) == 1, COSE_ERR_CRYPTO_FAIL);
-	CHECK_CONDITION(EC_KEY_set_public_key(pNewKey, pPoint) == 1, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(mbedtls_ecp_point_read_binary(&keypair->grp, &keypair->Q, rgbKey, cbKey) == 0, COSE_ERR_INVALID_PARAMETER);
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
 	if (p != NULL) {
-		BIGNUM * pbn;
-
-		pbn = BN_bin2bn(p->v.bytes, (int) p->length, NULL);
-		CHECK_CONDITION(pbn != NULL, COSE_ERR_CRYPTO_FAIL);
-		CHECK_CONDITION(EC_KEY_set_private_key(pNewKey, pbn) == 1, COSE_ERR_CRYPTO_FAIL);
+		CHECK_CONDITION(p->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(mbedtls_mpi_read_binary( &keypair->d, p->v.bytes, p->length) == 0, COSE_ERR_CRYPTO_FAIL);
 	}
-	
-	return pNewKey;
+	return true;
 
 errorReturn:
-	if (pNewKey != NULL) EC_KEY_free(pNewKey);
-	return NULL;
+	return false;
 }
 
+/*
 cn_cbor * EC_FromKey(const EC_KEY * pKey, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pkey = NULL;
@@ -929,134 +926,141 @@ errorReturn:
 	goto returnHere;
 }
 */
-/*
-bool ECDSA_Sign(const cn_cbor * pKey)
-{
-	byte * digest = NULL;
-	int digestLen = 0;
-	ECDSA_SIG * sig;
 
-	EC_KEY * eckey = ECKey_From(pKey);
-
-	sig = ECDSA_do_sign(digest, digestLen, eckey);
-
-	return true;
-}
-*/
-/*
 bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
-	EC_KEY * eckey = NULL;
-	byte rgbDigest[EVP_MAX_MD_SIZE];
-	unsigned int cbDigest = sizeof(rgbDigest);
-	byte  * pbSig = NULL;
-	const EVP_MD * digest;
+#if defined(MBEDTLS_ECDSA_DETERMINISTIC)
+	byte rgbDigest[MBEDTLS_MD_MAX_SIZE];
+	uint8_t * pbSig = NULL;
+	cn_cbor_errback cbor_error;
+	int cbR;
+	mbedtls_md_type_t mdType;
+	const mbedtls_md_info_t *pmdInfo;
+	mbedtls_ecp_keypair keypair;
+	mbedtls_mpi r;
+	mbedtls_mpi s;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_allocContext;
 #endif
 	cn_cbor * p = NULL;
-	ECDSA_SIG * psig = NULL;
-	cn_cbor_errback cbor_error;
-	int cbR;
-	byte rgbSig[66];
-	int cb;
-	
-	eckey = ECKey_From(pKey, &cbR, perr);
-	if (eckey == NULL) {
-	errorReturn:
-		if (pbSig != NULL) COSE_FREE(pbSig, context);
-		if (p != NULL) CN_CBOR_FREE(p, context);
-		if (eckey != NULL) EC_KEY_free(eckey);
-		return false;
-	}
+	bool result = false;
 
-	switch (cbitDigest) {
-	case 256: digest = EVP_sha256(); break;
-	case 512: digest = EVP_sha512(); break;
-	case 384: digest = EVP_sha384(); break;
+	mbedtls_ecp_keypair_init(&keypair);
+	mbedtls_mpi_init(&r);
+	mbedtls_mpi_init(&s);
+
+	if(!ECKey_From(pKey, &keypair, perr)) goto errorReturn;
+
+	CHECK_CONDITION(keypair.d.n != 0, COSE_ERR_INVALID_PARAMETER);
+
+	switch(cbitDigest)
+	{
+	case 256:
+		mdType = MBEDTLS_MD_SHA256;
+		break;
+
+	case 384:
+		mdType = MBEDTLS_MD_SHA384;
+		break;
+
+	case 512:
+		mdType = MBEDTLS_MD_SHA512;
+		break;
+
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
+	pmdInfo = mbedtls_md_info_from_type(mdType);
+	CHECK_CONDITION(pmdInfo != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(mbedtls_md(pmdInfo, rgbToSign, cbToSign, rgbDigest) == 0, COSE_ERR_INVALID_PARAMETER);
 
-	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, digest, NULL);
+	CHECK_CONDITION(mbedtls_ecdsa_sign_det(&keypair.grp, &r, &s, &keypair.d, rgbDigest, mbedtls_md_get_size(pmdInfo), mdType) == 0, COSE_ERR_CRYPTO_FAIL);
 
-	psig = ECDSA_do_sign(rgbDigest, cbDigest, eckey);
-	CHECK_CONDITION(psig != NULL, COSE_ERR_CRYPTO_FAIL);
+	cbR = (keypair.grp.nbits + 7) / 8;
 
 	pbSig = COSE_CALLOC(cbR, 2, context);
 	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	cb = BN_bn2bin(psig->r, rgbSig);
-	CHECK_CONDITION(cb <= cbR, COSE_ERR_INVALID_PARAMETER);
-	memcpy(pbSig + cbR - cb, rgbSig, cb);
-
-	cb = BN_bn2bin(psig->s, rgbSig);
-	CHECK_CONDITION(cb <= cbR, COSE_ERR_INVALID_PARAMETER);
-	memcpy(pbSig + 2*cbR - cb, rgbSig, cb);
+	CHECK_CONDITION(mbedtls_mpi_write_binary(&r, pbSig, cbR) == 0, COSE_ERR_INTERNAL);
+	CHECK_CONDITION(mbedtls_mpi_write_binary(&s, pbSig + cbR, cbR) == 0, COSE_ERR_INTERNAL);
 
 	p = cn_cbor_data_create(pbSig, cbR*2, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
 
 	CHECK_CONDITION(_COSE_array_replace(pSigner, p, index, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-	
+
+	p = NULL;
 	pbSig = NULL;
+	result = true;
 
-	if (eckey != NULL) EC_KEY_free(eckey);
-
-	return true;
+errorReturn:
+	cn_cbor_free(p CBOR_CONTEXT_PARAM);
+	COSE_FREE(pbSig, context);
+	mbedtls_mpi_free(&r);
+	mbedtls_mpi_free(&s);
+	mbedtls_ecp_keypair_free(&keypair);
+	return result;
+#else
+	return false;
+#endif
 }
+
 
 bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
-	EC_KEY * eckey = NULL;
-	byte rgbDigest[EVP_MAX_MD_SIZE];
-	unsigned int cbDigest = sizeof(rgbDigest);
-	const EVP_MD * digest;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = &pSigner->m_allocContext;
-#endif
-	cn_cbor * p = NULL;
-	ECDSA_SIG sig = { NULL, NULL };
-	int cbR;
+	mbedtls_ecp_keypair keypair;
+	mbedtls_mpi r;
+	mbedtls_mpi s;
+	mbedtls_md_type_t mdType;
+	const mbedtls_md_info_t *pmdInfo;
+	byte rgbDigest[MBEDTLS_MD_MAX_SIZE];
 	cn_cbor * pSig;
-	size_t cbSignature;
+	bool result = false;
 
-	eckey = ECKey_From(pKey, &cbR, perr);
-	if (eckey == NULL) {
-	errorReturn:
-		if (sig.r != NULL) BN_free(sig.r);
-		if (sig.s != NULL) BN_free(sig.s);
-		if (p != NULL) CN_CBOR_FREE(p, context);
-		if (eckey != NULL) EC_KEY_free(eckey);
-		return false;
-	}
+	mbedtls_ecp_keypair_init(&keypair);
+	mbedtls_mpi_init(&r);
+	mbedtls_mpi_init(&s);
 
-	switch (cbitDigest) {
-	case 256: digest = EVP_sha256(); break;
-	case 512: digest = EVP_sha512(); break;
-	case 384: digest = EVP_sha384(); break;
+	if(!ECKey_From(pKey, &keypair, perr)) goto errorReturn;
+
+	switch(cbitDigest)
+	{
+	case 256:
+		mdType = MBEDTLS_MD_SHA256;
+		break;
+
+	case 384:
+		mdType = MBEDTLS_MD_SHA384;
+		break;
+
+	case 512:
+		mdType = MBEDTLS_MD_SHA512;
+		break;
+
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
-	EVP_Digest(rgbToSign, cbToSign, rgbDigest, &cbDigest, digest, NULL);
+	pmdInfo = mbedtls_md_info_from_type(mdType);
+	CHECK_CONDITION(pmdInfo != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(mbedtls_md(pmdInfo, rgbToSign, cbToSign, rgbDigest) == 0, COSE_ERR_INVALID_PARAMETER);
 
 	pSig = _COSE_arrayget_int(pSigner, index);
-	CHECK_CONDITION(pSig != NULL, COSE_ERR_INVALID_PARAMETER);
-	cbSignature = pSig->length;
+	CHECK_CONDITION((pSig != NULL) && (pSig->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
-	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);
-	sig.r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL);
-	sig.s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL);
+	CHECK_CONDITION(mbedtls_mpi_read_binary( &r, pSig->v.bytes, pSig->length / 2 ) == 0, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(mbedtls_mpi_read_binary( &s, pSig->v.bytes + pSig->length / 2, pSig->length / 2 ) == 0, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(mbedtls_ecdsa_verify(&keypair.grp, rgbDigest, mbedtls_md_get_size(pmdInfo), &keypair.Q, &r, &s) == 0, COSE_ERR_CRYPTO_FAIL);
 
-	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, &sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL);
+	result = true;
 
-	BN_free(sig.r);
-	BN_free(sig.s);
-	if (eckey != NULL) EC_KEY_free(eckey);
-
-	return true;
+errorReturn:
+	mbedtls_mpi_free(&r);
+	mbedtls_mpi_free(&s);
+	mbedtls_ecp_keypair_free(&keypair);
+	return result;
 }
 
+/*
 bool AES_KW_Decrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbitKey, const byte * pbCipherText, size_t cbCipherText, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
 {
 	byte rgbOut[512 / 8];
