@@ -776,10 +776,7 @@ bool ECKey_From(const cn_cbor * pKey, mbedtls_ecp_keypair *keypair, cose_errback
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_Type);
 	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
-	if(p->type == CN_CBOR_INT) {
-		CHECK_CONDITION(p->v.sint == COSE_Key_Type_EC2, COSE_ERR_INVALID_PARAMETER);
-	}
-	else if(p->type == CN_CBOR_UINT) {
+	if(p->type == CN_CBOR_UINT) {
 		CHECK_CONDITION(p->v.uint == COSE_Key_Type_EC2, COSE_ERR_INVALID_PARAMETER);
 	}
 	else {
@@ -787,9 +784,9 @@ bool ECKey_From(const cn_cbor * pKey, mbedtls_ecp_keypair *keypair, cose_errback
 	}
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Curve);
-	CHECK_CONDITION((p != NULL) && ((p->type == CN_CBOR_INT) || (p->type == CN_CBOR_UINT)), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION((p != NULL) && (p->type == CN_CBOR_UINT), COSE_ERR_INVALID_PARAMETER);
 
-	switch (p->v.sint) {
+	switch (p->v.uint) {
 	case 1: // P-256
 		groupId = MBEDTLS_ECP_DP_SECP256R1;
 		break;
