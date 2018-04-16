@@ -65,7 +65,11 @@ endif()
 # CMake list format.
 string(REGEX REPLACE "\\*" ";" COVERAGE_SRCS ${COVERAGE_SRCS})
 
-find_program(GCOV_EXECUTABLE gcov)
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+   FIND_PROGRAM( GCOV_EXECUTABLE  llvm-clang )
+else ()
+   FIND_PROGRAM( GCOV_EXECUTABLE gcov )
+endif ()
 
 if (NOT GCOV_EXECUTABLE)
 	message(FATAL_ERROR "gcov not found! Aborting...")

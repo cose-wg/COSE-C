@@ -44,7 +44,7 @@ if (NOT CMAKE_BUILD_TYPE)
    endif ()
 endif ()
 
-if ( MSVC )
+if ( MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang" )
    set (coveralls OFF)
 endif ()
 
