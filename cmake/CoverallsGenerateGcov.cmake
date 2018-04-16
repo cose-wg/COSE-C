@@ -66,9 +66,9 @@ endif()
 string(REGEX REPLACE "\\*" ";" COVERAGE_SRCS ${COVERAGE_SRCS})
 
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
-    FIND_PROGRAM( LCOV_PATH  llvm-clang )
+   FIND_PROGRAM( GCOV_EXECUTABLE  llvm-clang )
 else ()
-   FIND_PROGRAM( LCOV_PATH gcov )
+   FIND_PROGRAM( GCOV_EXECUTABLE gcov )
 endif ()
 
 if (NOT GCOV_EXECUTABLE)
