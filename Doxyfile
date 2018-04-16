@@ -1,0 +1,10 @@
+PROJECT_NAME           = "cose-c"
+PROJECT_NUMBER         = 
+STRIP_FROM_PATH        = C:/Projects/COSE/COSE-C \
+                         C:/Projects/COSE/COSE-C
+INPUT                  = C:/Projects/COSE/COSE-C/README.md \
+                         C:/Projects/COSE/COSE-C/include \
+                         src
+FILE_PATTERNS          = *.c
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = README.md
