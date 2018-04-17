@@ -135,3 +135,14 @@
 
 
 //#define USE_COUNTER_SIGNATURES
+
+//
+//   Define which COSE objects can be decoded
+//
+
+#define COSE_DECODE_ENCRYPT
+#define COSE_DECODE_ENCRYPT0
+#define COSE_DECODE_MAC
+#define COSE_DECODE_MAC0
+#define COSE_DECODE_SIGN
+#define COSE_DECODE_SIGN0

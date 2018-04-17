@@ -150,47 +150,59 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
 	switch (*ptype) {
+#ifdef COSE_DECODE_ENCRYPT
 	case COSE_enveloped_object:
 		h = (HCOSE)_COSE_Enveloped_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
+#endif
 
+#ifdef COSE_DECODE_SIGN
 	case COSE_sign_object:
 		h = (HCOSE)_COSE_Sign_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
+#endif
 
+#ifdef COSE_DECODE_SIGN0
 	case COSE_sign0_object:
 		h = (HCOSE)_COSE_Sign0_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
+#endif
 
+#ifdef COSE_DECODE_MAC
 	case COSE_mac_object:
 		h = (HCOSE)_COSE_Mac_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
+#endif
 
+#ifdef COSE_DECODE_MAC0
 	case COSE_mac0_object:
 		h = (HCOSE)_COSE_Mac0_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
+#endif
 
+#ifdef COSE_DECODE_ENCRYPT0
 	case COSE_encrypt_object:
 		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
 		break;
+#endif
 
 	default:
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
