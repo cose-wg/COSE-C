@@ -35,7 +35,9 @@ typedef enum cose_error {
 	/** Cryptographic failure */
 	COSE_ERR_CRYPTO_FAIL,
 	/** Internal Error */
-	COSE_ERR_INTERNAL
+	COSE_ERR_INTERNAL,
+	/** Type is not supported */
+	COSE_ERR_UNSUPPORTED_COSE_TYPE
 } cose_error;
 
 typedef enum cose_init_flags {
