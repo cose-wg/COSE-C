@@ -21,6 +21,10 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	const cn_cbor * pFail;
 	const cn_cbor * pMac;
 	const cn_cbor * pRecipients;
+#ifndef COSE_DECODE_MAC
+	const cn_cbor * pHeader;
+	const cn_cbor * pAlg = NULL;
+#endif
 	HCOSE_MAC hMAC;
 	int type;
 	int iRecipient;
@@ -28,20 +32,67 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 	bool fFailBody = false;
 	bool fAlgNoSupport = false;
 	int returnCode = 1;
+	cose_errback cose_err;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
 	}
 
-	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) {
-            if (fFailBody) return 0; else goto failTest;
-        }
-
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto failTest;
 	pMac = cn_cbor_mapget_string(pInput, "mac");
 	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) goto failTest;
+
+#ifndef COSE_DECODE_MAC
+	pHeader = cn_cbor_mapget_string(pMac, "protected");
+	if (pHeader != NULL) {
+		if (pHeader->type != CN_CBOR_MAP) goto failTest;
+		pAlg = cn_cbor_mapget_string(pHeader, "alg");
+	}
+
+	if (pAlg == NULL) {
+		pHeader = cn_cbor_mapget_string(pMac, "unprotected");
+		if ((pHeader == NULL) || (pHeader->type != CN_CBOR_MAP)) goto failTest;
+		pAlg = cn_cbor_mapget_string(pHeader, "alg");
+	}
+
+	if ((pAlg == NULL) || (pAlg->type != CN_CBOR_TEXT)) goto failTest;
+	fAlgNoSupport = !IsTextAlgorithmSupported(pAlg);
+
+	if(!fAlgNoSupport) {
+		pRecipients = cn_cbor_mapget_string(pMac, "recipients");
+		if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto failTest;
+
+		for (pRecipients = pRecipients->first_child; pRecipients != NULL && !fAlgNoSupport; pRecipients=pRecipients->next) {
+			pAlg = NULL;
+			pHeader = cn_cbor_mapget_string(pRecipients, "protected");
+			if (pHeader != NULL) {
+				if (pHeader->type != CN_CBOR_MAP) goto failTest;
+				pAlg = cn_cbor_mapget_string(pHeader, "alg");
+			}
+
+			if (pAlg == NULL) {
+				pHeader = cn_cbor_mapget_string(pRecipients, "unprotected");
+				if ((pHeader == NULL) || (pHeader->type != CN_CBOR_MAP)) goto failTest;
+				pAlg = cn_cbor_mapget_string(pHeader, "alg");
+			}
+
+			if ((pAlg == NULL) || (pAlg->type != CN_CBOR_TEXT)) goto failTest;
+			if (!IsTextAlgorithmSupported(pAlg)) {
+				fAlgNoSupport = true;
+			}
+		}
+	}
+#endif
+
+	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
+	if (hMAC == NULL) {
+		if (fFailBody) return 0;
+#ifndef COSE_DECODE_MAC
+		if (cose_err.err == COSE_ERR_UNSUPPORTED_COSE_TYPE) return fAlgNoSupport ? 0 : 1;
+#endif
+		goto failTest;
+	}
 
 	if (!SetReceivingAttributes((HCOSE)hMAC, pMac, Attributes_MAC_protected)) goto failTest;
 
@@ -201,6 +252,7 @@ int MacMessage()
 	int cbKid = 6;
 	size_t cb;
 	byte * rgb;
+	cose_errback cose_err;
 
 	if (hEncObj == NULL) goto errorReturn;
 
@@ -241,8 +293,13 @@ int MacMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEncObj == NULL) goto errorReturn;
+	hEncObj = (HCOSE_MAC) COSE_Decode(rgb,  (int) cb, &typ, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
+	if (hEncObj == NULL) {
+#ifndef COSE_DECODE_MAC
+		if (cose_err.err == COSE_ERR_UNSUPPORTED_COSE_TYPE) return 1;
+#endif
+		goto errorReturn;
+	}
 
 	int iRecipient = 0;
 	do {
@@ -277,25 +334,50 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 	const cn_cbor * pFail;
 	const cn_cbor * pMac;
 	const cn_cbor * pRecipients;
+#ifndef COSE_DECODE_MAC0
+	const cn_cbor * pHeader;
+	const cn_cbor * pAlg = NULL;
+#endif
 	HCOSE_MAC0 hMAC;
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fUnsuportedAlg = false;
+	cose_errback cose_err;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
 	}
 
-	hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hMAC == NULL) {
-		if (fFailBody) return 0; else goto errorReturn;
-	}
-
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto errorReturn;
 	pMac = cn_cbor_mapget_string(pInput, "mac0");
 	if ((pMac == NULL) || (pMac->type != CN_CBOR_MAP)) goto errorReturn;
+
+#ifndef COSE_DECODE_MAC0
+	pHeader = cn_cbor_mapget_string(pMac, "protected");
+	if (pHeader != NULL) {
+		if (pHeader->type != CN_CBOR_MAP) goto errorReturn;
+		pAlg = cn_cbor_mapget_string(pHeader, "alg");
+	}
+
+	if (pAlg == NULL) {
+		pHeader = cn_cbor_mapget_string(pMac, "unprotected");
+		if ((pHeader == NULL) || (pHeader->type != CN_CBOR_MAP)) goto errorReturn;
+		pAlg = cn_cbor_mapget_string(pHeader, "alg");
+	}
+
+	if ((pAlg == NULL) || (pAlg->type != CN_CBOR_TEXT)) goto errorReturn;
+#endif
+
+	hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
+	if (hMAC == NULL) {
+		if (fFailBody) return 0;
+#ifndef COSE_DECODE_MAC0
+		if (cose_err.err == COSE_ERR_UNSUPPORTED_COSE_TYPE) return IsTextAlgorithmSupported(pAlg) ? 1 : 0;
+#endif
+		goto errorReturn;
+	}
 
 	if (!SetReceivingAttributes((HCOSE)hMAC, pMac, Attributes_MAC0_protected)) goto errorReturn;
 

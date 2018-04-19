@@ -22,12 +22,19 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 	const cn_cbor * pFail;
 	const cn_cbor * pSign;
 	const cn_cbor * pSigners;
+#ifndef COSE_DECODE_SIGN
+	const cn_cbor * pSigner;
+	const cn_cbor * pHeader;
+	const cn_cbor * pAlg = NULL;
+	bool fNoSupportAlg2 = false;
+#endif
 	HCOSE_SIGN	hSig;
 	int type;
 	int iSigner;
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fNoSupportAlg = false;
+	cose_errback cose_err;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -41,13 +48,39 @@ int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbE
 	pSigners = cn_cbor_mapget_string(pSign, "signers");
 	if ((pSigners == NULL) || (pSigners->type != CN_CBOR_ARRAY)) goto returnError;
 
+#ifndef COSE_DECODE_SIGN
+	for (pSigner = pSigners->first_child; pSigner != NULL && !fNoSupportAlg2; pSigner=pSigner->next) {
+		pAlg = NULL;
+		pHeader = cn_cbor_mapget_string(pSigner, "protected");
+		if (pHeader != NULL) {
+			if (pHeader->type != CN_CBOR_MAP) goto returnError;
+			pAlg = cn_cbor_mapget_string(pHeader, "alg");
+		}
+
+		if (pAlg == NULL) {
+			pHeader = cn_cbor_mapget_string(pSigner, "unprotected");
+			if ((pHeader == NULL) || (pHeader->type != CN_CBOR_MAP)) goto returnError;
+			pAlg = cn_cbor_mapget_string(pHeader, "alg");
+		}
+
+		if ((pAlg == NULL) || (pAlg->type != CN_CBOR_TEXT)) goto returnError;
+		if (!IsTextAlgorithmSupported(pAlg)) {
+			fNoSupportAlg2 = true;
+		}
+	}
+#endif
+
 	iSigner = (int) pSigners->length - 1;
 	pSigners = pSigners->first_child;
 	for (; pSigners != NULL; iSigner--, pSigners = pSigners->next) {
 
-		hSig = (HCOSE_SIGN)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+		hSig = (HCOSE_SIGN)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
 		if (hSig == NULL) {
-			if (fFailBody) 		return 0;  else goto returnError;
+			if (fFailBody) return 0;
+#ifndef COSE_DECODE_SIGN
+			if (cose_err.err == COSE_ERR_UNSUPPORTED_COSE_TYPE) return fNoSupportAlg2 ? 0 : 1;
+#endif
+			goto returnError;
 		}
 		if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign_protected)) goto returnError;
 
@@ -253,11 +286,16 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
 	const cn_cbor * pSign;
+#ifndef COSE_DECODE_SIGN0
+	const cn_cbor * pHeader;
+	const cn_cbor * pAlg = NULL;
+#endif
 	HCOSE_SIGN0	hSig;
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fNoAlgSupport = false;
+	cose_errback cose_err;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -268,9 +306,29 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	pSign = cn_cbor_mapget_string(pInput, "sign0");
 	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) goto returnError;
 
-	hSig = (HCOSE_SIGN0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+#ifndef COSE_DECODE_SIGN0
+	pHeader = cn_cbor_mapget_string(pSign, "protected");
+	if (pHeader != NULL) {
+		if (pHeader->type != CN_CBOR_MAP) goto returnError;
+		pAlg = cn_cbor_mapget_string(pHeader, "alg");
+	}
+
+	if (pAlg == NULL) {
+		pHeader = cn_cbor_mapget_string(pSign, "unprotected");
+		if ((pHeader == NULL) || (pHeader->type != CN_CBOR_MAP)) goto returnError;
+		pAlg = cn_cbor_mapget_string(pHeader, "alg");
+	}
+
+	if ((pAlg == NULL) || (pAlg->type != CN_CBOR_TEXT)) goto returnError;
+#endif
+
+	hSig = (HCOSE_SIGN0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
 	if (hSig == NULL) {
-		if (fFailBody) return 0; else goto returnError;
+		if (fFailBody) return 0;
+#ifndef COSE_DECODE_SIGN0
+		if (cose_err.err == COSE_ERR_UNSUPPORTED_COSE_TYPE) return IsTextAlgorithmSupported(pAlg) ? 1 : 0;
+#endif
+		goto returnError;
 	}
 
 	if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign0_protected)) goto returnError;

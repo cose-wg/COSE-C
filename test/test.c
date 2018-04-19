@@ -261,6 +261,21 @@ int IsAlgorithmSupported(const cn_cbor * alg)
 	return true;
 }
 
+bool IsTextAlgorithmSupported(const cn_cbor * alg)
+{
+	int algVal;
+	cn_cbor intAlg;
+
+	// Only text is valid here
+	if (alg->type != CN_CBOR_TEXT) return false;
+
+	memset(&intAlg, 0, sizeof(intAlg));
+	algVal = MapAlgorithmName(alg);
+	intAlg.type = (algVal >= 0) ? CN_CBOR_UINT : CN_CBOR_INT;
+	intAlg.v.sint = algVal;
+	return IsAlgorithmSupported(&intAlg);
+}
+
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 {
 	const cn_cbor * pOutputs = cn_cbor_mapget_string(pControl, "output");
