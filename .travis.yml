@@ -10,6 +10,12 @@ env:
   - USE_CONTEXT=ON
   - USE_CONTEXT=OFF
   - USE_CONTEXT=OFF USE_EMBEDTLS=ON
+  - CMAKE_OPTIONS="-Dinclude_encrypt=ON -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=ON -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=ON -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=ON -Dinclude_sign=OFF -Dinclude_sign0=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=ON -Dinclude_sign0=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=ON"
 matrix:
   exclude:
     - compiler: clang
@@ -31,7 +37,7 @@ script:
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
-  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON  -Duse_embedtls=$USE_EMBEDTLS .. && make all test
+  - cd build && cmake -Duse_context=$USE_CONTEXT -Dcoveralls_send=ON  -Duse_embedtls=$USE_EMBEDTLS $CMAKE_OPTIONS .. && make all test
 
 after_success:
   - make coveralls
