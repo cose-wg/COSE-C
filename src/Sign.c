@@ -7,6 +7,8 @@
 #include "cose.h"
 #include "cose_int.h"
 
+#if INCLUDE_SIGN
+
 COSE * SignRoot = NULL;
 
 /*! \private
@@ -368,4 +370,4 @@ HCOSE_SIGNER COSE_Sign_GetSigner(HCOSE_SIGN cose, int iSigner, cose_errback * pe
 	return (HCOSE_SIGNER)p;
 }
 
-
+#endif

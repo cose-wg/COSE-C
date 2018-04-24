@@ -16,6 +16,7 @@
 #pragma warning (disable: 4127)
 #endif
 
+#if INCLUDE_SIGN
 int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -279,8 +280,9 @@ int SignMessage()
 
 	return 1;
 }
+#endif
 
-
+#if INCLUDE_SIGN0
 int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -424,7 +426,9 @@ returnError:
 	CFails += 1;
 	return 1;
 }
+#endif
 
+#if INCLUDE_SIGN
 void Sign_Corners()
 {
 	HCOSE_SIGN hSign = NULL;
@@ -539,7 +543,9 @@ void Sign_Corners()
 
 	return;
 }
+#endif
 
+#if INCLUDE_SIGN0
 void Sign0_Corners()
 {
 	HCOSE_SIGN0 hSign = NULL;
@@ -609,3 +615,4 @@ void Sign0_Corners()
 
 	return;
 }
+#endif

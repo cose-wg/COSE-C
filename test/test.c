@@ -387,37 +387,53 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		}
 
 		switch (msgType) {
+#if INCLUDE_MAC
 		case Attributes_MAC_protected:
 			f = COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
+#if INCLUDE_MAC0
 		case Attributes_MAC0_protected:
 			f = COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 		case Attributes_Recipient_protected:
 			f = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
+#if INCLUDE_ENCRYPT
 		case Attributes_Enveloped_protected:
 			f = COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
+#if INCLUDE_ENCRYPT0
 		case Attributes_Encrypt_protected:
 			f = COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
+#if INCLUDE_SIGN
 		case Attributes_Sign_protected:
 			f = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
+#if INCLUDE_SIGN
 		case Attributes_Signer_protected:
 			f = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
+#if INCLUDE_SIGN0
 		case Attributes_Sign0_protected:
 			f = COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, which, NULL);
 			break;
+#endif
 
 		}
 		// assert(f);
@@ -439,29 +455,41 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pcn == NULL) goto returnError;
 		switch (base) {
+#if INCLUDE_ENCRYPT0
 		case Attributes_Encrypt_protected:
 			if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_ENCRYPT
 		case Attributes_Enveloped_protected:
 			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_MAC
 		case Attributes_MAC_protected:
 			if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_MAC0
 		case Attributes_MAC0_protected:
 			if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_SIGN
 		case Attributes_Signer_protected:
 			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_SIGN0
 		case Attributes_Sign0_protected:
 			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 		}
 	}
 
@@ -481,29 +509,41 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pcn == NULL) goto returnError;
 		switch (base) {
+#if INCLUDE_ENCRYPT0
 		case Attributes_Encrypt_protected:
 			if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_ENCRYPT
 		case Attributes_Enveloped_protected:
 			if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_MAC
 		case Attributes_MAC_protected:
 			if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_MAC0
 		case Attributes_MAC0_protected:
 			if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_SIGN
 		case Attributes_Signer_protected:
 			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 
+#if INCLUDE_SIGN0
 		case Attributes_Sign0_protected:
 			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
+#endif
 		}
 	}
 
@@ -617,13 +657,27 @@ bool Test_cn_cbor_array_replace()
 void RunCorners()
 {
 	Test_cn_cbor_array_replace();
+#if INCLUDE_MAC
 	MAC_Corners();
+#endif
+#if INCLUDE_MAC0
 	MAC0_Corners();
+#endif
+#if INCLUDE_ENCRYPT0
 	Encrypt_Corners();
+#endif
+#if INCLUDE_ENCRYPT
 	Enveloped_Corners();
+#endif
+#if INCLUDE_SIGN
 	Sign_Corners();
+#endif
+#if INCLUDE_SIGN0
 	Sign0_Corners();
+#endif
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 	Recipient_Corners();
+#endif
 }
 
 void RunMemoryTest(const char * szFileName)
@@ -652,101 +706,131 @@ void RunMemoryTest(const char * szFileName)
 	bool fBuildDone = false;
 
 	for (iFail = 0; !fValidateDone || !fBuildDone; iFail++) {
-		allocator = CreateContext(iFail);
+		context = CreateContext(iFail);
 
 		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+#if INCLUDE_MAC
 			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				ValidateMAC(pControl);
 				if (CFails == 0) fValidateDone = true;
 			}
 
 			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				BuildMacMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
+#else
+			fValidateDone = true;
+			fBuildDone = true;
+#endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+#if INCLUDE_MAC0
 			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				ValidateMac0(pControl);
 				if (CFails == 0) fValidateDone = true;
 			}
 
 			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				BuildMac0Message(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
+#else
+         fValidateDone = true;
+         fBuildDone = true;
+#endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+#if INCLUDE_ENCRYPT0
 			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				ValidateEncrypt(pControl);
 				if (CFails == 0) fValidateDone = true;
 			}
 
 			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				BuildEncryptMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
+#else
+         fValidateDone = true;
+         fBuildDone = true;
+#endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+#if INCLUDE_ENCRYPT
 			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				ValidateEnveloped(pControl);
 				if (CFails == 0) fValidateDone = true;
 			}
 
 			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				BuildEnvelopedMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
+#else
+         fValidateDone = true;
+         fBuildDone = true;
+#endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+#if INCLUDE_SIGN
 			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				ValidateSigned(pControl);
 				if (CFails == 0) fValidateDone = true;
 			}
 
 			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				BuildSignedMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
+#else
+         fValidateDone = true;
+         fBuildDone = true;
+#endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+#if INCLUDE_SIGN0
 			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				ValidateSign0(pControl);
 				if (CFails == 0) fValidateDone = true;
 			}
 
 			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
+				context = CreateContext(iFail);
 				CFails = 0;
 				BuildSign0Message(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
+#else
+         fValidateDone = true;
+         fBuildDone = true;
+#endif
 		}
 	}
 	CFails = 0;
-	allocator = NULL;
+	context = NULL;
 #else
 	return;
 #endif
@@ -777,34 +861,46 @@ void RunFileTest(const char * szFileName)
 	}
 
 	if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+#if INCLUDE_MAC
 		if (ValidateMAC(pControl)) {
 			BuildMacMessage(pControl);
 		}
+#endif
 	}
 	else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+#if INCLUDE_MAC0
 		if (ValidateMac0(pControl)) {
 			BuildMac0Message(pControl);
 		}
+#endif
 	}
 	else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+#if INCLUDE_ENCRYPT
 		if (ValidateEnveloped(pControl)) {
 			BuildEnvelopedMessage(pControl);
 		}
+#endif
 	}
 	else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+#if INCLUDE_SIGN
 		if (ValidateSigned(pControl)) {
 			BuildSignedMessage(pControl);
 		}
+#endif
 	}
 	else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+#if INCLUDE_SIGN0
 		if (ValidateSign0(pControl)) {
 			BuildSign0Message(pControl);
 		}
+#endif
 	}
 	else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+#if INCLUDE_ENCRYPT0
 		if (ValidateEncrypt(pControl)) {
 			BuildEncryptMessage(pControl);
 		}
+#endif
 	}
 
 	return;
@@ -949,13 +1045,19 @@ int main(int argc, char ** argv)
 	}
 	else {
 #ifdef USE_CBOR_CONTEXT
-		allocator = CreateContext((unsigned int) -1);
+		context = CreateContext((unsigned int) -1);
 #endif
+#if INCLUDE_MAC
 		MacMessage();
+#endif
+#if INCLUDE_SIGN
 		SignMessage();
+#endif
+#if INCLUDE_ENCRYPT
 		EncryptMessage();
+#endif
 #ifdef USE_CBOR_CONTEXT
-		FreeContext(allocator);
+		FreeContext(context);
 #endif
 	}
 

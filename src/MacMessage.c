@@ -13,6 +13,8 @@
 #include "configure.h"
 #include "crypto.h"
 
+#if INCLUDE_MAC
+
 COSE * MacRoot = NULL;
 
 /*! \private
@@ -219,8 +221,9 @@ bool COSE_Mac_map_put_int(HCOSE_MAC h, int key, cn_cbor * value, int flags, cose
 
 	return _COSE_map_put(&((COSE_MacMessage *)h)->m_message, key, value, flags, perror);
 }
+#endif
 
-
+#if INCLUDE_MAC || INCLUDE_MAC0
 bool _COSE_Mac_Build_AAD(COSE * pCose, const char * szContext, byte ** ppbAuthData, size_t * pcbAuthData, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pAuthData = NULL;
@@ -294,7 +297,9 @@ errorReturn:
 	if (ptmp != NULL) CN_CBOR_FREE(ptmp, context);
 	return fRet;
 }
+#endif
 
+#if INCLUDE_MAC
 bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 {
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
@@ -307,7 +312,9 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback * perr)
 	errorReturn:
 		return false;
 }
+#endif
 
+#if INCLUDE_MAC || INCLUDE_MAC0
 bool _COSE_Mac_compute(COSE_MacMessage * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
 {
 	int alg;
@@ -499,7 +506,9 @@ errorReturn:
 	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
 	return fRet;
 }
+#endif
 
+#if INCLUDE_MAC
 bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
 	COSE_MacMessage * pcose = (COSE_MacMessage *)h;
@@ -512,7 +521,9 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 errorReturn:
 	return false;
 }
+#endif
 
+#if INCLUDE_MAC || INCLUDE_MAC0
 bool _COSE_Mac_validate(COSE_MacMessage * pcose, COSE_RecipientInfo * pRecip, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
 {
 	byte * pbAuthData = NULL;
@@ -700,7 +711,9 @@ errorReturn:
 
 	return fRet;
 }
+#endif
 
+#if INCLUDE_MAC
 bool COSE_Mac_AddRecipient(HCOSE_MAC hMac, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
 	COSE_RecipientInfo * pRecip;
@@ -764,3 +777,5 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errba
 errorReturn:
 	return NULL;
 }
+
+#endif

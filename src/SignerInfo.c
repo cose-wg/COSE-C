@@ -10,6 +10,8 @@
 #include "configure.h"
 #include "crypto.h"
 
+#if INCLUDE_SIGN
+
 extern bool IsValidSignHandle(HCOSE_SIGN h);
 
 COSE * SignerRoot = NULL;
@@ -365,3 +367,5 @@ bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags
 errorReturn:
 	return fRet;
 }
+
+#endif

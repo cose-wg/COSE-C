@@ -12,10 +12,13 @@
 #include "configure.h"
 #include "crypto.h"
 
+#if INCLUDE_ENCRYPT0 || INCLUDE_MAC0
 void _COSE_Encrypt_Release(COSE_Encrypt * p);
 
 COSE * EncryptRoot = NULL;
+#endif
 
+#if INCLUDE_ENCRYPT0
 /*! \private
 * @brief Test if a HCOSE_ENCRYPT handle is valid
 *
@@ -35,8 +38,9 @@ bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 	COSE_Encrypt * p = (COSE_Encrypt *)h;
 	return _COSE_IsInList(EncryptRoot, (COSE *)p);
 }
+#endif
 
-
+#if INCLUDE_ENCRYPT0 || INCLUDE_MAC0
 HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
@@ -56,7 +60,9 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_e
 errorReturn:
 	return NULL;
 }
+#endif
 
+#if INCLUDE_ENCRYPT0
 HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_Encrypt * pobj = pIn;
@@ -108,14 +114,18 @@ bool COSE_Encrypt_Free(HCOSE_ENCRYPT h)
 
 	return true;
 }
+#endif
 
+#if INCLUDE_ENCRYPT0 || INCLUDE_MAC0
 void _COSE_Encrypt_Release(COSE_Encrypt * p)
 {
 	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent, &p->m_message.m_allocContext);
 
 	_COSE_Release(&p->m_message);
 }
+#endif
 
+#if INCLUDE_ENCRYPT0
 bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cose_errback * perr)
 {
 	COSE_Encrypt * pcose = (COSE_Encrypt *)h;
@@ -210,3 +220,5 @@ bool COSE_Encrypt_map_put_int(HCOSE_ENCRYPT h, int key, cn_cbor * value, int fla
 
 	return _COSE_map_put(&((COSE_Encrypt *)h)->m_message, key, value, flags, perror);
 }
+
+#endif

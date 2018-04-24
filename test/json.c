@@ -9,9 +9,9 @@
 #include "json.h"
 
 #ifdef USE_CBOR_CONTEXT
-extern cn_cbor_context * allocator;
-#define CBOR_CONTEXT_PARAM , allocator
-#define CBOR_CONTEXT_PARAM_COMMA allocator,
+extern cn_cbor_context * context;
+#define CBOR_CONTEXT_PARAM , context
+#define CBOR_CONTEXT_PARAM_COMMA context ,
 #else
 #define CBOR_CONTEXT_PARAM
 #define CBOR_CONTEXT_PARAM_COMMA

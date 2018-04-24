@@ -12,10 +12,13 @@
 #include "configure.h"
 #include "crypto.h"
 
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 void _COSE_Enveloped_Release(COSE_Enveloped * p);
 
 COSE * EnvelopedRoot = NULL;
+#endif
 
+#if INCLUDE_ENCRYPT
 /*! \private
 * @brief Test if a HCOSE_ENVELOPED handle is valid
 *
@@ -72,7 +75,9 @@ HCOSE_ENVELOPED COSE_Enveloped_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA co
 errorReturn:
 	return NULL;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_Enveloped * pobj = pIn;
@@ -114,7 +119,9 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped 
 
 	return(HCOSE_ENVELOPED) pobj;
 }
+#endif
 
+#if INCLUDE_ENCRYPT
 bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 {
 #ifdef USE_CBOR_CONTEXT
@@ -141,7 +148,9 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 
 	return true;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 void _COSE_Enveloped_Release(COSE_Enveloped * p)
 {
 	COSE_RecipientInfo * pRecipient1;
@@ -157,7 +166,9 @@ void _COSE_Enveloped_Release(COSE_Enveloped * p)
 
 	_COSE_Release(&p->m_message);
 }
+#endif
 
+#if INCLUDE_ENCRYPT
 bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
 {
 	COSE_Enveloped * pcose = (COSE_Enveloped *)h;
@@ -173,7 +184,9 @@ bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED h, HCOSE_RECIPIENT hRecip, cose_errb
 	errorReturn:
 	return f;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0
 bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip, const byte *pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
 {
 	int alg;
@@ -405,7 +418,9 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 
 	return true;
 }
+#endif
 
+#if INCLUDE_ENCRYPT
 bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 {
 	COSE_Enveloped * pcose = (COSE_Enveloped *)h;
@@ -418,7 +433,9 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
 errorReturn:
 	return false;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0
 bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
 {
 	int alg;
@@ -654,7 +671,9 @@ errorReturn:
 	}
 	return fRet;
 }
+#endif
 
+#if INCLUDE_ENCRYPT
 bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h, const byte * rgb, size_t cb, cose_errback * perr)
 {
 	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
@@ -785,7 +804,9 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, c
 errorReturn:
 	return false;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
 bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, const char * szContext, cose_errback * perr)
 {
 #ifdef USE_CBOR_CONTEXT
@@ -841,7 +862,9 @@ errorReturn:
 	if (pAuthData != NULL) CN_CBOR_FREE(pAuthData, context);
 	return false;
 }
+#endif
 
+#if INCLUDE_ENCRYPT
 HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose, int iRecipient, cose_errback * perr)
 {
 	int i;
@@ -879,4 +902,6 @@ HCOSE_COUNTERSIGN COSE_Enveloped_GetCounterSigner(HCOSE_ENCRYPT h, int iSigner, 
 errorReturn:
 	return NULL;
 }
+#endif
+
 #endif
