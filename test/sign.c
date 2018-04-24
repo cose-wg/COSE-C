@@ -397,7 +397,7 @@ void Sign_Corners()
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 	hSignerBad = (HCOSE_SIGNER)COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
-   hSignerBad = (HCOSE_SIGNER)COSE_CALLOC(1, sizeof(COSE), context);
+	hSignerBad = (HCOSE_SIGNER)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
 
 	//  Missing case - addref then release on item

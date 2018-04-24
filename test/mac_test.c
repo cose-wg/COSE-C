@@ -438,9 +438,9 @@ void MAC_Corners()
 	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
 
 #if INCLUDE_ENCRYPT0
-   hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
-   hEncrypt = (HCOSE_ENCRYPT)COSE_CALLOC(1, sizeof(COSE), context);
+	hEncrypt = (HCOSE_ENCRYPT)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
 
 	if (COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL)) CFails++;

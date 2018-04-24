@@ -729,8 +729,8 @@ void RunMemoryTest(const char * szFileName)
 				if (CFails == 0) fBuildDone = true;
 			}
 #else
-         fValidateDone = true;
-         fBuildDone = true;
+			fValidateDone = true;
+			fBuildDone = true;
 #endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
@@ -749,8 +749,8 @@ void RunMemoryTest(const char * szFileName)
 				if (CFails == 0) fBuildDone = true;
 			}
 #else
-         fValidateDone = true;
-         fBuildDone = true;
+			fValidateDone = true;
+			fBuildDone = true;
 #endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
@@ -769,8 +769,8 @@ void RunMemoryTest(const char * szFileName)
 				if (CFails == 0) fBuildDone = true;
 			}
 #else
-         fValidateDone = true;
-         fBuildDone = true;
+			fValidateDone = true;
+			fBuildDone = true;
 #endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
@@ -789,8 +789,8 @@ void RunMemoryTest(const char * szFileName)
 				if (CFails == 0) fBuildDone = true;
 			}
 #else
-         fValidateDone = true;
-         fBuildDone = true;
+			fValidateDone = true;
+			fBuildDone = true;
 #endif
 		}
 		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
@@ -809,8 +809,8 @@ void RunMemoryTest(const char * szFileName)
 				if (CFails == 0) fBuildDone = true;
 			}
 #else
-         fValidateDone = true;
-         fBuildDone = true;
+			fValidateDone = true;
+			fBuildDone = true;
 #endif
 		}
 	}
