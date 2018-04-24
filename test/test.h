@@ -74,7 +74,6 @@ byte * FromHex(const char * rgch, int cch);
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
 bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base);
 int IsAlgorithmSupported(const cn_cbor * alg);
-bool IsTextAlgorithmSupported(const cn_cbor * alg);
 
 //
 //  Internal macros to make testing easier

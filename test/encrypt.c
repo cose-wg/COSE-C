@@ -286,7 +286,6 @@ int EncryptMessage()
 	byte * rgb;
 	char * sz = "This is the content to be used";
 	HCOSE_RECIPIENT hRecip = NULL;
-	cose_errback cose_err;
 
 	if (hEncObj == NULL) goto errorReturn;
 	if (!COSE_Enveloped_map_put_int(hEncObj, COSE_Header_Algorithm, cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) goto errorReturn;
@@ -330,13 +329,8 @@ int EncryptMessage()
 	/* */
 
 	int typ;
-	hEncObj = (HCOSE_ENVELOPED) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
-	if (hEncObj == NULL) {
-#ifndef COSE_DECODE_ENCRYPT
-		if (cose_err.err == COSE_ERR_UNSUPPORTED_COSE_TYPE) return 1;
-#endif
-		goto errorReturn;
-	}
+	hEncObj = (HCOSE_ENVELOPED) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hEncObj == NULL) goto errorReturn;
 	
 	int iRecipient = 0;
 	do {
@@ -373,16 +367,11 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	const cn_cbor * pFail;
 	const cn_cbor * pEncrypt;
 	const cn_cbor * pRecipients;
-#ifndef COSE_DECODE_ENCRYPT0
-	const cn_cbor * pHeader;
-	const cn_cbor * pAlg = NULL;
-#endif
 	HCOSE_ENCRYPT hEnc;
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fAlgSupport = true;
-	cose_errback cose_err;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -393,35 +382,13 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	pEncrypt = cn_cbor_mapget_string(pInput, "encrypted");
 	if ((pEncrypt == NULL) || (pEncrypt->type != CN_CBOR_MAP)) goto returnError;
 
-#ifndef COSE_DECODE_ENCRYPT0
-	pHeader = cn_cbor_mapget_string(pEncrypt, "protected");
-	if (pHeader != NULL) {
-		if (pHeader->type != CN_CBOR_MAP) goto returnError;
-		pAlg = cn_cbor_mapget_string(pHeader, "alg");
-	}
-
-	if (pAlg == NULL) {
-		pHeader = cn_cbor_mapget_string(pEncrypt, "unprotected");
-		if ((pHeader == NULL) || (pHeader->type != CN_CBOR_MAP)) goto returnError;
-		pAlg = cn_cbor_mapget_string(pHeader, "alg");
-	}
-
-	if ((pAlg == NULL) || (pAlg->type != CN_CBOR_TEXT)) goto returnError;
-#endif
-
 	pRecipients = cn_cbor_mapget_string(pEncrypt, "recipients");
 	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) goto returnError;
 
 	pRecipients = pRecipients->first_child;
 
-	hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA &cose_err);
-	if (hEnc == NULL) {
-		if (fFailBody) return 0;
-#ifndef COSE_DECODE_ENCRYPT0
-		if (cose_err.err == COSE_ERR_UNSUPPORTED_COSE_TYPE) return IsTextAlgorithmSupported(pAlg) ? 1 : 0;
-#endif
-		goto returnError;
-	}
+	hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (hEnc == NULL) { if (fFailBody) return 0; else  goto returnError; }
 
 	if (!SetReceivingAttributes((HCOSE)hEnc, pEncrypt, Attributes_Encrypt_protected)) goto returnError;
 
