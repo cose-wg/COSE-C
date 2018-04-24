@@ -65,7 +65,7 @@ endif ()
 if (NOT include_sign)
    add_definitions( -DINCLUDE_SIGN=0 )
 endif ()
-if (NOT include_sign)
+if (NOT include_sign0)
    add_definitions( -DINCLUDE_SIGN0=0 )
 endif ()
 
