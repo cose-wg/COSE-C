@@ -135,3 +135,26 @@
 
 
 //#define USE_COUNTER_SIGNATURES
+
+//
+//   Define which COSE objects are included
+//
+
+#ifndef INCLUDE_ENCRYPT
+#define INCLUDE_ENCRYPT 1
+#endif
+#ifndef INCLUDE_ENCRYPT0
+#define INCLUDE_ENCRYPT0 1
+#endif
+#ifndef INCLUDE_MAC
+#define INCLUDE_MAC 1
+#endif
+#ifndef INCLUDE_MAC0
+#define INCLUDE_MAC0 1
+#endif
+#ifndef INCLUDE_SIGN
+#define INCLUDE_SIGN 1
+#endif
+#ifndef INCLUDE_SIGN0
+#define INCLUDE_SIGN0 1
+#endif

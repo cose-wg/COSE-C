@@ -5,6 +5,9 @@
 #include <string.h>
 #include <cose.h>
 #include <cn-cbor/cn-cbor.h>
+#if INCLUDE_MAC && !INCLUDE_ENCRYPT0
+#include <cose_int.h>
+#endif
 
 #include "json.h"
 #include "test.h"
@@ -14,7 +17,7 @@
 #pragma warning (disable: 4127)
 #endif
 
-
+#if INCLUDE_MAC
 int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -269,8 +272,9 @@ errorReturn:
 	CFails++;
 	return 1;
 }
+#endif
 
-
+#if INCLUDE_MAC0
 int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -403,8 +407,9 @@ returnError:
 	CFails += 1;
 	return 1;
 }
+#endif
 
-
+#if INCLUDE_MAC
 void MAC_Corners()
 {
     HCOSE_MAC hMAC;
@@ -432,7 +437,11 @@ void MAC_Corners()
 	if (COSE_Mac_SetExternal((HCOSE_MAC)hEncrypt, rgb, 0, NULL)) CFails++;
 	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
 
-    hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+#if INCLUDE_ENCRYPT0
+	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+#else
+	hEncrypt = (HCOSE_ENCRYPT)COSE_CALLOC(1, sizeof(COSE), context);
+#endif
 
 	if (COSE_Mac_SetContent((HCOSE_MAC)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac_map_get_int((HCOSE_MAC)hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
@@ -473,7 +482,9 @@ void MAC_Corners()
 
     return;
 }
+#endif
 
+#if INCLUDE_MAC0
 void MAC0_Corners()
 {
 	HCOSE_ENCRYPT hEncrypt = NULL;
@@ -526,3 +537,4 @@ void MAC0_Corners()
 
 	return;
 }
+#endif

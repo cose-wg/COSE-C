@@ -151,45 +151,69 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 
 	switch (*ptype) {
 	case COSE_enveloped_object:
+#if INCLUDE_ENCRYPT
 		h = (HCOSE)_COSE_Enveloped_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
+#else
+		FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
+#endif
 		break;
 
 	case COSE_sign_object:
+#if INCLUDE_SIGN
 		h = (HCOSE)_COSE_Sign_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
+#else
+		FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
+#endif
 		break;
 
 	case COSE_sign0_object:
+#if INCLUDE_SIGN0
 		h = (HCOSE)_COSE_Sign0_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
+#else
+		FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
+#endif
 		break;
 
 	case COSE_mac_object:
+#if INCLUDE_MAC
 		h = (HCOSE)_COSE_Mac_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
+#else
+		FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
+#endif
 		break;
 
 	case COSE_mac0_object:
+#if INCLUDE_MAC0
 		h = (HCOSE)_COSE_Mac0_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
+#else
+		FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
+#endif
 		break;
 
 	case COSE_encrypt_object:
+#if INCLUDE_ENCRYPT0
 		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}
+#else
+		FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
+#endif
 		break;
 
 	default:

@@ -6,9 +6,11 @@
 #include "configure.h"
 #include "crypto.h"
 
+#if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
 extern bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr);
+#endif
 
-
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 COSE* RecipientRoot = NULL;
 
 /*! \private
@@ -114,7 +116,9 @@ void _COSE_Recipient_Free(COSE_RecipientInfo * pRecipient)
 
 	return;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
 #if defined(USE_HKDF_SHA2) || defined(USE_HKDF_AES)
 /**
 * Perform an AES-CCM Decryption operation
@@ -942,7 +946,9 @@ errorReturn:
 	if (pb != NULL) COSE_FREE(pb, context);
 	return NULL;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient, const byte * rgbKey, int cbKey, const byte * rgbKid, int cbKid, cose_errback * perr)
 {
 	COSE_RecipientInfo * p;
@@ -1205,8 +1211,9 @@ bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h, int key, cn_cbor * value, int
 errorReturn:
 	return false;
 }
+#endif
 
-
+#if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
 bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pArray;
@@ -1359,7 +1366,9 @@ errorReturn:
 	fReturn = false;
 	goto returnHere;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 /*! brief Retrieve header parameter from a recipient structure
 *
 * Retrieve a header parameter from the message.
@@ -1445,3 +1454,5 @@ bool COSE_Recipient_AddRecipient(HCOSE_RECIPIENT hEnc, HCOSE_RECIPIENT hRecip, c
 errorReturn:
 	return false;
 }
+
+#endif

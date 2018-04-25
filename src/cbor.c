@@ -184,11 +184,8 @@ cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp)
 	return pcn;
 }
 
-
-unsigned char RgbDontUse4[8 * 1024];
-
 size_t cn_cbor_encode_size(cn_cbor * object)
 {
-	ssize_t size = cn_cbor_encoder_write(RgbDontUse4, 0, sizeof(RgbDontUse4), object);
+	ssize_t size = cn_cbor_encoder_write(NULL, 0, 0, object);
 	return size >= 0 ? size : 0;
 }

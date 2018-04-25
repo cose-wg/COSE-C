@@ -7,6 +7,9 @@
 #include <string.h>
 #include <cose.h>
 #include <cn-cbor/cn-cbor.h>
+#if (INCLUDE_SIGN && !(INCLUDE_SIGN0 || INCLUDE_ENCRYPT || INCLUDE_MAC)) || (INCLUDE_SIGN0 && !INCLUDE_SIGN)
+#include <cose_int.h>
+#endif
 
 #include "json.h"
 #include "test.h"
@@ -16,6 +19,7 @@
 #pragma warning (disable: 4127)
 #endif
 
+#if INCLUDE_SIGN
 int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -246,8 +250,9 @@ int SignMessage()
 
 	return 1;
 }
+#endif
 
-
+#if INCLUDE_SIGN0
 int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -366,7 +371,9 @@ returnError:
 	CFails += 1;
 	return 1;
 }
+#endif
 
+#if INCLUDE_SIGN
 void Sign_Corners()
 {
 	HCOSE_SIGN hSign = NULL;
@@ -380,10 +387,18 @@ void Sign_Corners()
 	cose_errback cose_error;
 
 	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA  NULL);
+#if INCLUDE_SIGN0
 	hSignBad = (HCOSE_SIGN)COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+#else
+	hSignBad = (HCOSE_SIGN)COSE_CALLOC(1, sizeof(COSE), context);
+#endif
 
 	hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA  NULL);
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 	hSignerBad = (HCOSE_SIGNER)COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+#else
+	hSignerBad = (HCOSE_SIGNER)COSE_CALLOC(1, sizeof(COSE), context);
+#endif
 
 	//  Missing case - addref then release on item
 	//  Incorrect algorithm
@@ -481,7 +496,9 @@ void Sign_Corners()
 
 	return;
 }
+#endif
 
+#if INCLUDE_SIGN0
 void Sign0_Corners()
 {
 	HCOSE_SIGN0 hSign = NULL;
@@ -493,8 +510,11 @@ void Sign0_Corners()
 	cose_errback cose_error;
 
 	hSign = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+#if INCLUDE_SIGN
 	hSignBad = (HCOSE_SIGN0)COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-
+#else
+	hSignBad = (HCOSE_SIGN0)COSE_CALLOC(1, sizeof(COSE), context);
+#endif
 
 	//  Look for invalid parameter
 	//		Null handle checks
@@ -551,3 +571,4 @@ void Sign0_Corners()
 
 	return;
 }
+#endif

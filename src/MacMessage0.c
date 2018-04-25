@@ -13,6 +13,8 @@
 #include "configure.h"
 #include "crypto.h"
 
+#if INCLUDE_MAC0
+
 COSE * Mac0Root = NULL;
 
 /*! \private
@@ -222,3 +224,5 @@ bool COSE_Mac0_validate(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_err
 errorReturn:
 	return false;
 }
+
+#endif

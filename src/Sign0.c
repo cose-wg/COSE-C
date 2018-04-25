@@ -8,6 +8,8 @@
 #include "cose_int.h"
 #include "crypto.h"
 
+#if INCLUDE_SIGN0
+
 bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_errback * perr);
 bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cose_errback * perr);
 void _COSE_Sign0_Release(COSE_Sign0Message * p);
@@ -438,3 +440,5 @@ errorReturn:
 
 	return fRet;
 }
+
+#endif
