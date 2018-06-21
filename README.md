@@ -2,13 +2,21 @@
 # COSE-C Implementation [![Build Status](https://travis-ci.org/cose-wg/COSE-C.svg?branch=master)](https://travis-ci.org/cose-wg/COSE-C) [![Coverage Status](https://coveralls.io/repos/cose-wg/COSE-C/badge.svg?branch=master&service=github)](https://coveralls.io/github/cose-wg/COSE-C?branch=master) [![Coverity Status](https://scan.coverity.com/projects/7542/badge.svg)](https://scan.coverity.com/projects/jimsch-cose-c)
 
 This project is a C implementation of the IETF CBOR Encoded Message Syntax (COSE).
-There are currently two versions of the COSE document that can be read.
-The most current work in progress draft can be found on github in the [cose-wg/cose-spec](https://cose-wg.github.io/cose-spec/) project.
-The IETF also keeps a copy of the spec in the [COSE WG](https://tools.ietf.org/html/draft-ietf-cose-msg).
+COSE has reached RFC status and is now available at [RFC 8152](https://tools.ietf.org/html/rfc8152).
+
+In addition to the core document the following have also become RFCs:
+
+* [RFC 8230](https://tools.ietf.org/html/rfc8230) How to use RSA algorithms with COSE.
+
 
 The project is using the [CN-CBOR](https://github.com/cabo/cn-cbor) project to provide an implementation of the Concise Binary Object Representation or [CBOR](https://datatracker.ietf.org/doc/rfc7049/).
 
-The project is using OpenSSL for the cryptographic primitives.
+The project is setup to use two different cryptographic
+
+*  Open SSL - This is a reasonable complete implementation
+
+*  MbedTLS - Not all cryptographic primitives have been linked between COSE and the library yet.
+
 
 ## Contributing
 
@@ -18,7 +26,7 @@ Go ahead, file issues, make pull requests.
 
 The project is setup to build using *CMake.*  The way that the CMake files are setup, it requires that version 3.0 or higher is used.
 
-The project requires the use of cn-cbor(https://github.com/cabo/cn-cbor) in order to build.  The CMake configuration files will automatically pull down the correct version when run.
+The project requires the use of cn-cbor(https://github.com/jimsch/cn-cbor) in order to build.  While this is based on the original version at (https://github.com/cabo/cn-cbor) there have been several updates to this version which have not been reflected in the base library. The CMake configuration files will automatically pull down the correct version when run.
 
 ## Memory Model
 
