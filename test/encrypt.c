@@ -402,7 +402,11 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 	}
 
 	cn_cbor * alg = COSE_Encrypt_map_get_int(hEnc, COSE_Header_Algorithm, COSE_BOTH, NULL);
-	if (!IsAlgorithmSupported(alg)) fAlgSupport = false;
+	if (!IsAlgorithmSupported(alg)) {
+		fAlgSupport = false;
+		fFail = false;
+		goto exitHere;
+	}
 
 	pFail = cn_cbor_mapget_string(pRecipients, "fail");
 	if (COSE_Encrypt_decrypt(hEnc, k->v.bytes, k->length, NULL)) {
@@ -424,9 +428,14 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 
 exitHere:
 
-	if (fFailBody) {
-		if (!fFail) fFail = true;
-		else fFail = false;
+	if (fAlgSupport) {
+		if (fFailBody) {
+			if (!fFail) fFail = true;
+			else fFail = false;
+		}
+	}
+	else {
+		fFail = false;
 	}
 
 	if (fFail) CFails += 1;
