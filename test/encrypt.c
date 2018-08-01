@@ -429,7 +429,7 @@ exitHere:
 		else fFail = false;
 	}
 
-	if (fFail && fAlgSupport) CFails += 1;
+	if (fFail) CFails += 1;
 	return fAlgSupport ? 1 : 0;
 
 returnError:
