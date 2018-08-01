@@ -136,7 +136,7 @@ bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 		return false;
 	}
 
-	f = _COSE_Enveloped_decrypt(pcose, NULL, pbKey, cbKey, "Encrypt1", perr);
+	f = _COSE_Enveloped_decrypt(pcose, NULL, pbKey, cbKey, "Encrypt0", perr);
 	return f;
 }
 
@@ -145,7 +145,7 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 	CHECK_CONDITION(IsValidEncryptHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pbKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_Enveloped_encrypt((COSE_Encrypt *)h, pbKey, cbKey, "Encrypt1", perr);
+	return _COSE_Enveloped_encrypt((COSE_Encrypt *)h, pbKey, cbKey, "Encrypt0", perr);
 
 errorReturn:
 	return false;
