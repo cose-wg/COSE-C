@@ -155,6 +155,6 @@
 #ifndef INCLUDE_SIGN
 #define INCLUDE_SIGN 1
 #endif
-#ifndef INCLUDE_SIGN0
-#define INCLUDE_SIGN0 1
+#ifndef INCLUDE_SIGN1
+#define INCLUDE_SIGN1 1
 #endif

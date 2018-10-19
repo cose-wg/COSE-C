@@ -414,9 +414,9 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 #endif
 
-#if INCLUDE_SIGN0
-		case Attributes_Sign0_protected:
-			f = COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, which, NULL);
+#if INCLUDE_SIGN1
+		case Attributes_Sign1_protected:
+			f = COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
@@ -470,9 +470,9 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 			break;
 #endif
 
-#if INCLUDE_SIGN0
-		case Attributes_Sign0_protected:
-			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+#if INCLUDE_SIGN1
+		case Attributes_Sign1_protected:
+			if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 #endif
 		}
@@ -524,9 +524,9 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 			break;
 #endif
 
-#if INCLUDE_SIGN0
-		case Attributes_Sign0_protected:
-			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+#if INCLUDE_SIGN1
+		case Attributes_Sign1_protected:
+			if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 #endif
 		}
@@ -657,8 +657,8 @@ void RunCorners()
 #if INCLUDE_SIGN
 	Sign_Corners();
 #endif
-#if INCLUDE_SIGN0
-	Sign0_Corners();
+#if INCLUDE_SIGN1
+	Sign1_Corners();
 #endif
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 	Recipient_Corners();
@@ -793,19 +793,19 @@ void RunMemoryTest(const char * szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-#if INCLUDE_SIGN0
+		else if (cn_cbor_mapget_string(pInput, "sign1") != NULL) {
+#if INCLUDE_SIGN1
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
 				CFails = 0;
-				ValidateSign0(pControl);
+				ValidateSign1(pControl);
 				if (CFails == 0) fValidateDone = true;
 			}
 
 			if (!fBuildDone) {
 				context = CreateContext(iFail);
 				CFails = 0;
-				BuildSign0Message(pControl);
+				BuildSign1Message(pControl);
 				if (CFails == 0) fBuildDone = true;
 			}
 #else
@@ -873,10 +873,10 @@ void RunFileTest(const char * szFileName)
 		}
 #endif
 	}
-	else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-#if INCLUDE_SIGN0
-		if (ValidateSign0(pControl)) {
-			BuildSign0Message(pControl);
+	else if (cn_cbor_mapget_string(pInput, "sign1") != NULL) {
+#if INCLUDE_SIGN1
+		if (ValidateSign1(pControl)) {
+			BuildSign1Message(pControl);
 		}
 #endif
 	}

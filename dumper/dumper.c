@@ -177,7 +177,7 @@ FOO SignBody[5] = {
 	{ "signatures", CN_CBOR_ARRAY, 0, &Signers, 1, 0 }
 };
 
-FOO Sign0Body[4] = {
+FOO Sign1Body[4] = {
 	{ "protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0 },
 	{ "unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0 },
 	{ "payload", CN_CBOR_BYTES, 0, NULL, 0, 0 },
@@ -190,8 +190,8 @@ FOO EnvelopedMessage = {
 FOO SignedMessage = {
 	NULL, CN_CBOR_ARRAY, 0, SignBody, _countof(SignBody), 0
 };
-FOO Sign0Message = {
-	NULL, CN_CBOR_ARRAY, 0, Sign0Body, _countof(Sign0Body), 0
+FOO Sign1Message = {
+	NULL, CN_CBOR_ARRAY, 0, Sign1Body, _countof(Sign1Body), 0
 };
 
 FOO MacMessage = {
@@ -214,8 +214,8 @@ FOO SignedMessageWithTag = {
 	NULL, CN_CBOR_TAG, 999, &SignedMessage, 1, 0
 };
 
-FOO Sign0MessageWithTag = {
-	NULL, CN_CBOR_TAG, 997, &Sign0Message, 1, 0
+FOO Sign1MessageWithTag = {
+	NULL, CN_CBOR_TAG, 997, &Sign1Message, 1, 0
 };
 
 FOO MacMessageWithTag = {
@@ -605,7 +605,7 @@ int main(int argc, char ** argv)
 			case 16: root = &EncryptedMessageWithTag; break;
 			case 97: root = &MacMessageWithTag; break;
 			case 17: root = &Mac0MessageWithTag; break;
-			case 18: root = &Sign0MessageWithTag; break;
+			case 18: root = &Sign1MessageWithTag; break;
 			}
 		}
 	}

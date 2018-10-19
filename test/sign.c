@@ -7,7 +7,7 @@
 #include <string.h>
 #include <cose.h>
 #include <cn-cbor/cn-cbor.h>
-#if (INCLUDE_SIGN && !(INCLUDE_SIGN0 || INCLUDE_ENCRYPT || INCLUDE_MAC)) || (INCLUDE_SIGN0 && !INCLUDE_SIGN)
+#if (INCLUDE_SIGN && !(INCLUDE_SIGN1 || INCLUDE_ENCRYPT || INCLUDE_MAC)) || (INCLUDE_SIGN1 && !INCLUDE_SIGN)
 #include <cose_int.h>
 #endif
 
@@ -252,13 +252,13 @@ int SignMessage()
 }
 #endif
 
-#if INCLUDE_SIGN0
-int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
+#if INCLUDE_SIGN1
+int _ValidateSign1(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
 	const cn_cbor * pSign;
-	HCOSE_SIGN0	hSig;
+	HCOSE_SIGN1	hSig;
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
@@ -270,15 +270,15 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	}
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto returnError;
-	pSign = cn_cbor_mapget_string(pInput, "sign0");
+	pSign = cn_cbor_mapget_string(pInput, "sign1");
 	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) goto returnError;
 
-	hSig = (HCOSE_SIGN0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSig = (HCOSE_SIGN1)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign1_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSig == NULL) {
 		if (fFailBody) return 0; else goto returnError;
 	}
 
-	if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign0_protected)) goto returnError;
+	if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign1_protected)) goto returnError;
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
 	if (pkey == NULL) {
@@ -286,11 +286,11 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 		goto exitHere;
 	}
 
-	cn_cbor * alg = COSE_Sign0_map_get_int(hSig, COSE_Header_Algorithm, COSE_BOTH, NULL);
+	cn_cbor * alg = COSE_Sign1_map_get_int(hSig, COSE_Header_Algorithm, COSE_BOTH, NULL);
 	if (!IsAlgorithmSupported(alg)) fNoAlgSupport = true;
 
 	pFail = cn_cbor_mapget_string(pInput, "fail");
-	if (COSE_Sign0_validate(hSig, pkey, NULL)) {
+	if (COSE_Sign1_validate(hSig, pkey, NULL)) {
 		if (fNoAlgSupport) {
 			fFail = true;
 		}
@@ -304,7 +304,7 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 		else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 	}
 
-	COSE_Sign0_Free(hSig);
+	COSE_Sign1_Free(hSig);
 
 	if (fFailBody) {
 		if (!fFail) fFail = true;
@@ -321,15 +321,15 @@ returnError:
 	return 0;
 }
 
-int ValidateSign0(const cn_cbor * pControl)
+int ValidateSign1(const cn_cbor * pControl)
 {
 	int cbEncoded;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
-	return _ValidateSign0(pControl, pbEncoded, cbEncoded);
+	return _ValidateSign1(pControl, pbEncoded, cbEncoded);
 }
 
-int BuildSign0Message(const cn_cbor * pControl)
+int BuildSign1Message(const cn_cbor * pControl)
 {
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
@@ -338,31 +338,31 @@ int BuildSign0Message(const cn_cbor * pControl)
 	const cn_cbor * pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) return 0;
 
-	HCOSE_SIGN0 hSignObj = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_SIGN1 hSignObj = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) goto returnError;
-	const cn_cbor * pSign = cn_cbor_mapget_string(pInputs, "sign0");
+	const cn_cbor * pSign = cn_cbor_mapget_string(pInputs, "sign1");
 	if (pSign == NULL) goto returnError;
 
 	const cn_cbor * pContent = cn_cbor_mapget_string(pInputs, "plaintext");
-	if (!COSE_Sign0_SetContent(hSignObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
+	if (!COSE_Sign1_SetContent(hSignObj, pContent->v.bytes, pContent->length, NULL)) goto returnError;
 
-	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Sign0_protected)) goto returnError;
+	if (!SetSendingAttributes((HCOSE)hSignObj, pSign, Attributes_Sign1_protected)) goto returnError;
 
 	cn_cbor * pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
 	if (pkey == NULL) goto returnError;
 
 
-	if (!COSE_Sign0_Sign(hSignObj, pkey, NULL)) goto returnError;
+	if (!COSE_Sign1_Sign(hSignObj, pkey, NULL)) goto returnError;
 
 	size_t cb = COSE_Encode((HCOSE)hSignObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hSignObj, rgb, 0, cb);
 
-	COSE_Sign0_Free(hSignObj);
+	COSE_Sign1_Free(hSignObj);
 
-	int f = _ValidateSign0(pControl, rgb, cb);
+	int f = _ValidateSign1(pControl, rgb, cb);
 
 	free(rgb);
 	return f;
@@ -387,8 +387,8 @@ void Sign_Corners()
 	cose_errback cose_error;
 
 	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA  NULL);
-#if INCLUDE_SIGN0
-	hSignBad = (HCOSE_SIGN)COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+#if INCLUDE_SIGN1
+	hSignBad = (HCOSE_SIGN)COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hSignBad = (HCOSE_SIGN)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
@@ -498,22 +498,22 @@ void Sign_Corners()
 }
 #endif
 
-#if INCLUDE_SIGN0
-void Sign0_Corners()
+#if INCLUDE_SIGN1
+void Sign1_Corners()
 {
-	HCOSE_SIGN0 hSign = NULL;
-	HCOSE_SIGN0 hSignNULL = NULL;
-	HCOSE_SIGN0 hSignBad;
+	HCOSE_SIGN1 hSign = NULL;
+	HCOSE_SIGN1 hSignNULL = NULL;
+	HCOSE_SIGN1 hSignBad;
 
 	byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cose_errback cose_error;
 
-	hSign = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 #if INCLUDE_SIGN
-	hSignBad = (HCOSE_SIGN0)COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSignBad = (HCOSE_SIGN1)COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
-	hSignBad = (HCOSE_SIGN0)COSE_CALLOC(1, sizeof(COSE), context);
+	hSignBad = (HCOSE_SIGN1)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
 
 	//  Look for invalid parameter
@@ -521,53 +521,53 @@ void Sign0_Corners()
 	//		bad handle checks
 	//		null pointers
 
-	CHECK_FAILURE(COSE_Sign0_SetContent(hSignNULL, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_SetContent(hSignBad, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_SetContent(hSign, NULL, 10, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_FAILURE(COSE_Sign1_SetContent(hSignNULL, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_SetContent(hSignBad, rgb, 10, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_SetContent(hSign, NULL, 10, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign0_map_get_int(hSignNULL, 1, COSE_BOTH, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_map_get_int(hSignBad, 1, COSE_BOTH, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_map_get_int(hSign, 1, COSE_BOTH, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_FAILURE(COSE_Sign1_map_get_int(hSignNULL, 1, COSE_BOTH, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_map_get_int(hSignBad, 1, COSE_BOTH, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_map_get_int(hSign, 1, COSE_BOTH, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign0_map_put_int(hSignNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_map_put_int(hSignBad, 1, cn, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_map_put_int(hSign, 1, NULL, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
-	CHECK_FAILURE(COSE_Sign0_map_put_int(hSign, 1, cn, COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_FAILURE(COSE_Sign1_map_put_int(hSignNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_map_put_int(hSignBad, 1, cn, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_map_put_int(hSign, 1, NULL, COSE_PROTECT_ONLY, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_FAILURE(COSE_Sign1_map_put_int(hSign, 1, cn, COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign0_Sign(hSignNULL, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_Sign(hSignBad, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_Sign(hSign, NULL, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_FAILURE(COSE_Sign1_Sign(hSignNULL, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_Sign(hSignBad, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_Sign(hSign, NULL, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign0_validate(hSignNULL, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_validate(hSignBad, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_validate(hSign, NULL, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_FAILURE(COSE_Sign1_validate(hSignNULL, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_validate(hSignBad, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_validate(hSign, NULL, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign0_SetExternal(hSignNULL, rgb, sizeof(rgb), &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_SetExternal(hSignBad, rgb, sizeof(rgb), &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_SetExternal(hSignNULL, rgb, sizeof(rgb), &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign1_SetExternal(hSignBad, rgb, sizeof(rgb), &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
 
-	COSE_Sign0_Free(hSign);
+	COSE_Sign1_Free(hSign);
 
 	//
 	//  Unsupported algorithm
 
-	hSign = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) CFails++;
 
 	cn = cn_cbor_int_create(15, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (!COSE_Sign0_SetContent(hSign, (byte *) "Message", 7, NULL)) CFails++;
-	if (!COSE_Sign0_map_put_int(hSign, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
-	CHECK_FAILURE(COSE_Sign0_Sign(hSign, cn, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
-	COSE_Sign0_Free(hSign);
+	if (!COSE_Sign1_SetContent(hSign, (byte *) "Message", 7, NULL)) CFails++;
+	if (!COSE_Sign1_map_put_int(hSign, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	CHECK_FAILURE(COSE_Sign1_Sign(hSign, cn, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	COSE_Sign1_Free(hSign);
 
-	hSign = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) CFails++;
 
-	if (!COSE_Sign0_SetContent(hSign, (byte *) "Message", 7, NULL)) CFails++;
+	if (!COSE_Sign1_SetContent(hSign, (byte *) "Message", 7, NULL)) CFails++;
 
-	if (!COSE_Sign0_map_put_int(hSign, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
-	CHECK_FAILURE(COSE_Sign0_Sign(hSign, cn, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	if (!COSE_Sign1_map_put_int(hSign, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
+	CHECK_FAILURE(COSE_Sign1_Sign(hSign, cn, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 
-	COSE_Sign0_Free(hSign);
+	COSE_Sign1_Free(hSign);
 
 	return;
 }
