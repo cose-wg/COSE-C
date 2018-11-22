@@ -1,5 +1,15 @@
 #include <cn-cbor/cn-cbor.h>
 #include "configure.h"
+
+#ifndef __COSE_H__
+#define __COSE_H__
+#ifdef  __cplusplus
+extern "C" {
+#endif
+#ifdef EMACS_HELPER
+}
+#endif
+
 typedef unsigned char byte;
 
 typedef struct _cose * HCOSE;
@@ -232,6 +242,7 @@ HCOSE_RECIPIENT COSE_Recipient_GetRecipient(HCOSE_RECIPIENT cose, int iRecipient
  */
 
 HCOSE_ENCRYPT  COSE_Encrypt_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
+HCOSE_ENCRYPT COSE_Encrypt_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Encrypt_Free(HCOSE_ENCRYPT cose);
 
 cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT cose, int key, int flags, cose_errback * errp);
@@ -241,7 +252,7 @@ bool COSE_Encrypt_map_put_string(HCOSE_ENCRYPT cose, int key, cn_cbor * value, i
 
 
 bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
-byte * COSE_Encrypt_GetContent(HCOSE_ENCRYPT cose, size_t * pcbContent, cose_errback * errp);
+const byte * COSE_Encrypt_GetContent(HCOSE_ENCRYPT cose, size_t * pcbContent, cose_errback * errp);
 bool COSE_Encrypt_SetExternal(HCOSE_ENCRYPT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT cose, const byte * pbKey, size_t cbKey, cose_errback * perror);
@@ -338,3 +349,10 @@ extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA
 extern cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 extern cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 
+#ifdef EMACS_HELPER
+{
+#endif
+#ifdef  __cplusplus
+}
+#endif
+#endif // __COSE_H__

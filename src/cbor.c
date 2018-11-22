@@ -1,6 +1,8 @@
 #include "cn-cbor/cn-cbor.h"
 #include <stdlib.h>
+#ifndef __MBED__
 #include <memory.h>
+#endif
 
 #define INIT_CB(v) \
   if (errp) {errp->err = CN_CBOR_NO_ERROR;} \
