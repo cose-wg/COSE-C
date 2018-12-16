@@ -361,7 +361,8 @@ errorReturn:
 
 /********************************************/
 #if INCLUDE_ENCRYPT0
-int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
+
+int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded, cn_cbor * pcnEncoded)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
@@ -387,8 +388,14 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 
 	pRecipients = pRecipients->first_child;
 
-	hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEnc == NULL) { if (fFailBody) return 0; else  goto returnError; }
+	if (pcnEncoded == NULL) {
+		hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+		if (hEnc == NULL) { if (fFailBody) return 0; else  goto returnError; }
+	}
+	else {
+		hEnc = COSE_Encrypt_Init_From_Object(pcnEncoded, NULL);
+		if (hEnc == NULL) { if (fFailBody) return 0; else  goto returnError; }
+	}
 
 	if (!SetReceivingAttributes((HCOSE)hEnc, pEncrypt, Attributes_Encrypt_protected)) goto returnError;
 
@@ -454,8 +461,15 @@ int ValidateEncrypt(const cn_cbor * pControl)
 {
 	int cbEncoded;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
+	int fRet;
 
-	return _ValidateEncrypt(pControl, pbEncoded, cbEncoded);
+	fRet = _ValidateEncrypt(pControl, pbEncoded, cbEncoded, NULL);
+	if (!fRet) return fRet;
+
+	cn_cbor * cbor = cn_cbor_decode(pbEncoded, cbEncoded, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (cbor == NULL) return FALSE;
+
+	return _ValidateEncrypt(pControl, NULL, 0, cbor);
 }
 
 int BuildEncryptMessage(const cn_cbor * pControl)
@@ -501,7 +515,7 @@ int BuildEncryptMessage(const cn_cbor * pControl)
 
 	COSE_Encrypt_Free(hEncObj);
 
-	int f = _ValidateEncrypt(pControl, rgb, cb);
+	int f = _ValidateEncrypt(pControl, rgb, cb, NULL);
 	free(rgb);
 	return f;
 
