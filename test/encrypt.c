@@ -467,7 +467,7 @@ int ValidateEncrypt(const cn_cbor * pControl)
 	if (!fRet) return fRet;
 
 	cn_cbor * cbor = cn_cbor_decode(pbEncoded, cbEncoded, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (cbor == NULL) return FALSE;
+	if (cbor == NULL) return false;
 
 	return _ValidateEncrypt(pControl, NULL, 0, cbor);
 }
