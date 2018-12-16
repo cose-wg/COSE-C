@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#ifndef __MBED__
 #include <memory.h>
+#endif
 
 #include "cose.h"
 #include "cose_int.h"

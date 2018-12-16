@@ -3,7 +3,11 @@
 */
 
 #include <stdlib.h>
+#ifndef __MBED__
 #include <memory.h>
+#else
+#include <stddef.h>
+#endif
 #include <stdio.h>
 #include <assert.h>
 
@@ -300,6 +304,7 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 		CHECK_CONDITION(cbKeyIn == cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
 		pbKey = pbKeyIn;
 	}
+#ifdef INCLUDE_ENCRYPT
 	else {
 		//  Allocate the key if we have not already done so
 
@@ -332,6 +337,7 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 			CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		}
 	}
+#endif // INCLUDE_ENCRYPT
 
 	//  Build authenticated data
 
@@ -539,6 +545,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 		pbKey = pbKeyIn;
 		cbKey = cbKeyIn;
 	}
+#ifdef INCLUDE_ENCRYPT
 	else {
 		//  If we are doing direct encryption - then recipient generates the key
 
@@ -566,11 +573,13 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 		}
 		pbKey = pbKeyNew;
 	}
+#endif // INCLUDE_ENCRYPT
 
 	//  Build protected headers
 
 	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, perr);
 	if (cbProtected == NULL) goto errorReturn;
+
 
 #ifdef USE_COUNTER_SIGNATURES
 	//  Setup Counter Signatures
@@ -655,9 +664,11 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
+#ifdef INCLUDE_ENCRYPT        
 	for (pri = pcose->m_recipientFirst; pri != NULL; pri = pri->m_recipientNext) {
 		if (!_COSE_Recipient_encrypt(pri, pbKey, cbKey, perr)) goto errorReturn;
 	}
+#endif // INCLUDE_ENCRYPT
 
 	//  Figure out the clean up
 
@@ -853,6 +864,18 @@ bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, c
 
 	*ppbAAD = pbAuthData;
 	*pcbAAD = cbAuthData;
+
+#if 0
+        {
+            printf("Encrypt* AAD = ");
+            int iX;
+            for (iX=0; iX < cbAuthData; iX++) {
+                printf("%02x ", pbAuthData[iX]);
+            }
+            printf("\n");
+        }
+#endif
+        
 
 	return true;
 

@@ -3,7 +3,9 @@
 */
 
 #include <stdlib.h>
+#ifndef __MBED__
 #include <memory.h>
+#endif
 #include <stdio.h>
 #include <assert.h>
 
@@ -59,6 +61,36 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_e
 
 errorReturn:
 	return NULL;
+}
+#endif
+
+#if INCLUDE_ENCRYPT0
+HCOSE_ENCRYPT COSE_Encrypt_Init_From_Object(cn_cbor * cbor, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+    COSE_Encrypt * pobj;
+
+    cose_errback error = { 0 };
+    if (perr == NULL) perr = &error;
+
+    pobj = (COSE_Encrypt *) COSE_CALLOC(1, sizeof(COSE_Encrypt), context);
+    if (pobj == NULL) {
+        perr->err = COSE_ERR_OUT_OF_MEMORY;
+    errorReturn:
+        if (pobj != NULL) {
+            _COSE_Encrypt_Release(pobj);
+            COSE_FREE(pobj, context);
+        }
+        return NULL;
+    }
+
+    if (!_COSE_Init_From_Object(&pobj->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) {
+        goto errorReturn;
+    }
+
+    _COSE_InsertInList(&EncryptRoot, &pobj->m_message);
+
+    return(HCOSE_ENCRYPT) pobj;
+    
 }
 #endif
 
@@ -150,6 +182,19 @@ bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 errorReturn:
 	return false;
 }
+
+const byte * COSE_Encrypt_GetContent(HCOSE_ENCRYPT h, size_t * pcbContent, cose_errback * perror)
+{
+    COSE_Encrypt * cose = (COSE_Encrypt *) h;
+    if (!IsValidEncryptHandle(h) || (pcbContent == NULL)) {
+        if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
+        return false;
+    }
+
+    *pcbContent = cose->cbContent;
+    return cose->pbContent;
+}
+
 
 bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT h, const byte * rgb, size_t cb, cose_errback * perror)
 {
