@@ -393,7 +393,7 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 		if (hEnc == NULL) { if (fFailBody) return 0; else  goto returnError; }
 	}
 	else {
-		hEnc = COSE_Encrypt_Init_From_Object(pcnEncoded, NULL);
+		hEnc = COSE_Encrypt_Init_From_Object(pcnEncoded, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hEnc == NULL) { if (fFailBody) return 0; else  goto returnError; }
 	}
 
