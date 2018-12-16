@@ -1,0 +1,4 @@
+dumper/*
+test/*
+cmake/*
+Coverity_Model.c
