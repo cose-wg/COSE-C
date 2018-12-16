@@ -246,7 +246,7 @@ bool COSE_Encrypt_map_put_string(HCOSE_ENCRYPT cose, int key, cn_cbor * value, i
 
 
 bool COSE_Encrypt_SetContent(HCOSE_ENCRYPT cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
-byte * COSE_Encrypt_GetContent(HCOSE_ENCRYPT cose, size_t * pcbContent, cose_errback * errp);
+const byte * COSE_Encrypt_GetContent(HCOSE_ENCRYPT cose, size_t * pcbContent, cose_errback * errp);
 bool COSE_Encrypt_SetExternal(HCOSE_ENCRYPT hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT cose, const byte * pbKey, size_t cbKey, cose_errback * perror);
