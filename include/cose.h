@@ -1,10 +1,9 @@
 #include <cn-cbor/cn-cbor.h>
-#include "configure.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 typedef unsigned char byte;
 
 typedef struct _cose * HCOSE;
