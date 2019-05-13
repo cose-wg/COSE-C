@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cose.h>
+#include <configure.h>
 #include <cn-cbor/cn-cbor.h>
 #if INCLUDE_MAC && !INCLUDE_ENCRYPT0
 #include <cose_int.h>
@@ -422,7 +423,7 @@ void MAC_Corners()
     //  Missing case - addref then release on item
 
     //  Incorrect algorithm
-    
+
     hMAC = (HCOSE_MAC) COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
     //  Invalid Handle checks
