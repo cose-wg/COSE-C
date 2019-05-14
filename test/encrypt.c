@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cose.h>
+#include <configure.h>
 #include <cn-cbor/cn-cbor.h>
 #if (INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC) && (!INCLUDE_MAC || !INCLUDE_SIGN)
 #include <cose_int.h>
@@ -331,7 +332,7 @@ int EncryptMessage()
 	int typ;
 	hEncObj = (HCOSE_ENVELOPED) COSE_Decode(rgb, (int) cb, &typ, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hEncObj == NULL) goto errorReturn;
-	
+
 	int iRecipient = 0;
 	do {
 		hRecip = COSE_Enveloped_GetRecipient(hEncObj, iRecipient, NULL);
