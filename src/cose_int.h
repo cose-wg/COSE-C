@@ -1,3 +1,5 @@
+#ifndef __COSE_INT_H__
+#define __COSE_INT_H__
 #include <assert.h>
 
 // These definitions are here because they aren't required for the public
@@ -280,3 +282,4 @@ enum {
 
 
 #define COSE_CounterSign_object 1000
+#endif // __COSE_INT_H__

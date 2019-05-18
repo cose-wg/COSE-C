@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cose.h>
+#include <configure.h>
 #include <cn-cbor/cn-cbor.h>
 #include <assert.h>
 
@@ -62,7 +63,7 @@ NameMap RgAlgorithmNames[47] = {
 	{"ECDH-ES", COSE_Algorithm_ECDH_ES_HKDF_256},
 {"ECDH-ES-512",COSE_Algorithm_ECDH_ES_HKDF_512},
 { "ECDH-SS", COSE_Algorithm_ECDH_SS_HKDF_256 },
-{ "ECDH-SS-256", COSE_Algorithm_ECDH_SS_HKDF_256}, 
+{ "ECDH-SS-256", COSE_Algorithm_ECDH_SS_HKDF_256},
 { "ECDH-SS-512",COSE_Algorithm_ECDH_SS_HKDF_512 },
 { "ECDH-ES+A128KW", COSE_Algorithm_ECDH_ES_A128KW },
 { "ECDH-ES+A192KW", COSE_Algorithm_ECDH_ES_A192KW },
