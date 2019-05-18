@@ -20,6 +20,10 @@
 
 #include "test.h"
 
+#ifdef USE_MBED_TLS
+#include "mbedtls/entropy.h"
+#endif
+
 int CFails = 0;
 
 
@@ -1006,6 +1010,11 @@ int main(int argc, char ** argv)
 		}
 	}
 
+#ifdef USE_MBED_TLS
+        mbedtls_entropy_context entropy;
+        mbedtls_entropy_init(&entropy);
+#endif
+
 	//
 	//  If we are given a file name, then process the file name
 	//
@@ -1049,5 +1058,5 @@ int main(int argc, char ** argv)
 	if (CFails > 0) fprintf(stderr, "Failed %d tests\n", CFails);
 	else fprintf(stderr, "SUCCESS\n");
 
-	exit(CFails);
+ 	exit(CFails);
 }

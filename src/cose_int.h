@@ -238,6 +238,7 @@ extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONT
 //#define DO_ASSERT assert(false);
 #define DO_ASSERT
 #define CHECK_CONDITION(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}}
+#define CHECK_CONDITION0(condition, error) { if ((condition)) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}}
 #define FAIL_CONDITION(error) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}
 #define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = _MapFromCBOR(error);} goto errorReturn;}}
 

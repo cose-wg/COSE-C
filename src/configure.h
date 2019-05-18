@@ -18,7 +18,6 @@
 //  Define which AES GCM algorithms are being used
 //
 
-#if !defined(USE_MBED_TLS)
 #define USE_AES_GCM_128
 #define USE_AES_GCM_192
 #define USE_AES_GCM_256
@@ -26,7 +25,6 @@
 #if defined(USE_AES_GCM_128) || defined(USE_AES_GCM_192) || defined(USE_AES_GCM_256)
 #define USE_AES_GCM
 #endif
-#endif // !defined(USE_MBED_TLS)
 
 //
 //  Define which AES CCM algorithms are being used
@@ -72,7 +70,6 @@
 //  Define which ECDH algorithms are to be used
 //
 
-#if !defined(USE_MBED_TLS)
 #define USE_ECDH_ES_HKDF_256
 #define USE_ECDH_ES_HKDF_512
 #define USE_ECDH_SS_HKDF_256
@@ -81,7 +78,6 @@
 #define USE_ECDH 1
 #define USE_HKDF_SHA2 1
 #endif
-#endif // !defined(USE_MBED_TLS)
 
 #if !defined(USE_MBED_TLS)
 #define USE_ECDH_ES_A128KW
