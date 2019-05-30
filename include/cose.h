@@ -314,6 +314,15 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, si
  *  Sign routines
  */
 
+#if USE_MBED_TLS
+	typedef struct mbedtls_ecp_keypair eckey_t;
+#else
+	typedef struct eckey_t {
+		struct ec_key_st *key;
+		int group;
+	} eckey_t;
+#endif // USE_MBED_TLS
+
 HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
 
@@ -321,7 +330,9 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbC
 bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
+bool COSE_Sign0_Sign_eckey(HCOSE_SIGN0 h, const eckey_t * pbKey, cose_errback * perr);
 bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback * perr);
+bool COSE_Sign0_validate_eckey(HCOSE_SIGN0 hSign, const eckey_t * pbKey, cose_errback * perr);
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
 bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
