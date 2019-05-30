@@ -320,6 +320,8 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 	cn_cbor * pValueNew;
 	bool f = false;
 
+	(void)(f);
+
 	if (pAttributes == NULL) return true;
 	if (pAttributes->type != CN_CBOR_MAP) return false;
 
@@ -572,7 +574,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 
 		if (pKey->type == CN_CBOR_TEXT) {
 			for (i = 0; i < 7; i++) {
-				if ((pKey->length == strlen(RgStringKeys[i].szKey)) &&
+				if (((size_t)pKey->length == strlen(RgStringKeys[i].szKey)) &&
 					(strncmp(pKey->v.str, RgStringKeys[i].szKey, strlen(RgStringKeys[i].szKey)) == 0) &&
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
 					switch (RgStringKeys[i].operation) {
@@ -640,8 +642,14 @@ bool Test_cn_cbor_array_replace()
 }
 
 
-void RunCorners()
+void RunCorners(const char *szFileName)
 {
+	const cn_cbor *pControl = ParseJson(szFileName);
+	if (pControl == NULL) {
+		CFails += 1;
+		return;
+	}
+
 	Test_cn_cbor_array_replace();
 #if INCLUDE_MAC
 	MAC_Corners();
@@ -659,7 +667,7 @@ void RunCorners()
 	Sign_Corners();
 #endif
 #if INCLUDE_SIGN0
-	Sign0_Corners();
+	Sign0_Corners(pControl);
 #endif
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 	Recipient_Corners();
@@ -818,6 +826,7 @@ void RunMemoryTest(const char * szFileName)
 	CFails = 0;
 	context = NULL;
 #else
+	(void)(szFileName);
 	return;
 #endif
 }
@@ -1027,7 +1036,7 @@ int main(int argc, char ** argv)
 		else RunFileTest(szWhere);
 	}
 	else if (fCorners) {
-		RunCorners();
+		RunCorners(szWhere);
 	}
 	else {
 #ifdef USE_CBOR_CONTEXT

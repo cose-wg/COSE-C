@@ -12,6 +12,12 @@
 #include "configure.h"
 #include "crypto.h"
 
+#ifdef USE_MBED_TLS
+#include "mbedtls/ecp.h"
+#else
+
+#endif
+
 #if INCLUDE_SIGN
 
 extern bool IsValidSignHandle(HCOSE_SIGN h);
@@ -115,6 +121,7 @@ bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcbo
 	cn_cbor * pArray = NULL;
 	cn_cbor_errback cbor_error;
 	size_t cbToSign;
+	ssize_t written;
 	byte * pbToSign = NULL;
 	bool f = false;
 	cn_cbor * cn = NULL;
@@ -153,7 +160,8 @@ bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcbo
 	CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
 	pbToSign = (byte *)COSE_CALLOC(cbToSign, 1, context);
 	CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray) == cbToSign, COSE_ERR_CBOR);
+	written = cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray);
+	CHECK_CONDITION(written >= 0 && (size_t)written == cbToSign, COSE_ERR_CBOR);
 
 	*ppbToSign = pbToSign;
 	*pcbToSign = cbToSign;
@@ -182,6 +190,10 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	bool f;
 	int alg;
 	bool fRet = false;
+	eckey_t eckey;
+
+	UNUSED(f);
+	CHECK_CONDITION(eckey_from_cbor(&eckey, pSigner->m_pkey, perr), COSE_ERR_INVALID_PARAMETER);
 
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(pArray != NULL, COSE_ERR_OUT_OF_MEMORY);
@@ -206,19 +218,19 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
-		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 256, pbToSign, cbToSign, perr)) goto errorReturn;
+		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, &eckey, 256, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_384
 	case COSE_Algorithm_ECDSA_SHA_384:
-		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 384, pbToSign, cbToSign, perr)) goto errorReturn;
+		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, &eckey, 384, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
-		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 512, pbToSign, cbToSign, perr)) goto errorReturn;
+		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, &eckey, 512, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
@@ -231,6 +243,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 errorReturn:
 	if (pArray != NULL) COSE_FREE(pArray, context);
 	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
+	eckey_release(&eckey);
 	return fRet;
 }
 
@@ -286,6 +299,11 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 #endif
 	size_t cbToBeSigned;
 	bool fRet = false;
+	eckey_t eckey;
+
+	UNUSED(pSign);
+
+	CHECK_CONDITION(eckey_from_cbor(&eckey, pSigner->m_pkey, perr), COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pSign->m_message.m_allocContext;
@@ -318,19 +336,19 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
-		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 256, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, &eckey, 256, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_384
 	case COSE_Algorithm_ECDSA_SHA_384:
-		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 384, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, &eckey, 384, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
-		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 512, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, &eckey, 512, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
 		break;
 #endif
 
@@ -343,7 +361,7 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 
 errorReturn:
 	if (pbToBeSigned != NULL) COSE_FREE(pbToBeSigned, context);
-
+	eckey_release(&eckey);
 	return fRet;
 }
 

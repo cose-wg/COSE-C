@@ -9,7 +9,8 @@ else ()
 endif()
 
 set ( cose_sources 
-	Cose.c
+  Cose.c
+  key.c
 	MacMessage.c
         MacMessage0.c
 	Sign.c

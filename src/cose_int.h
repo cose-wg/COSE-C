@@ -280,6 +280,9 @@ enum {
 	COSE_Int_Alg_AES_CBC_MAC_256_64 = -22
 };
 
+// KEY
+void eckey_release(eckey_t * eckey);
+bool eckey_from_cbor(eckey_t * eckey, const cn_cbor * pKey, cose_errback * perr);
 
 #define COSE_CounterSign_object 1000
 #endif // __COSE_INT_H__
