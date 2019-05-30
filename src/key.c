@@ -124,4 +124,4 @@ bool eckey_from_cbor(eckey_t * eckey, const cn_cbor * pKey, cose_errback * perr)
 	return eckey->key != NULL;
 }
 
-#endif
+#endif // USE_MBED_TLS
