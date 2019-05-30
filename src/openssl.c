@@ -643,7 +643,7 @@ errorReturn:
 }
 
 
-bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDigest, byte * rgbDigest, size_t * pcbDigest, CBOR_CONTEXT_COMMA cose_errback * perr)
+bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDigest, byte * rgbDigest, size_t * pcbDigest, cose_errback * perr)
 {
 	byte rgbSalt[EVP_MAX_MD_SIZE] = { 0 };
 	int cbSalt;
@@ -995,9 +995,11 @@ bool ECDSA_Sign(const cn_cbor * pKey)
 }
 */
 
-bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
+bool ECDSA_Sign(COSE * pSigner, int index, const eckey_t * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
-	EC_KEY * eckey = NULL;
+	EC_KEY * eckey = pKey->key;
+	int cbR = pKey->group;
+
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	unsigned int cbDigest = sizeof(rgbDigest);
 	byte  * pbSig = NULL;
@@ -1008,16 +1010,13 @@ bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest,
 	cn_cbor * p = NULL;
 	ECDSA_SIG * psig = NULL;
 	cn_cbor_errback cbor_error;
-	int cbR;
 	byte rgbSig[66];
 	int cb;
-	
-	eckey = ECKey_From(pKey, &cbR, perr);
+
 	if (eckey == NULL) {
 	errorReturn:
 		if (pbSig != NULL) COSE_FREE(pbSig, context);
 		if (p != NULL) CN_CBOR_FREE(p, context);
-		if (eckey != NULL) EC_KEY_free(eckey);
 		return false;
 	}
 
@@ -1052,17 +1051,16 @@ bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest,
 	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
 
 	CHECK_CONDITION(_COSE_array_replace(pSigner, p, index, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
-	
-	pbSig = NULL;
 
-	if (eckey != NULL) EC_KEY_free(eckey);
+	pbSig = NULL;
 
 	return true;
 }
 
-bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
+bool ECDSA_Verify(COSE * pSigner, int index, const eckey_t * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
-	EC_KEY * eckey = NULL;
+	EC_KEY * eckey = pKey->key;
+	int cbR = pKey->group;
 	byte rgbDigest[EVP_MAX_MD_SIZE];
 	unsigned int cbDigest = sizeof(rgbDigest);
 	const EVP_MD * digest;
@@ -1071,17 +1069,14 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 #endif
 	cn_cbor * p = NULL;
 	ECDSA_SIG *sig = NULL;
-	int cbR;
 	cn_cbor * pSig;
 	size_t cbSignature;
 
 	BIGNUM *r, *s;
 
-	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
 		if (p != NULL) CN_CBOR_FREE(p, context);
-		if (eckey != NULL) EC_KEY_free(eckey);
 		if (sig != NULL) ECDSA_SIG_free(sig);
 		return false;
 	}
@@ -1099,7 +1094,7 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	CHECK_CONDITION(pSig != NULL, COSE_ERR_INVALID_PARAMETER);
 	cbSignature = pSig->length;
 
-	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cbSignature / 2 == (size_t)cbR, COSE_ERR_INVALID_PARAMETER);
 	r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL);
 	CHECK_CONDITION(NULL != r, COSE_ERR_OUT_OF_MEMORY);
 	s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL);
@@ -1112,7 +1107,6 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 
 	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, sig, eckey) == 1, COSE_ERR_CRYPTO_FAIL);
 
-	if (eckey != NULL) EC_KEY_free(eckey);
 	if (sig != NULL) ECDSA_SIG_free(sig);
 
 	return true;

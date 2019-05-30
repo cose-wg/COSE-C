@@ -100,7 +100,7 @@ HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor * cbor, COSE_Mac0Message * pIn, C
 bool COSE_Mac0_Free(HCOSE_MAC0 h)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context context;
+	cn_cbor_context *context;
 #endif
 	COSE_Mac0Message * p = (COSE_Mac0Message *)h;
 
@@ -114,12 +114,12 @@ bool COSE_Mac0_Free(HCOSE_MAC0 h)
 	_COSE_RemoveFromList(&Mac0Root, &p->m_message);
 
 #ifdef USE_CBOR_CONTEXT
-	context = p->m_message.m_allocContext;
+	context = &p->m_message.m_allocContext;
 #endif
 
 	_COSE_Mac0_Release(p);
 
-	COSE_FREE(p, &context);
+	COSE_FREE(p, context);
 
 	return true;
 }

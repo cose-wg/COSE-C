@@ -205,7 +205,7 @@ static bool HKDF_X(COSE * pCose, bool fHMAC, bool fECDH, bool fStatic, bool fSen
 
 	if (fHMAC) {
 #ifdef USE_HKDF_SHA2
-		if (!HKDF_Extract(pCose, pbSecret, cbSecret, cbitHash, rgbDigest, &cbDigest, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
+		if (!HKDF_Extract(pCose, pbSecret, cbSecret, cbitHash, rgbDigest, &cbDigest, perr)) goto errorReturn;
 
 		if (!HKDF_Expand(pCose, cbitHash, rgbDigest, cbDigest, pbContext, cbContext, pbKey, cbitKey / 8, perr)) goto errorReturn;
 #else
@@ -251,6 +251,10 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * p
 	int cbitKeyX = 0;
 	byte rgbKey[256 / 8];
 
+	UNUSED(rgbKey);
+	UNUSED(cbKey2);
+	UNUSED(pRecipUse);
+	UNUSED(algIn);
 	UNUSED(pcose);
 
 #ifdef USE_CBOR_CONTEXT
@@ -279,7 +283,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * p
 		CHECK_CONDITION(pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 		cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
 		CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-		CHECK_CONDITION((cn->length == (unsigned int)cbitKeyOut / 8), COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(((size_t)cn->length == cbitKeyOut / 8), COSE_ERR_INVALID_PARAMETER);
 		memcpy(pbKeyOut, cn->v.bytes, cn->length);
 
 		return true;
@@ -574,6 +578,9 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo * pRecipient, const byte * pbCon
 	byte * pbKey = NULL;
 	size_t cbKey = 0;
 
+	UNUSED(pbContent);
+	UNUSED(cbContent);
+
 #ifdef USE_CBOR_CONTEXT
 	context = &pRecipient->m_encrypt.m_message.m_allocContext;
 #endif // USE_CBOR_CONTEXT
@@ -867,6 +874,8 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, int algI
 	const cn_cbor * pK;
 	byte *pbSecret = NULL;
 
+	UNUSED(algIn);
+
 	CHECK_CONDITION(cn_Alg != NULL, COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION((cn_Alg->type == CN_CBOR_UINT) || (cn_Alg->type == CN_CBOR_INT), COSE_ERR_INVALID_PARAMETER);
 	alg = (int)cn_Alg->v.uint;
@@ -881,7 +890,7 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, int algI
 		CHECK_CONDITION(pRecipient->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 			pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
 			CHECK_CONDITION((pK != NULL) && (pK->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-			CHECK_CONDITION(pK->length == cbitKeySize / 8, COSE_ERR_INVALID_PARAMETER);
+			CHECK_CONDITION((size_t)pK->length == cbitKeySize / 8, COSE_ERR_INVALID_PARAMETER);
 			memcpy(pb, pK->v.bytes, cbitKeySize / 8);
 	break;
 
@@ -1226,6 +1235,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	cn_cbor * cnParam;
 	byte * pbContext = NULL;
 	size_t cbContext;
+	ssize_t written;
 
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
@@ -1350,7 +1360,8 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	CHECK_CONDITION(cbContext > 0, COSE_ERR_CBOR);
 	pbContext = (byte *)COSE_CALLOC(cbContext, 1, context);
 	CHECK_CONDITION(pbContext != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbContext, 0, cbContext, pArray) == cbContext, COSE_ERR_CBOR);
+	written = cn_cbor_encoder_write(pbContext, 0, cbContext, pArray);
+	CHECK_CONDITION(written >= 0 && (size_t)written == cbContext, COSE_ERR_CBOR);
 
 	*ppbContext = pbContext;
 	*pcbContext = cbContext;
