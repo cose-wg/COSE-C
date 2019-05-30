@@ -922,7 +922,7 @@ errorReturn:
 }
 
 
-bool ECDSA_Verify(COSE * pSigner, int index, const eckey_t *eckey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
+bool ECDSA_Verify(COSE * pSigner, int index, const eckey_t * eckey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
 	mbedtls_mpi r;
 	mbedtls_mpi s;

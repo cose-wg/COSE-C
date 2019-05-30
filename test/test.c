@@ -642,8 +642,14 @@ bool Test_cn_cbor_array_replace()
 }
 
 
-void RunCorners()
+void RunCorners(const char *szFileName)
 {
+	const cn_cbor *pControl = ParseJson(szFileName);
+	if (pControl == NULL) {
+		CFails += 1;
+		return;
+	}
+
 	Test_cn_cbor_array_replace();
 #if INCLUDE_MAC
 	MAC_Corners();
@@ -661,7 +667,7 @@ void RunCorners()
 	Sign_Corners();
 #endif
 #if INCLUDE_SIGN0
-	Sign0_Corners();
+	Sign0_Corners(pControl);
 #endif
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 	Recipient_Corners();
@@ -1030,7 +1036,7 @@ int main(int argc, char ** argv)
 		else RunFileTest(szWhere);
 	}
 	else if (fCorners) {
-		RunCorners();
+		RunCorners(szWhere);
 	}
 	else {
 #ifdef USE_CBOR_CONTEXT

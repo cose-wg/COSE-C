@@ -112,7 +112,7 @@ extern EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * p
 
 void eckey_release(eckey_t * eckey)
 {
-	if (eckey->key != NULL) {
+	if (eckey != NULL && eckey->key != NULL) {
 		EC_KEY_free(eckey->key);
 		eckey->key = NULL;
 	}

@@ -500,14 +500,20 @@ void Sign_Corners()
 #endif
 
 #if INCLUDE_SIGN0
-void Sign0_Corners()
+void Sign0_Corners(const cn_cbor * pControl)
 {
 	HCOSE_SIGN0 hSign = NULL;
 	HCOSE_SIGN0 hSignNULL = NULL;
 	HCOSE_SIGN0 hSignBad;
 
 	byte rgb[10];
-	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+	const cn_cbor * pInputs = cn_cbor_mapget_string(pControl, "input");
+	if (pInputs == NULL) goto returnError;
+	const cn_cbor * pSign = cn_cbor_mapget_string(pInputs, "sign0");
+	if (pSign == NULL) goto returnError;
+	cn_cbor * cn = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
+	if (cn == NULL) goto returnError;
+
 	cose_errback cose_error;
 
 	hSign = COSE_Sign0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
@@ -570,6 +576,10 @@ void Sign0_Corners()
 
 	COSE_Sign0_Free(hSign);
 
+	return;
+
+returnError:
+	++CFails;
 	return;
 }
 #endif

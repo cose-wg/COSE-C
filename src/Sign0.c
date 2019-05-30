@@ -186,12 +186,16 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
 {
 	bool ret = false;
 	eckey_t eckey;
+
+	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 	if (eckey_from_cbor(&eckey, pKey, perr))
 	{
 		ret = COSE_Sign0_Sign_eckey(h, &eckey, perr);
 	}
 
 	eckey_release(&eckey);
+
+errorReturn:
 	return ret;
 }
 
@@ -224,11 +228,15 @@ bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pKey, cose_errback *
 {
 	bool ret = false;
 	eckey_t eckey;
+
+	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 	if (eckey_from_cbor(&eckey, pKey, perr))
 	{
 		ret = COSE_Sign0_validate_eckey(hSign, &eckey, perr);
 	}
 	eckey_release(&eckey);
+
+errorReturn:
 	return ret;
 }
 

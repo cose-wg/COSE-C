@@ -62,7 +62,7 @@ add_test ( NAME sign WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --d
 add_test ( NAME sign1 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/sign1-tests )
 
 
-add_test (NAME corner-cases WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --corners )
+add_test (NAME corner-cases WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --corners Examples/ecdsa-examples/ecdsa-sig-01.json )
 
 add_test (NAME Memory-mac-hmac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/hmac-examples/HMac-01.json )
 add_test (NAME Memory-mac-cbc-mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/cbc-mac-examples/cbc-mac-01.json )
