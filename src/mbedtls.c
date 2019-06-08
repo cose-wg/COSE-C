@@ -1145,15 +1145,18 @@ static int ctr_drbg_self_test_entropy( void *data, unsigned char *buf, size_t le
 
 mbedtls_ctr_drbg_context ctx;
 int ctx_setup = 0;
+mbedtls_entropy_context entropy;
 
 void rand_bytes(byte* pb, size_t cb){
      
     // unsigned char buf[16];
 
     if (!ctx_setup) {
+        mbedtls_entropy_init(&entropy);
+        
         mbedtls_ctr_drbg_init( &ctx );
      
-        mbedtls_ctr_drbg_seed_entropy_len( &ctx, mbedtls_entropy_func, (void *) entropy_source_pr, nonce_pers_pr, 16, 32 );
+        mbedtls_ctr_drbg_seed_entropy_len( &ctx, mbedtls_entropy_func, (void *) &entropy, nonce_pers_pr, 16, 32 );
 
         ctx_setup = 1;
     }
