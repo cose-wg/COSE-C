@@ -1117,6 +1117,7 @@ void rand_bytes(byte * pb, size_t cb){
         printf("rand byute done\n");
 }*/
 //TODO HOW TO GENERATE GOOD RANDOM BYTES
+#if 0
 static const unsigned char entropy_source_pr[96] =
    { 0xc1, 0x80, 0x81, 0xa6, 0x5d, 0x44, 0x02, 0x16,
      0x19, 0xb3, 0xf1, 0x80, 0xb1, 0xc9, 0x20, 0x02,
@@ -1130,11 +1131,13 @@ static const unsigned char entropy_source_pr[96] =
      0x4d, 0x55, 0xb9, 0xe9, 0x1c, 0x5a, 0x5e, 0xe4,
      0x93, 0x92, 0xcf, 0xc5, 0x23, 0x12, 0xd5, 0x56,
      0x2c, 0x4a, 0x6e, 0xff, 0xdc, 0x10, 0xd0, 0x68 };
+#endif
 
 static const unsigned char nonce_pers_pr[16] =
      { 0xd2, 0x54, 0xfc, 0xff, 0x02, 0x1e, 0x69, 0xd2,
       0x29, 0xc9, 0xcf, 0xad, 0x85, 0xfa, 0x48, 0x6c };
 
+/*
 static size_t test_offset;
 static int ctr_drbg_self_test_entropy( void *data, unsigned char *buf, size_t len ) {
     const unsigned char *p = data;
@@ -1142,6 +1145,7 @@ static int ctr_drbg_self_test_entropy( void *data, unsigned char *buf, size_t le
     test_offset += len;
     return( 0 );
  }
+*/
 
 mbedtls_ctr_drbg_context ctx;
 int ctx_setup = 0;
@@ -1178,6 +1182,7 @@ int rand_bytes2(void * pv, unsigned char * pb, size_t cb)
 
 //END OF TODO RANDOM BYTES
 
+#if USE_ECDH
 /*!
 *
 * @param[in] pRecipent	Pointer to the message object
@@ -1334,5 +1339,5 @@ errorReturn:
     mbedtls_ecdh_free(&ctx);
     return fRet;
 }
-
+#endif // USE_ECDH
 #endif // USE_MBED_TLS
