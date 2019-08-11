@@ -1,3 +1,5 @@
+#define USE_MBED_TLS 1
+
 #include <cn-cbor/cn-cbor.h>
 
 #ifdef __cplusplus
