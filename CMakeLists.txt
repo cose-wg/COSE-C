@@ -14,7 +14,7 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 project ("cose-c" VERSION "${COSE_VERSION}")
 
 find_package(Doxygen)
-find_package(OpenSSL 1.0 REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 ### setup options
 option (use_context	"Use context pointer for COSE functions" ON)
@@ -24,6 +24,7 @@ option (fatal_warnings  "Treat build warnings as error" OFF)
 option (coveralls       "Generate coveralls data" ON)
 option ( coveralls_send "Send data to coveralls site" OFF )
 option (build_docs      "Create docs using Doxygen" ${DOXYGEN_FOUND} )
+option (build_tests      "build tests" ON )
 option (build_shared_libs "Build Shared Libraries" ON)
 option (use_embedtls    "Use MBedTLS for the Crypto Package" OFF)
 option (include_encrypt  "Include COSE_ENCRYPT" ON)
@@ -105,7 +106,6 @@ if (versbose)
    set (CMAKE_VERBOSE_MAKEFILE ON)
 endif ()
 
-include (CTest)
 
 ##  try for documentation
 if (build_docs)
@@ -175,6 +175,9 @@ endif ()
 ## include the parts
 add_subdirectory(src)
 add_subdirectory(include)
-add_subdirectory(test)
 add_subdirectory(dumper)
 
+if(build_tests)
+   include (CTest)
+   add_subdirectory(test)
+endif()
