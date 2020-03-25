@@ -11,15 +11,15 @@ endif()
 set ( cose_sources 
 	Cose.c
 	MacMessage.c
-        MacMessage0.c
+  MacMessage0.c
 	Sign.c
-        Sign0.c
+  Sign0.c
 	cbor.c
 	Encrypt.c
-        Encrypt0.c
+  Encrypt0.c
 	Recipient.c
 	SignerInfo.c
-        ${cose_crypto}
+  ${cose_crypto}
 )
 
 
@@ -27,18 +27,19 @@ if (use_context)
     add_definitions(-DUSE_CBOR_CONTEXT)
 endif()
 
-add_library ( cose-c ${LIB_TYPE} ${cose_sources} )
+add_library ( cose-c ${cose_sources} )
 
 target_include_directories ( cose-c PRIVATE ${OPENSSL_INCLUDE_DIR} )
 target_include_directories ( cose-c PUBLIC ${dist_dir}/include )
 target_include_directories ( cose-c PUBLIC ../include )
 target_include_directories ( cose-c PRIVATE ../src )
 
-target_link_libraries ( cose-c PRIVATE ${OPENSSL_LIBRARIES} )
 target_link_libraries ( cose-c PRIVATE cn-cbor )
 if (use_embedtls)
     target_include_directories ( cose-c PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include )
     target_link_libraries ( cose-c PRIVATE embedtls )
+else()
+  target_link_libraries ( cose-c PRIVATE ${OPENSSL_LIBRARIES} )
 endif()
 
 if ( MSVC )

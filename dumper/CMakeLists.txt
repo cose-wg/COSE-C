@@ -12,11 +12,7 @@ add_executable ( cose_dumper dumper.c )
 
 target_link_libraries (cose_dumper PRIVATE cose-c )
 
-## OpenSSL
-
-target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
 #target_link_libraries( cose_dumper PRIVATE event_openssl)
-target_link_libraries( cose_dumper PRIVATE ${OPENSSL_LIBRARIES} )
 target_link_libraries( cose_dumper PRIVATE cn-cbor )
 
 if ( MSVC )
@@ -28,6 +24,9 @@ endif ()
 if (use_embedtls)
     target_include_directories ( cose_dumper PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include )
     target_link_libraries ( cose_dumper PRIVATE embedtls )
+else()
+   target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
+   target_link_libraries( cose_dumper PRIVATE ${OPENSSL_LIBRARIES} )
 endif()
 
 target_include_directories ( cose_dumper PRIVATE ../include )

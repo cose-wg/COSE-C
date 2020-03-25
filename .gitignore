@@ -75,3 +75,4 @@ cov-int
 html
 latex
 doxygen.bat
+/.vscode/

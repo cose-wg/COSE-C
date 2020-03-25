@@ -14,9 +14,12 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 project ("cose-c" VERSION "${COSE_VERSION}")
 
 find_package(Doxygen)
-find_package(OpenSSL REQUIRED)
 
-### setup options
+###############################################################################
+# OPTIONS
+###############################################################################
+
+
 option (use_context	"Use context pointer for COSE functions" ON)
 option (verbose         "Produce verbose makefile output" OFF)
 option (optimize        "Optimize for size" OFF)
@@ -33,6 +36,8 @@ option (include_mac      "Include COSE_MAC" ON)
 option (include_mac0     "Include COSE_MAC0" ON)
 option (include_sign     "Include COSE_SIGN" ON)
 option (include_sign0    "Include COSE_SIGN0" ON)
+option (COSE_C_USE_PROJECT_ADD "download and build together with this script instead of using find_package for mbedtls and cn-cbor" ON )
+
 
 set ( dist_dir          ${CMAKE_BINARY_DIR}/dist )
 set ( prefix            ${CMAKE_INSTALL_PREFIX} )
@@ -97,17 +102,14 @@ else ()
     message ( FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}" )
 endif ()
 
-set (LIB_TYPE STATIC)
-if (build_shared_libs)
-   set (LIB_TYPE SHARED)
-endif (build_shared_libs)
-
 if (versbose)
    set (CMAKE_VERBOSE_MAKEFILE ON)
 endif ()
 
+###############################################################################
+# DOCS
+###############################################################################
 
-##  try for documentation
 if (build_docs)
    if (NOT DOXYGEN_FOUND)
         message(FATAL_ERROR "Doxygen is needed to build the documenation")
@@ -127,29 +129,40 @@ if (build_docs)
    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION share/doc)
 endif()
 
+###############################################################################
+# DEPENDENCIES
+###############################################################################
+
 Include(ExternalProject)
-ExternalProject_Add(
-  project_cn-cbor
-  GIT_REPOSITORY https://github.com/jimsch/cn-cbor
-  GIT_TAG complete
-  CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF
-  INSTALL_DIR "${dist_dir}"
-  UPDATE_DISCONNECTED 1
-)
+if(COSE_C_USE_PROJECT_ADD)
+   ExternalProject_Add(
+   project_cn-cbor
+   GIT_REPOSITORY https://github.com/jimsch/cn-cbor
+   GIT_TAG complete
+   CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF
+   INSTALL_DIR "${dist_dir}"
+   UPDATE_DISCONNECTED 1
+   )
 
-ExternalProject_Get_Property(project_cn-cbor install_dir)
-include_directories ( "${install_dir}/include" )
+   ExternalProject_Get_Property(project_cn-cbor install_dir)
+   include_directories ( "${install_dir}/include" )
+   include_directories ( "${dist_dir}" )
 
-if (MSVC)
-   add_library (cn-cbor STATIC IMPORTED)
-   set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
-else ()
-   add_library (cn-cbor STATIC IMPORTED)
-   set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
-endif ()
+   if (MSVC)
+      add_library (cn-cbor STATIC IMPORTED)
+      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
+   else ()
+      add_library (cn-cbor STATIC IMPORTED)
+      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
+   endif ()
 
-add_dependencies(cn-cbor project_cn-cbor)
+   add_dependencies(cn-cbor project_cn-cbor)
+else()
+   find_package(cn-cbor REQUIRED)
+endif()
 
+
+if(COSE_C_USE_PROJECT_ADD)
 if (use_embedtls)
    add_definitions( -DUSE_MBED_TLS )
    ExternalProject_Add(
@@ -169,15 +182,26 @@ if (use_embedtls)
       set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
    endif ()
    add_dependencies(embedtls project_embedtls)
+else()
+   find_package(MbedTLS REQUIRED)
 endif ()
-
 
 ## include the parts
 add_subdirectory(src)
-add_subdirectory(include)
 add_subdirectory(dumper)
+
+###############################################################################
+# TESTS
+###############################################################################
 
 if(build_tests)
    include (CTest)
    add_subdirectory(test)
 endif()
+
+###############################################################################
+# INSTALL
+###############################################################################
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include
+      DESTINATION include)
