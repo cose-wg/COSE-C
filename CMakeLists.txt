@@ -133,31 +133,32 @@ endif()
 ###############################################################################
 
 Include(ExternalProject)
-if(COSE_C_USE_PROJECT_ADD)
-   ExternalProject_Add(
-   project_cn-cbor
-   GIT_REPOSITORY https://github.com/jimsch/cn-cbor
-   GIT_TAG complete
-   CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF
-   INSTALL_DIR "${dist_dir}"
-   UPDATE_DISCONNECTED 1
-   )
+   if(COSE_C_USE_PROJECT_ADD)
+      ExternalProject_Add(
+      project_cn-cbor
+      GIT_REPOSITORY https://github.com/jimsch/cn-cbor
+      GIT_TAG complete
+      CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF
+      INSTALL_DIR "${dist_dir}"
+      UPDATE_DISCONNECTED 1
+      )
 
-   ExternalProject_Get_Property(project_cn-cbor install_dir)
-   include_directories ( "${install_dir}/include" )
-   include_directories ( "${dist_dir}" )
+      ExternalProject_Get_Property(project_cn-cbor install_dir)
+      include_directories ( "${install_dir}/include" )
+      include_directories ( "${dist_dir}" )
 
-   if (MSVC)
-      add_library (cn-cbor STATIC IMPORTED)
-      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
-   else ()
-      add_library (cn-cbor STATIC IMPORTED)
-      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
-   endif ()
+      if (MSVC)
+         add_library (cn-cbor STATIC IMPORTED)
+         set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
+      else ()
+         add_library (cn-cbor STATIC IMPORTED)
+         set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
+      endif ()
 
-   add_dependencies(cn-cbor project_cn-cbor)
-else()
-   find_package(cn-cbor REQUIRED)
+      add_dependencies(cn-cbor project_cn-cbor)
+   else()
+      find_package(cn-cbor REQUIRED)
+   endif()
 endif()
 
 
