@@ -13,8 +13,6 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 
 project ("cose-c" VERSION "${COSE_VERSION}")
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
 ###############################################################################
 # OPTIONS
 ###############################################################################
@@ -37,13 +35,11 @@ option (include_sign             "Include COSE_SIGN" ON)
 option (include_sign0            "Include COSE_SIGN0" ON)
 option (COSE_C_USE_PROJECT_ADD   "download and build together with this script instead of using find_package for mbedtls and cn-cbor" ON )
 
-
 set ( dist_dir          ${CMAKE_BINARY_DIR}/dist )
 set ( prefix            ${CMAKE_INSTALL_PREFIX} )
 set ( exec_prefix       ${CMAKE_INSTALL_PREFIX}/bin )
 set ( libdir            ${CMAKE_INSTALL_PREFIX}/lib )
 set ( includedir        ${CMAKE_INSTALL_PREFIX}/include )
-
 
 if (NOT CMAKE_BUILD_TYPE)
    if (optimize)

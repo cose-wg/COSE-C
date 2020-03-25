@@ -18,7 +18,8 @@ class CoseCConan(ConanFile):
         "shared": False,
         "use_embedtls": False
     }
-    generators = "cmake"
+    
+    generators = "cmake", "cmake_find_package"
 
     _cmake = None
 
