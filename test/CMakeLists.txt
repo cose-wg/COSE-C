@@ -2,10 +2,6 @@
 #  Compiling/running tests
 #
 
-if (use_context)
-   add_definitions(-DUSE_CBOR_CONTEXT)
-endif()
-
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test )
 
 add_executable ( cose_test test.c json.c encrypt.c sign.c context.c mac_test.c)

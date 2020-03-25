@@ -13,6 +13,7 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 
 project ("cose-c" VERSION "${COSE_VERSION}")
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ###############################################################################
 # OPTIONS
@@ -72,6 +73,9 @@ endif ()
 if (NOT include_sign0)
    add_definitions( -DINCLUDE_SIGN0=0 )
 endif ()
+if(use_context)
+  add_definitions(-DUSE_CBOR_CONTEXT)
+endif()
 
 if ( MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang" )
    set (coveralls OFF)
@@ -160,6 +164,9 @@ else()
    find_package(cn-cbor REQUIRED)
 endif()
 
+if(NOT TARGET cn-cbor::cn-cbor)
+  add_library(cn-cbor::cn-cbor ALIAS cn-cbor)
+endif()
 
 if(COSE_C_USE_PROJECT_ADD)
    if (use_embedtls)

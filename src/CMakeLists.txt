@@ -21,21 +21,12 @@ set(cose_sources
     SignerInfo.c
     ${cose_crypto})
 
-if(use_context)
-  add_definitions(-DUSE_CBOR_CONTEXT)
-endif()
-
 add_library(cose-c ${cose_sources})
-
 target_include_directories(cose-c PUBLIC ${dist_dir}/include)
 target_include_directories(cose-c PUBLIC ../include)
 target_include_directories(cose-c PRIVATE ../src)
 
-if(NOT TARGET cn-cbor::cn-cbor)
-  add_library(cn-cbor::cn-cbor ALIAS cn-cbor)
-endif()
-
-target_link_libraries(cose-c PRIVATE cn-cbor::cn-cbor)
+target_link_libraries(cose-c PUBLIC cn-cbor::cn-cbor)
 
 if(use_embedtls)
   target_include_directories(
