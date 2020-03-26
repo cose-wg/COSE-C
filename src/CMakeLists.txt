@@ -26,7 +26,7 @@ target_include_directories(cose-c PUBLIC ${dist_dir}/include)
 target_include_directories(cose-c PUBLIC ../include)
 target_include_directories(cose-c PRIVATE ../src)
 
-target_link_libraries(cose-c PUBLIC cn-cbor)
+target_link_libraries(cose-c PUBLIC cn-cbor::cn-cbor)
 
 if(use_embedtls)
   target_include_directories(
