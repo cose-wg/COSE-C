@@ -8,8 +8,7 @@ add_executable(cose_dumper dumper.c)
 
 target_link_libraries(cose_dumper PRIVATE cose-c)
 
-# target_link_libraries( cose_dumper PRIVATE event_openssl)
-target_link_libraries(cose_dumper PRIVATE cn-cbor::cn-cbor)
+target_link_libraries(cose_dumper PRIVATE cn-cbor)
 
 if(MSVC)
   message("test: ${build_shared_libs}")

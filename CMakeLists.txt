@@ -3,7 +3,7 @@
 #
 
 ## prepare CMAKE
-cmake_minimum_required( VERSION 3.0.0)
+cmake_minimum_required( VERSION 3.11)
 
 set (VERSION_MAJOR 0 CACHE STRING "Project major version number")
 set (VERSION_MINOR "1" CACHE STRING "Project minor version number")
@@ -138,35 +138,23 @@ endif()
 ###############################################################################
 
 Include(ExternalProject)
+include(FetchContent)
+
 if(COSE_C_USE_PROJECT_ADD)
-   ExternalProject_Add(
-   project_cn-cbor
+   FetchContent_Populate(
+   project_cn_cbor
    GIT_REPOSITORY https://github.com/jimsch/cn-cbor
    GIT_TAG complete
-   CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF
-   INSTALL_DIR "${dist_dir}"
-   UPDATE_DISCONNECTED 1
    )
-
-   ExternalProject_Get_Property(project_cn-cbor install_dir)
-   include_directories ( "${install_dir}/include" )
-   include_directories ( "${dist_dir}" )
-
-   if (MSVC)
-      add_library (cn-cbor STATIC IMPORTED)
-      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
-   else ()
-      add_library (cn-cbor STATIC IMPORTED)
-      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
-   endif ()
-
-   add_dependencies(cn-cbor project_cn-cbor)
+   set(optimize
+   OFF
+   CACHE BOOL "" FORCE)
+   set(coveralls
+   OFF
+   CACHE BOOL "" FORCE)
+   add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR})
 else()
    find_package(cn-cbor REQUIRED)
-endif()
-
-if(NOT TARGET cn-cbor::cn-cbor)
-  add_library(cn-cbor::cn-cbor ALIAS cn-cbor)
 endif()
 
 if (use_embedtls)
@@ -196,7 +184,11 @@ else()
    find_package(OpenSSL REQUIRED)
 endif()
 
-## include the parts
+
+###############################################################################
+# LIBRARY
+###############################################################################
+
 add_subdirectory(src)
 add_subdirectory(dumper)
 
