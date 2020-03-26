@@ -202,6 +202,42 @@ endif()
 # INSTALL
 ###############################################################################
 
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include
-      DESTINATION include)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
+set(COSE_C_CONFIG_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}Targets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
+
+install(
+  EXPORT ${PROJECT_NAME}Targets
+  DESTINATION ${COSE_C_CONFIG_INSTALL_DIR}
+  NAMESPACE ${PROJECT_NAME}::
+  COMPONENT dev)
+
+configure_package_config_file(cmake/Config.cmake.in ${PROJECT_NAME}Config.cmake
+                              INSTALL_DESTINATION ${COSE_C_CONFIG_INSTALL_DIR})
+write_basic_package_version_file(${PROJECT_NAME}ConfigVersion.cmake
+                                 COMPATIBILITY SameMajorVersion)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+  DESTINATION ${COSE_C_CONFIG_INSTALL_DIR}
+  COMPONENT dev)
+install(
+      DIRECTORY include/
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+      COMPONENT dev
+      FILES_MATCHING
+      PATTERN "*.h")
+
+install( 
+      TARGETS cose-c
+      LIBRARY DESTINATION lib
+      ARCHIVE DESTINATION lib
+      RUNTIME DESTINATION bin)
+       

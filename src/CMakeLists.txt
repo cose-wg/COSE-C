@@ -44,12 +44,6 @@ if(MSVC)
   target_link_libraries(cose-c PRIVATE ws2_32)
 endif()
 
-install(
-  TARGETS cose-c
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  RUNTIME DESTINATION bin)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 if(coveralls)
   include(Coveralls)
