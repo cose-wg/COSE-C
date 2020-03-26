@@ -216,3 +216,8 @@ endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include
       DESTINATION include)
+
+if(build_tests)
+   include (CTest)
+   add_subdirectory(test)
+endif()
