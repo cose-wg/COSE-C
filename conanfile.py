@@ -33,8 +33,7 @@ class CoseCConan(ConanFile):
 
     def source(self):
         self.run(
-            "git clone -b build--improve-cmake git@github.com:gocarlos/COSE-C.git")
-        # os.rename(self.name + "-" + self.version, self._source_subfolder)
+            "git clone https://github.com/cose-wg/COSE-C.git")
         os.rename("COSE-C", self._source_subfolder)
 
     def requirements(self):
