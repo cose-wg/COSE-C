@@ -16,12 +16,7 @@ if(MSVC)
 endif()
 
 if(use_embedtls)
-  target_include_directories(
-    cose_dumper
-    PUBLIC
-      ${CMAKE_SHARED_MODLE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include
-  )
-  target_link_libraries(cose_dumper PRIVATE embedtls)
+  target_link_libraries(cose_dumper PRIVATE mbedtls)
 else()
   target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(cose_dumper PRIVATE ${OPENSSL_LIBRARIES})

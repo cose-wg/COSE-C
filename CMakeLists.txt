@@ -156,27 +156,17 @@ endif()
 if (use_embedtls)
    add_definitions( -DUSE_MBED_TLS )
    if(COSE_C_USE_PROJECT_ADD)
-      ExternalProject_Add(
+      FetchContent_Populate(
       project_embedtls
       GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-      CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${build_shared_libs} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
-      INTALL_DIR "${dist_dir}"
-      UPDATE_DISCONNECTED 1
       )
-
-      ExternalProject_Get_Property(project_embedtls install_dir)
-      include_directories( "${install_dir}/include" )
-      add_library( embedtls STATIC IMPORTED)
-      if (MSVC)
-         set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto.lib")
-      else ()
-         set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
-      endif ()
-      add_dependencies(embedtls project_embedtls)
+      add_subdirectory(${project_embedtls_SOURCE_DIR} ${project_embedtls_BINARY_DIR})
    else()
       find_package(MbedTLS REQUIRED)
    endif ()
 else()
+add_definitions( -DUSE_OPEN_SSL )
+
    find_package(OpenSSL REQUIRED)
 endif()
 
@@ -205,17 +195,6 @@ include(CMakePackageConfigHelpers)
 
 set(COSE_C_CONFIG_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
-install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}Targets
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
-
-install(
-  EXPORT ${PROJECT_NAME}Targets
-  DESTINATION ${COSE_C_CONFIG_INSTALL_DIR}
-  NAMESPACE ${PROJECT_NAME}::
-  COMPONENT dev)
 
 configure_package_config_file(cmake/Config.cmake.in ${PROJECT_NAME}Config.cmake
                               INSTALL_DESTINATION ${COSE_C_CONFIG_INSTALL_DIR})

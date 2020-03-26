@@ -1,13 +1,3 @@
-#
-# compiling/installing sources for COSE-C
-#
-
-if(use_embedtls)
-  set(cose_crypto mbedtls.c)
-else()
-  set(cose_crypto openssl.c)
-endif()
-
 set(cose_sources
     Cose.c
     MacMessage.c
@@ -19,11 +9,11 @@ set(cose_sources
     Encrypt0.c
     Recipient.c
     SignerInfo.c
-    ${cose_crypto})
+    mbedtls.c
+    openssl.c)
 
 add_library(cose-c ${cose_sources})
 target_link_libraries(cose-c PUBLIC cn-cbor::cn-cbor)
-
 target_include_directories(
   ${PROJECT_NAME}
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -31,12 +21,7 @@ target_include_directories(
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
 
 if(use_embedtls)
-  target_include_directories(
-    cose-c
-    PUBLIC
-      ${CMAKE_SHARED_MODLE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include
-  )
-  target_link_libraries(cose-c PRIVATE embedtls)
+  target_link_libraries(cose-c PRIVATE mbedtls)
 else()
   target_include_directories(cose-c PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(cose-c PRIVATE ${OPENSSL_LIBRARIES})
@@ -57,7 +42,6 @@ if(coveralls)
     list(APPEND COVERAGE_SRCS ${S_ABS})
   endforeach()
 
-  # Create the coveralls target.
-  coveralls_setup("${COVERAGE_SRCS}" ${coveralls_send} # If we should upload
-  )
+  # Create the coveralls target. If we should upload
+  coveralls_setup("${COVERAGE_SRCS}" ${coveralls_send})
 endif()
