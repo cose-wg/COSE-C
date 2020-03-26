@@ -22,11 +22,13 @@ set(cose_sources
     ${cose_crypto})
 
 add_library(cose-c ${cose_sources})
-target_include_directories(cose-c PUBLIC ${dist_dir}/include)
-target_include_directories(cose-c PUBLIC ../include)
-target_include_directories(cose-c PRIVATE ../src)
-
 target_link_libraries(cose-c PUBLIC cn-cbor::cn-cbor)
+
+target_include_directories(
+  ${PROJECT_NAME}
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:include>
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
 
 if(use_embedtls)
   target_include_directories(

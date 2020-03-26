@@ -141,8 +141,7 @@ if(COSE_C_USE_PROJECT_ADD)
    FetchContent_Populate(
    project_cn_cbor
    GIT_REPOSITORY https://github.com/jimsch/cn-cbor
-   GIT_TAG complete
-   )
+   GIT_TAG complete)
    set(optimize
    OFF
    CACHE BOOL "" FORCE)
@@ -180,7 +179,6 @@ if (use_embedtls)
 else()
    find_package(OpenSSL REQUIRED)
 endif()
-
 
 ###############################################################################
 # LIBRARY
