@@ -179,7 +179,6 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	cn_cbor * cnAlgorithm = NULL;
 	size_t cbToSign;
 	byte * pbToSign = NULL;
-	bool f;
 	int alg;
 	bool fRet = false;
 

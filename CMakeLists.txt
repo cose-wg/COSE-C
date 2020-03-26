@@ -17,13 +17,13 @@ project ("cose-c" VERSION "${COSE_VERSION}")
 # OPTIONS
 ###############################################################################
 
-option (use_context	            "Use context pointer for COSE functions" ON)
+option (use_context              "Use context pointer for COSE functions" ON)
 option (verbose                  "Produce verbose makefile output" OFF)
 option (optimize                 "Optimize for size" OFF)
 option (fatal_warnings           "Treat build warnings as error" OFF)
 option (coveralls                "Generate coveralls data" ON)
 option (coveralls_send           "Send data to coveralls site" OFF )
-option (build_docs               "Create docs using Doxygen" ON )
+option (build_docs               "Create docs using Doxygen" OFF )
 option (build_tests              "build tests" ON )
 option (build_shared_libs        "Build Shared Libraries" ON)
 option (use_embedtls             "Use MBedTLS for the Crypto Package" OFF)
@@ -41,15 +41,21 @@ set ( exec_prefix       ${CMAKE_INSTALL_PREFIX}/bin )
 set ( libdir            ${CMAKE_INSTALL_PREFIX}/lib )
 set ( includedir        ${CMAKE_INSTALL_PREFIX}/include )
 
+
 if (NOT CMAKE_BUILD_TYPE)
    if (optimize)
       set ( CMAKE_BUILD_TYPE MinSizeRel )
       set ( coveralls OFF )
       set ( coveralls_send OFF )
-   else ()
       set ( CMAKE_BUILD_TYPE Debug)
+   else()
+      message(STATUS "CMAKE_BUILD_TYPE empty setting to DEBUG")
+      set(CMAKE_BUILD_TYPE "Debug")
+      if(coveralls)
+         link_libraries(-lgcov)
+      endif()
    endif ()
-endif ()
+endif()
 
 if (NOT include_encrypt)
    add_definitions( -DINCLUDE_ENCRYPT=0 )
@@ -164,9 +170,9 @@ if(NOT TARGET cn-cbor::cn-cbor)
   add_library(cn-cbor::cn-cbor ALIAS cn-cbor)
 endif()
 
-if(COSE_C_USE_PROJECT_ADD)
-   if (use_embedtls)
-      add_definitions( -DUSE_MBED_TLS )
+if (use_embedtls)
+   add_definitions( -DUSE_MBED_TLS )
+   if(COSE_C_USE_PROJECT_ADD)
       ExternalProject_Add(
       project_embedtls
       GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
@@ -187,6 +193,8 @@ if(COSE_C_USE_PROJECT_ADD)
    else()
       find_package(MbedTLS REQUIRED)
    endif ()
+else()
+   find_package(OpenSSL REQUIRED)
 endif()
 
 ## include the parts
