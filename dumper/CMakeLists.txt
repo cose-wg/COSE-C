@@ -5,11 +5,10 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/dumper)
 
 add_executable(cose_dumper dumper.c)
-
 target_link_libraries(cose_dumper PRIVATE cose-c)
 
 if(MSVC)
-  message("test: ${build_shared_libs}")
+  message("test: ${BUILD_SHARED_LIBS}")
   message("verbose: ${verbose}")
 
   target_link_libraries(cose_dumper PRIVATE ws2_32)
