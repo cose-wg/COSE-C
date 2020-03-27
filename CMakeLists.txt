@@ -142,7 +142,6 @@ endif()
 # DEPENDENCIES
 ###############################################################################
 
-include(ExternalProject)
 include(FetchContent)
 
 if(COSE_C_USE_PROJECT_ADD)
@@ -164,6 +163,9 @@ endif()
 if(use_embedtls)
   add_definitions(-DUSE_MBED_TLS)
   if(COSE_C_USE_PROJECT_ADD)
+    set(ENABLE_PROGRAMS
+        OFF
+        CACHE BOOL "" FORCE)
     fetchcontent_populate(project_embedtls GIT_REPOSITORY https://github.com/ARMmbed/mbedtls)
     add_subdirectory(${project_embedtls_SOURCE_DIR} ${project_embedtls_BINARY_DIR})
   else()
@@ -171,7 +173,6 @@ if(use_embedtls)
   endif()
 else()
   add_definitions(-DUSE_OPEN_SSL)
-
   find_package(OpenSSL REQUIRED)
 endif()
 
