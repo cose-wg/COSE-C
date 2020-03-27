@@ -179,9 +179,9 @@ endif()
 # LIBRARY
 ###############################################################################
 
-set(src/crypto.h
+set(cose_sources
+    src/crypto.h
     src/cose_int.h
-    src/cose_sources
     src/Cose.c
     src/MacMessage.c
     src/MacMessage0.c
