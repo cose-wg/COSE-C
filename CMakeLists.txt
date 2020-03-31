@@ -1,8 +1,3 @@
-#
-#  top level build file for COSE-C
-#
-
-## prepare CMAKE
 cmake_minimum_required(VERSION 3.11)
 
 set(VERSION_MAJOR
@@ -166,6 +161,9 @@ if(use_embedtls)
     set(ENABLE_PROGRAMS
         OFF
         CACHE BOOL "" FORCE)
+    set(ENABLE_TESTING
+        OFF
+        CACHE BOOL "" FORCE)
     fetchcontent_populate(project_embedtls GIT_REPOSITORY https://github.com/ARMmbed/mbedtls)
     add_subdirectory(${project_embedtls_SOURCE_DIR} ${project_embedtls_BINARY_DIR})
   else()
@@ -196,22 +194,22 @@ set(cose_sources
     src/mbedtls.c
     src/openssl.c)
 
-add_library(cose-c ${cose_sources})
-target_link_libraries(cose-c PUBLIC cn-cbor::cn-cbor)
+add_library(${PROJECT_NAME} ${cose_sources})
+target_link_libraries(${PROJECT_NAME} PUBLIC cn-cbor::cn-cbor)
 target_include_directories(
   ${PROJECT_NAME}
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
 
 if(use_embedtls)
-  target_link_libraries(cose-c PRIVATE mbedtls)
+  target_link_libraries(${PROJECT_NAME} PRIVATE mbedtls)
 else()
-  target_include_directories(cose-c PRIVATE ${OPENSSL_INCLUDE_DIR})
-  target_link_libraries(cose-c PRIVATE ${OPENSSL_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
+  target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENSSL_LIBRARIES})
 endif()
 
 if(MSVC)
-  target_link_libraries(cose-c PRIVATE ws2_32)
+  target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
 endif()
 
 if(COSE_C_BUILD_DUMPER)
@@ -266,7 +264,7 @@ install(
   PATTERN "*.h")
 
 install(
-  TARGETS cose-c
+  TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin)

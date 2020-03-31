@@ -13,7 +13,7 @@ The project is using the [CN-CBOR](https://github.com/cabo/cn-cbor) project to p
 
 The project is setup to use two different cryptographic
 
-*  Open SSL - This is a reasonable complete implementation
+*  OpenSSL - This is a reasonable complete implementation
 
 *  MbedTLS - Not all cryptographic primitives have been linked between COSE and the library yet.
 
@@ -22,11 +22,30 @@ The project is setup to use two different cryptographic
 
 Go ahead, file issues, make pull requests.
 
-## Building
+## Building and using
 
-The project is setup to build using *CMake.*  The way that the CMake files are setup, it requires that version 3.0 or higher is used.
+The project is setup to build using *CMake.*  The way that the CMake files are setup, it requires that version 3.11 or higher is used.
 
-The project requires the use of cn-cbor(https://github.com/jimsch/cn-cbor) in order to build.  While this is based on the original version at (https://github.com/cabo/cn-cbor) there have been several updates to this version which have not been reflected in the base library. The CMake configuration files will automatically pull down the correct version when run.
+The project requires the use of cn-cbor(https://github.com/jimsch/cn-cbor) in order to build.
+While this is based on the original version at (https://github.com/cabo/cn-cbor) there have
+been several updates to this version which have not been reflected in the base library.
+The CMake configuration files will automatically pull down the correct version when run.
+
+Building:
+```sh
+mkdir build
+cd build
+cmake ..
+cmake --build . -j
+sudo cmake --build . --target install
+```
+
+Consuming:
+```cmake
+find_package(cose-c REQUIRED)
+add_executable(mytarget main.cpp)
+target_link_libraries(mytarget cose-c::cose-c)
+```
 
 ## Memory Model
 

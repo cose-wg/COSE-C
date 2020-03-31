@@ -76,3 +76,4 @@ html
 latex
 doxygen.bat
 /.vscode/
+/_build/
