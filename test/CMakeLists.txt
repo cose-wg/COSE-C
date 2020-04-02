@@ -3,7 +3,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test)
 add_executable(cose_test test.c json.c encrypt.c sign.c context.c mac_test.c)
 
 target_link_libraries(cose_test PRIVATE cose-c)
-if(use_embedtls)
+if(COSE_C_USE_EMBEDTLS)
   target_link_libraries(cose_test PRIVATE mbedtls)
 else()
   target_include_directories(cose_test PRIVATE ${OPENSSL_INCLUDE_DIR})

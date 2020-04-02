@@ -57,8 +57,8 @@ class CoseCConan(ConanFile):
             self._cmake = CMake(self)
         self._cmake.definitions["build_tests"] = False
         self._cmake.definitions["build_docs"] = False
-        self._cmake.definitions["use_embedtls"] = self.options.use_embedtls
         self._cmake.definitions["coveralls"] = False
+        self._cmake.definitions["COSE_C_USE_EMBEDTLS"] = self.options.use_embedtls
         self._cmake.definitions["COSE_C_USE_PROJECT_ADD"] = False
         # self._cmake.configure(source_folder="COSE-C")
         self._cmake.configure(
