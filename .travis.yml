@@ -11,7 +11,7 @@ env:
     COVERALLS="-Dcoveralls_send=ON"
   - USE_CONTEXT=OFF
     COVERALLS="-Dcoveralls_send=ON"
-  - USE_CONTEXT=OFF USE_EMBEDTLS=ON
+  - USE_CONTEXT=OFF USE_MBEDTLS=ON
     COVERALLS="-Dcoveralls_send=ON"
   - CMAKE_OPTIONS="-Dinclude_encrypt=ON -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
   - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=ON -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
@@ -40,7 +40,7 @@ script:
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
-  - cd build && cmake -Duse_context=$USE_CONTEXT -DCOSE_C_USE_EMBEDTLS=$USE_EMBEDTLS $CMAKE_OPTIONS $COVERALLS .. && make all test
+  - cd build && cmake -Duse_context=$USE_CONTEXT -DCOSE_C_USE_MBEDTLS=$USE_MBEDTLS $CMAKE_OPTIONS $COVERALLS .. && make all test
 
 after_success:
   - make coveralls

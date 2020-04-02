@@ -23,9 +23,9 @@ option(optimize "Optimize for size" OFF)
 option(COSE_C_FATAL_WARNINGS "Treat build warnings as error" OFF)
 option(coveralls "Generate coveralls data" ON)
 option(coveralls_send "Send data to coveralls site" OFF)
-option(build_docs "Create docs using Doxygen" OFF)
-option(build_tests "build tests" ON)
-option(COSE_C_USE_EMBEDTLS "Use MBedTLS for the Crypto Package" OFF)
+option(COSE_C_BUILD_DOCS "Create docs using Doxygen" OFF)
+option(COSE_C_BUILD_TESTS "build tests" ON)
+option(COSE_C_USE_MBEDTLS "Use MBedTLS for the Crypto Package" OFF)
 option(include_encrypt "Include COSE_ENCRYPT" ON)
 option(include_encrypt0 "Include COSE_ENCRYPT0" ON)
 option(include_mac "Include COSE_MAC" ON)
@@ -107,7 +107,7 @@ endif()
 # DOCS
 ###############################################################################
 
-if(build_docs)
+if(COSE_C_BUILD_DOCS)
   find_package(Doxygen)
   if(NOT DOXYGEN_FOUND)
     message(FATAL_ERROR "Doxygen is needed to build the documenation")
@@ -132,6 +132,14 @@ endif()
 # DEPENDENCIES
 ###############################################################################
 
+if(COSE_C_USE_MBEDTLS)
+  add_definitions(-DUSE_MBED_TLS)
+  find_package(MbedTLS REQUIRED)
+else()
+  add_definitions(-DUSE_OPEN_SSL)
+  find_package(OpenSSL REQUIRED)
+endif()
+
 include(FetchContent)
 
 if(COSE_C_USE_PROJECT_ADD)
@@ -148,14 +156,6 @@ if(COSE_C_USE_PROJECT_ADD)
   add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR})
 else()
   find_package(cn-cbor REQUIRED)
-endif()
-
-if(COSE_C_USE_EMBEDTLS)
-  add_definitions(-DUSE_MBED_TLS)
-  find_package(MbedTLS REQUIRED)
-else()
-  add_definitions(-DUSE_OPEN_SSL)
-  find_package(OpenSSL REQUIRED)
 endif()
 
 ###############################################################################
@@ -185,8 +185,9 @@ target_include_directories(
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
 
-if(COSE_C_USE_EMBEDTLS)
-  target_link_libraries(${PROJECT_NAME} PRIVATE mbedtls)
+if(COSE_C_USE_MBEDTLS)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} PRIVATE ${MBEDTLS_LIBRARY})
 else()
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENSSL_LIBRARIES})
@@ -218,7 +219,7 @@ if(coveralls)
   coveralls_setup("${COVERAGE_SRCS}" ${coveralls_send})
 endif()
 
-if(build_tests)
+if(COSE_C_BUILD_TESTS)
   include(CTest)
   add_subdirectory(test)
 endif()

@@ -10,13 +10,13 @@ configuration:
 environment:
   matrix:
     - USE_CONTEXT: ON      
-      USE_EMBEDTLS: OFF
+      USE_MBEDTLS: OFF
 
     - USE_CONTEXT: OFF
-      USE_EMBEDTLS: OFF
+      USE_MBEDTLS: OFF
 
     - USE_CONTEXT: OFF
-      USE_EMBEDTLS: ON
+      USE_MBEDTLS: ON
 
 
 matrix:
@@ -28,7 +28,7 @@ install:
 
 before_build:
   - cmake --version
-  - cmake -Duse_context=%USE_CONTEXT% -DCOSE_C_USE_EMBEDTLS=%USE_EMBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF -G "Visual Studio 15 2017 Win64" .
+  - cmake -Duse_context=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_MBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF -G "Visual Studio 15 2017 Win64" .
 
 build_script:
   - msbuild cose-c.sln

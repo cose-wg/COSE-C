@@ -12,11 +12,11 @@ class CoseCConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     options = {
         "shared": [True, False],
-        "use_embedtls": [True, False]
+        "use_mbedtls": [True, False]
     }
     default_options = {
         "shared": False,
-        "use_embedtls": False
+        "use_mbedtls": False
     }
     
     generators = "cmake", "cmake_find_package"
@@ -43,7 +43,7 @@ class CoseCConan(ConanFile):
     def requirements(self):
         self.requires("cn-cbor/20200227@gocarlos/testing")
 
-        if self.options.use_embedtls:
+        if self.options.use_mbedtls:
             self.requires("mbedtls/2.16.3-gpl")
         else:
             self.requires("openssl/1.1.1d")
@@ -55,10 +55,10 @@ class CoseCConan(ConanFile):
     def _configure_cmake(self):
         if not self._cmake:
             self._cmake = CMake(self)
-        self._cmake.definitions["build_tests"] = False
-        self._cmake.definitions["build_docs"] = False
         self._cmake.definitions["coveralls"] = False
-        self._cmake.definitions["COSE_C_USE_EMBEDTLS"] = self.options.use_embedtls
+        self._cmake.definitions["COSE_C_BUILD_TESTS"] = False
+        self._cmake.definitions["COSE_C_BUILD_DOCS"] = False
+        self._cmake.definitions["COSE_C_USE_MBEDTLS"] = self.options.use_mbedtls
         self._cmake.definitions["COSE_C_USE_PROJECT_ADD"] = False
         # self._cmake.configure(source_folder="COSE-C")
         self._cmake.configure(
