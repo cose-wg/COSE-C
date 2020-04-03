@@ -36,8 +36,8 @@ install:
 
 before_build:
   - cmake --version
-  - cmake -Duse_context=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_MBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF -G "Visual Studio 15 2017 Win64" .
+  - cmake -Duse_context=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_MBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF .
 
 build_script:
-  - msbuild cose-c.sln
+  - cmake --build .
   - ctest -C %CONFIGURATION%
