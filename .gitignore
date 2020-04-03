@@ -45,7 +45,6 @@ Release
 CMakeFiles
 CMakeCache.txt
 Makefile
-*.cmake
 build
 
 # Visual Studio files
