@@ -18,7 +18,7 @@ project("cose-c" VERSION "${COSE_VERSION}")
 # OPTIONS
 ###############################################################################
 
-option(use_context "Use context pointer for COSE functions" ON)
+option(COSE_C_USE_CONTEXT "Use context pointer for COSE functions" ON)
 option(optimize "Optimize for size" OFF)
 option(COSE_C_FATAL_WARNINGS "Treat build warnings as error" OFF)
 option(coveralls "Generate coveralls data" ON)
@@ -73,7 +73,7 @@ endif()
 if(NOT include_sign0)
   add_definitions(-DINCLUDE_SIGN0=0)
 endif()
-if(use_context)
+if(COSE_C_USE_CONTEXT)
   add_definitions(-DUSE_CBOR_CONTEXT)
 endif()
 

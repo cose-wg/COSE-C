@@ -41,7 +41,7 @@ script:
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
-  - cd build && cmake -Duse_context=$USE_CONTEXT -DCOSE_C_USE_MBEDTLS=$USE_MBEDTLS $CMAKE_OPTIONS $COVERALLS .. && make all test
+  - cd build && cmake -DCOSE_C_USE_CONTEXT=$USE_CONTEXT -DCOSE_C_USE_MBEDTLS=$USE_MBEDTLS $CMAKE_OPTIONS $COVERALLS .. && make all test
 
 after_success:
   - make coveralls

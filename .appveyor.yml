@@ -36,7 +36,7 @@ install:
 
 before_build:
   - cmake --version
-  - cmake -Duse_context=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_MBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF .
+  - cmake -DCOSE_C_USE_CONTEXT=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_MBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF -DCMAKE_BUILD_TYPE=%CONFIGURATION% .
 
 build_script:
   - cmake --build .
