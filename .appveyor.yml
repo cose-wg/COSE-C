@@ -15,9 +15,8 @@ environment:
     - USE_CONTEXT: OFF
       USE_MBEDTLS: OFF
 
-    # - USE_CONTEXT: OFF
-    #   USE_MBEDTLS: ON
-
+    - USE_CONTEXT: OFF
+      USE_MBEDTLS: ON
 
 matrix:
   fast_finish: true
@@ -25,6 +24,15 @@ matrix:
 install:
   - git submodule update --init --recursive
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
+  - rm -rf mbedtls
+  - git clone --depth=1 git@github.com:ARMmbed/mbedtls.git mbedtls
+  - cd mbedtls
+  - mkdir build
+  - cd build
+  - cmake .. -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF
+  - cmake --build .
+  - cmake --build . --target install
+  - cd ../..
 
 before_build:
   - cmake --version
