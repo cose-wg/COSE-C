@@ -153,6 +153,9 @@ if(COSE_C_USE_PROJECT_ADD)
   set(coveralls
       OFF
       CACHE BOOL "" FORCE)
+  set(fatal_warnings
+      OFF
+      CACHE BOOL "" FORCE)
   add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR})
 else()
   find_package(cn-cbor REQUIRED)

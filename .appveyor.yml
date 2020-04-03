@@ -15,8 +15,8 @@ environment:
     - USE_CONTEXT: OFF
       USE_MBEDTLS: OFF
 
-    - USE_CONTEXT: OFF
-      USE_MBEDTLS: ON
+    # - USE_CONTEXT: OFF
+    #   USE_MBEDTLS: ON
 
 
 matrix:
