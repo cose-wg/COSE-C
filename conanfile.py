@@ -4,7 +4,7 @@ from conans import ConanFile, CMake, tools
 
 class CoseCConan(ConanFile):
     name = "cose-c"
-    version = "20200225"
+    version = "20200403"
     license = "BSD"
     url = "https://github.com/cose-wg/COSE-C"
     description = """;"""

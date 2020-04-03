@@ -22,8 +22,11 @@ matrix:
   fast_finish: true
 
 install:
+  # get test data
   - git submodule update --init --recursive
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
+  
+  # get mbedtls
   - rm -rf mbedtls
   - git clone --depth=1 --recurse-submodules git://github.com/ARMmbed/mbedtls mbedtls
   - cd mbedtls
@@ -36,7 +39,8 @@ install:
 
 before_build:
   - cmake --version
-  - cmake -DCOSE_C_USE_CONTEXT=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_MBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF -DCMAKE_BUILD_TYPE=%CONFIGURATION% .
+  - mkdir build && cd build
+  - cmake -DCOSE_C_USE_CONTEXT=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_MBEDTLS% -DCOSE_C_FATAL_WARNINGS=OFF -DCMAKE_BUILD_TYPE=%CONFIGURATION% ..
 
 build_script:
   - cmake --build .
