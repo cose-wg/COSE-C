@@ -39,7 +39,8 @@ extern FOO Signer[];
 #define CBOR_CONTEXT_PARAM
 #endif
 
-FOO AlgorithmMap[37] = {
+FOO AlgorithmMap[38] = {
+    { "HSS-LMS", CN_CBOR_INT, -46, NULL, 0, 0},
 	{ "ECHD-SS+A256KW", CN_CBOR_INT, -34, NULL, 0, 0 },
 	{ "ECHD-SS+A192KW", CN_CBOR_INT, -33, NULL, 0, 0 },
 	{ "ECHD-SS+A128KW", CN_CBOR_INT, -32, NULL, 0, 0 },
@@ -238,12 +239,12 @@ FOO Mac0MessageWithTag = {
 };
 
 size_t WrapLineAt = 0;
-char OutputBuffer[4096];
+char OutputBuffer[4*4096];
 
 void WrapPrintF(FILE * fp, char * format, ...)
 {
 	va_list args;
-	char	buffer[4000];
+	char	buffer[10000];
 	char *  iRet;
 
 	va_start(args, format);
@@ -272,7 +273,7 @@ void WrapPrintF(FILE * fp, char * format, ...)
 		fprintf(fp, "%s", t);
 		fprintf(fp, "\n");
 		if (strlen(OutputBuffer) + strlen(iRet + 1) >= sizeof(OutputBuffer)-1) {
-			fprintf(stderr, "Internal buffer too small for dumpping");
+			fprintf(stderr, "Internal buffer too small for dumping");
 			exit(1);
 		}
 		strcpy(OutputBuffer, iRet + 1);
