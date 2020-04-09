@@ -12,7 +12,7 @@ typedef unsigned char byte;
 typedef struct _cose * HCOSE;
 typedef struct _cose_sign * HCOSE_SIGN;
 typedef struct _cose_signer * HCOSE_SIGNER;
-typedef struct _cose_sign0 * HCOSE_SIGN0;
+typedef struct _cose_sign1 * HCOSE_SIGN1;
 typedef struct _cose_encrypt * HCOSE_ENCRYPT;
 typedef struct _cose_enveloped * HCOSE_ENVELOPED;
 typedef struct _cose_recipient * HCOSE_RECIPIENT;
@@ -64,7 +64,7 @@ typedef struct _cose_errback {
 typedef enum {
 	COSE_unknown_object = 0,
 	COSE_sign_object = 98,
-	COSE_sign0_object = 18,
+	COSE_sign1_object = 18,
 	COSE_enveloped_object = 96,
 	COSE_encrypt_object = 16,
 	COSE_mac_object = 97,
@@ -317,16 +317,29 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, si
  *  Sign routines
  */
 
-HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
-bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
+/*  allow use of the old names */    
+#define COSE_Sign0_Init COSE_Sign1_Init
+#define COSE_Sign0_Free COSE_Sign1_Free
 
-bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
-bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
+#define COSE_Sign0_SetContent COSE_Sign1_SetContent
+#define COSE_Sign0_SetExternal COSE_Sign1_SetExternal
 
-bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
-bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback * perr);
-cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
-bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+#define COSE_Sign0_Sign COSE_Sign1_Sign
+#define COSE_Sign0_validate COSE_Sign1_validate
+#define COSE_Sign0_map_get_int COSE_Sign1_map_get_int
+#define COSE_Sign0_map_put_int COSE_Sign1_map_put_int
+
+    
+HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
+bool COSE_Sign1_Free(HCOSE_SIGN1 cose);
+
+bool COSE_Sign1_SetContent(HCOSE_SIGN1 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
+
+bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor * pkey, cose_errback * perr);
+bool COSE_Sign1_validate(HCOSE_SIGN1 hSign, const cn_cbor * pkey, cose_errback * perr);
+cn_cbor * COSE_Sign1_map_get_int(HCOSE_SIGN1 h, int key, int flags, cose_errback * perror);
+bool COSE_Sign1_map_put_int(HCOSE_SIGN1 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
 /*
  * Counter Signature Routines

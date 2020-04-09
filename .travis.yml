@@ -13,12 +13,12 @@ env:
     COVERALLS="-Dcoveralls_send=ON"
   - USE_CONTEXT=OFF USE_MBEDTLS=ON
     COVERALLS="-Dcoveralls_send=ON"
-  - CMAKE_OPTIONS="-Dinclude_encrypt=ON -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
-  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=ON -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
-  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=ON -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF"
-  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=ON -Dinclude_sign=OFF -Dinclude_sign0=OFF"
-  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=ON -Dinclude_sign0=OFF"
-  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=ON"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=ON -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=ON -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=ON -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=ON -Dinclude_sign=OFF -Dinclude_sign1=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=ON -Dinclude_sign1=OFF"
+  - CMAKE_OPTIONS="-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=ON"
 matrix:
   exclude:
     - compiler: clang
