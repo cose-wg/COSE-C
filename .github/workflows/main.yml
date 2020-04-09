@@ -7,18 +7,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         BUILD_SHARED_LIBS: ["ON", "OFF"]
         USE_MBEDTLS: ["ON", "OFF"]
         USE_CONTEXT: ["ON", "OFF"]
         CMAKE_OPTIONS:
           [
-            "-Dinclude_encrypt=ON -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF",
-            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=ON -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF",
-            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=ON -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF",
-            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=ON -Dinclude_sign=OFF -Dinclude_sign0=OFF",
-            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=ON -Dinclude_sign0=OFF",
-            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=ON",
+            "-Dinclude_encrypt=ON -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=ON -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=ON -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=ON -Dinclude_sign=OFF -Dinclude_sign1=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=ON -Dinclude_sign1=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=ON",
           ]
 
     steps:
@@ -39,13 +39,6 @@ jobs:
           cmake .. -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF  && \
           cmake --build . && \
           sudo cmake --build . --target install
-
-      - name: clone examples CMake
-        shell: bash
-        working-directory: ${{runner.workspace}}
-        run: |
-          cmake --version && \
-          pwd
 
       - name: Create Build directory
         run: cmake -E make_directory ${{runner.workspace}}/build
