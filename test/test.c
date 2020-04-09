@@ -10,6 +10,8 @@
 #include <configure.h>
 #include <cn-cbor/cn-cbor.h>
 #include <assert.h>
+#include <unistd.h>
+#include <limits.h>
 
 #ifndef _MSC_VER
 #include <dirent.h>
@@ -987,13 +989,19 @@ void RunTestsInDirectory(const char * szDir)
 
 int main(int argc, char ** argv)
 {
-	int i;
+	char cwd[PATH_MAX];
+	if (getcwd(cwd, sizeof(cwd)) != NULL) {
+		printf("Current working dir: %s\n", cwd);
+	} else {
+		perror("getcwd() error");
+	}
+
 	const char * szWhere = NULL;
 	bool fDir = false;
-        bool fCorners = false;
-		bool fMemory = false;
+	bool fCorners = false;
+	bool fMemory = false;
 
-	for (i = 1; i < argc; i++) {
+	for (int i = 1; i < argc; i++) {
 		printf("arg: '%s'\n", argv[i]);
 		if (argv[i][0] == '-') {
 			if (strcmp(argv[i], "--dir") == 0) {

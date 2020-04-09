@@ -1,5 +1,3 @@
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/dumper)
-
 add_executable(cose_dumper dumper.c)
 target_link_libraries(cose_dumper PRIVATE cose-c)
 
@@ -10,6 +8,8 @@ endif()
 
 if(COSE_C_USE_MBEDTLS)
   target_link_libraries(cose_dumper PRIVATE mbedtls)
+  target_include_directories(cose_dumper PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+  target_link_libraries(cose_dumper PRIVATE ${MBEDTLS_LIBRARY})
 else()
   target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(cose_dumper PRIVATE ${OPENSSL_LIBRARIES})

@@ -18,31 +18,32 @@ project("cose-c" VERSION "${COSE_VERSION}")
 # OPTIONS
 ###############################################################################
 
-option(COSE_C_USE_CONTEXT "Use context pointer for COSE functions" ON)
 option(optimize "Optimize for size" OFF)
-option(COSE_C_FATAL_WARNINGS "Treat build warnings as error" OFF)
 option(coveralls "Generate coveralls data" ON)
 option(coveralls_send "Send data to coveralls site" OFF)
-option(COSE_C_BUILD_DOCS "Create docs using Doxygen" OFF)
-option(COSE_C_BUILD_TESTS "build tests" ON)
-option(COSE_C_USE_MBEDTLS "Use MBedTLS for the Crypto Package" OFF)
 option(include_encrypt "Include COSE_ENCRYPT" ON)
 option(include_encrypt0 "Include COSE_ENCRYPT0" ON)
 option(include_mac "Include COSE_MAC" ON)
 option(include_mac0 "Include COSE_MAC0" ON)
 option(include_sign "Include COSE_SIGN" ON)
 option(include_sign0 "Include COSE_SIGN0" ON)
-option(COSE_C_USE_PROJECT_ADD
-       "download and build together with this script instead of using find_package for mbedtls and cn-cbor" ON)
+option(COSE_C_USE_CONTEXT "Use context pointer for COSE functions" ON)
+option(COSE_C_FATAL_WARNINGS "Treat build warnings as error" OFF)
+option(COSE_C_BUILD_DOCS "Create docs using Doxygen" OFF)
+option(COSE_C_BUILD_TESTS "build tests" ON)
+option(COSE_C_USE_MBEDTLS "Use MBedTLS for the Crypto Package" OFF)
+option(COSE_C_USE_PROJECT_ADD "download & build instead of using find_package for mbedtls and cn-cbor" ON)
 option(COSE_C_BUILD_DUMPER "build dumper" ON)
 
-set(dist_dir ${CMAKE_BINARY_DIR}/dist)
+# Set the output of the libraries and executables.
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+
 set(prefix ${CMAKE_INSTALL_PREFIX})
 set(exec_prefix ${CMAKE_INSTALL_PREFIX}/bin)
 set(libdir ${CMAKE_INSTALL_PREFIX}/lib)
 set(includedir ${CMAKE_INSTALL_PREFIX}/include)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 if(NOT CMAKE_BUILD_TYPE)
   if(optimize)
@@ -81,7 +82,7 @@ if(MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   set(coveralls OFF)
 endif()
 
-message("Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 add_definitions(-DUSE_ARRAY)
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
@@ -146,7 +147,7 @@ if(COSE_C_USE_PROJECT_ADD)
   fetchcontent_populate(
     project_cn_cbor
     GIT_REPOSITORY https://github.com/jimsch/cn-cbor
-    GIT_TAG complete)
+    GIT_TAG 1.0.0)
   set(optimize
       OFF
       CACHE BOOL "" FORCE)
@@ -189,8 +190,8 @@ target_include_directories(
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
 
 if(COSE_C_USE_MBEDTLS)
-  target_include_directories(${PROJECT_NAME} PRIVATE ${MBEDTLS_INCLUDE_DIRS})
-  target_link_libraries(${PROJECT_NAME} PRIVATE ${MBEDTLS_LIBRARY})
+  target_include_directories(${PROJECT_NAME} PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} PUBLIC ${MBEDTLS_LIBRARIES})
 else()
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENSSL_LIBRARIES})

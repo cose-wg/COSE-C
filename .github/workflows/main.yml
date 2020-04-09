@@ -1,0 +1,79 @@
+name: CMake
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        BUILD_SHARED_LIBS: ["ON", "OFF"]
+        USE_MBEDTLS: ["ON", "OFF"]
+        USE_CONTEXT: ["ON", "OFF"]
+        CMAKE_OPTIONS:
+          [
+            "-Dinclude_encrypt=ON -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=ON -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=ON -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=ON -Dinclude_sign=OFF -Dinclude_sign0=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=ON -Dinclude_sign0=OFF",
+            "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign0=ON",
+          ]
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: setup (linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install libssl-dev cmake-data && \
+          pip install cpp-coveralls --user
+
+      - name: install mbedtls
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          git clone --depth=1 --recurse-submodules --branch master git://github.com/ARMmbed/mbedtls mbedtls && \
+          cd mbedtls && \
+          mkdir build && \
+          cd build  && \
+          cmake .. -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF  && \
+          cmake --build . && \
+          sudo cmake --build . --target install
+
+      - name: clone examples CMake
+        shell: bash
+        working-directory: ${{runner.workspace}}
+        run: |
+          cmake --version && \
+          pwd
+
+      - name: Create Build directory
+        run: cmake -E make_directory ${{runner.workspace}}/build
+
+      - name: Configure CMake
+        shell: bash
+        working-directory: ${{runner.workspace}}/build
+        run: |
+          cmake $GITHUB_WORKSPACE \
+          -DBUILD_SHARED_LIBS=${{matrix.BUILD_SHARED_LIBS}} \
+          -DCOSE_C_USE_CONTEXT=${{matrix.USE_CONTEXT}} \
+          -DCOSE_C_BUILD_DOCS=OFF \
+          -DCOSE_C_BUILD_TESTS=ON \
+          -Dcoveralls_send=ON \
+          ${{matrix.CMAKE_OPTIONS}} \
+          -DCOSE_C_USE_MBEDTLS=${{matrix.USE_MBEDTLS}}
+
+      - name: Build
+        working-directory: ${{runner.workspace}}/build
+        shell: bash
+        run: cmake --build .
+
+      - name: Test
+        working-directory: ${{runner.workspace}}/build
+        shell: bash
+        run: |
+          ls -al && \
+          ls -al .. && \
+          pwd && \
+          git clone --depth 1 git://github.com/cose-wg/Examples $GITHUB_WORKSPACE/Examples && \
+          ctest . --verbose
