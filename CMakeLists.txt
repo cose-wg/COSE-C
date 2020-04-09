@@ -173,7 +173,7 @@ set(cose_sources
     src/MacMessage.c
     src/MacMessage0.c
     src/Sign.c
-    src/Sign0.c
+    src/Sign1.c
     src/cbor.c
     src/Encrypt.c
     src/Encrypt0.c
