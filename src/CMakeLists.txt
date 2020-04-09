@@ -13,7 +13,7 @@ set ( cose_sources
 	MacMessage.c
         MacMessage0.c
 	Sign.c
-        Sign0.c
+        Sign1.c
 	cbor.c
 	Encrypt.c
         Encrypt0.c
