@@ -83,9 +83,6 @@ if(MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   set(coveralls OFF)
 endif()
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
-add_definitions(-DUSE_ARRAY)
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   message(STATUS "adding GCC/Clang options ")
   add_definitions(-std=gnu99 -Wall -Wextra -pedantic)
@@ -104,6 +101,9 @@ elseif(MSVC)
 else()
   message(FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}")
 endif()
+
+
+
 
 ###############################################################################
 # DOCS
@@ -260,3 +260,16 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin)
+
+###############################################################################
+# PRINT CONFIG 
+###############################################################################
+
+message(STATUS "CMAKE_BUILD_TYPE:....................${CMAKE_BUILD_TYPE}")
+message(STATUS "COSE_VERSION:........................${COSE_VERSION}")
+message(STATUS "include_encrypt:.....................${include_encrypt}")
+message(STATUS "include_encrypt0:....................${include_encrypt0}")
+message(STATUS "include_mac0:........................${include_mac0}")
+message(STATUS "include_mac:.........................${include_mac}")
+message(STATUS "include_sign:........................${include_sign}")
+message(STATUS "include_sign1:.......................${include_sign1}")
