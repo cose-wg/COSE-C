@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cose.h>
-#include <configure.h>
+#include <cose/cose.h>
+#include <cose/configure.h>
 #include <cn-cbor/cn-cbor.h>
 #if INCLUDE_MAC && !INCLUDE_ENCRYPT0
 #include <cose_int.h>

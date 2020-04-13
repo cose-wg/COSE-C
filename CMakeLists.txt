@@ -170,6 +170,8 @@ endif()
 set(cose_sources
     src/crypto.h
     src/cose_int.h
+    include/cose/cose/cose.h
+    include/cose/cose/configure.h
     src/Cose.c
     src/MacMessage.c
     src/MacMessage0.c

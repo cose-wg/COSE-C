@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cose.h>
-#include <configure.h>
+#include <cose/cose.h>
+#include <cose/configure.h>
 #include <cn-cbor/cn-cbor.h>
 #if (INCLUDE_SIGN && !(INCLUDE_SIGN1 || INCLUDE_ENCRYPT || INCLUDE_MAC)) || (INCLUDE_SIGN1 && !INCLUDE_SIGN)
 #include <cose_int.h>

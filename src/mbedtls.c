@@ -1,5 +1,5 @@
-#include "cose.h"
-#include "configure.h"
+#include "cose/cose.h"
+#include "cose/configure.h"
 #include "cose_int.h"
 #include "crypto.h"
 
@@ -1097,7 +1097,7 @@ errorReturn:
 /*
 //#include <stdio.h> //TODO
 void rand_bytes(byte * pb, size_t cb){
-//ctx->aes_ctx->rk e null... i callchainen längst in. prova istället:
+//ctx->aes_ctx->rk e null... i callchainen lï¿½ngst in. prova istï¿½llet:
 //kolla https://tls.mbed.org/kb/how-to/add-a-random-generator
         //init random
        mbedtls_ctr_drbg_context ctr_drbg;

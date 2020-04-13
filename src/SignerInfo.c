@@ -7,9 +7,9 @@
 #include <memory.h>
 #endif
 
-#include "cose.h"
+#include "cose/cose.h"
 #include "cose_int.h"
-#include "configure.h"
+#include "cose/configure.h"
 #include "crypto.h"
 
 #if INCLUDE_SIGN

@@ -1,5 +1,5 @@
 #include <cn-cbor/cn-cbor.h>
-#include "configure.h"
+#include "cose/configure.h"
 
 #pragma once
 
