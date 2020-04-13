@@ -130,10 +130,10 @@ add_test(
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   COMMAND cose_test --memory "${PROJECT_SOURCE_DIR}/Examples/aes-gcm-examples/aes-gcm-01.json")
 
-# add_test(
-  # NAME Memory-ecdh
-  # WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  # COMMAND cose_test --memory "${PROJECT_SOURCE_DIR}/Examples/ecdh-direct-examples/p256-hkdf-256-01.json")
+add_test(
+  NAME Memory-ecdh
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  COMMAND cose_test --memory "${PROJECT_SOURCE_DIR}/Examples/ecdh-direct-examples/p256-hkdf-256-01.json")
 add_test(
   NAME Memory-aes-kw
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
