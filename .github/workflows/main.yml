@@ -7,7 +7,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
+        # os: [ubuntu-latest, windows-latest]
         BUILD_SHARED_LIBS: ["ON", "OFF"]
         USE_MBEDTLS: ["ON", "OFF"]
         USE_CONTEXT: ["ON", "OFF"]
