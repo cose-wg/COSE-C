@@ -574,20 +574,15 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
 	mbedtls_md_type_t mdType;
 	mbedtls_md_info_t * pmd;
 
-	size_t ib;
-    int cbSalt;
-    unsigned int cbDigest = 0;
-    byte bCount = 1;
-
     if (0) {
     errorReturn:
         return false;
     }
 
     switch (cbitDigest) {
-    case 256: mdType = MBEDTLS_MD_SHA256; cbDigest = 256 / 8;  break;
-    case 384: mdType = MBEDTLS_MD_SHA384; cbDigest = 384 / 8; break;
-    case 512: mdType = MBEDTLS_MD_SHA512; cbDigest = 512 / 8; break;
+    case 256: mdType = MBEDTLS_MD_SHA256; break;
+    case 384: mdType = MBEDTLS_MD_SHA384; break;
+    case 512: mdType = MBEDTLS_MD_SHA512; break;
     default: FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER); break;
     }
 
