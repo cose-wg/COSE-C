@@ -22,8 +22,6 @@ jobs:
             "-Dinclude_encrypt=OFF -Dinclude_encrypt0=OFF -Dinclude_mac0=OFF -Dinclude_mac=OFF -Dinclude_sign=OFF -Dinclude_sign1=ON"
           ]
 
-
-
     steps:
       - uses: actions/checkout@v1
       - name: setup (linux)
