@@ -32,9 +32,14 @@ option(COSE_C_USE_CONTEXT "Use context pointer for COSE functions" ON)
 option(COSE_C_FATAL_WARNINGS "Treat build warnings as error" OFF)
 option(COSE_C_BUILD_DOCS "Create docs using Doxygen" OFF)
 option(COSE_C_BUILD_TESTS "build tests" ON)
-option(COSE_C_USE_MBEDTLS "Use MBedTLS for the Crypto Package" OFF)
+option(COSE_C_USE_MBEDTLS "Use MBedTLS as crypto backend instead of openssl" OFF)
 option(COSE_C_USE_PROJECT_ADD "download & build instead of using find_package for mbedtls and cn-cbor" ON)
 option(COSE_C_BUILD_DUMPER "build dumper" ON)
+
+if(NOT include_sign0)
+  message("Use include_sign1 rather than include_sign0")
+  set(include_sign1 ${include_sign0})
+endif()
 
 # Set the output of the libraries and executables.
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -72,8 +77,8 @@ endif()
 if(NOT include_sign)
   add_definitions(-DINCLUDE_SIGN=0)
 endif()
-if(NOT include_sign0 AND NOT include_sign1)
-  add_definitions(-DINCLUDE_SIGN0=0)
+if(NOT include_sign1)
+  add_definitions(-DINCLUDE_SIGN1=0)
 endif()
 if(COSE_C_USE_CONTEXT)
   add_definitions(-DUSE_CBOR_CONTEXT)
@@ -259,13 +264,13 @@ install(
   RUNTIME DESTINATION bin)
 
 ###############################################################################
-# PRINT CONFIG 
+# PRINT CONFIG
 ###############################################################################
 
 message(STATUS "include_encrypt:.....................${include_encrypt}")
 message(STATUS "include_encrypt0:....................${include_encrypt0}")
-message(STATUS "include_mac0:........................${include_mac0}")
 message(STATUS "include_mac:.........................${include_mac}")
+message(STATUS "include_mac0:........................${include_mac0}")
 message(STATUS "include_sign:........................${include_sign}")
 message(STATUS "include_sign1:.......................${include_sign1}")
 message(STATUS "COSE_C_USE_CONTEXT:..................${COSE_C_USE_CONTEXT}")
