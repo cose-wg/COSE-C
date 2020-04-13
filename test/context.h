@@ -1,3 +1,4 @@
+#pragma once
 
 #ifdef USE_CBOR_CONTEXT
 
