@@ -39,7 +39,7 @@ jobs:
           cd mbedtls && \
           mkdir build && \
           cd build  && \
-          cmake .. -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=${{matrix.BUILD_SHARED_LIBS}} && \
+          cmake .. -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=ON && \
           cmake --build . && \
           sudo cmake --build . --target install
 
@@ -50,7 +50,7 @@ jobs:
           cd mbedtls && \
           mkdir build && \
           cd build  && \
-          cmake .. -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=${{matrix.BUILD_SHARED_LIBS}} && \
+          cmake .. -DENABLE_PROGRAMS=OFF -DENABLE_TESTING=OFF -DUSE_STATIC_MBEDTLS_LIBRARY=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=ON && \
           cmake --build . && \
           cmake --build . --target install
 

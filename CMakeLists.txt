@@ -102,9 +102,6 @@ else()
   message(FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}")
 endif()
 
-
-
-
 ###############################################################################
 # DOCS
 ###############################################################################
@@ -168,10 +165,10 @@ endif()
 ###############################################################################
 
 set(cose_sources
-    src/crypto.h
-    src/cose_int.h
     include/cose/cose.h
     include/cose/configure.h
+    src/crypto.h
+    src/cose_int.h
     src/Cose.c
     src/MacMessage.c
     src/MacMessage0.c
@@ -265,11 +262,18 @@ install(
 # PRINT CONFIG 
 ###############################################################################
 
-message(STATUS "CMAKE_BUILD_TYPE:....................${CMAKE_BUILD_TYPE}")
-message(STATUS "COSE_VERSION:........................${COSE_VERSION}")
 message(STATUS "include_encrypt:.....................${include_encrypt}")
 message(STATUS "include_encrypt0:....................${include_encrypt0}")
 message(STATUS "include_mac0:........................${include_mac0}")
 message(STATUS "include_mac:.........................${include_mac}")
 message(STATUS "include_sign:........................${include_sign}")
 message(STATUS "include_sign1:.......................${include_sign1}")
+message(STATUS "COSE_C_USE_CONTEXT:..................${COSE_C_USE_CONTEXT}")
+message(STATUS "COSE_C_FATAL_WARNINGS:...............${COSE_C_FATAL_WARNINGS}")
+message(STATUS "COSE_C_BUILD_DOCS:...................${COSE_C_BUILD_DOCS}")
+message(STATUS "COSE_C_BUILD_TESTS:..................${COSE_C_BUILD_TESTS}")
+message(STATUS "COSE_C_USE_MBEDTLS:..................${COSE_C_USE_MBEDTLS}")
+message(STATUS "COSE_C_USE_PROJECT_ADD:..............${COSE_C_USE_PROJECT_ADD}")
+message(STATUS "COSE_C_BUILD_DUMPER:.................${COSE_C_BUILD_DUMPER}")
+message(STATUS "CMAKE_BUILD_TYPE:....................${CMAKE_BUILD_TYPE}")
+message(STATUS "COSE_VERSION:........................${COSE_VERSION}")
