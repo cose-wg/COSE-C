@@ -39,6 +39,11 @@ if (NOT include_sign0)
    set (include_sign1 ${include_sign0})
 endif ()
 
+# Set the output of the libraries and executables.
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+
 set ( dist_dir          ${CMAKE_BINARY_DIR}/dist )
 set ( prefix            ${CMAKE_INSTALL_PREFIX} )
 set ( exec_prefix       ${CMAKE_INSTALL_PREFIX}/bin )
