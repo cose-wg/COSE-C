@@ -1,5 +1,5 @@
-#include "cose.h"
-#include "configure.h"
+#include "cose/cose.h"
+#include "cose/cose_configure.h"
 #include "cose_int.h"
 #include "crypto.h"
 

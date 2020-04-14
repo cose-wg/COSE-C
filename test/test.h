@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _countof
 
 #define _countof(x) (sizeof(x)/sizeof(x[0]))
@@ -29,10 +31,10 @@ void Recipient_Corners();
 int ValidateSigned(const cn_cbor * pControl);
 int SignMessage();
 int BuildSignedMessage(const cn_cbor * pControl);
-int ValidateSign0(const cn_cbor * pControl);
-int BuildSign0Message(const cn_cbor * pControl);
+int ValidateSign1(const cn_cbor * pControl);
+int BuildSign1Message(const cn_cbor * pControl);
 void Sign_Corners();
-void Sign0_Corners();
+void Sign1_Corners();
 
 
 // mac_testc
@@ -61,7 +63,7 @@ enum {
 	Attributes_Encrypt_protected,
 	Attributes_Sign_protected,
 	Attributes_Signer_protected,
-	Attributes_Sign0_protected,
+	Attributes_Sign1_protected,
 } whichSet;
 
 extern int CFails;

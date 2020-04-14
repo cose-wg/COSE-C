@@ -3,9 +3,9 @@
 #include <memory.h>
 #endif
 
-#include "cose.h"
+#include "cose/cose.h"
 #include "cose_int.h"
-#include "configure.h"
+#include "cose/cose_configure.h"
 #include "crypto.h"
 
 bool IsValidCOSEHandle(HCOSE h)
@@ -174,9 +174,9 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
 #endif
 		break;
 
-	case COSE_sign0_object:
-#if INCLUDE_SIGN0
-		h = (HCOSE)_COSE_Sign0_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+	case COSE_sign1_object:
+#if INCLUDE_SIGN1
+		h = (HCOSE)_COSE_Sign1_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (h == NULL) {
 			goto errorReturn;
 		}

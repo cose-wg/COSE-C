@@ -11,9 +11,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "cose.h"
+#include "cose/cose.h"
 #include "cose_int.h"
-#include "configure.h"
+#include "cose/cose_configure.h"
 #include "crypto.h"
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC

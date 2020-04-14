@@ -2,6 +2,8 @@
 //  Determine which cryptographic library we are going to be using
 //
 
+#pragma once
+
 #if defined(USE_MBED_TLS)
 #if defined(USE_OPEN_SSL) || defined(USE_BCRYPT)
 #error Only Define One Crypto Package
@@ -153,6 +155,6 @@
 #ifndef INCLUDE_SIGN
 #define INCLUDE_SIGN 1
 #endif
-#ifndef INCLUDE_SIGN0
-#define INCLUDE_SIGN0 1
+#ifndef INCLUDE_SIGN1
+#define INCLUDE_SIGN1 1
 #endif

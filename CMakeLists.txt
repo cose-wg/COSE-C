@@ -14,7 +14,7 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 project ("cose-c" VERSION "${COSE_VERSION}")
 
 find_package(Doxygen)
-find_package(OpenSSL 1.0 REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 ### setup options
 option (use_context	"Use context pointer for COSE functions" ON)
@@ -24,6 +24,7 @@ option (fatal_warnings  "Treat build warnings as error" OFF)
 option (coveralls       "Generate coveralls data" ON)
 option ( coveralls_send "Send data to coveralls site" OFF )
 option (build_docs      "Create docs using Doxygen" ${DOXYGEN_FOUND} )
+option (build_tests      "build tests" ON )
 option (build_shared_libs "Build Shared Libraries" ON)
 option (use_embedtls    "Use MBedTLS for the Crypto Package" OFF)
 option (include_encrypt  "Include COSE_ENCRYPT" ON)
@@ -31,7 +32,13 @@ option (include_encrypt0 "Include COSE_ENCRYPT0" ON)
 option (include_mac      "Include COSE_MAC" ON)
 option (include_mac0     "Include COSE_MAC0" ON)
 option (include_sign     "Include COSE_SIGN" ON)
-option (include_sign0    "Include COSE_SIGN0" ON)
+option (include_sign1    "Include COSE_SIGN1" ON)
+option (include_sign0    "Include COSE_SIGN1" ON)
+
+if (NOT include_sign0)
+   message ( "Use include_sign1 rather than include_sign0" )
+   set (include_sign1 ${include_sign0})
+endif ()
 
 set ( dist_dir          ${CMAKE_BINARY_DIR}/dist )
 set ( prefix            ${CMAKE_INSTALL_PREFIX} )
@@ -65,8 +72,8 @@ endif ()
 if (NOT include_sign)
    add_definitions( -DINCLUDE_SIGN=0 )
 endif ()
-if (NOT include_sign0)
-   add_definitions( -DINCLUDE_SIGN0=0 )
+if (NOT include_sign1)
+   add_definitions( -DINCLUDE_SIGN1=0 )
 endif ()
 
 if ( MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang" )
@@ -105,7 +112,6 @@ if (versbose)
    set (CMAKE_VERBOSE_MAKEFILE ON)
 endif ()
 
-include (CTest)
 
 ##  try for documentation
 if (build_docs)
@@ -131,8 +137,8 @@ Include(ExternalProject)
 ExternalProject_Add(
   project_cn-cbor
   GIT_REPOSITORY https://github.com/jimsch/cn-cbor
-  GIT_TAG complete
-  CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -Dbuild_shared_libs=${build_shared_libs} -Dfatal_warnings=OFF
+  GIT_TAG master
+  CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DBUILD_SHARED_LIBS=${build_shared_libs} -Dfatal_warnings=OFF
   INSTALL_DIR "${dist_dir}"
   UPDATE_DISCONNECTED 1
 )
@@ -175,6 +181,9 @@ endif ()
 ## include the parts
 add_subdirectory(src)
 add_subdirectory(include)
-add_subdirectory(test)
 add_subdirectory(dumper)
 
+if(build_tests)
+   include (CTest)
+   add_subdirectory(test)
+endif()
