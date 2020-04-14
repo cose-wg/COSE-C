@@ -25,6 +25,7 @@ option (COSE_C_BUILD_TESTS      "build tests" ON )
 option (COSE_C_BUILD_DUMPER      "build dumper" ON )
 option (BUILD_SHARED_LIBS "Build Shared Libraries" ON)
 option (COSE_C_USE_MBEDTLS    "Use MBedTLS for the Crypto Package" OFF)
+option(COSE_C_USE_FIND_PACKAGE "Use cmake find_package instead of using cmake project_add" OFF)
 option (include_encrypt  "Include COSE_ENCRYPT" ON)
 option (include_encrypt0 "Include COSE_ENCRYPT0" ON)
 option (include_mac      "Include COSE_MAC" ON)
@@ -134,50 +135,60 @@ if (COSE_C_BUILD_DOCS)
    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION share/doc)
 endif()
 
-Include(ExternalProject)
-ExternalProject_Add(
-  project_cn-cbor
-  GIT_REPOSITORY https://github.com/jimsch/cn-cbor
-  GIT_TAG master
-  CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF
-  INSTALL_DIR "${dist_dir}"
-  UPDATE_DISCONNECTED 1
-)
+if(COSE_C_USE_FIND_PACKAGE)
+   find_package(cn-cbor REQUIRED)
+else()
+   include(ExternalProject)
+   ExternalProject_Add(
+   project_cn-cbor
+   GIT_REPOSITORY https://github.com/jimsch/cn-cbor
+   GIT_TAG master
+   CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF
+   INSTALL_DIR "${dist_dir}"
+   UPDATE_DISCONNECTED 1
+   )
 
-ExternalProject_Get_Property(project_cn-cbor install_dir)
-include_directories ( "${install_dir}/include" )
+   ExternalProject_Get_Property(project_cn-cbor install_dir)
+   include_directories ( "${install_dir}/include" )
 
-if (MSVC)
-   add_library (cn-cbor STATIC IMPORTED)
-   set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
-else ()
-   add_library (cn-cbor STATIC IMPORTED)
-   set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
-endif ()
+   if (MSVC)
+      add_library (cn-cbor STATIC IMPORTED)
+      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
+   else ()
+      add_library (cn-cbor STATIC IMPORTED)
+      set_property (TARGET cn-cbor PROPERTY IMPORTED_LOCATION "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
+   endif ()
 
-add_dependencies(cn-cbor project_cn-cbor)
+   add_dependencies(cn-cbor project_cn-cbor)
+endif()
 
 if (COSE_C_USE_MBEDTLS)
    add_definitions( -DUSE_MBED_TLS )
-   ExternalProject_Add(
-     project_mbedtls
-     GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-     CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
-     INTALL_DIR "${dist_dir}"
-     UPDATE_DISCONNECTED 1
-   )
 
-   ExternalProject_Get_Property(project_mbedtls install_dir)
-   include_directories( "${install_dir}/include" )
-   add_library( mbedtls STATIC IMPORTED)
-   if (MSVC)
-      set_property (TARGET mbedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto.lib")
-   else ()
-      set_property (TARGET mbedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
-   endif ()
-   add_dependencies(mbedtls project_mbedtls)
+   if(COSE_C_USE_FIND_PACKAGE)
+      find_package(MbedTLS REQUIRED)
    else()
-      find_package(OpenSSL REQUIRED)
+      ExternalProject_Add(
+         project_mbedtls
+         GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
+         CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
+         INTALL_DIR "${dist_dir}"
+         UPDATE_DISCONNECTED 1
+      )
+
+      ExternalProject_Get_Property(project_mbedtls install_dir)
+      include_directories( "${install_dir}/include" )
+      add_library( mbedtls STATIC IMPORTED)
+      if (MSVC)
+         set_property (TARGET mbedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto.lib")
+      else ()
+         set_property (TARGET mbedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
+      endif ()
+      add_dependencies(mbedtls project_mbedtls)
+   endif()
+
+else()
+   find_package(OpenSSL REQUIRED)
 endif ()
 
 ## include the parts
@@ -207,6 +218,7 @@ message(STATUS "use_context:.........................${use_context}")
 message(STATUS "COSE_C_BUILD_TESTS:..................${COSE_C_BUILD_TESTS}")
 message(STATUS "COSE_C_BUILD_DOCS:...................${COSE_C_BUILD_DOCS}")
 message(STATUS "COSE_C_USE_MBEDTLS:..................${COSE_C_USE_MBEDTLS}")
+message(STATUS "COSE_C_USE_FIND_PACKAGE:.............${COSE_C_USE_FIND_PACKAGE}")
 message(STATUS "COSE_C_BUILD_DUMPER:.................${COSE_C_BUILD_DUMPER}")
 message(STATUS "CMAKE_BUILD_TYPE:....................${CMAKE_BUILD_TYPE}")
 message(STATUS "BUILD_SHARED_LIBS:...................${BUILD_SHARED_LIBS}")
