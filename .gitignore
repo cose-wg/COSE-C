@@ -59,10 +59,11 @@ build
 *.VC.db
 *.VC.opendb
 .vs
+.vscode
 
 # CMake and CTest directories
 project_cn-cbor-prefix
-project_embedtls-prefix
+project_mbedtls-prefix
 Testing
 dist
 test/test.cbor
