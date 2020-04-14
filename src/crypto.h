@@ -1,3 +1,5 @@
+#pragma once
+
 /**
 * Perform an AES-CCM Decryption operation
 *

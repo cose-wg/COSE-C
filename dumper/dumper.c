@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
-#include <cose.h>
+#include <cose/cose.h>
 #include <sys/stat.h>
 #include <cn-cbor/cn-cbor.h>
 #include <fcntl.h>
