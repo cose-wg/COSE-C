@@ -8,18 +8,23 @@ else ()
   set (cose_crypto openssl.c)
 endif()
 
-set ( cose_sources 
-	Cose.c
-	MacMessage.c
-        MacMessage0.c
-	Sign.c
-        Sign1.c
-	cbor.c
-	Encrypt.c
-        Encrypt0.c
-	Recipient.c
-	SignerInfo.c
-        ${cose_crypto}
+set(cose_sources
+  ${CMAKE_CURRENT_LIST_DIR}/../include/cose/cose.h
+  ${CMAKE_CURRENT_LIST_DIR}/../include/cose/configure.h
+  crypto.h
+  cose_int.h
+  crypto.h
+  Cose.c
+  MacMessage.c
+  MacMessage0.c
+  Sign.c
+  Sign1.c
+  cbor.c
+  Encrypt.c
+  Encrypt0.c
+  Recipient.c
+  SignerInfo.c
+  ${cose_crypto}
 )
 
 
