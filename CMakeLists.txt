@@ -13,9 +13,6 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 
 project ("cose-c" VERSION "${COSE_VERSION}")
 
-find_package(Doxygen)
-find_package(OpenSSL REQUIRED)
-
 ### setup options
 option (use_context	"Use context pointer for COSE functions" ON)
 option (verbose         "Produce verbose makefile output" OFF)
@@ -23,10 +20,11 @@ option (optimize        "Optimize for size" OFF)
 option (fatal_warnings  "Treat build warnings as error" OFF)
 option (coveralls       "Generate coveralls data" ON)
 option ( coveralls_send "Send data to coveralls site" OFF )
-option (build_docs      "Create docs using Doxygen" ${DOXYGEN_FOUND} )
-option (build_tests      "build tests" ON )
-option (build_shared_libs "Build Shared Libraries" ON)
-option (use_embedtls    "Use MBedTLS for the Crypto Package" OFF)
+option (COSE_C_BUILD_DOCS      "Create docs using Doxygen" OFF )
+option (COSE_C_BUILD_TESTS      "build tests" ON )
+option (COSE_C_BUILD_DUMPER      "build dumper" ON )
+option (BUILD_SHARED_LIBS "Build Shared Libraries" ON)
+option (COSE_C_USE_MBEDTLS    "Use MBedTLS for the Crypto Package" OFF)
 option (include_encrypt  "Include COSE_ENCRYPT" ON)
 option (include_encrypt0 "Include COSE_ENCRYPT0" ON)
 option (include_mac      "Include COSE_MAC" ON)
@@ -104,17 +102,20 @@ else ()
 endif ()
 
 set (LIB_TYPE STATIC)
-if (build_shared_libs)
+if (BUILD_SHARED_LIBS)
    set (LIB_TYPE SHARED)
-endif (build_shared_libs)
+endif (BUILD_SHARED_LIBS)
 
 if (versbose)
    set (CMAKE_VERBOSE_MAKEFILE ON)
 endif ()
 
+###############################################################################
+# DOCS
+###############################################################################
 
-##  try for documentation
-if (build_docs)
+if (COSE_C_BUILD_DOCS)
+   find_package(Doxygen)
    if (NOT DOXYGEN_FOUND)
         message(FATAL_ERROR "Doxygen is needed to build the documenation")
    endif()
@@ -138,7 +139,7 @@ ExternalProject_Add(
   project_cn-cbor
   GIT_REPOSITORY https://github.com/jimsch/cn-cbor
   GIT_TAG master
-  CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DBUILD_SHARED_LIBS=${build_shared_libs} -Dfatal_warnings=OFF
+  CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF
   INSTALL_DIR "${dist_dir}"
   UPDATE_DISCONNECTED 1
 )
@@ -156,34 +157,57 @@ endif ()
 
 add_dependencies(cn-cbor project_cn-cbor)
 
-if (use_embedtls)
+if (COSE_C_USE_MBEDTLS)
    add_definitions( -DUSE_MBED_TLS )
    ExternalProject_Add(
-     project_embedtls
+     project_mbedtls
      GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-     CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${build_shared_libs} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
+     CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
      INTALL_DIR "${dist_dir}"
      UPDATE_DISCONNECTED 1
    )
 
-   ExternalProject_Get_Property(project_embedtls install_dir)
+   ExternalProject_Get_Property(project_mbedtls install_dir)
    include_directories( "${install_dir}/include" )
-   add_library( embedtls STATIC IMPORTED)
+   add_library( mbedtls STATIC IMPORTED)
    if (MSVC)
-      set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto.lib")
+      set_property (TARGET mbedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto.lib")
    else ()
-      set_property (TARGET embedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
+      set_property (TARGET mbedtls PROPERTY IMPORTED_LOCATION "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
    endif ()
-   add_dependencies(embedtls project_embedtls)
+   add_dependencies(mbedtls project_mbedtls)
+   else()
+      find_package(OpenSSL REQUIRED)
 endif ()
-
 
 ## include the parts
 add_subdirectory(src)
 add_subdirectory(include)
-add_subdirectory(dumper)
 
-if(build_tests)
+if(COSE_C_BUILD_DUMPER)
+   add_subdirectory(dumper)
+endif()
+
+if(COSE_C_BUILD_TESTS)
    include (CTest)
    add_subdirectory(test)
 endif()
+
+###############################################################################
+# PRINT CONFIG 
+###############################################################################
+
+message(STATUS "include_encrypt:.....................${include_encrypt}")
+message(STATUS "include_encrypt0:....................${include_encrypt0}")
+message(STATUS "include_mac:.........................${include_mac}")
+message(STATUS "include_mac0:........................${include_mac0}")
+message(STATUS "include_sign:........................${include_sign}")
+message(STATUS "include_sign1:.......................${include_sign1}")
+message(STATUS "use_context:.........................${use_context}")
+message(STATUS "COSE_C_BUILD_TESTS:..................${COSE_C_BUILD_TESTS}")
+message(STATUS "COSE_C_BUILD_DOCS:...................${COSE_C_BUILD_DOCS}")
+message(STATUS "COSE_C_USE_MBEDTLS:..................${COSE_C_USE_MBEDTLS}")
+message(STATUS "COSE_C_BUILD_DUMPER:.................${COSE_C_BUILD_DUMPER}")
+message(STATUS "CMAKE_BUILD_TYPE:....................${CMAKE_BUILD_TYPE}")
+message(STATUS "BUILD_SHARED_LIBS:...................${BUILD_SHARED_LIBS}")
+message(STATUS "COSE_VERSION:........................${COSE_VERSION}")

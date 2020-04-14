@@ -20,14 +20,14 @@ target_link_libraries( cose_dumper PRIVATE ${OPENSSL_LIBRARIES} )
 target_link_libraries( cose_dumper PRIVATE cn-cbor )
 
 if ( MSVC )
-   message ( "test: ${build_shared_libs}")
+   message ( "test: ${BUILD_SHARED_LIBS}")
    message ( "verbose: ${verbose}")
 
 target_link_libraries( cose_dumper PRIVATE ws2_32 )
 endif ()
-if (use_embedtls)
-    target_include_directories ( cose_dumper PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}embedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include )
-    target_link_libraries ( cose_dumper PRIVATE embedtls )
+if (COSE_C_USE_MBEDTLS)
+    target_include_directories ( cose_dumper PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}mbedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include )
+    target_link_libraries ( cose_dumper PRIVATE mbedtls )
 endif()
 
 target_include_directories ( cose_dumper PRIVATE ../include )
