@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cose/cose.h>
-#include <cose/configure.h>
+#include <cose/cose_configure.h>
 #include <cn-cbor/cn-cbor.h>
 #if (INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC) && (!INCLUDE_MAC || !INCLUDE_SIGN)
 #include <cose_int.h>

@@ -10,7 +10,7 @@ endif()
 
 set(cose_sources
   ${CMAKE_CURRENT_LIST_DIR}/../include/cose/cose.h
-  ${CMAKE_CURRENT_LIST_DIR}/../include/cose/configure.h
+  ${CMAKE_CURRENT_LIST_DIR}/../include/cose/cose_configure.h
   crypto.h
   cose_int.h
   crypto.h

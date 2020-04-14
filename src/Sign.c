@@ -6,7 +6,7 @@
 
 #include "cose/cose.h"
 #include "cose_int.h"
-#include "cose/configure.h"
+#include "cose/cose_configure.h"
 
 #if INCLUDE_SIGN
 
