@@ -1,6 +1,4 @@
-#
-#  compiling/installing sources for COSE-C
-#
+include(GNUInstallDirs)
 
 if (COSE_C_USE_MBEDTLS)
   set (cose_crypto mbedtls.c)
@@ -28,7 +26,7 @@ set(cose_sources
 )
 
 
-if (use_context)
+if (COSE_C_USE_CONTEXT)
     add_definitions(-DUSE_CBOR_CONTEXT)
 endif()
 
@@ -54,9 +52,15 @@ install ( TARGETS cose-c
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
 	RUNTIME DESTINATION bin)
+install(
+  DIRECTORY ../include
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT dev
+  FILES_MATCHING
+  PATTERN "*.h")
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-if (coveralls)
+if (COSE_C_COVERALLS)
     include(Coveralls)
     coveralls_turn_on_coverage()
 
@@ -69,6 +73,6 @@ if (coveralls)
     # Create the coveralls target.
     coveralls_setup(
     	"${COVERAGE_SRCS}"
-  	${coveralls_send}	# If we should upload
+  	${COSE_C_COVERALLS_SEND}	# If we should upload
     )
 endif()

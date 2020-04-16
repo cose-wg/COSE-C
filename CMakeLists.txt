@@ -1,8 +1,3 @@
-#
-#  top level build file for COSE-C
-#
-
-## prepare CMAKE
 cmake_minimum_required( VERSION 3.0.0)
 
 set (VERSION_MAJOR 0 CACHE STRING "Project major version number")
@@ -13,30 +8,33 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH COSE_VERSION)
 
 project ("cose-c" VERSION "${COSE_VERSION}")
 
-### setup options
-option (use_context	"Use context pointer for COSE functions" ON)
-option (verbose         "Produce verbose makefile output" OFF)
-option (optimize        "Optimize for size" OFF)
-option (fatal_warnings  "Treat build warnings as error" OFF)
-option (coveralls       "Generate coveralls data" ON)
-option ( coveralls_send "Send data to coveralls site" OFF )
-option (COSE_C_BUILD_DOCS      "Create docs using Doxygen" OFF )
-option (COSE_C_BUILD_TESTS      "build tests" ON )
-option (COSE_C_BUILD_DUMPER      "build dumper" ON )
-option (BUILD_SHARED_LIBS "Build Shared Libraries" ON)
-option (COSE_C_USE_MBEDTLS    "Use MBedTLS for the Crypto Package" OFF)
-option(COSE_C_USE_FIND_PACKAGE "Use cmake find_package instead of using cmake project_add" OFF)
-option (include_encrypt  "Include COSE_ENCRYPT" ON)
-option (include_encrypt0 "Include COSE_ENCRYPT0" ON)
-option (include_mac      "Include COSE_MAC" ON)
-option (include_mac0     "Include COSE_MAC0" ON)
-option (include_sign     "Include COSE_SIGN" ON)
-option (include_sign1    "Include COSE_SIGN1" ON)
-option (include_sign0    "Include COSE_SIGN1" ON)
+###############################################################################
+# OPTIONS
+###############################################################################
 
-if (NOT include_sign0)
-   message ( "Use include_sign1 rather than include_sign0" )
-   set (include_sign1 ${include_sign0})
+option (COSE_C_USE_CONTEXT	         "Use context pointer for COSE functions" ON)
+option (COSE_C_VERBOSE              "Produce COSE_C_VERBOSE makefile output" OFF)
+option (COSE_C_OPTIMIZE             "Optimize for size" OFF)
+option (COSE_C_FATAL_WARNINGS       "Treat build warnings as error" OFF)
+option (COSE_C_COVERALLS            "Generate coveralls data" ON)
+option (COSE_C_COVERALLS_SEND       "Send data to coveralls site" OFF )
+option (COSE_C_BUILD_DOCS           "Create docs using Doxygen" OFF )
+option (COSE_C_BUILD_TESTS          "build tests" ON )
+option (COSE_C_BUILD_DUMPER         "build dumper" ON )
+option (BUILD_SHARED_LIBS           "Build Shared Libraries" ON)
+option (COSE_C_USE_MBEDTLS          "Use MBedTLS for the Crypto Package" OFF)
+option (COSE_C_USE_FIND_PACKAGE     "Use cmake find_package instead of using cmake project_add" OFF)
+option (COSE_C_INCLUDE_ENCRYPT      "Include COSE_ENCRYPT" ON)
+option (COSE_C_INCLUDE_ENCRYPT0     "Include COSE_ENCRYPT0" ON)
+option (COSE_C_INCLUDE_MAC          "Include COSE_MAC" ON)
+option (COSE_C_INCLUDE_MAC0         "Include COSE_MAC0" ON)
+option (COSE_C_INCLUDE_SIGN         "Include COSE_SIGN" ON)
+option (COSE_C_INCLUDE_SIGN0        "Include COSE_SIGN0" ON)
+option (COSE_C_INCLUDE_SIGN1        "Include COSE_SIGN1" ON)
+
+if (NOT COSE_C_INCLUDE_SIGN0)
+   message ( "Use COSE_C_INCLUDE_SIGN1 rather than COSE_C_INCLUDE_SIGN0" )
+   set (COSE_C_INCLUDE_SIGN1 ${COSE_C_INCLUDE_SIGN0})
 endif ()
 
 # Set the output of the libraries and executables.
@@ -52,36 +50,36 @@ set ( includedir        ${CMAKE_INSTALL_PREFIX}/include )
 
 
 if (NOT CMAKE_BUILD_TYPE)
-   if (optimize)
+   if (COSE_C_OPTIMIZE)
       set ( CMAKE_BUILD_TYPE MinSizeRel )
-      set ( coveralls OFF )
-      set ( coveralls_send OFF )
+      set ( COSE_C_COVERALLS OFF )
+      set ( COSE_C_COVERALLS_SEND OFF )
    else ()
       set ( CMAKE_BUILD_TYPE Debug)
    endif ()
 endif ()
 
-if (NOT include_encrypt)
+if (NOT COSE_C_INCLUDE_ENCRYPT)
    add_definitions( -DINCLUDE_ENCRYPT=0 )
 endif ()
-if (NOT include_encrypt0)
+if (NOT COSE_C_INCLUDE_ENCRYPT0)
    add_definitions( -DINCLUDE_ENCRYPT0=0 )
 endif ()
-if (NOT include_mac)
+if (NOT COSE_C_INCLUDE_MAC)
    add_definitions( -DINCLUDE_MAC=0 )
 endif ()
-if (NOT include_mac0)
+if (NOT COSE_C_INCLUDE_MAC0)
    add_definitions( -DINCLUDE_MAC0=0 )
 endif ()
-if (NOT include_sign)
-   add_definitions( -DINCLUDE_SIGN=0 )
+if (NOT COSE_C_INCLUDE_SIGN)
+   add_definitions( -DCOSE_C_INCLUDE_SIGN=0 )
 endif ()
-if (NOT include_sign1)
-   add_definitions( -DINCLUDE_SIGN1=0 )
+if (NOT COSE_C_INCLUDE_SIGN1)
+   add_definitions( -DCOSE_C_INCLUDE_SIGN1=0 )
 endif ()
 
 if ( MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang" )
-   set (coveralls OFF)
+   set (COSE_C_COVERALLS OFF)
 endif ()
 
 message ( "Build type: ${CMAKE_BUILD_TYPE}" )
@@ -91,16 +89,16 @@ if ( CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
      CMAKE_C_COMPILER_ID MATCHES "Clang")
    message ( STATUS "adding GCC/Clang options ")
    add_definitions( -std=gnu99 -Wall -Wextra -pedantic )
-   if ( fatal_warnings )
+   if ( COSE_C_FATAL_WARNINGS )
       add_definitions( -Werror )
    endif ()
-   if (optimize) 
+   if (COSE_C_OPTIMIZE) 
       add_definitions( -Os )
    endif ()
    add_definitions( -DNDEBUG )
 elseif (MSVC)
    add_definitions ( /W4 )
-   if (fatal_warnings)
+   if (COSE_C_FATAL_WARNINGS)
       add_definitions( /WX )
    endif ()
 else ()
@@ -140,6 +138,10 @@ if (COSE_C_BUILD_DOCS)
    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION share/doc)
 endif()
 
+###############################################################################
+# DEPENDENCIES
+###############################################################################
+
 if(COSE_C_USE_FIND_PACKAGE)
    find_package(cn-cbor REQUIRED)
 else()
@@ -148,7 +150,7 @@ else()
    project_cn-cbor
    GIT_REPOSITORY https://github.com/jimsch/cn-cbor
    GIT_TAG master
-   CMAKE_ARGS -Doptimize=OFF -Duse_context=${use_context} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF
+   CMAKE_ARGS -Doptimize=OFF -Duse_context=${COSE_C_USE_CONTEXT} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCOSE_C_COVERALLS=OFF -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF
    INSTALL_DIR "${dist_dir}"
    UPDATE_DISCONNECTED 1
    )
@@ -176,7 +178,7 @@ if (COSE_C_USE_MBEDTLS)
       ExternalProject_Add(
          project_mbedtls
          GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-         CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
+         CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCOSE_C_COVERALLS=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
          INTALL_DIR "${dist_dir}"
          UPDATE_DISCONNECTED 1
       )
@@ -196,13 +198,23 @@ else()
    find_package(OpenSSL REQUIRED)
 endif ()
 
-## include the parts
+###############################################################################
+# ADD LIBRARY
+###############################################################################
+
 add_subdirectory(src)
-add_subdirectory(include)
+
+###############################################################################
+# ADD DUMPER 
+###############################################################################
 
 if(COSE_C_BUILD_DUMPER)
    add_subdirectory(dumper)
 endif()
+
+###############################################################################
+# ADD TESTS 
+###############################################################################
 
 if(COSE_C_BUILD_TESTS)
    include (CTest)
@@ -213,13 +225,15 @@ endif()
 # PRINT CONFIG 
 ###############################################################################
 
-message(STATUS "include_encrypt:.....................${include_encrypt}")
-message(STATUS "include_encrypt0:....................${include_encrypt0}")
-message(STATUS "include_mac:.........................${include_mac}")
-message(STATUS "include_mac0:........................${include_mac0}")
-message(STATUS "include_sign:........................${include_sign}")
-message(STATUS "include_sign1:.......................${include_sign1}")
-message(STATUS "use_context:.........................${use_context}")
+message(STATUS "COSE_C_INCLUDE_ENCRYPT:..............${COSE_C_INCLUDE_ENCRYPT}")
+message(STATUS "COSE_C_INCLUDE_ENCRYPT0:.............${COSE_C_INCLUDE_ENCRYPT0}")
+message(STATUS "COSE_C_INCLUDE_MAC:..................${COSE_C_INCLUDE_MAC}")
+message(STATUS "COSE_C_INCLUDE_MAC0:.................${COSE_C_INCLUDE_MAC0}")
+message(STATUS "COSE_C_INCLUDE_SIGN:.................${COSE_C_INCLUDE_SIGN}")
+message(STATUS "COSE_C_INCLUDE_SIGN0:................${COSE_C_INCLUDE_SIGN0}")
+message(STATUS "COSE_C_INCLUDE_SIGN1:................${COSE_C_INCLUDE_SIGN1}")
+message(STATUS "COSE_C_USE_CONTEXT:..................${COSE_C_USE_CONTEXT}")
+message(STATUS "COSE_C_FATAL_WARNINGS:...............${COSE_C_FATAL_WARNINGS}")
 message(STATUS "COSE_C_BUILD_TESTS:..................${COSE_C_BUILD_TESTS}")
 message(STATUS "COSE_C_BUILD_DOCS:...................${COSE_C_BUILD_DOCS}")
 message(STATUS "COSE_C_USE_MBEDTLS:..................${COSE_C_USE_MBEDTLS}")
@@ -228,3 +242,5 @@ message(STATUS "COSE_C_BUILD_DUMPER:.................${COSE_C_BUILD_DUMPER}")
 message(STATUS "CMAKE_BUILD_TYPE:....................${CMAKE_BUILD_TYPE}")
 message(STATUS "BUILD_SHARED_LIBS:...................${BUILD_SHARED_LIBS}")
 message(STATUS "COSE_VERSION:........................${COSE_VERSION}")
+
+

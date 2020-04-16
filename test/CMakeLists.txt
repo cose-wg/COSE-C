@@ -2,7 +2,7 @@
 #  Compiling/running tests
 #
 
-if (use_context)
+if (COSE_C_USE_CONTEXT)
    add_definitions(-DUSE_CBOR_CONTEXT)
 endif()
 

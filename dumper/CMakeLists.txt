@@ -2,7 +2,7 @@
 #  Compiling/running tests
 #
 
-if (use_context)
+if (COSE_C_USE_CONTEXT)
    add_definitions(-DUSE_CBOR_CONTEXT)
 endif()
 
@@ -21,7 +21,7 @@ target_link_libraries( cose_dumper PRIVATE cn-cbor )
 
 if ( MSVC )
    message ( "test: ${BUILD_SHARED_LIBS}")
-   message ( "verbose: ${verbose}")
+   message ( "COSE_C_VERBOSE: ${COSE_C_VERBOSE}")
 
 target_link_libraries( cose_dumper PRIVATE ws2_32 )
 endif ()
