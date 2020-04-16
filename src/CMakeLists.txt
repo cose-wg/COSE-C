@@ -1,4 +1,3 @@
-include(GNUInstallDirs)
 
 if (COSE_C_USE_MBEDTLS)
   set (cose_crypto mbedtls.c)
@@ -48,18 +47,6 @@ if ( MSVC )
     target_link_libraries( cose-c PRIVATE ws2_32 )
 endif ()
 
-install ( TARGETS cose-c
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
-	RUNTIME DESTINATION bin)
-install(
-  DIRECTORY ../include
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  COMPONENT dev
-  FILES_MATCHING
-  PATTERN "*.h")
-
-set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 if (COSE_C_COVERALLS)
     include(Coveralls)
     coveralls_turn_on_coverage()
@@ -76,3 +63,22 @@ if (COSE_C_COVERALLS)
   	${COSE_C_COVERALLS_SEND}	# If we should upload
     )
 endif()
+
+
+###############################################################################
+# INSTALL LIBRARY
+###############################################################################
+
+include(GNUInstallDirs)
+
+install ( TARGETS cose-c
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin)
+install(
+  DIRECTORY ../include
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT dev
+  FILES_MATCHING
+  PATTERN "*.h")
+

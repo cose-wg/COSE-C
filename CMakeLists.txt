@@ -72,10 +72,10 @@ if (NOT COSE_C_INCLUDE_MAC0)
    add_definitions( -DINCLUDE_MAC0=0 )
 endif ()
 if (NOT COSE_C_INCLUDE_SIGN)
-   add_definitions( -DCOSE_C_INCLUDE_SIGN=0 )
+   add_definitions( -DINCLUDE_SIGN=0 )
 endif ()
 if (NOT COSE_C_INCLUDE_SIGN1)
-   add_definitions( -DCOSE_C_INCLUDE_SIGN1=0 )
+   add_definitions( -DINCLUDE_SIGN1=0 )
 endif ()
 
 if ( MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang" )
@@ -150,7 +150,7 @@ else()
    project_cn-cbor
    GIT_REPOSITORY https://github.com/jimsch/cn-cbor
    GIT_TAG master
-   CMAKE_ARGS -Doptimize=OFF -Duse_context=${COSE_C_USE_CONTEXT} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCOSE_C_COVERALLS=OFF -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF
+   CMAKE_ARGS -Doptimize=OFF -Duse_context=${COSE_C_USE_CONTEXT} -Dbuild_docs=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF
    INSTALL_DIR "${dist_dir}"
    UPDATE_DISCONNECTED 1
    )
@@ -178,7 +178,7 @@ if (COSE_C_USE_MBEDTLS)
       ExternalProject_Add(
          project_mbedtls
          GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-         CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCOSE_C_COVERALLS=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
+         CMAKE_ARGS -DENABLED_PROGRAMS=OFF -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -Dcoveralls=OFF -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS} -Dfatal_warnings=OFF -DENABLE_TESTING=OFF -DLIB_INSTALL_DIR=${install_dir}/lib
          INTALL_DIR "${dist_dir}"
          UPDATE_DISCONNECTED 1
       )
