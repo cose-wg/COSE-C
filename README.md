@@ -22,6 +22,8 @@ The project is setup to use two different cryptographic
 
 Go ahead, file issues, make pull requests.
 
+before committing changes, run `./scripts/format_code.sh`
+
 ## Building
 
 The project is setup to build using *CMake.*  The way that the CMake files are setup, it requires that version 3.0 or higher is used.

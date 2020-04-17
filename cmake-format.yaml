@@ -1,5 +1,10 @@
 # https://github.com/cheshirekow/cmake_format
 
+# usage:
+
+# pip install cmake_format --upgrade
+# ./scripts/format_cmake.sh
+
 # How wide to allow formatted cmake files
 line_width: 120
 
