@@ -1,40 +1,20 @@
-#
-#  Compiling/running tests
-#
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/dumper)
 
-if (use_context)
-   add_definitions(-DUSE_CBOR_CONTEXT)
+add_executable(cose_dumper dumper.c)
+target_link_libraries(cose_dumper PRIVATE cn-cbor::cn-cbor cose-c::cose-c)
+if(MSVC)
+  target_link_libraries(cose_dumper PRIVATE ws2_32)
 endif()
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/dumper )
-
-add_executable ( cose_dumper dumper.c )
-
-target_link_libraries (cose_dumper PRIVATE cose-c )
-
-## OpenSSL
-
-target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
-#target_link_libraries( cose_dumper PRIVATE event_openssl)
-target_link_libraries( cose_dumper PRIVATE ${OPENSSL_LIBRARIES} )
-target_link_libraries( cose_dumper PRIVATE cn-cbor )
-
-if ( MSVC )
-   message ( "test: ${BUILD_SHARED_LIBS}")
-   message ( "verbose: ${verbose}")
-
-target_link_libraries( cose_dumper PRIVATE ws2_32 )
-endif ()
-if (COSE_C_USE_MBEDTLS)
-    target_include_directories ( cose_dumper PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}mbedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include )
-    target_link_libraries ( cose_dumper PRIVATE mbedtls )
+if(COSE_C_USE_MBEDTLS)
+  # mbedtls
+  target_include_directories(cose_dumper
+                             PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}mbedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include)
+  target_link_libraries(cose_dumper PRIVATE mbedtls)
+else()
+  # openssl
+  target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
+  target_link_libraries(cose_dumper PRIVATE ${OPENSSL_LIBRARIES})
 endif()
 
-target_include_directories ( cose_dumper PRIVATE ../include )
-target_include_directories ( cose_dumper PRIVATE ../src )
-target_include_directories ( cose_dumper PUBLIC ../../cose/cn-cbor/include )
-target_include_directories ( cose_dumper PUBLIC ../../cn-cbor/implement/cn-cbor/include )
-
-enable_testing()
-# add_test ( NAME cose_dumper COMMAND cose_dumper )
-
+# target_include_directories(cose_dumper PRIVATE ../src)

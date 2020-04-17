@@ -1,0 +1,19 @@
+# conan usage:
+
+# pip install conan --upgrade
+# rm -rf build
+# mkdir build
+# cd build
+# conan install ..
+# cmake .. -DCOSE_C_USE_FIND_PACKAGE=OFF
+# cmake --build .
+
+[requires]
+mbedtls/2.16.3-gpl
+cn-cbor/1.0.0
+
+[generators]
+cmake_find_package
+cmake_paths
+
+[options]
