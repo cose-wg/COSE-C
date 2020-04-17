@@ -249,3 +249,37 @@ void build_decoding_table() {
 void base64_cleanup() {
 	free(decoding_table);
 }
+
+unsigned char* hex_decode(const char* data,
+	size_t input_length,
+	size_t* output_length) {
+
+    if (input_length % 2 != 0) {
+		return NULL;
+	}
+
+	*output_length = input_length / 2;
+
+	unsigned char* decoded_data = malloc(*output_length);
+	if (decoded_data == NULL) {
+		return NULL;
+	}
+
+	for (unsigned int i = 0, j = 0; i < input_length; i++) {
+		int c;
+
+		if ('0' <= data[i] && data[i] <= '9') c = data[i] - '0';
+		else if ('A' <= data[i] && data[i] <= 'F') c = data[i] - 'A' + 10;
+		else if ('a' <= data[i] && data[i] <= 'f') c = data[i] - 'a' + 10;
+		else return NULL;
+
+		if ((i & 0x1) == 0) {
+			decoded_data[j] = ((byte) c << 4);
+		}
+		else {
+			decoded_data[j++] |= (byte)c;
+		}
+	}
+
+	return decoded_data;
+}

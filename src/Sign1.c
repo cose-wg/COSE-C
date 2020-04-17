@@ -369,6 +369,13 @@ bool _COSE_Signer0_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_
 		f = ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE+1, pKey, 512, pbToSign, cbToSign, perr);
 		break;
 #endif
+
+#ifdef USE_EDDSA
+	case COSE_Algorithm_EdDSA:
+		f = EdDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE + 1, pKey, pbToSign, cbToSign, perr);
+		break;
+#endif
+
 	default:
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
@@ -426,6 +433,12 @@ bool _COSE_Signer0_validate(COSE_Sign1Message * pSign, const cn_cbor * pKey, cos
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
 		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 512, pbToSign, cbToSign, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_EDDSA
+	case COSE_Algorithm_EdDSA:
+		if (!EdDSA_Verify(&pSign->m_message, INDEX_SIGNATURE + 1, pKey, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 

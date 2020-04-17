@@ -46,6 +46,7 @@ add_test ( NAME encrypted WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_tes
 add_test ( NAME cbc-mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/cbc-mac-examples )
 
 add_test ( NAME ecdsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/ecdsa-examples )
+add_test ( NAME eddsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/eddsa-examples )
 
 add_test ( NAME hmac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/hmac-examples )
 add_test ( NAME mac WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --dir Examples/mac-tests )
@@ -77,4 +78,7 @@ add_test (NAME Memory-aes-kw WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_
 
 add_test (NAME Memory-sign0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-sig-01.json )
 add_test (NAME Memory-sign WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-01.json )
+
+add_test (NAME Memory-sign0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/eddsa-examples/eddsa-sig-01.json )
+add_test (NAME Memory-sign WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/eddsa-examples/eddsa-01.json )
 

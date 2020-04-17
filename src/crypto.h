@@ -67,6 +67,9 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitsDige
 
 bool ECDH_ComputeSecret(COSE * pReciient, cn_cbor ** ppKeyMe, const cn_cbor * pKeyYou, byte ** ppbSecret, size_t * pcbSecret, CBOR_CONTEXT_COMMA cose_errback *perr);
 
+bool EdDSA_Sign(COSE* pSigner, int index, const cn_cbor* pKey, const byte* rgbToSign, size_t cbToSign, cose_errback* perr);
+bool EdDSA_Verify(COSE* pSigner, int index, const cn_cbor* pKey, const byte* rgbToSign, size_t cbToSign, cose_errback* perr);
+
 /**
 *  Generate random bytes in a buffer
 *
