@@ -112,11 +112,6 @@ else()
   message(FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}")
 endif()
 
-set(LIB_TYPE STATIC)
-if(BUILD_SHARED_LIBS)
-  set(LIB_TYPE SHARED)
-endif(BUILD_SHARED_LIBS)
-
 if(versbose)
   set(CMAKE_VERBOSE_MAKEFILE ON)
 endif()

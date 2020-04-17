@@ -1,4 +1,4 @@
-add_library(${PROJECT_NAME} ${LIB_TYPE})
+add_library(${PROJECT_NAME})
 
 if(COSE_C_USE_MBEDTLS)
   set(cose_crypto mbedtls.c)
@@ -34,8 +34,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE cn-cbor::cn-cbor)
 # target_include_directories(${PROJECT_NAME} PUBLIC ${dist_dir}/include)
 
 if(COSE_C_USE_MBEDTLS)
-  target_include_directories(${PROJECT_NAME}
-                             PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}mbedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include)
+  # target_include_directories(${PROJECT_NAME}
+                            #  PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}mbedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include)
   target_link_libraries(${PROJECT_NAME} PRIVATE mbedtls)
 else()
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
