@@ -76,9 +76,9 @@ add_test (NAME Memory-enveloped WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND co
 add_test (NAME Memory-ecdh WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdh-direct-examples/p256-hkdf-256-01.json )
 add_test (NAME Memory-aes-kw WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/aes-wrap-examples/aes-wrap-128-01.json )
 
-add_test (NAME Memory-sign0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-sig-01.json )
-add_test (NAME Memory-sign WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-01.json )
+add_test (NAME Memory-sign0-ecdsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-sig-01.json )
+add_test (NAME Memory-sign-ecdsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-01.json )
 
-add_test (NAME Memory-sign0 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/eddsa-examples/eddsa-sig-01.json )
-add_test (NAME Memory-sign WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/eddsa-examples/eddsa-01.json )
+add_test (NAME Memory-sign0-eddsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/eddsa-examples/eddsa-sig-01.json )
+add_test (NAME Memory-sign-eddsa WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND cose_test --memory Examples/eddsa-examples/eddsa-01.json )
 

@@ -131,7 +131,10 @@
 #define USE_ECDSA_SHA_256
 #define USE_ECDSA_SHA_384
 #define USE_ECDSA_SHA_512
+#if !defined(USE_MBED_TLS)
+//  MBEDTLS currently supports ECDH for X25519 but not EdDSA
 #define USE_EDDSA
+#endif // !defined (USE_MBED_TLS)
 
 
 //#define USE_COUNTER_SIGNATURES
