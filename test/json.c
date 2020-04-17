@@ -274,10 +274,10 @@ unsigned char* hex_decode(const char* data,
 		else return NULL;
 
 		if ((i & 0x1) == 0) {
-			decoded_data[j] = ((byte) c << 4);
+			decoded_data[j] = ((unsigned char) c << 4);
 		}
 		else {
-			decoded_data[j++] |= (byte)c;
+			decoded_data[j++] |= (unsigned char)c;
 		}
 	}
 
