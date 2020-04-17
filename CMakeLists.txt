@@ -158,13 +158,13 @@ else()
     project_cn-cbor
     GIT_REPOSITORY https://github.com/jimsch/cn-cbor
     GIT_TAG master
-    CMAKE_ARGS -Doptimize=OFF
-               -Duse_context=${COSE_C_USE_CONTEXT}
-               -Dbuild_docs=OFF
+    CMAKE_ARGS -DCN_CBOR_OPTIMIZE=OFF
+               -DCN_CBOR_USE_CONTEXT=${COSE_C_USE_CONTEXT}
+               -DCN_CBOR_BUILD_DOCS=OFF
                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-               -Dcoveralls=OFF
+               -DCN_CBOR_COVERALLS=OFF
                -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-               -Dfatal_warnings=OFF
+               -DCN_CBOR_FATAL_WARNINGS=OFF
     INSTALL_DIR "${dist_dir}"
     UPDATE_DISCONNECTED 1)
 
@@ -200,9 +200,7 @@ if(COSE_C_USE_MBEDTLS)
       GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
       CMAKE_ARGS -DENABLED_PROGRAMS=OFF
                  -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-                 -Dcoveralls=OFF
                  -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS}
-                 -Dfatal_warnings=OFF
                  -DENABLE_TESTING=OFF
                  -DLIB_INSTALL_DIR=${install_dir}/lib
                  INTALL_DIR
