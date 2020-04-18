@@ -13,20 +13,50 @@ The project is using the [CN-CBOR](https://github.com/cabo/cn-cbor) project to p
 
 The project is setup to use two different cryptographic
 
-*  Open SSL - This is a reasonable complete implementation
-
-*  MbedTLS - Not all cryptographic primitives have been linked between COSE and the library yet.
-
+* OpenSSL - This is a reasonable complete implementation
+* MbedTLS - Not all cryptographic primitives have been linked between COSE and the library yet.
 
 ## Contributing
 
 Go ahead, file issues, make pull requests.
 
+before committing changes, run `./scripts/format_code.sh`
+
 ## Building
 
 The project is setup to build using *CMake.*  The way that the CMake files are setup, it requires that version 3.0 or higher is used.
 
-The project requires the use of cn-cbor(https://github.com/jimsch/cn-cbor) in order to build.  While this is based on the original version at (https://github.com/cabo/cn-cbor) there have been several updates to this version which have not been reflected in the base library. The CMake configuration files will automatically pull down the correct version when run.
+The project requires the use of cn-cbor(https://github.com/jimsch/cn-cbor) in order to build. While this is based on the original version at (https://github.com/cabo/cn-cbor) there have been several updates to this version which have not been reflected in the base library. The CMake configuration files will automatically pull down the correct version when run.
+
+Building:
+```sh
+mkdir build
+cd build
+cmake ..
+cmake --build .
+# if user wants to install
+sudo cmake --build . --target install
+```
+
+Consuming via cmake find_package (after installation):
+```cmake
+find_package(cose-c REQUIRED)
+add_executable(mytarget main.cpp)
+target_link_libraries(mytarget cose-c::cose-c)
+```
+
+Consuming via cmake add_subdirectory (e.g. as a submodule):
+```cmake
+add_subdirectory(vendor/cose-c)
+add_executable(mytarget main.cpp)
+target_link_libraries(mytarget cose-c::cose-c)
+```
+
+Consuming via conan package: add `cose-c/[>=20200417]` to your conanfile.txt
+```cmake
+add_executable(mytarget main.cpp)
+target_link_libraries(mytarget cose-c::cose-c)
+```
 
 ## Memory Model
 

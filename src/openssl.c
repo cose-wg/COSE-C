@@ -1118,6 +1118,137 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	return true;
 }
 
+
+#ifdef USE_EDDSA
+bool EdDSA_Sign(COSE* pSigner, int index, const cn_cbor* pKeyIn, const byte* rgbToSign, size_t cbToSign, cose_errback* perr)
+{
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context* context = &pSigner->m_allocContext;
+#endif
+	cn_cbor* p;
+	cn_cbor_errback cbor_error;
+	EVP_PKEY_CTX* keyCtx = NULL;
+	EVP_MD_CTX* mdCtx = NULL;
+	EVP_PKEY* pkey = NULL;
+	byte* pbSig = NULL;
+	int cbSig;
+
+	p = cn_cbor_mapget_int(pKeyIn, COSE_Key_OPK_Curve);
+	if (p == NULL) {
+	errorReturn:
+		if (mdCtx != NULL) EVP_MD_CTX_free(mdCtx);
+		if (keyCtx != NULL) EVP_PKEY_CTX_free(keyCtx);
+		if (pkey != NULL) EVP_PKEY_free(pkey);
+		if (pbSig != NULL) COSE_FREE(pbSig, context);
+		return false;
+	}
+
+	int type;
+
+	switch (p->v.uint) {
+	case COSE_Curve_Ed25519:
+		type = EVP_PKEY_ED25519;
+		cbSig = 32 * 2;
+		break;
+
+	case COSE_Curve_Ed448:
+		type = EVP_PKEY_ED448;
+		cbSig = 64 * 2;
+		break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+
+	p = cn_cbor_mapget_int(pKeyIn, COSE_Key_EC_d);
+	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	pkey = EVP_PKEY_new_raw_private_key(type, NULL, p->v.bytes, p->length);
+	CHECK_CONDITION(pkey != NULL, COSE_ERR_CRYPTO_FAIL);
+
+	keyCtx = EVP_PKEY_CTX_new_id(type, NULL);
+	CHECK_CONDITION(keyCtx != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	mdCtx = EVP_MD_CTX_new();
+	CHECK_CONDITION(mdCtx != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(EVP_DigestSignInit(mdCtx, &keyCtx, NULL, NULL, pkey) == 1, COSE_ERR_CRYPTO_FAIL);
+	keyCtx = NULL;
+
+	pbSig = COSE_CALLOC(cbSig, 1, context);
+	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	size_t cb2 = cbSig;
+	CHECK_CONDITION(EVP_DigestSign(mdCtx, pbSig, &cb2, rgbToSign, cbToSign) == 1, COSE_ERR_CRYPTO_FAIL);
+
+	p = cn_cbor_data_create(pbSig, (int)cb2, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
+	pbSig = NULL;
+
+	CHECK_CONDITION(_COSE_array_replace(pSigner, p, index, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR);
+
+	if (mdCtx != NULL) EVP_MD_CTX_free(mdCtx);
+	if (keyCtx != NULL) EVP_PKEY_CTX_free(keyCtx);
+	if (pkey != NULL) EVP_PKEY_free(pkey);
+	if (pbSig != NULL) COSE_FREE(pbSig, context);
+
+	return true;
+}
+
+bool EdDSA_Verify(COSE* pSigner, int index, const cn_cbor* pKey, const byte* rgbToSign, size_t cbToSign, cose_errback* perr)
+{
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context* context = &pSigner->m_allocContext;
+#endif
+	cn_cbor* p = NULL;
+	cn_cbor* pSig;
+	EVP_PKEY* pkey = NULL;
+
+	p = cn_cbor_mapget_int(pKey, COSE_Key_OPK_Curve);
+	if (p == NULL) {
+	errorReturn:
+		if (pkey != NULL) EVP_PKEY_free(pkey);
+		return false;
+	}
+
+	int type;
+
+	switch (p->v.uint) {
+	case COSE_Curve_Ed25519:
+		type = EVP_PKEY_ED25519;
+		break;
+
+	case COSE_Curve_Ed448:
+		type = EVP_PKEY_ED448;
+		break;
+
+	default:
+		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+
+	p = cn_cbor_mapget_int(pKey, COSE_Key_OPK_X);
+	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	pkey = EVP_PKEY_new_raw_public_key(type, NULL, p->v.bytes, p->length);
+	CHECK_CONDITION(pkey != NULL, COSE_ERR_CBOR);
+
+	pSig = _COSE_arrayget_int(pSigner, index);
+	CHECK_CONDITION(pSig != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	EVP_MD_CTX* pmdCtx = EVP_MD_CTX_new();
+	EVP_PKEY_CTX* keyCtx = EVP_PKEY_CTX_new_id(type, NULL);
+
+	CHECK_CONDITION(EVP_DigestVerifyInit(pmdCtx, &keyCtx, NULL, NULL, pkey) == 1, COSE_ERR_CRYPTO_FAIL);
+
+	CHECK_CONDITION(EVP_DigestVerify(pmdCtx, pSig->v.bytes, pSig->length, rgbToSign, cbToSign) == 1, COSE_ERR_CRYPTO_FAIL);
+
+	if (pmdCtx != NULL) EVP_MD_CTX_free(pmdCtx);
+	if (pkey != NULL) EVP_PKEY_free(pkey);
+
+	return true;
+}
+#endif
+
 bool AES_KW_Decrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbitKey, const byte * pbCipherText, size_t cbCipherText, byte * pbKeyOut, int * pcbKeyOut, cose_errback * perr)
 {
 	byte rgbOut[512 / 8];

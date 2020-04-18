@@ -33,7 +33,7 @@ typedef struct _NameMap {
 	int    i;
 } NameMap;
 
-NameMap RgAlgorithmNames[47] = {
+NameMap RgAlgorithmNames[48] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
 	{"HS256/64", COSE_Algorithm_HMAC_256_64},
 	{"HS384", COSE_Algorithm_HMAC_384_384},
@@ -81,13 +81,18 @@ NameMap RgAlgorithmNames[47] = {
 { "ECDH-SS-A128KW", COSE_Algorithm_ECDH_SS_A128KW },
 { "ECDH-SS-A192KW", COSE_Algorithm_ECDH_SS_A192KW },
 { "ECDH-SS-A256KW", COSE_Algorithm_ECDH_SS_A256KW },
+	{ "EdDSA", COSE_Algorithm_EdDSA},
 };
 
 
-NameMap RgCurveNames[3] = {
+NameMap RgCurveNames[7] = {
 	{"P-256", 1},
 	{"P-384", 2},
-	{"P-521", 3}
+	{"P-521", 3},
+	{"X25519", 4},
+	{"X448", 5},
+	{"Ed25519", 6},
+	{"Ed448", 7}
 };
 
 int MapName(const cn_cbor * p, NameMap * rgMap, unsigned int cMap)
@@ -259,6 +264,9 @@ int IsAlgorithmSupported(const cn_cbor * alg)
 #ifdef USE_HMAC_512_512
 	case COSE_Algorithm_HMAC_512_512:
 #endif
+#ifdef USE_EDDSA
+	case COSE_Algorithm_EdDSA:
+#endif
 	case COSE_Algorithm_Direct:
 	case -999: // Unsupported algorithm for testing.
 		return true;
@@ -300,20 +308,24 @@ byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 #define OPERATION_BASE64 1
 #define OPERATION_IGNORE 2
 #define OPERATION_STRING 3
+#define OPERATION_HEX 4
 
 struct {
 	char * szKey;
 	int kty;
 	int operation;
 	int keyNew;
-} RgStringKeys[7] = {
+} RgStringKeys[10] = {
 	{ "kty", 0, OPERATION_IGNORE, COSE_Key_Type},
 	{ "kid", 0, OPERATION_NONE, COSE_Key_ID},
 	{ "crv", 2, OPERATION_STRING, COSE_Key_EC2_Curve},
 	{ "x", 2, OPERATION_BASE64, COSE_Key_EC2_X},
 	{ "y", 2, OPERATION_BASE64, COSE_Key_EC2_Y},
 	{ "d", 2, OPERATION_BASE64, -4},
-	{ "k", 4, OPERATION_BASE64, -1}
+	{ "k", 4, OPERATION_BASE64, -1},
+	{ "crv", COSE_Key_Type_OKP, OPERATION_STRING, COSE_Key_OPK_Curve},
+	{ "x_hex", COSE_Key_Type_OKP, OPERATION_HEX, COSE_Key_OPK_X},
+	{ "d_hex", COSE_Key_Type_OKP, OPERATION_HEX, -4}
 };
 
 bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int msgType, bool fPublicKey)
@@ -563,6 +575,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 	}
 	else if (pKty->length == 3) {
 		if (strncmp(pKty->v.str, "oct", 3) == 0) kty = 4;
+		else if (strncmp(pKty->v.str, "OKP", 3) == 0) kty = COSE_Key_Type_OKP;
 		else return NULL;
 	}
 	else return NULL;
@@ -575,7 +588,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 		pValue = pKey->next;
 
 		if (pKey->type == CN_CBOR_TEXT) {
-			for (i = 0; i < 7; i++) {
+			for (i = 0; i < sizeof(RgStringKeys)/sizeof(RgStringKeys[0]); i++) {
 				if ((pKey->length == strlen(RgStringKeys[i].szKey)) &&
 					(strncmp(pKey->v.str, RgStringKeys[i].szKey, strlen(RgStringKeys[i].szKey)) == 0) &&
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
@@ -597,6 +610,14 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 
 					case OPERATION_STRING:
 						p = cn_cbor_int_create(MapName(pValue, RgCurveNames, _countof(RgCurveNames)), CBOR_CONTEXT_PARAM_COMMA NULL);
+						if (p == NULL) return NULL;
+						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
+						break;
+
+					case OPERATION_HEX:
+						if ((strcmp(pKey->v.str, "d_hex") == 0) && fPublicKey) continue;
+						pb = hex_decode(pValue->v.str, pValue->length, &cb);
+						p = cn_cbor_data_create(pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA NULL);
 						if (p == NULL) return NULL;
 						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
@@ -695,9 +716,7 @@ void RunMemoryTest(const char * szFileName)
 	bool fValidateDone = false;
 	bool fBuildDone = false;
 
-	for (iFail = 0; !fValidateDone || !fBuildDone; iFail++) {
-		context = CreateContext(iFail);
-
+	for (iFail = 0; (!fValidateDone || !fBuildDone) && (iFail < 3); iFail++) {
 		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 #if INCLUDE_MAC
 			if (!fValidateDone) {
@@ -705,6 +724,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateMAC(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -712,6 +732,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildMacMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -725,6 +746,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateMac0(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -732,6 +754,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildMac0Message(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -745,6 +768,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateEncrypt(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -752,6 +776,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildEncryptMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -765,6 +790,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateEnveloped(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -772,6 +798,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildEnvelopedMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -785,6 +812,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateSigned(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -792,6 +820,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildSignedMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -805,6 +834,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateSign1(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -812,6 +842,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildSign1Message(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
