@@ -45,7 +45,7 @@ before_install:
 
 script:
 #  - apt-get install libssl1.1.0
-  - export OPENSSL_ROOT_DIR=$(OPENSSL_INSTALL_DIR)
+  - export OPENSSL_ROOT_DIR=${OPENSSL_INSTALL_DIR}
   - cmake --version
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
   - mkdir build
