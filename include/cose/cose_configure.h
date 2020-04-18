@@ -148,7 +148,7 @@
 #endif
 #endif	// !defined (USE_MBED_TLS)
 
-//#define USE_COUNTER_SIGNATURES
+#define USE_COUNTER_SIGNATURES
 
 //
 //   Define which COSE objects are included

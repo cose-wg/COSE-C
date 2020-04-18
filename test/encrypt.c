@@ -543,7 +543,8 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		size_t cb;
 		byte *pb;
 		pb = COSE_Encrypt_GetContent(hEnc, &cb, NULL);
-	} else {
+	}
+        else {
 		if (fAlgSupport) {
 			fFail = true;
 			fAlgSupport = false;

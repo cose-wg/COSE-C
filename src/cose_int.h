@@ -37,7 +37,7 @@ typedef struct _COSE {
 #endif
 	struct _COSE *m_handleList;
 #ifdef USE_COUNTER_SIGNATURES
-	COSE_CounterSign *m_counterSigners;
+	COSE_CounterSign *m_counterSigners;     // Linked list of all counter signatures
 #endif
 } COSE;
 
