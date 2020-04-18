@@ -716,9 +716,7 @@ void RunMemoryTest(const char * szFileName)
 	bool fValidateDone = false;
 	bool fBuildDone = false;
 
-	for (iFail = 0; !fValidateDone || !fBuildDone; iFail++) {
-		context = CreateContext(iFail);
-
+	for (iFail = 0; (!fValidateDone || !fBuildDone) && (iFail < 3); iFail++) {
 		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 #if INCLUDE_MAC
 			if (!fValidateDone) {
@@ -726,6 +724,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateMAC(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -733,6 +732,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildMacMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -746,6 +746,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateMac0(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -753,6 +754,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildMac0Message(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -766,6 +768,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateEncrypt(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -773,6 +776,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildEncryptMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -786,6 +790,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateEnveloped(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -793,6 +798,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildEnvelopedMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -806,6 +812,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateSigned(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -813,6 +820,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildSignedMessage(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
@@ -826,6 +834,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				ValidateSign1(pControl);
 				if (CFails == 0) fValidateDone = true;
+				FreeContext(context);
 			}
 
 			if (!fBuildDone) {
@@ -833,6 +842,7 @@ void RunMemoryTest(const char * szFileName)
 				CFails = 0;
 				BuildSign1Message(pControl);
 				if (CFails == 0) fBuildDone = true;
+				FreeContext(context);
 			}
 #else
 			fValidateDone = true;
