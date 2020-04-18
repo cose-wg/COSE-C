@@ -31,7 +31,7 @@ addons:
       - george-edison55-precise-backports
     packages:
     - libssl-dev
-    - libssl1.1.1
+    - libssl1.1
     - cmake
     - cmake-data
 
