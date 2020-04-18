@@ -13,6 +13,7 @@
 #error Only Define One Crypto Package
 #endif
 #elif !defined(USE_OPEN_SSL)
+#include <openssl/opensslv.h>
 #define USE_OPEN_SSL
 #endif
 
@@ -133,8 +134,13 @@
 #define USE_ECDSA_SHA_512
 #if !defined(USE_MBED_TLS)
 //  MBEDTLS currently supports ECDH for X25519 but not EdDSA
+#if OPENSSL_VERSION_NUMBER > 0x10100000L
 // Requires OPEN SSL 1.1.1 to build
-//#define USE_EDDSA
+#define USE_EDDSA
+#else
+#pragma message("OPENSSL VERSION IS ")
+#pragma message(OPENSSL_VERISON_NUMBER)
+#endif
 #endif // !defined (USE_MBED_TLS)
 
 
