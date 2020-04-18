@@ -4,6 +4,9 @@ compiler:
   - gcc
 sudo: false
 env:
+  global:
+    - OPENSSL_VERSION="1.1.1f"
+      OPENSSL_INSTALL_DIR="${HOME}/opt"
   jobs:
     - USE_CONTEXT=ON
       COVERALLS="-DCOSE_C_COVERALLS_SEND=ON"
@@ -30,8 +33,8 @@ addons:
       - llvm-toolchain-precise-3.8
       - george-edison55-precise-backports
     packages:
-    - libssl-dev
-    - libssl1.1
+    # - libssl-dev
+    # - libssl1.1
     - cmake
     - cmake-data
 
