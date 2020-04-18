@@ -132,6 +132,8 @@ typedef enum {
 
 	COSE_Algorithm_Direct = -6,
 
+	COSE_Algorithm_EdDSA = - 8,
+
 	COSE_Algorithm_Direct_HKDF_HMAC_SHA_256 = -10,
 	COSE_Algorithm_Direct_HKDF_HMAC_SHA_512 = -11,
 	COSE_Algorithm_Direct_HKDF_AES_128 = -12,
@@ -177,6 +179,7 @@ typedef enum {
 } COSE_Header;
 
 typedef enum {
+	COSE_Key_Type_OKP = 1,
 	COSE_Key_Type_EC2 = 2,
 	COSE_Key_Type_OCTET = 4,
 	COSE_Key_Type = 1,
@@ -184,9 +187,20 @@ typedef enum {
 	COSE_Parameter_KID = 4,
 	COSE_Key_EC2_Curve=-1,
 	COSE_Key_EC2_X = -2,
-	COSE_Key_EC2_Y = -3
+	COSE_Key_EC2_Y = -3,
+	COSE_Key_OPK_Curve = -1,
+	COSE_Key_OPK_X = -2,
 } COSE_Constants;
 
+typedef enum {
+	COSE_Curve_P256 = 1,
+	COSE_Curve_P384 = 2,
+	COSE_Curve_P521 = 3,
+	COSE_Curve_X25519 = 4,
+	COSE_Curve_X448 = 5,
+	COSE_Curve_Ed25519 = 6,
+	COSE_Curve_Ed448 = 7,
+} COSE_Curves;
 
 /*
  *  messages dealing with the Enveloped message type

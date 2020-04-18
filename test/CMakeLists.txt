@@ -57,6 +57,10 @@ add_test(
   NAME ecdsa
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --dir Examples/ecdsa-examples)
+add_test(
+  NAME eddsa
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMAND cose_test --dir Examples/eddsa-examples)
 
 add_test(
   NAME hmac
@@ -150,3 +154,11 @@ add_test(
   NAME Memory-sign
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --memory Examples/ecdsa-examples/ecdsa-01.json)
+add_test(
+  NAME Memory-sign0-eddsa
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMAND cose_test --memory Examples/eddsa-examples/eddsa-sig-01.json)
+add_test(
+  NAME Memory-sign-eddsa
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMAND cose_test --memory Examples/eddsa-examples/eddsa-01.json)

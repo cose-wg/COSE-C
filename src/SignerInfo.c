@@ -179,7 +179,6 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	cn_cbor * cnAlgorithm = NULL;
 	size_t cbToSign;
 	byte * pbToSign = NULL;
-	bool f;
 	int alg;
 	bool fRet = false;
 
@@ -219,6 +218,12 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
 		if (!ECDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 512, pbToSign, cbToSign, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_EDDSA
+	case COSE_Algorithm_EdDSA:
+		if (!EdDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
@@ -331,6 +336,12 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
 		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 512, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
+		break;
+#endif
+
+#ifdef USE_EDDSA
+	case COSE_Algorithm_EdDSA:
+		if (!EdDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
 		break;
 #endif
 
