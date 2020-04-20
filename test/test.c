@@ -559,7 +559,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 	cn_cbor * p;
 	cn_cbor * pKey;
 	cn_cbor * pValue;
-	int i;
+	size_t i;
 	int kty;
 	unsigned char * pb;
 	size_t cb;

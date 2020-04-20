@@ -880,7 +880,7 @@ byte * _COSE_RecipientInfo_generateKey(COSE_RecipientInfo * pRecipient, int algI
 		CHECK_CONDITION(pRecipient->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 			pK = cn_cbor_mapget_int(pRecipient->m_pkey, -1);
 			CHECK_CONDITION((pK != NULL) && (pK->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-			CHECK_CONDITION(pK->length == cbitKeySize / 8, COSE_ERR_INVALID_PARAMETER);
+			CHECK_CONDITION((size_t)pK->length == cbitKeySize / 8, COSE_ERR_INVALID_PARAMETER);
 			memcpy(pb, pK->v.bytes, cbitKeySize / 8);
 	break;
 
