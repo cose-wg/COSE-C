@@ -15,6 +15,10 @@ typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
 
 #define UNUSED(x) ((void) (x))
 
+#ifndef _countof
+#define _countof(x) (sizeof(x)/sizeof(x[0]))
+#endif
+
 typedef struct _COSE {
 	COSE_INIT_FLAGS m_flags;		//  Not sure what goes here yet
 	int m_ownMsg;		//  Do I own the pointer @ m_cbor?

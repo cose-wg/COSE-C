@@ -2,11 +2,6 @@
 
 #include <stdbool.h>
 
-#ifndef _countof
-
-#define _countof(x) (sizeof(x)/sizeof(x[0]))
-#endif
-
 #ifdef USE_CBOR_CONTEXT
 cn_cbor_context * context;
 #define CBOR_CONTEXT_PARAM , context

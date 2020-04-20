@@ -1,20 +1,17 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <stdio.h>
-#include <cose/cose.h>
-#include <sys/stat.h>
 #include <cn-cbor/cn-cbor.h>
+#include <cose/cose.h>
+#include <cose_int.h>
 #include <fcntl.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
+#include <sys/stat.h>
 
 #ifdef _MSC_VER
 #include <io.h>
-#endif
-
-#ifndef _countof
-#define _countof(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
 #ifndef _MSC_VER

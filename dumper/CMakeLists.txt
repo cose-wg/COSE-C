@@ -6,6 +6,8 @@ if(MSVC)
   target_link_libraries(cose_dumper PRIVATE ws2_32)
 endif()
 
+target_include_directories(cose_dumper PRIVATE ../src)
+
 if(COSE_C_USE_MBEDTLS)
   # mbedtls
   target_include_directories(cose_dumper
@@ -16,5 +18,3 @@ else()
   target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(cose_dumper PRIVATE ${OPENSSL_LIBRARIES})
 endif()
-
-# target_include_directories(cose_dumper PRIVATE ../src)
