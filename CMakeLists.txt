@@ -146,7 +146,7 @@ endif()
 ###############################################################################
 
 if(COSE_C_USE_FIND_PACKAGE)
-  find_package(cn-cbor REQUIRED)
+  find_package(cn-cbor)
 else()
   include(ExternalProject)
   externalproject_add(
@@ -188,7 +188,7 @@ if(COSE_C_USE_MBEDTLS)
   add_definitions(-DUSE_MBED_TLS)
 
   if(COSE_C_USE_FIND_PACKAGE)
-    find_package(MbedTLS REQUIRED)
+    find_package(MbedTLS)
   else()
     externalproject_add(
       project_mbedtls
