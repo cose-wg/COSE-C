@@ -1,7 +1,9 @@
 #!/bin/sh
 
-export CC=clang-10
-export CXX=clang++-10
+# sudo apt install clang clang-tidy
+
+export CC=clang
+export CXX=clang++
 rm -rf build
 mkdir build
 cd build
