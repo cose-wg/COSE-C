@@ -1,7 +1,8 @@
+#pragma once
+
+#include <stdbool.h>
 #include <cn-cbor/cn-cbor.h>
 #include "cose/cose_configure.h"
-
-#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -368,10 +369,10 @@ bool COSE_CounterSign_map_put_int(HCOSE_COUNTERSIGN cose, int key, cn_cbor * val
 /*
 */
 
-extern cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
-extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
-extern cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
-extern cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
+cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
+cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
+cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
+cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 
 #ifdef __cplusplus
 }

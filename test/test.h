@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #ifndef _countof
 
 #define _countof(x) (sizeof(x)/sizeof(x[0]))

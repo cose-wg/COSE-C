@@ -234,6 +234,7 @@ errorReturn:
 
 bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * pRecipUse, int algIn, size_t cbitKeyOut, byte * pbKeyOut, cose_errback * perr)
 {
+	UNUSED(pRecipUse);
 	int alg;
 	const cn_cbor * cn = NULL;
 	COSE_RecipientInfo * pRecip2;
@@ -250,8 +251,6 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * p
 	byte * pbKeyX = NULL;
 	int cbitKeyX = 0;
 	byte rgbKey[256 / 8];
-
-	UNUSED(pcose);
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pcose->m_message.m_allocContext;

@@ -1197,14 +1197,10 @@ bool EdDSA_Sign(COSE* pSigner, int index, const cn_cbor* pKeyIn, const byte* rgb
 
 bool EdDSA_Verify(COSE* pSigner, int index, const cn_cbor* pKey, const byte* rgbToSign, size_t cbToSign, cose_errback* perr)
 {
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context* context = &pSigner->m_allocContext;
-#endif
-	cn_cbor* p = NULL;
 	cn_cbor* pSig;
 	EVP_PKEY* pkey = NULL;
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_OPK_Curve);
+	cn_cbor *p = cn_cbor_mapget_int(pKey, COSE_Key_OPK_Curve);
 	if (p == NULL) {
 	errorReturn:
 		if (pkey != NULL) EVP_PKEY_free(pkey);

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <assert.h>
+#include <cn-cbor/cn-cbor.h>
+#include <cose/cose.h>
+#include <stdbool.h>
 
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
