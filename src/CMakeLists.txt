@@ -47,12 +47,6 @@ if(CLANG_TIDY_EXE)
   set_target_properties(${PROJECT_NAME} PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY}")
 endif()
 
-target_compile_options(
-  ${PROJECT_NAME}
-  PRIVATE $<$<OR:$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wextra>
-          $<$<OR:$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wall>
-          $<$<OR:$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-sign-compare>)
-
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 if(COSE_C_COVERALLS)
