@@ -1172,6 +1172,7 @@ void rand_bytes(byte* pb, size_t cb){
 
 int rand_bytes2(void * pv, unsigned char * pb, size_t cb)
 {
+	UNUSED(pv);
     rand_bytes(pb, cb);
     return 0;
 }
