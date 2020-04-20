@@ -31,11 +31,8 @@ target_include_directories(
   PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
   PRIVATE ../src)
 target_link_libraries(${PROJECT_NAME} PRIVATE cn-cbor::cn-cbor)
-# target_include_directories(${PROJECT_NAME} PUBLIC ${dist_dir}/include)
 
 if(COSE_C_USE_MBEDTLS)
-  # target_include_directories(${PROJECT_NAME}
-                            #  PUBLIC ${CMAKE_SHARED_MODLE_PREFIX}mbedtls${CMAKE_SHARED_LIBRARY_SUFFIX}/include)
   target_link_libraries(${PROJECT_NAME} PRIVATE mbedtls)
 else()
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
@@ -45,6 +42,16 @@ endif()
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
 endif()
+
+if(CLANG_TIDY_EXE)
+  set_target_properties(${PROJECT_NAME} PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY}")
+endif()
+
+target_compile_options(
+  ${PROJECT_NAME}
+  PRIVATE $<$<OR:$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wextra>
+          $<$<OR:$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wall>
+          $<$<OR:$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wno-sign-compare>)
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 

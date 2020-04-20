@@ -25,6 +25,7 @@ option(COSE_C_FATAL_WARNINGS "Treat build warnings as error" OFF)
 option(COSE_C_COVERALLS "Generate coveralls data" ON)
 option(COSE_C_COVERALLS_SEND "Send data to coveralls site" OFF)
 option(COSE_C_BUILD_DOCS "Create docs using Doxygen" OFF)
+option(COSE_C_RUN_CLANG_TIDY "Use Clang-Tidy for static analysis" OFF)
 option(COSE_C_BUILD_TESTS "build tests" ON)
 option(COSE_C_BUILD_DUMPER "build dumper" ON)
 option(BUILD_SHARED_LIBS "Build Shared Libraries" ON)
@@ -90,8 +91,6 @@ if(MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   set(COSE_C_COVERALLS OFF)
 endif()
 
-message("Build type: ${CMAKE_BUILD_TYPE}")
-
 add_definitions(-DUSE_ARRAY)
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   message(STATUS "adding GCC/Clang options ")
@@ -145,6 +144,24 @@ endif()
 # DEPENDENCIES
 ###############################################################################
 
+if(COSE_C_RUN_CLANG_TIDY)
+  find_program(
+    CLANG_TIDY_EXE
+    NAMES "clang-tidy"
+    DOC "/usr/bin/clang-tidy")
+  if(NOT CLANG_TIDY_EXE)
+    message(WARNING "clang-tidy not found.")
+  else()
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+    set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  endif()
+endif(COSE_C_RUN_CLANG_TIDY)
+
+
+###############################################################################
+# DEPENDENCIES
+###############################################################################
+
 if(COSE_C_USE_FIND_PACKAGE)
   find_package(cn-cbor REQUIRED)
 else()
@@ -166,12 +183,11 @@ else()
   externalproject_get_property(project_cn-cbor install_dir)
   include_directories("${install_dir}/include")
 
+  add_library(cn-cbor STATIC IMPORTED GLOBAL)
   if(MSVC)
-    add_library(cn-cbor STATIC IMPORTED GLOBAL)
     set_property(TARGET cn-cbor PROPERTY IMPORTED_LOCATION
                                          "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
   else()
-    add_library(cn-cbor STATIC IMPORTED GLOBAL)
     set_property(
       TARGET cn-cbor PROPERTY IMPORTED_LOCATION
                               "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
@@ -265,3 +281,6 @@ message(STATUS "COSE_C_BUILD_DUMPER:.............${COSE_C_BUILD_DUMPER}")
 message(STATUS "CMAKE_BUILD_TYPE:................${CMAKE_BUILD_TYPE}")
 message(STATUS "BUILD_SHARED_LIBS:...............${BUILD_SHARED_LIBS}")
 message(STATUS "COSE_VERSION:....................${COSE_VERSION}")
+message(STATUS "CMAKE_C_COMPILER:................${CMAKE_C_COMPILER}")
+message(STATUS "CMAKE_CXX_COMPILER:..............${CMAKE_CXX_COMPILER}")
+message(STATUS "DO_CLANG_TIDY:...................${DO_CLANG_TIDY}")
