@@ -1,0 +1,54 @@
+name: CMake
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        USE_MBEDTLS: ["ON", "OFF"]
+        USE_CONTEXT: ["ON", "OFF"]
+        CMAKE_OPTIONS:
+          [
+            "-DCOSE_C_INCLUDE_ENCRYPT=ON -DCOSE_C_INCLUDE_encrypt0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_encrypt0=ON -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_encrypt0=OFF -DCOSE_C_INCLUDE_MAC0=ON -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_encrypt0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=ON -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_encrypt0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=ON -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_encrypt0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=ON",
+          ]
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: setup (linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install cmake-data clang clang-tidy
+
+      - name: Create Build directory
+        run: cmake -E make_directory ${{runner.workspace}}/build
+
+      - name: install conan deps
+        working-directory: ${{runner.workspace}}/build
+        run: conan install $GITHUB_WORKSPACE
+
+      - name: Configure CMake
+        shell: bash
+        working-directory: ${{runner.workspace}}/build
+        run: |
+          export CC=clang && \
+          export CXX=clang++ && \
+          cmake $GITHUB_WORKSPACE \
+          -DCOSE_C_USE_CONTEXT=${{matrix.USE_CONTEXT}} \
+          -DCOSE_C_BUILD_DOCS=OFF \
+          -DCOSE_C_BUILD_TESTS=ON \
+          -DCOSE_C_RUN_CLANG_TIDY=ON \
+          ${{matrix.CMAKE_OPTIONS}} \
+          -DCOSE_C_USE_MBEDTLS=${{matrix.USE_MBEDTLS}}
+
+      - name: Build
+        working-directory: ${{runner.workspace}}/build
+        shell: bash
+        run: cmake --build .
