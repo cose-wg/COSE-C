@@ -587,7 +587,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 
 		if (pKey->type == CN_CBOR_TEXT) {
 			for (i = 0; i < sizeof(RgStringKeys)/sizeof(RgStringKeys[0]); i++) {
-				if ((pKey->length == strlen(RgStringKeys[i].szKey)) &&
+				if (((size_t)pKey->length == strlen(RgStringKeys[i].szKey)) &&
 					(strncmp(pKey->v.str, RgStringKeys[i].szKey, strlen(RgStringKeys[i].szKey)) == 0) &&
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
 					switch (RgStringKeys[i].operation) {

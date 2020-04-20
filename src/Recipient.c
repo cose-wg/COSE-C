@@ -278,7 +278,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo * pRecip, COSE_RecipientInfo * p
 		CHECK_CONDITION(pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 		cn = cn_cbor_mapget_int(pRecip->m_pkey, -1);
 		CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-		CHECK_CONDITION((cn->length == (unsigned int)cbitKeyOut / 8), COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(((size_t)cn->length == cbitKeyOut / 8), COSE_ERR_INVALID_PARAMETER);
 		memcpy(pbKeyOut, cn->v.bytes, cn->length);
 
 		return true;

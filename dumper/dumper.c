@@ -392,7 +392,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 			if (pFOO != NULL) {
 				//  Locate the right entry in foo
 				for (i2 = 0, pFoo2 = pFOO->children; i2 < pFOO->count; pFoo2++, i2 += 1) {
-					if (pFoo2->type != cbor2->type) continue;
+					if ((unsigned)pFoo2->type != cbor2->type) continue;
 					switch (cbor2->type) {
 					case CN_CBOR_UINT:
 						if ((group != 0) && (pFoo2->group != 0) && (pFoo2->group != group)) continue;

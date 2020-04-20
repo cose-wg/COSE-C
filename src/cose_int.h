@@ -167,7 +167,7 @@ extern cose_error _MapFromCBOR(cn_cbor_errback err);
  */
 
 extern void _COSE_InsertInList(COSE ** rootNode, COSE * newMsg);
-extern bool _COSE_IsInList(COSE * rootNode, COSE * thisMsg);
+extern bool _COSE_IsInList(const COSE *const rootNode, const COSE  *const thisMsg);
 extern void _COSE_RemoveFromList(COSE ** rootNode, COSE * thisMsg);
 
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
