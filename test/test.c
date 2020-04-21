@@ -334,6 +334,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 	const cn_cbor * pValue;
 	int keyNew;
 	cn_cbor * pValueNew;
+	bool fRet = false;
 
 	if (pAttributes == NULL) return true;
 	if (pAttributes->type != CN_CBOR_MAP) return false;
@@ -390,56 +391,56 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		switch (msgType) {
 #if INCLUDE_MAC
 		case Attributes_MAC_protected:
-			COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_MAC0
 		case Attributes_MAC0_protected:
-			COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 		case Attributes_Recipient_protected:
-			COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT
 		case Attributes_Enveloped_protected:
-			COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT0
 		case Attributes_Encrypt_protected:
-			COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN
 		case Attributes_Sign_protected:
-			COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN
 		case Attributes_Signer_protected:
-			COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN1
 		case Attributes_Sign1_protected:
-			COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
+			fRet = COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
-
+		assert(fRet);
 		}
 	}
 
-	return true;
+	return fRet;
 }
 
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
@@ -629,9 +630,6 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 	return pKeyOut;
 }
 
-
-
-bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
 
 bool Test_cn_cbor_array_replace()
 {

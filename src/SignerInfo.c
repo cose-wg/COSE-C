@@ -372,15 +372,13 @@ cn_cbor * COSE_Signer_map_get_int(HCOSE_SIGNER h, int key, int flags, cose_errba
 
 bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perr)
 {
-	bool fRet = false;
-
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	return _COSE_map_put(&((COSE_SignerInfo *)h)->m_message, key, value, flags, perr);
 
 errorReturn:
-	return fRet;
+	return false;
 }
 
 #endif
