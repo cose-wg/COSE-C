@@ -18,5 +18,5 @@ else()
 endif()
 
 if(CLANG_TIDY_EXE)
-  set_target_properties(cose_dumper PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY}")
+  set_target_properties(cose_dumper PROPERTIES C_CLANG_TIDY "${CLANG_TIDY_EXE}")
 endif()
