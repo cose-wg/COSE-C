@@ -18,7 +18,10 @@ if(MSVC)
 endif()
 
 target_include_directories(cose_test PRIVATE ../src)
-# target_include_directories(cose_test PUBLIC ../../cose/cn-cbor/include)
+
+if(CLANG_TIDY_EXE)
+  set_target_properties(cose_test PROPERTIES C_CLANG_TIDY "${CLANG_TIDY_EXE}")
+endif()
 
 enable_testing()
 

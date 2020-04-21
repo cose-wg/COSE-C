@@ -25,6 +25,7 @@ option(COSE_C_FATAL_WARNINGS "Treat build warnings as error" OFF)
 option(COSE_C_COVERALLS "Generate coveralls data" ON)
 option(COSE_C_COVERALLS_SEND "Send data to coveralls site" OFF)
 option(COSE_C_BUILD_DOCS "Create docs using Doxygen" OFF)
+option(COSE_C_RUN_CLANG_TIDY "Use Clang-Tidy for static analysis" OFF)
 option(COSE_C_BUILD_TESTS "build tests" ON)
 option(COSE_C_BUILD_DUMPER "build dumper" ON)
 option(BUILD_SHARED_LIBS "Build Shared Libraries" ON)
@@ -90,8 +91,6 @@ if(MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   set(COSE_C_COVERALLS OFF)
 endif()
 
-message("Build type: ${CMAKE_BUILD_TYPE}")
-
 add_definitions(-DUSE_ARRAY)
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   message(STATUS "adding GCC/Clang options ")
@@ -145,8 +144,23 @@ endif()
 # DEPENDENCIES
 ###############################################################################
 
+if(COSE_C_RUN_CLANG_TIDY)
+  find_program(
+    CLANG_TIDY_EXE
+    NAMES "clang-tidy"
+    DOC "/usr/bin/clang-tidy")
+  if(NOT CLANG_TIDY_EXE)
+    message(WARNING "clang-tidy not found.")
+  endif()
+endif(COSE_C_RUN_CLANG_TIDY)
+
+
+###############################################################################
+# DEPENDENCIES
+###############################################################################
+
 if(COSE_C_USE_FIND_PACKAGE)
-  find_package(cn-cbor REQUIRED)
+  find_package(cn-cbor)
 else()
   include(FetchContent)
 
@@ -177,7 +191,6 @@ else()
         OFF
         CACHE BOOL "" FORCE)
     add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR} EXCLUDE_FROM_ALL)
-  endif()
 endif()
 
 if(BUILD_SHARED_LIBS)
@@ -190,7 +203,7 @@ if(COSE_C_USE_MBEDTLS)
   add_definitions(-DUSE_MBED_TLS)
 
   if(COSE_C_USE_FIND_PACKAGE)
-    find_package(MbedTLS REQUIRED)
+    find_package(MbedTLS)
   else()
     include(FetchContent)
     fetchcontent_declare(
@@ -267,3 +280,6 @@ message(STATUS "COSE_C_BUILD_DUMPER:.............${COSE_C_BUILD_DUMPER}")
 message(STATUS "CMAKE_BUILD_TYPE:................${CMAKE_BUILD_TYPE}")
 message(STATUS "BUILD_SHARED_LIBS:...............${BUILD_SHARED_LIBS}")
 message(STATUS "COSE_VERSION:....................${COSE_VERSION}")
+message(STATUS "CMAKE_C_COMPILER:................${CMAKE_C_COMPILER}")
+message(STATUS "CMAKE_CXX_COMPILER:..............${CMAKE_CXX_COMPILER}")
+message(STATUS "CLANG_TIDY_EXE:..................${CLANG_TIDY_EXE}")
