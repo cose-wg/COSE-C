@@ -1,4 +1,5 @@
 #!/bin/sh
-rm -rf build
-mkdir build
-cd build && cmake .. && make
+if [ ! -d "build" ]; then
+    mkdir build
+fi
+cd build && cmake .. && make $*
