@@ -173,6 +173,9 @@ else()
     set(CN_CBOR_BUILD_DOCS
         OFF
         CACHE BOOL "" FORCE)
+    set(CN_CBOR_BUILD_TESTS
+        OFF
+        CACHE BOOL "" FORCE)
     add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR} EXCLUDE_FROM_ALL)
   endif()
 endif()
