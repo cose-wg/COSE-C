@@ -1,9 +1,52 @@
 name: CMake
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, windows-2019, macos-10.15]
+        USE_MBEDTLS: ["ON", "OFF"]
+        USE_CONTEXT: ["ON", "OFF"]
+        CMAKE_OPTIONS:
+          [
+            "-DCOSE_C_INCLUDE_ENCRYPT=ON -DCOSE_C_INCLUDE_ENCRYPT0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_ENCRYPT0=ON -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_ENCRYPT0=OFF -DCOSE_C_INCLUDE_MAC0=ON -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_ENCRYPT0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=ON -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_ENCRYPT0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=ON -DCOSE_C_INCLUDE_SIGN1=OFF",
+            "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_ENCRYPT0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=ON",
+          ]
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: setup (linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt install cmake-data
+
+      - name: Create Build directory
+        run: cmake -E make_directory ${{runner.workspace}}/build
+
+      - name: Configure CMake
+        shell: bash
+        working-directory: ${{runner.workspace}}/build
+        run: |
+          cmake $GITHUB_WORKSPACE \
+          -DCOSE_C_USE_CONTEXT=${{matrix.USE_CONTEXT}} \
+          -DCOSE_C_BUILD_DOCS=OFF \
+          -DCOSE_C_BUILD_TESTS=ON \
+          ${{matrix.CMAKE_OPTIONS}} \
+          -DCOSE_C_USE_MBEDTLS=${{matrix.USE_MBEDTLS}}
+
+      - name: Build
+        working-directory: ${{runner.workspace}}/build
+        shell: bash
+        run: cmake --build .
+
+  clang-tidy:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
