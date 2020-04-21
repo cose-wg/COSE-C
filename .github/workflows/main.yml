@@ -27,6 +27,13 @@ jobs:
         run: |
           sudo apt install cmake-data
 
+      - name: setup (mac)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew update
+          brew upgrade
+          brew install cmake openssl
+
       - name: Create Build directory
         run: cmake -E make_directory ${{runner.workspace}}/build
 
