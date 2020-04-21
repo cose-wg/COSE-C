@@ -154,7 +154,6 @@ if(COSE_C_RUN_CLANG_TIDY)
   endif()
 endif(COSE_C_RUN_CLANG_TIDY)
 
-
 ###############################################################################
 # DEPENDENCIES
 ###############################################################################
@@ -191,6 +190,7 @@ else()
         OFF
         CACHE BOOL "" FORCE)
     add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
 endif()
 
 if(BUILD_SHARED_LIBS)
