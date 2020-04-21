@@ -229,7 +229,7 @@ if(COSE_C_USE_MBEDTLS)
       add_subdirectory(${project_mbedtls_SOURCE_DIR} ${project_mbedtls_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
     # TODO: remove next line after https://github.com/ARMmbed/mbedtls/pull/2090
-    include_directories("${project_mbedtls_BINARY_DIR}/include")
+    include_directories("${project_mbedtls_SOURCE_DIR}/include")
   endif()
 else()
   find_package(OpenSSL REQUIRED)
