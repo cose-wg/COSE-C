@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.11.0)
 
 set(VERSION_MAJOR
     0
@@ -148,40 +148,26 @@ endif()
 if(COSE_C_USE_FIND_PACKAGE)
   find_package(cn-cbor REQUIRED)
 else()
-  include(ExternalProject)
-  externalproject_add(
-    project_cn-cbor
-    GIT_REPOSITORY https://github.com/jimsch/cn-cbor
+  include(FetchContent)
+
+  fetchcontent_declare(
+    project_cn_cbor
+    GIT_REPOSITORY https://github.com/jimsch/cn-cbor.git
     GIT_TAG master
-    CMAKE_ARGS -DCN_CBOR_OPTIMIZE=OFF
-               -DCN_CBOR_USE_CONTEXT=${COSE_C_USE_CONTEXT}
-               -DCN_CBOR_BUILD_DOCS=OFF
-               -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-               -DCN_CBOR_COVERALLS=OFF
-               -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-               -DCN_CBOR_FATAL_WARNINGS=OFF
-    INSTALL_DIR "${dist_dir}"
-    UPDATE_DISCONNECTED 1)
+    CMAKE_ARGS
+    -DCN_CBOR_OPTIMIZE=OFF
+    -DCN_CBOR_USE_CONTEXT=${COSE_C_USE_CONTEXT}
+    -DCN_CBOR_BUILD_DOCS=OFF
+    -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+    -DCN_CBOR_COVERALLS=OFF
+    -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
+    -DCN_CBOR_FATAL_WARNINGS=OFF)
 
-  externalproject_get_property(project_cn-cbor install_dir)
-  include_directories("${install_dir}/include")
-
-  if(MSVC)
-    add_library(cn-cbor STATIC IMPORTED GLOBAL)
-    set_property(TARGET cn-cbor PROPERTY IMPORTED_LOCATION
-                                         "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
-  else()
-    add_library(cn-cbor STATIC IMPORTED GLOBAL)
-    set_property(
-      TARGET cn-cbor PROPERTY IMPORTED_LOCATION
-                              "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  fetchcontent_getproperties(project_cn_cbor)
+  if(NOT project_cn_cbor_POPULATED)
+    fetchcontent_populate(project_cn_cbor)
+    add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR} EXCLUDE_FROM_ALL)
   endif()
-
-  if(NOT TARGET cn-cbor::cn-cbor)
-    add_library(cn-cbor::cn-cbor ALIAS cn-cbor)
-  endif()
-
-  add_dependencies(cn-cbor project_cn-cbor)
 endif()
 
 if(COSE_C_USE_MBEDTLS)
@@ -190,6 +176,7 @@ if(COSE_C_USE_MBEDTLS)
   if(COSE_C_USE_FIND_PACKAGE)
     find_package(MbedTLS REQUIRED)
   else()
+    include(ExternalProject)
     externalproject_add(
       project_mbedtls
       GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
