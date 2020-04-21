@@ -156,9 +156,6 @@ typedef struct _COSE_COUNTER_SIGN {
 
 #endif // USE_CBOR_CONTEXT
 
-#ifndef UNUSED_PARAM
-#define UNUSED_PARAM(p) ((void)&(p))
-#endif
 
 extern cose_error _MapFromCBOR(cn_cbor_errback err);
 
