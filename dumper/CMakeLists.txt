@@ -18,3 +18,7 @@ else()
   target_include_directories(cose_dumper PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(cose_dumper PRIVATE ${OPENSSL_LIBRARIES})
 endif()
+
+if(CLANG_TIDY_EXE)
+  set_target_properties(cose_dumper PROPERTIES C_CLANG_TIDY "${CLANG_TIDY_EXE}")
+endif()
