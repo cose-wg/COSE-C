@@ -20,7 +20,7 @@ endif()
 target_include_directories(cose_test PRIVATE ../src)
 
 if(CLANG_TIDY_EXE)
-  set_target_properties(cose_test PROPERTIES C_CLANG_TIDY "${DO_CLANG_TIDY}")
+  set_target_properties(cose_test PROPERTIES C_CLANG_TIDY "${CLANG_TIDY_EXE}")
 endif()
 
 enable_testing()
