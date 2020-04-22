@@ -284,19 +284,16 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, si
 bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, cose_errback * perr)
 {
 	byte * pbToBeSigned = NULL;
-	int alg;
-	const cn_cbor * cn = NULL;
+	int alg = 0;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = NULL;
+	cn_cbor_context * context = &pSign->m_message.m_allocContext;
+#else
+	UNUSED(pSign);
 #endif
 	size_t cbToBeSigned;
 	bool fRet = false;
 
-#ifdef USE_CBOR_CONTEXT
-	context = &pSign->m_message.m_allocContext;
-#endif
-
-	cn = _COSE_map_get_int(&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
+	const cn_cbor * cn = _COSE_map_get_int(&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn == NULL) goto errorReturn;
 
 	if (cn->type == CN_CBOR_TEXT) {

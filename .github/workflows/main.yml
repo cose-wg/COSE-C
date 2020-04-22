@@ -7,7 +7,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-2019, macos-10.15]
+        # os: [ubuntu-18.04, windows-2019, macos-10.15]
+        os: [ubuntu-18.04]
         USE_MBEDTLS: ["ON", "OFF"]
         USE_CONTEXT: ["ON", "OFF"]
         CMAKE_OPTIONS:
@@ -27,17 +28,17 @@ jobs:
         run: |
           sudo apt install cmake-data
 
-      - name: setup (mac)
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          brew update
-          brew upgrade
-          brew install cmake openssl
+      # - name: setup (mac)
+      #   if: startsWith(matrix.os, 'macos')
+      #   run: |
+      #     brew update
+      #     brew upgrade
+      #     brew install cmake openssl
 
-      - name: setup (windows)
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          choco install openssl cmake
+      # - name: setup (windows)
+      #   if: startsWith(matrix.os, 'windows')
+      #   run: |
+      #     choco install openssl cmake
 
       - name: Create Build directory
         run: cmake -E make_directory ${{runner.workspace}}/build
