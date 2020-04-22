@@ -29,22 +29,19 @@ typedef struct _MyItem {
 bool CheckMemory(MyContext * pContext)
 {
 	MyItem * p;
-	int i;
-
 	//  Walk memory and check every block
 
 	for (p =  (MyItem *) pContext->pFirst; p != NULL; p = p->pNext) {
 		if (p->pad[0] == (byte) 0xab) {
 			//  Block has been freed
-			for (i = 0; i < p->size + 8; i++) {
+			for (unsigned i = 0; i < p->size + 8; i++) {
 				if (p->pad[i] != (byte) 0xab) {
 					fprintf(stderr, "Freed block is modified");
 					assert(false);
 				}
 			}
-		}
-		else if (p->pad[0] == (byte) 0xef) {
-			for (i = 0; i < 4; i++) {
+		} else if (p->pad[0] == (byte) 0xef) {
+			for (unsigned i = 0; i < 4; i++) {
 				if ((p->pad[i] != (byte) 0xef) || (p->pad[i + 4 + p->size] != (byte) 0xef)) {
 					fprintf(stderr, "Curent block was overrun");
 					assert(false);

@@ -421,12 +421,13 @@ int _ValidateEncrypt(const cn_cbor * pControl, const byte * pbEncoded, size_t cb
 		if (!fAlgSupport) {
 			fFail = true;
 			fAlgSupport = false;
+		} else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
+			fFail = true;
 		}
-		else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
 
-                size_t cb;
-                byte * pb;
-                pb = COSE_Encrypt_GetContent(hEnc, &cb, NULL);
+		size_t cb;
+		byte * pb;
+		pb = COSE_Encrypt_GetContent(hEnc, &cb, NULL);
 	}
 	else {
 		if (fAlgSupport) {

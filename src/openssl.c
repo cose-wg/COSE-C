@@ -1099,7 +1099,7 @@ bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDiges
 	CHECK_CONDITION(pSig != NULL, COSE_ERR_INVALID_PARAMETER);
 	cbSignature = pSig->length;
 
-	CHECK_CONDITION(cbSignature / 2 == cbR, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(cbSignature / 2 == (size_t)cbR, COSE_ERR_INVALID_PARAMETER);
 	r = BN_bin2bn(pSig->v.bytes,(int) cbSignature/2, NULL);
 	CHECK_CONDITION(NULL != r, COSE_ERR_OUT_OF_MEMORY);
 	s = BN_bin2bn(pSig->v.bytes+cbSignature/2, (int) cbSignature/2, NULL);
@@ -1197,14 +1197,10 @@ bool EdDSA_Sign(COSE* pSigner, int index, const cn_cbor* pKeyIn, const byte* rgb
 
 bool EdDSA_Verify(COSE* pSigner, int index, const cn_cbor* pKey, const byte* rgbToSign, size_t cbToSign, cose_errback* perr)
 {
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context* context = &pSigner->m_allocContext;
-#endif
-	cn_cbor* p = NULL;
 	cn_cbor* pSig;
 	EVP_PKEY* pkey = NULL;
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_OPK_Curve);
+	cn_cbor *p = cn_cbor_mapget_int(pKey, COSE_Key_OPK_Curve);
 	if (p == NULL) {
 	errorReturn:
 		if (pkey != NULL) EVP_PKEY_free(pkey);
