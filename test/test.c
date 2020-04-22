@@ -330,19 +330,23 @@ struct {
 
 bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int msgType, bool fPublicKey)
 {
-	const cn_cbor * pKey;
-	const cn_cbor * pValue;
-	int keyNew;
-	cn_cbor * pValueNew;
-	bool fRet = false;
+	int keyNew = 0;
+	cn_cbor * pValueNew = NULL;
+	bool fRet = true;
 
-	if (pAttributes == NULL) return true;
-	if (pAttributes->type != CN_CBOR_MAP) return false;
+	if (pAttributes == NULL) {
+		return true;
+	}
+	if (pAttributes->type != CN_CBOR_MAP) {
+		return false;
+	}
 
-	for (pKey = pAttributes->first_child; pKey != NULL; pKey = pKey->next->next) {
-		pValue = pKey->next;
+	for (const cn_cbor * pKey = pAttributes->first_child; pKey != NULL; pKey = pKey->next->next) {
+		const cn_cbor *  pValue = pKey->next;
 
-		if (pKey->type != CN_CBOR_TEXT) return false;
+		if (pKey->type != CN_CBOR_TEXT) {
+			return false;
+		}
 
 		if (strcmp(pKey->v.str, "alg") == 0) {
 			keyNew = COSE_Header_Algorithm;
@@ -391,49 +395,49 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		switch (msgType) {
 #if INCLUDE_MAC
 		case Attributes_MAC_protected:
-			fRet = COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_MAC0
 		case Attributes_MAC0_protected:
-			fRet = COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 		case Attributes_Recipient_protected:
-			fRet = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT
 		case Attributes_Enveloped_protected:
-			fRet = COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT0
 		case Attributes_Encrypt_protected:
-			fRet = COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN
 		case Attributes_Sign_protected:
-			fRet = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN
 		case Attributes_Signer_protected:
-			fRet = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN1
 		case Attributes_Sign1_protected:
-			fRet = COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 		assert(fRet);
