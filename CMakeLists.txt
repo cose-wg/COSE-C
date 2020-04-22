@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.11.0)
 
 set(VERSION_MAJOR
     0
@@ -92,24 +92,6 @@ if(MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
 endif()
 
 add_definitions(-DUSE_ARRAY)
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
-  message(STATUS "adding GCC/Clang options ")
-  add_definitions(-std=gnu99 -Wall -Wextra -pedantic)
-  if(COSE_C_FATAL_WARNINGS)
-    add_definitions(-Werror)
-  endif()
-  if(COSE_C_OPTIMIZE)
-    add_definitions(-Os)
-  endif()
-  add_definitions(-DNDEBUG)
-elseif(MSVC)
-  add_definitions(/W4)
-  if(COSE_C_FATAL_WARNINGS)
-    add_definitions(/WX)
-  endif()
-else()
-  message(FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}")
-endif()
 
 if(versbose)
   set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -154,7 +136,6 @@ if(COSE_C_RUN_CLANG_TIDY)
   endif()
 endif(COSE_C_RUN_CLANG_TIDY)
 
-
 ###############################################################################
 # DEPENDENCIES
 ###############################################################################
@@ -162,39 +143,42 @@ endif(COSE_C_RUN_CLANG_TIDY)
 if(COSE_C_USE_FIND_PACKAGE)
   find_package(cn-cbor)
 else()
-  include(ExternalProject)
-  externalproject_add(
-    project_cn-cbor
-    GIT_REPOSITORY https://github.com/jimsch/cn-cbor
-    GIT_TAG master
-    CMAKE_ARGS -DCN_CBOR_OPTIMIZE=OFF
-               -DCN_CBOR_USE_CONTEXT=${COSE_C_USE_CONTEXT}
-               -DCN_CBOR_BUILD_DOCS=OFF
-               -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-               -DCN_CBOR_COVERALLS=OFF
-               -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
-               -DCN_CBOR_FATAL_WARNINGS=OFF
-    INSTALL_DIR "${dist_dir}"
-    UPDATE_DISCONNECTED 1)
+  include(FetchContent)
 
-  externalproject_get_property(project_cn-cbor install_dir)
-  include_directories("${install_dir}/include")
+  fetchcontent_declare(
+    project_cn_cbor
+    GIT_REPOSITORY https://github.com/jimsch/cn-cbor.git
+    GIT_TAG master)
 
-  add_library(cn-cbor STATIC IMPORTED GLOBAL)
-  if(MSVC)
-    set_property(TARGET cn-cbor PROPERTY IMPORTED_LOCATION
-                                         "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor.lib")
-  else()
-    set_property(
-      TARGET cn-cbor PROPERTY IMPORTED_LOCATION
-                              "${install_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}cn-cbor${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  fetchcontent_getproperties(project_cn_cbor)
+  if(NOT project_cn_cbor_POPULATED)
+    fetchcontent_populate(project_cn_cbor)
+    set(CN_CBOR_FATAL_WARNINGS
+        OFF
+        CACHE BOOL "" FORCE)
+    set(CN_CBOR_COVERALLS
+        OFF
+        CACHE BOOL "" FORCE)
+    set(CN_CBOR_USE_CONTEXT
+        ${COSE_C_USE_CONTEXT}
+        CACHE BOOL "" FORCE)
+    set(BUILD_SHARED_LIBS
+        ${BUILD_SHARED_LIBS}
+        CACHE BOOL "" FORCE)
+    set(CN_CBOR_BUILD_DOCS
+        OFF
+        CACHE BOOL "" FORCE)
+    set(CN_CBOR_BUILD_TESTS
+        OFF
+        CACHE BOOL "" FORCE)
+    add_subdirectory(${project_cn_cbor_SOURCE_DIR} ${project_cn_cbor_BINARY_DIR} EXCLUDE_FROM_ALL)
   endif()
+endif()
 
-  if(NOT TARGET cn-cbor::cn-cbor)
-    add_library(cn-cbor::cn-cbor ALIAS cn-cbor)
-  endif()
-
-  add_dependencies(cn-cbor project_cn-cbor)
+if(BUILD_SHARED_LIBS)
+  set(BUILD_STATIC_LIBS OFF)
+else()
+  set(BUILD_STATIC_LIBS ON)
 endif()
 
 if(COSE_C_USE_MBEDTLS)
@@ -203,32 +187,32 @@ if(COSE_C_USE_MBEDTLS)
   if(COSE_C_USE_FIND_PACKAGE)
     find_package(MbedTLS)
   else()
-    externalproject_add(
+    include(FetchContent)
+    fetchcontent_declare(
       project_mbedtls
       GIT_REPOSITORY https://github.com/ARMmbed/mbedtls
-      CMAKE_ARGS -DENABLED_PROGRAMS=OFF
-                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-                 -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED_LIBS}
-                 -DENABLE_TESTING=OFF
-                 -DLIB_INSTALL_DIR=${install_dir}/lib
-                 INTALL_DIR
-                 "${dist_dir}"
-      UPDATE_DISCONNECTED 1)
+      GIT_TAG master)
 
-    externalproject_get_property(project_mbedtls install_dir)
-    include_directories("${install_dir}/include")
-    add_library(mbedtls STATIC IMPORTED)
-    if(MSVC)
-      set_property(TARGET mbedtls PROPERTY IMPORTED_LOCATION
-                                           "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto.lib")
-    else()
-      set_property(
-        TARGET mbedtls PROPERTY IMPORTED_LOCATION
-                                "${dist_dir}/lib/${CMAKE_SHARED_MODULE_PREFIX}mbedcrypto${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    fetchcontent_getproperties(project_mbedtls)
+    if(NOT project_mbedtls_POPULATED)
+      fetchcontent_populate(project_mbedtls)
+      set(ENABLED_PROGRAMS
+          OFF
+          CACHE BOOL "" FORCE)
+      set(USE_STATIC_MBEDTLS_LIBRARY
+          ${BUILD_STATIC_LIBS}
+          CACHE BOOL "" FORCE)
+      set(USE_SHARED_MBEDTLS_LIBRARY
+          ${BUILD_SHARED_LIBS}
+          CACHE BOOL "" FORCE)
+      set(ENABLE_TESTING
+          OFF
+          CACHE BOOL "" FORCE)
+      add_subdirectory(${project_mbedtls_SOURCE_DIR} ${project_mbedtls_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
-    add_dependencies(mbedtls project_mbedtls)
+    # TODO: remove next line after https://github.com/ARMmbed/mbedtls/pull/2090
+    include_directories("${project_mbedtls_SOURCE_DIR}/include")
   endif()
-
 else()
   find_package(OpenSSL REQUIRED)
 endif()
@@ -278,6 +262,7 @@ message(STATUS "COSE_C_BUILD_DUMPER:.............${COSE_C_BUILD_DUMPER}")
 message(STATUS "CMAKE_BUILD_TYPE:................${CMAKE_BUILD_TYPE}")
 message(STATUS "BUILD_SHARED_LIBS:...............${BUILD_SHARED_LIBS}")
 message(STATUS "COSE_VERSION:....................${COSE_VERSION}")
+message(STATUS "CMAKE_VERSION:...................${CMAKE_VERSION}")
 message(STATUS "CMAKE_C_COMPILER:................${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER:..............${CMAKE_CXX_COMPILER}")
 message(STATUS "CLANG_TIDY_EXE:..................${CLANG_TIDY_EXE}")
