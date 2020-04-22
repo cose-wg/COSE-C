@@ -67,6 +67,8 @@ Testing
 dist
 test/test.cbor
 *.tcl
+CMakeLists.txt.user
+
 
 # Coverity
 cov-int

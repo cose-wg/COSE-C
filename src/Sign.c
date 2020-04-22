@@ -107,7 +107,7 @@ errorReturn:
 bool COSE_Sign_Free(HCOSE_SIGN h)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context context;
+	cn_cbor_context *context;
 #endif
 	COSE_SignMessage * pMessage = (COSE_SignMessage *)h;
 
@@ -122,12 +122,12 @@ bool COSE_Sign_Free(HCOSE_SIGN h)
 	_COSE_RemoveFromList(&SignRoot, &pMessage->m_message);
 
 #ifdef USE_CBOR_CONTEXT
-	context = pMessage->m_message.m_allocContext;
+	context = &pMessage->m_message.m_allocContext;
 #endif
 
 	_COSE_Sign_Release(pMessage);
 
-	COSE_FREE(pMessage, &context);
+	COSE_FREE(pMessage, context);
 
 	return true;
 }

@@ -1,9 +1,6 @@
 #pragma once
 
-#ifndef _countof
-
-#define _countof(x) (sizeof(x)/sizeof(x[0]))
-#endif
+#include <stdbool.h>
 
 #ifdef USE_CBOR_CONTEXT
 cn_cbor_context * context;

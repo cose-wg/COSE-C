@@ -153,7 +153,9 @@ bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcbo
 	CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
 	pbToSign = (byte *)COSE_CALLOC(cbToSign, 1, context);
 	CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray) == cbToSign, COSE_ERR_CBOR);
+	const ssize_t writtenBits = cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray);
+	CHECK_CONDITION(writtenBits >= 0, COSE_ERR_CBOR);
+	CHECK_CONDITION((size_t)writtenBits == cbToSign, COSE_ERR_CBOR);
 
 	*ppbToSign = pbToSign;
 	*pcbToSign = cbToSign;
@@ -367,15 +369,13 @@ cn_cbor * COSE_Signer_map_get_int(HCOSE_SIGNER h, int key, int flags, cose_errba
 
 bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perr)
 {
-	bool fRet = false;
-
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	return _COSE_map_put(&((COSE_SignerInfo *)h)->m_message, key, value, flags, perr);
 
 errorReturn:
-	return fRet;
+	return false;
 }
 
 #endif
