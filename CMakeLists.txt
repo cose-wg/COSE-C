@@ -85,7 +85,6 @@ if(MSVC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   set(COSE_C_COVERALLS OFF)
 endif()
 
-add_definitions(-DUSE_ARRAY)
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   message(STATUS "adding GCC/Clang options ")
   add_definitions(-std=gnu99 -Wall -Wextra -pedantic)
