@@ -3,9 +3,9 @@
 #include <cn-cbor/cn-cbor.h>
 #include "cose/cose_configure.h"
 
-#if USE_MBED_TLS
+#if defined(COSE_C_USE_MBEDTLS)
 #include "mbedtls/ecp.h"
-#endif // USE_MBED_TLS
+#endif // COSE_C_USE_MBEDTLS
 
 #ifdef __cplusplus
 extern "C" {
@@ -207,14 +207,14 @@ typedef enum {
 } COSE_Curves;
 
 
-#if USE_MBED_TLS
+#if defined(COSE_C_USE_MBEDTLS)
 typedef struct mbedtls_ecp_keypair eckey_t;
 #else
 	typedef struct eckey_t {
 		struct ec_key_st *key;
 		int group;
 	} eckey_t;
-#endif // USE_MBED_TLS
+#endif // COSE_C_USE_MBEDTLS
 
 /*
  *  messages dealing with the Enveloped message type

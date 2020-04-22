@@ -154,7 +154,6 @@ if(COSE_C_RUN_CLANG_TIDY)
   endif()
 endif(COSE_C_RUN_CLANG_TIDY)
 
-
 ###############################################################################
 # DEPENDENCIES
 ###############################################################################
@@ -198,8 +197,7 @@ else()
 endif()
 
 if(COSE_C_USE_MBEDTLS)
-  add_definitions(-DUSE_MBED_TLS)
-
+  set(COSE_C_USE_OPENSSL OFF)
   if(COSE_C_USE_FIND_PACKAGE)
     find_package(MbedTLS)
   else()
@@ -231,6 +229,7 @@ if(COSE_C_USE_MBEDTLS)
 
 else()
   find_package(OpenSSL REQUIRED)
+  set(COSE_C_USE_OPENSSL ON)
 endif()
 
 ###############################################################################
