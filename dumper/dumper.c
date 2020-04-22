@@ -1,20 +1,17 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <stdio.h>
-#include <cose/cose.h>
-#include <sys/stat.h>
 #include <cn-cbor/cn-cbor.h>
+#include <cose/cose.h>
+#include <cose_int.h>
 #include <fcntl.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
+#include <sys/stat.h>
 
 #ifdef _MSC_VER
 #include <io.h>
-#endif
-
-#ifndef _countof
-#define _countof(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
 #ifndef _MSC_VER
@@ -395,7 +392,7 @@ void DumpTree(const cn_cbor * cbor, FILE * out, const FOO *pFOO, int depth, int 
 			if (pFOO != NULL) {
 				//  Locate the right entry in foo
 				for (i2 = 0, pFoo2 = pFOO->children; i2 < pFOO->count; pFoo2++, i2 += 1) {
-					if (pFoo2->type != cbor2->type) continue;
+					if ((unsigned)pFoo2->type != cbor2->type) continue;
 					switch (cbor2->type) {
 					case CN_CBOR_UINT:
 						if ((group != 0) && (pFoo2->group != 0) && (pFoo2->group != group)) continue;

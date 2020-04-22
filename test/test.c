@@ -10,6 +10,7 @@
 #include <cose/cose_configure.h>
 #include <cn-cbor/cn-cbor.h>
 #include <assert.h>
+#include <cose_int.h>
 
 #ifndef _MSC_VER
 #include <dirent.h>
@@ -18,7 +19,6 @@
 #endif
 
 #include "json.h"
-
 #include "test.h"
 
 #ifdef USE_MBED_TLS
@@ -330,19 +330,23 @@ struct {
 
 bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int msgType, bool fPublicKey)
 {
-	const cn_cbor * pKey;
-	const cn_cbor * pValue;
-	int keyNew;
-	cn_cbor * pValueNew;
-	bool f = false;
+	int keyNew = 0;
+	cn_cbor * pValueNew = NULL;
+	bool fRet = true;
 
-	if (pAttributes == NULL) return true;
-	if (pAttributes->type != CN_CBOR_MAP) return false;
+	if (pAttributes == NULL) {
+		return true;
+	}
+	if (pAttributes->type != CN_CBOR_MAP) {
+		return false;
+	}
 
-	for (pKey = pAttributes->first_child; pKey != NULL; pKey = pKey->next->next) {
-		pValue = pKey->next;
+	for (const cn_cbor * pKey = pAttributes->first_child; pKey != NULL; pKey = pKey->next->next) {
+		const cn_cbor *  pValue = pKey->next;
 
-		if (pKey->type != CN_CBOR_TEXT) return false;
+		if (pKey->type != CN_CBOR_TEXT) {
+			return false;
+		}
 
 		if (strcmp(pKey->v.str, "alg") == 0) {
 			keyNew = COSE_Header_Algorithm;
@@ -391,57 +395,56 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		switch (msgType) {
 #if INCLUDE_MAC
 		case Attributes_MAC_protected:
-			f = COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_MAC0
 		case Attributes_MAC0_protected:
-			f = COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 		case Attributes_Recipient_protected:
-			f = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT
 		case Attributes_Enveloped_protected:
-			f = COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_ENCRYPT0
 		case Attributes_Encrypt_protected:
-			f = COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN
 		case Attributes_Sign_protected:
-			f = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN
 		case Attributes_Signer_protected:
-			f = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
 
 #if INCLUDE_SIGN1
 		case Attributes_Sign1_protected:
-			f = COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
+			fRet &= COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
 			break;
 #endif
-
+		assert(fRet);
 		}
-		// assert(f);
 	}
 
-	return true;
+	return fRet;
 }
 
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
@@ -561,7 +564,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 	cn_cbor * p;
 	cn_cbor * pKey;
 	cn_cbor * pValue;
-	int i;
+	size_t i;
 	int kty;
 	unsigned char * pb;
 	size_t cb;
@@ -589,7 +592,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 
 		if (pKey->type == CN_CBOR_TEXT) {
 			for (i = 0; i < sizeof(RgStringKeys)/sizeof(RgStringKeys[0]); i++) {
-				if ((pKey->length == strlen(RgStringKeys[i].szKey)) &&
+				if (((size_t)pKey->length == strlen(RgStringKeys[i].szKey)) &&
 					(strncmp(pKey->v.str, RgStringKeys[i].szKey, strlen(RgStringKeys[i].szKey)) == 0) &&
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
 					switch (RgStringKeys[i].operation) {
@@ -631,9 +634,6 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 	return pKeyOut;
 }
 
-
-
-bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
 
 bool Test_cn_cbor_array_replace()
 {

@@ -498,15 +498,19 @@ void _COSE_InsertInList(COSE ** root, COSE * newMsg)
 	return;
 }
 
-bool _COSE_IsInList(COSE * root, COSE * thisMsg)
+bool _COSE_IsInList(const COSE *const root, const COSE  *const thisMsg)
 {
-	COSE * walk;
+	if (root == NULL) {
+		return false;
+	}
+	if (thisMsg == NULL) {
+		return false;
+	}
 
-	if (root == NULL) return false;
-	if (thisMsg == NULL) return false;
-
-	for (walk = root; walk != NULL; walk = walk->m_handleList) {
-		if (walk == thisMsg) return true;		
+	for (const COSE * walk = root; walk != NULL; walk = walk->m_handleList) {
+		if (walk == thisMsg) {
+			return true;
+		}
 	}
 	return false;
 }
