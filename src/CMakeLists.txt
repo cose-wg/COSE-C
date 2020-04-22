@@ -33,7 +33,7 @@ target_sources(${PROJECT_NAME} PRIVATE ${cose_sources})
 
 target_include_directories(
   ${PROJECT_NAME}
-  PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+  PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
          $<INSTALL_INTERFACE:include>
   PRIVATE ../src)
 target_link_libraries(${PROJECT_NAME} PRIVATE cn-cbor::cn-cbor)
