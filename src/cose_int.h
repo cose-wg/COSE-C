@@ -1,6 +1,9 @@
 #pragma once
 
 #include <assert.h>
+#include <cn-cbor/cn-cbor.h>
+#include <cose/cose.h>
+#include <stdbool.h>
 
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
@@ -11,6 +14,10 @@ typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
 #endif
 
 #define UNUSED(x) ((void) (x))
+
+#ifndef _countof
+#define _countof(x) (sizeof(x)/sizeof(x[0]))
+#endif
 
 typedef struct _COSE {
 	COSE_INIT_FLAGS m_flags;		//  Not sure what goes here yet
@@ -149,9 +156,6 @@ typedef struct _COSE_COUNTER_SIGN {
 
 #endif // USE_CBOR_CONTEXT
 
-#ifndef UNUSED_PARAM
-#define UNUSED_PARAM(p) ((void)&(p))
-#endif
 
 extern cose_error _MapFromCBOR(cn_cbor_errback err);
 
@@ -160,7 +164,7 @@ extern cose_error _MapFromCBOR(cn_cbor_errback err);
  */
 
 extern void _COSE_InsertInList(COSE ** rootNode, COSE * newMsg);
-extern bool _COSE_IsInList(COSE * rootNode, COSE * thisMsg);
+extern bool _COSE_IsInList(const COSE *const rootNode, const COSE  *const thisMsg);
 extern void _COSE_RemoveFromList(COSE ** rootNode, COSE * thisMsg);
 
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);

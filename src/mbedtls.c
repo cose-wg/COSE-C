@@ -231,9 +231,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
 {
 	mbedtls_gcm_context ctx;
-	int cbOut;
 	byte * rgbOut = NULL;
-	int outl = 0;
 	byte rgbIV[16] = { 0 };
 	byte * pbIV = NULL;
 	const cn_cbor * cbor_iv = NULL;
@@ -571,20 +569,19 @@ bool HKDF_Extract(COSE * pcose, const byte * pbKey, size_t cbKey, size_t cbitDig
 
 bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput, cose_errback * perr)
 {
+	UNUSED(pcose);
 	mbedtls_md_type_t mdType;
 	mbedtls_md_info_t * pmd;
 
-	size_t ib;
-    int cbSalt;
-    unsigned int cbDigest = 0;
-    byte bCount = 1;
 
-    if (0) {
-    errorReturn:
-        return false;
-    }
+	unsigned int cbDigest = 0;
 
-    switch (cbitDigest) {
+	if (0) {
+	errorReturn:
+		return false;
+	}
+
+	switch (cbitDigest) {
     case 256: mdType = MBEDTLS_MD_SHA256; cbDigest = 256 / 8;  break;
     case 384: mdType = MBEDTLS_MD_SHA384; cbDigest = 384 / 8; break;
     case 512: mdType = MBEDTLS_MD_SHA512; cbDigest = 512 / 8; break;
@@ -600,7 +597,6 @@ bool HKDF_Expand(COSE * pcose, size_t cbitDigest, const byte * pbPRK, size_t cbP
     }
 
     return true;
-
 }
 /*
 void dump_output(byte* b, size_t s){
@@ -1175,6 +1171,7 @@ void rand_bytes(byte* pb, size_t cb){
 
 int rand_bytes2(void * pv, unsigned char * pb, size_t cb)
 {
+	UNUSED(pv);
     rand_bytes(pb, cb);
     return 0;
 }

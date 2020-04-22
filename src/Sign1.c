@@ -92,7 +92,7 @@ errorReturn:
 bool COSE_Sign1_Free(HCOSE_SIGN1 h)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context context;
+	cn_cbor_context *context;
 #endif
 	COSE_Sign1Message * pMessage = (COSE_Sign1Message *)h;
 
@@ -107,12 +107,12 @@ bool COSE_Sign1_Free(HCOSE_SIGN1 h)
 	_COSE_RemoveFromList(&Sign1Root, &pMessage->m_message);
 
 #ifdef USE_CBOR_CONTEXT
-	context = pMessage->m_message.m_allocContext;
+	context = &pMessage->m_message.m_allocContext;
 #endif
 
 	_COSE_Sign1_Release(pMessage);
 
-	COSE_FREE(pMessage, &context);
+	COSE_FREE(pMessage, context);
 
 	return true;
 }
@@ -340,7 +340,7 @@ static bool CreateSign1AAD(COSE_Sign1Message * pMessage, byte ** ppbToSign, size
 	CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
 	pbToSign = (byte *)COSE_CALLOC(cbToSign, 1, context);
 	CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray) == cbToSign, COSE_ERR_CBOR);
+	CHECK_CONDITION(cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray) == (ssize_t)cbToSign, COSE_ERR_CBOR);
 
 	*ppbToSign = pbToSign;
 	*pcbToSign = cbToSign;

@@ -113,7 +113,7 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor * cbor, COSE_MacMessage * pIn, CBOR
 bool COSE_Mac_Free(HCOSE_MAC h)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context context;
+	cn_cbor_context *context;
 #endif
 	COSE_MacMessage * p = (COSE_MacMessage *)h;
 
@@ -127,12 +127,12 @@ bool COSE_Mac_Free(HCOSE_MAC h)
 	_COSE_RemoveFromList(&MacRoot, &p->m_message);
 
 #ifdef USE_CBOR_CONTEXT
-	context = ((COSE_MacMessage *)h)->m_message.m_allocContext;
+	context = &((COSE_MacMessage *)h)->m_message.m_allocContext;
 #endif
 
 	_COSE_Mac_Release((COSE_MacMessage *)h);
 
-	COSE_FREE((COSE_MacMessage *)h, &context);
+	COSE_FREE((COSE_MacMessage *)h, context);
 
 	return true;
 }
@@ -286,7 +286,7 @@ bool _COSE_Mac_Build_AAD(COSE * pCose, const char * szContext, byte ** ppbAuthDa
 	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == (ssize_t)cbAuthData, COSE_ERR_CBOR);
 
 	*ppbAuthData = pbAuthData;
 	*pcbAuthData = cbAuthData;
