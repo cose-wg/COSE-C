@@ -51,6 +51,7 @@ jobs:
           cmake $GITHUB_WORKSPACE \
           -DCOSE_C_USE_CONTEXT=${{matrix.USE_CONTEXT}} \
           -DCOSE_C_BUILD_DOCS=OFF \
+          -DCOSE_C_COVERALLS=OFF \
           -DCOSE_C_BUILD_TESTS=ON \
           -DBUILD_SHARED_LIBS=OFF \
           ${{matrix.CMAKE_OPTIONS}} \
