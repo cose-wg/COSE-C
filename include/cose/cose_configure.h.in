@@ -144,7 +144,7 @@
 #define USE_EDDSA
 #else
 #pragma message("OPENSSL VERSION IS ")
-#pragma message(OPENSSL_VERISON_NUMBER)
+#pragma message(OPENSSL_VERSION_NUMBER)
 #endif
 #endif // !defined (COSE_C_USE_MBEDTLS)
 
