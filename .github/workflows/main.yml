@@ -34,6 +34,11 @@ jobs:
           brew upgrade
           brew install cmake openssl
 
+      - name: setup (windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          choco install openssl cmake
+
       - name: Create Build directory
         run: cmake -E make_directory ${{runner.workspace}}/build
 
