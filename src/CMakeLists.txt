@@ -1,3 +1,22 @@
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+  message(STATUS "adding GCC/Clang options ")
+  add_definitions(-std=gnu99 -Wall -Wextra -pedantic)
+  if(COSE_C_FATAL_WARNINGS)
+    add_definitions(-Werror)
+  endif()
+  if(COSE_C_OPTIMIZE)
+    add_definitions(-Os)
+  endif()
+  add_definitions(-DNDEBUG)
+elseif(MSVC)
+  add_definitions(/W4)
+  if(COSE_C_FATAL_WARNINGS)
+    add_definitions(/WX)
+  endif()
+else()
+  message(FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}")
+endif()
+
 add_library(${PROJECT_NAME})
 
 # some structs look differently depending on the crypto lib used
@@ -78,17 +97,19 @@ include(CMakePackageConfigHelpers)
 
 set(COSE_C_CONFIG_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
-install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}Targets
-  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT dev
-  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib)
-install(
-  EXPORT ${PROJECT_NAME}Targets
-  DESTINATION "${COSE_C_CONFIG_INSTALL_DIR}"
-  NAMESPACE ${PROJECT_NAME}::
-  COMPONENT dev)
+if(COSE_C_EXPORT_TARGETS)
+  install(
+    TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}Targets
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT dev
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib)
+  install(
+    EXPORT ${PROJECT_NAME}Targets
+    DESTINATION "${COSE_C_CONFIG_INSTALL_DIR}"
+    NAMESPACE ${PROJECT_NAME}::
+    COMPONENT dev)
+endif()
 
 configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in ${PROJECT_NAME}Config.cmake
                               INSTALL_DESTINATION ${COSE_C_CONFIG_INSTALL_DIR})
