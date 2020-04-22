@@ -1,7 +1,11 @@
+#pragma once
+
 #include <cn-cbor/cn-cbor.h>
 #include "cose/cose_configure.h"
 
-#pragma once
+#if USE_MBED_TLS
+#include "mbedtls/ecp.h"
+#endif // USE_MBED_TLS
 
 #ifdef __cplusplus
 extern "C" {
@@ -202,6 +206,16 @@ typedef enum {
 	COSE_Curve_Ed448 = 7,
 } COSE_Curves;
 
+
+#if USE_MBED_TLS
+typedef struct mbedtls_ecp_keypair eckey_t;
+#else
+	typedef struct eckey_t {
+		struct ec_key_st *key;
+		int group;
+	} eckey_t;
+#endif // USE_MBED_TLS
+
 /*
  *  messages dealing with the Enveloped message type
  */
@@ -343,7 +357,7 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, si
 #define COSE_Sign0_map_get_int COSE_Sign1_map_get_int
 #define COSE_Sign0_map_put_int COSE_Sign1_map_put_int
 
-    
+
 HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
 bool COSE_Sign1_Free(HCOSE_SIGN1 cose);
 
@@ -352,6 +366,8 @@ bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose, const byte * pbExternalData, size
 
 bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor * pkey, cose_errback * perr);
 bool COSE_Sign1_validate(HCOSE_SIGN1 hSign, const cn_cbor * pkey, cose_errback * perr);
+bool COSE_Sign1_Sign_eckey(HCOSE_SIGN1 h, const eckey_t * pbKey, cose_errback * perr);
+bool COSE_Sign1_validate_eckey(HCOSE_SIGN1 hSign, const eckey_t * pbKey, cose_errback * perr);
 cn_cbor * COSE_Sign1_map_get_int(HCOSE_SIGN1 h, int key, int flags, cose_errback * perror);
 bool COSE_Sign1_map_put_int(HCOSE_SIGN1 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
 
