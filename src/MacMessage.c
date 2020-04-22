@@ -17,7 +17,7 @@
 
 #if INCLUDE_MAC
 
-COSE * MacRoot = NULL;
+static COSE * MacRoot = NULL;
 
 /*! \private
 * @brief Test if a HCOSE_MAC handle is valid

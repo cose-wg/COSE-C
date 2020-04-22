@@ -7,19 +7,33 @@
 
 #cmakedefine COSE_C_USE_MBEDTLS
 #cmakedefine COSE_C_USE_OPENSSL
+#cmakedefine COSE_C_USE_BCRYPT
 
-
+// make sure we only use one crypto lib
 #if defined(COSE_C_USE_MBEDTLS)
 #if defined(COSE_C_USE_OPENSSL) || defined(COSE_C_USE_BCRYPT)
 #error Only Define One Crypto Package
 #endif
-#elif defined(COSE_C_USE_BCRYPT)
+#endif
+
+#if defined(COSE_C_USE_BCRYPT)
 #if defined(COSE_C_USE_OPENSSL)
 #error Only Define One Crypto Package
 #endif
-#elif !defined(COSE_C_USE_OPENSSL)
+#endif
+
+#if defined(COSE_C_USE_OPENSSL)
 #include <openssl/opensslv.h>
-#define COSE_C_USE_OPENSSL
+//  MBEDTLS currently supports ECDH for X25519 but not EdDSA
+#if OPENSSL_VERSION_NUMBER > 0x10100000L
+// Requires OPEN SSL 1.1.1 to build
+#define USE_EDDSA
+#else
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#pragma message("OPENSSL VERSION IS " OPENSSL_VERSION_TEXT)
+#pragma message ("Version number: " TOSTRING(OPENSSL_VERSION_NUMBER))
+#endif
 #endif
 
 //
@@ -137,17 +151,6 @@
 #define USE_ECDSA_SHA_256
 #define USE_ECDSA_SHA_384
 #define USE_ECDSA_SHA_512
-#if !defined(COSE_C_USE_MBEDTLS)
-//  MBEDTLS currently supports ECDH for X25519 but not EdDSA
-#if OPENSSL_VERSION_NUMBER > 0x10100000L
-// Requires OPEN SSL 1.1.1 to build
-#define USE_EDDSA
-#else
-#pragma message("OPENSSL VERSION IS ")
-#pragma message(OPENSSL_VERSION_NUMBER)
-#endif
-#endif // !defined (COSE_C_USE_MBEDTLS)
-
 
 //#define USE_COUNTER_SIGNATURES
 
