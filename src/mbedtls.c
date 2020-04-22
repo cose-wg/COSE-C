@@ -155,7 +155,6 @@ bool AES_GCM_Decrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 	mbedtls_gcm_context ctx;
 	int cbOut;
 	byte * rgbOut = NULL;
-	int outl = 0;
 	byte rgbIV[15] = { 0 };
 	const cn_cbor * pIV = NULL;
 #ifdef USE_CBOR_CONTEXT
