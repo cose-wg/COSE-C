@@ -1097,8 +1097,7 @@ errorReturn:
 /*
 //#include <stdio.h> //TODO
 void rand_bytes(byte * pb, size_t cb){
-//ctx->aes_ctx->rk e null... i callchainen längst in. prova istället:
-//kolla https://tls.mbed.org/kb/how-to/add-a-random-generator
+// https://tls.mbed.org/kb/how-to/add-a-random-generator
         //init random
        mbedtls_ctr_drbg_context ctr_drbg;
           char *personalization = "my_app_specific_string";
