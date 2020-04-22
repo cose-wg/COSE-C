@@ -1,4 +1,4 @@
-/** \file Sign.c
+/** \file Sign1.c
 * Contains implementation of the functions related to HCOSE_SIGN handle objects.
 */
 
@@ -11,8 +11,8 @@
 
 #if INCLUDE_SIGN1
 
-bool _COSE_Signer0_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_errback * perr);
-bool _COSE_Signer0_validate(COSE_Sign1Message * pSign, const cn_cbor * pKey, cose_errback * perr);
+bool _COSE_Signer1_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_errback * perr);
+bool _COSE_Signer1_validate(COSE_Sign1Message * pSign, const cn_cbor * pKey, cose_errback * perr);
 void _COSE_Sign1_Release(COSE_Sign1Message * p);
 
 COSE * Sign1Root = NULL;
@@ -196,7 +196,7 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor * pKey, cose_errback * perr)
 	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
 	if (pcborProtected == NULL) goto errorReturn;
 
-	if (!_COSE_Signer0_sign(pMessage, pKey, perr)) goto errorReturn;
+	if (!_COSE_Signer1_sign(pMessage, pKey, perr)) goto errorReturn;
 
 	return true;
 }
@@ -221,7 +221,7 @@ bool COSE_Sign1_Sign_eckey(HCOSE_SIGN1 h, const eckey_t * eckey, cose_errback * 
 	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
 	if (pcborProtected == NULL) goto errorReturn;
 
-	if (!_COSE_Signer0_sign(pMessage, eckey, perr)) goto errorReturn;
+	if (!_COSE_Signer1_sign(pMessage, eckey, perr)) goto errorReturn;
 
 	return true;
 }
@@ -243,7 +243,7 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign, const cn_cbor * pKey, cose_errback *
 	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
-	f = _COSE_Signer0_validate(pSign, pKey,  perr);
+	f = _COSE_Signer1_validate(pSign, pKey,  perr);
 
 	return f;
 
@@ -267,7 +267,7 @@ bool COSE_Sign1_validate_eckey(HCOSE_SIGN1 hSign, const eckey_t * eckey, cose_er
 	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_Signer0_validate(pSign, eckey,  perr);
+	return _COSE_Signer1_validate(pSign, eckey,  perr);
 
 errorReturn:
 	return false;
@@ -357,7 +357,7 @@ errorReturn:
 	return false;
 }
 
-bool _COSE_Signer0_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_errback * perr)
+bool _COSE_Signer1_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_errback * perr)
 {
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
@@ -432,7 +432,7 @@ bool _COSE_Signer0_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_
 	return f;
 }
 
-bool _COSE_Signer0_validate(COSE_Sign1Message * pSign, const cn_cbor * pKey, cose_errback * perr)
+bool _COSE_Signer1_validate(COSE_Sign1Message * pSign, const cn_cbor * pKey, cose_errback * perr)
 {
 	byte * pbToSign = NULL;
 	int alg;
