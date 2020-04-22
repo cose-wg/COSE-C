@@ -52,6 +52,7 @@ jobs:
           -DCOSE_C_USE_CONTEXT=${{matrix.USE_CONTEXT}} \
           -DCOSE_C_BUILD_DOCS=OFF \
           -DCOSE_C_BUILD_TESTS=ON \
+          -DBUILD_SHARED_LIBS=OFF \
           ${{matrix.CMAKE_OPTIONS}} \
           -DCOSE_C_USE_MBEDTLS=${{matrix.USE_MBEDTLS}}
 
