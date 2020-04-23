@@ -9,11 +9,11 @@
 #include "crypto.h"
 
 #if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
-extern bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr);
+static bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr);
 #endif
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
-COSE* RecipientRoot = NULL;
+static COSE* RecipientRoot = NULL;
 
 /*! \private
 * @brief Test if a HCOSE_RECIPIENT handle is valid
@@ -1215,7 +1215,7 @@ errorReturn:
 #endif
 
 #if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
-bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr)
+static bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pArray;
 	cn_cbor_errback cbor_error;

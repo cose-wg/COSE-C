@@ -21,7 +21,7 @@
 #include "mbedtls/ecdh.h"
 #include "mbedtls/nist_kw.h"
 
-bool FUseCompressed = true;
+static bool FUseCompressed = true;
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 

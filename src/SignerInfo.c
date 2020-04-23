@@ -14,9 +14,7 @@
 
 #if INCLUDE_SIGN
 
-extern bool IsValidSignHandle(HCOSE_SIGN h);
-
-COSE * SignerRoot = NULL;
+static COSE * SignerRoot = NULL;
 
 bool IsValidSignerHandle(HCOSE_SIGNER h)
 {
@@ -110,7 +108,7 @@ errorReturn:
 	return NULL;
 }
 
-bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, const cn_cbor * pcborProtectedSign, const byte * pbExternal, size_t cbExternal, CBOR_CONTEXT_COMMA cose_errback * perr)
+static bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcborBody, const cn_cbor * pcborProtected, const cn_cbor * pcborProtectedSign, const byte * pbExternal, size_t cbExternal, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	cn_cbor * pArray = NULL;
 	cn_cbor_errback cbor_error;

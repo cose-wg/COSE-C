@@ -10,7 +10,7 @@
 
 #if INCLUDE_SIGN
 
-COSE * SignRoot = NULL;
+static COSE * SignRoot = NULL;
 
 /*! \private
 * @brief Test if a HCOSE_SIGN handle is valid
@@ -26,7 +26,7 @@ COSE * SignRoot = NULL;
 *  @returns result of check
 */
 
-bool IsValidSignHandle(HCOSE_SIGN h)
+static bool IsValidSignHandle(HCOSE_SIGN h)
 {
 	COSE_SignMessage * p = (COSE_SignMessage *)h;
 

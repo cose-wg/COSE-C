@@ -15,7 +15,7 @@ bool _COSE_Signer0_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_
 bool _COSE_Signer0_validate(COSE_Sign1Message * pSign, const cn_cbor * pKey, cose_errback * perr);
 void _COSE_Sign1_Release(COSE_Sign1Message * p);
 
-COSE * Sign1Root = NULL;
+static COSE * Sign1Root = NULL;
 
 /*! \private
 * @brief Test if a HCOSE_SIGN1 handle is valid
