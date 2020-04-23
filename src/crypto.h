@@ -33,10 +33,9 @@ bool AES_GCM_Encrypt(COSE_Enveloped * pcose, const byte * pbKey, size_t cbKey, c
 bool AES_KW_Encrypt(COSE_RecipientInfo * pcose, const byte * pbKeyIn, int cbitKey, const byte *  pbContent, int  cbContent, cose_errback * perr);
 
 
-extern bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
-
-extern bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
-extern bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, size_t cbitKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+bool AES_CMAC_Validate(COSE_MacMessage * pcose, int KeySize, int TagSize, const byte * pbKey, int cbitKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
+bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TagSize, const byte * pbKey, size_t cbitKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr);
 
 /**
 * Perform an HMAC Creation operation

@@ -144,7 +144,7 @@ const cn_cbor * ParseJson(const char * fileName)
 }
 
 
-extern void build_decoding_table();
+static void build_decoding_table();
 
 
 static char encoding_table[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
@@ -237,7 +237,7 @@ unsigned char *base64_decode(const char *data,
 }
 
 
-void build_decoding_table() {
+static void build_decoding_table() {
 
 	decoding_table = malloc(256);
 

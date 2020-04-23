@@ -19,7 +19,7 @@
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 void _COSE_Enveloped_Release(COSE_Enveloped * p);
 
-COSE * EnvelopedRoot = NULL;
+static COSE * EnvelopedRoot = NULL;
 #endif
 
 #if INCLUDE_ENCRYPT
