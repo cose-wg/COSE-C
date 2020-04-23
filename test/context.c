@@ -28,7 +28,7 @@ typedef struct _MyItem {
 
 bool CheckMemory(MyContext * pContext)
 {
-	MyItem * p;
+	MyItem * p = NULL;
 	//  Walk memory and check every block
 
 	for (p =  (MyItem *) pContext->pFirst; p != NULL; p = p->pNext) {
@@ -59,7 +59,7 @@ bool CheckMemory(MyContext * pContext)
 
 void * MyCalloc(size_t count, size_t size, void * context)
 {
-	MyItem * pb;
+	MyItem * pb = NULL;
 	MyContext * myContext = (MyContext *)context;
 
 	CheckMemory(myContext);

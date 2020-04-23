@@ -40,8 +40,11 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 
 	hMAC = (HCOSE_MAC) COSE_Decode(pbEncoded, cbEncoded, &type, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) {
-            if (fFailBody) return 0; else goto failTest;
-        }
+		if (fFailBody) {
+			return 0;
+		}
+		goto failTest;
+	}
 
 	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto failTest;
 	pMac = cn_cbor_mapget_string(pInput, "mac");
@@ -85,16 +88,21 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 		pFail = cn_cbor_mapget_string(pRecipients, "fail");
 
 		cn_cbor * alg = COSE_Mac_map_get_int(hMAC, COSE_Header_Algorithm, COSE_BOTH, NULL);
-		if (!IsAlgorithmSupported(alg)) fAlgNoSupport = true;
+		if (!IsAlgorithmSupported(alg)) {
+			fAlgNoSupport = true;
+		}
 
 		alg = COSE_Recipient_map_get_int(hRecip, COSE_Header_Algorithm, COSE_BOTH, NULL);
-		if (!IsAlgorithmSupported(alg)) fAlgNoSupport = true;
+		if (!IsAlgorithmSupported(alg)) {
+			fAlgNoSupport = true;
+		}
 
 		if (COSE_Mac_validate(hMAC, hRecip, NULL)) {
 			if (fAlgNoSupport) {
 				fFail = true;
+			} else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)){
+				fFail = true;
 			}
-			else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) fFail = true;
 		}
 		else {
 			if (fAlgNoSupport) {
@@ -123,7 +131,7 @@ failTest:
 
 int ValidateMAC(const cn_cbor * pControl)
 {
-	int cbEncoded;
+	int cbEncoded = 0;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
 	return _ValidateMAC(pControl, pbEncoded, cbEncoded);
@@ -131,7 +139,7 @@ int ValidateMAC(const cn_cbor * pControl)
 
 int BuildMacMessage(const cn_cbor * pControl)
 {
-	int iRecipient;
+	int iRecipient = 0;
 
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
@@ -203,8 +211,8 @@ int MacMessage()
 	byte rgbSecret[256 / 8] = { 'a', 'b', 'c' };
 	byte  rgbKid[6] = { 'a', 'b', 'c', 'd', 'e', 'f' };
 	int cbKid = 6;
-	size_t cb;
-	byte * rgb;
+	size_t cb = 0;
+	byte * rgb = NULL;
 
 	if (hEncObj == NULL) goto errorReturn;
 
@@ -413,7 +421,7 @@ returnError:
 #if INCLUDE_MAC
 void MAC_Corners()
 {
-    HCOSE_MAC hMAC;
+    HCOSE_MAC hMAC = NULL;
     HCOSE_ENCRYPT hEncrypt = NULL;
 	HCOSE_RECIPIENT hRecipient = NULL;
     byte rgb[10];
@@ -479,9 +487,9 @@ void MAC_Corners()
 	COSE_Recipient_Free(hRecipient);
 	COSE_Mac_Free(hMAC);
 
-	if (COSE_Mac_GetRecipient(hMAC, 9, NULL)) CFails++;
-
-    return;
+	if (COSE_Mac_GetRecipient(hMAC, 9, NULL)) {
+		CFails++;
+	}
 }
 #endif
 
@@ -489,7 +497,7 @@ void MAC_Corners()
 void MAC0_Corners()
 {
 	HCOSE_ENCRYPT hEncrypt = NULL;
-	HCOSE_MAC0 hMAC;
+	HCOSE_MAC0 hMAC = NULL;
 	byte rgb[10];
 	cn_cbor * cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cose_errback cose_error;
@@ -535,7 +543,5 @@ void MAC0_Corners()
 	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
 	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Mac0_Free(hMAC);
-
-	return;
 }
 #endif

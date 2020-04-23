@@ -324,7 +324,7 @@ returnError:
 
 int ValidateSign1(const cn_cbor * pControl)
 {
-	int cbEncoded;
+	int cbEncoded = 0;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
 	return _ValidateSign1(pControl, pbEncoded, cbEncoded);
@@ -569,7 +569,5 @@ void Sign1_Corners()
 	CHECK_FAILURE(COSE_Sign1_Sign(hSign, cn, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 
 	COSE_Sign1_Free(hSign);
-
-	return;
 }
 #endif

@@ -824,14 +824,13 @@ bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, c
 	cn_cbor_context * context = &pMessage->m_allocContext;
 #endif
 	cn_cbor_errback cbor_error;
-	byte  * pbAuthData;
+    byte  * pbAuthData = NULL;
 	size_t cbAuthData;
-	cn_cbor * pAuthData;
-	cn_cbor * pItem;
+    cn_cbor * pAuthData = NULL;
+    cn_cbor * pItem = NULL;
 	cn_cbor * ptmp = NULL;
 
 	//  Build authenticated data
-	pbAuthData = NULL;
 	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(pAuthData != NULL, cbor_error);
 
