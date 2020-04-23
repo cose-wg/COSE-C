@@ -561,12 +561,12 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 {
 	cn_cbor * pKeyOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	cn_cbor * pKty = cn_cbor_mapget_string(pKeyIn, "kty");
-	cn_cbor * p;
-	cn_cbor * pKey;
-	cn_cbor * pValue;
+	cn_cbor * p = NULL;
+	cn_cbor * pKey = NULL;
+	cn_cbor * pValue = NULL;
 	size_t i;
 	int kty;
-	unsigned char * pb;
+	unsigned char * pb = NULL;
 	size_t cb;
 
 	if (pKeyOut == NULL) return NULL;
@@ -923,8 +923,6 @@ void RunFileTest(const char * szFileName)
 		}
 #endif
 	}
-
-	return;
 }
 
 #ifdef _MSC_VER
@@ -970,7 +968,6 @@ void RunTestsInDirectory(const char * szDir)
 	FindClose(hFind);
 
 	CFails = cFailTotal;
-	return;
 }
 
 #else
