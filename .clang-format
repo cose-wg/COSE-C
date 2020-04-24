@@ -1,0 +1,13 @@
+---
+BasedOnStyle: Chromium
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always
+DerivePointerAlignment: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  BeforeCatch: false
+  BeforeElse: false
+AlignAfterOpenBracket: false
+SortIncludes: false

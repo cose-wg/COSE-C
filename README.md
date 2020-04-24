@@ -20,7 +20,7 @@ The project is setup to use two different cryptographic
 
 Go ahead, file issues, make pull requests.
 
-before committing changes, run `./scripts/format_code.sh`
+before committing changes, run `./scripts/format_cmake.sh` and `./scripts/format_source.sh`
 
 ## Building
 
