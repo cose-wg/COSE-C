@@ -8,42 +8,38 @@
 #include "cose/cose_configure.h"
 #include "crypto.h"
 
-#ifdef USE_COUNTER_SIGNATURE0
-bool _COSE_CounterSign_add(COSE* pMessage, HCOSE_COUNTERSIGN hSigner, cose_errback* perr)
+#ifdef USE_COUNTER_SIGNATURE1
+
+extern bool IsValidCounterSign1Handle(HCOSE_COUNTERSIGN1 h);
+
+
+bool _COSE_CounterSign1_add(COSE* pMessage, HCOSE_COUNTERSIGN1 hSigner, cose_errback* perr)
 {
-	COSE_CounterSign* pSigner = (COSE_CounterSign*)hSigner;
+	COSE_CounterSign1* pSigner = (COSE_CounterSign1*)hSigner;
 
-	CHECK_CONDITION(IsValidCounterSignHandle(hSigner), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(pSigner->m_signer.m_signerNext == NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidCounterSign1Handle(hSigner), COSE_ERR_INVALID_HANDLE);
 
-	pSigner = pMessage->m_counterSigners;
-	pMessage->m_counterSigners = pSigner;
+	pMessage->m_counterSign1 = pSigner;
 	return true;
 
 errorReturn:
 	return false;
 }
 
-HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE* pMessage, int iSigner, cose_errback* perr)
+HCOSE_COUNTERSIGN _COSE_CounterSign1_get(COSE* pMessage, cose_errback* perr)
 {
-	COSE_CounterSign* pSigner = pMessage->m_counterSigners;
-	int i;
+	UNUSED(perr);
 
-	for (i = 0; i < iSigner; i++, pSigner = pSigner->m_next) {
-		CHECK_CONDITION(pSigner != NULL, COSE_ERR_INVALID_PARAMETER);
-	}
+	COSE_CounterSign1* pSigner = pMessage->m_counterSign1;
 
 	return (HCOSE_COUNTERSIGN)pSigner;
-
-errorReturn:
-	return false;
 }
 
 bool _COSE_CountSign_create(COSE* pMessage, cn_cbor* pcnBody, CBOR_CONTEXT_COMMA cose_errback* perr)
 {
 	cn_cbor* pArray = NULL;
 	cn_cbor_errback cbor_err;
-	COSE_CounterSign* pSigner = NULL;
+	COSE_CounterSign1* pSigner = NULL;
 	cn_cbor* pcnProtected = NULL;
 	cn_cbor* pcn = NULL;
 	cn_cbor* pcn2 = NULL;

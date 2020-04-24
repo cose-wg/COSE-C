@@ -32,6 +32,8 @@ set(cose_sources
     cose_int.h
     crypto.h
     Cose.c
+    CounterSign.c
+    CounterSign0.c
     MacMessage.c
     MacMessage0.c
     Sign.c

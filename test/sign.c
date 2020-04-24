@@ -16,6 +16,7 @@
 #include "json.h"
 #include "test.h"
 #include "context.h"
+#include "cose_int.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4127)
@@ -106,6 +107,50 @@ int _ValidateSigned(const cn_cbor *pControl,
 				fFail = true;
 		}
 
+		cn_cbor* counter = cn_cbor_mapget_string(pSigners, "countersign");
+		if (counter != NULL) {
+			counter = cn_cbor_mapget_string(counter, "signers");
+			if (counter == NULL) {
+				fFail = true;
+				continue;
+			}
+			int count = counter->length;
+			cn_cbor* counterSigners = counter->first_child;
+			if (COSE_Signer_map_get_int(hSigner, COSE_Header_CounterSign, COSE_UNPROTECT_ONLY, 0) == NULL) {
+				goto returnError;
+			}
+
+			for (int counterNo=0; counterNo < count; counterNo++) {
+				HCOSE_COUNTERSIGN h = COSE_Signer_get_countersignature(hSigner, counterNo, 0);
+				if (h == NULL) {
+					fFail = true;
+					continue;
+				}
+
+				cn_cbor* pkeyCountersign = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
+				if (pkeyCountersign == NULL) {
+					fFail = true;
+					continue;
+				}
+
+				if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+					fFail = true;
+					continue;
+				}
+
+				if (COSE_CounterSign_validate(hSigner, h, 0)) {
+				    //  I don't think we have any forced errors yet.
+				}
+				else {
+					fFail = true;
+				}
+
+				CN_CBOR_FREE(pkeyCountersign, context);
+				COSE_CounterSign_Free(h);
+			}
+		}
+
+
 		COSE_Sign_Free(hSig);
 		COSE_Signer_Free(hSigner);
 	}
@@ -187,6 +232,38 @@ int BuildSignedMessage(const cn_cbor *pControl)
 
 		if (!COSE_Sign_AddSigner(hSignObj, hSigner, NULL))
 			goto returnError;
+
+		cn_cbor* countersigns = cn_cbor_mapget_string(pSigners, "countersign");
+		if (countersigns != NULL) {
+			countersigns = cn_cbor_mapget_string(countersigns, "signers");
+			cn_cbor* countersign = countersigns->first_child;
+
+			for (; countersign != NULL; countersign = countersign->next) {
+				cn_cbor* pkeyCountersign = BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+				if (pkeyCountersign == NULL) {
+					goto returnError;
+				}
+
+				HCOSE_COUNTERSIGN hCountersign = COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+				if (hCountersign == NULL) {
+					goto returnError;
+				}
+
+				if (!SetSendingAttributes((HCOSE)hCountersign, countersign, Attributes_Signer_protected)) {
+					goto returnError;
+				}
+
+				if (!COSE_Signer_SetKey(hCountersign, pkeyCountersign, NULL)) {
+					goto returnError;
+				}
+
+				if (!COSE_Signer_add_countersignature(hSigner, hCountersign, NULL)) {
+					goto returnError;
+				}
+
+				COSE_CounterSign_Free(hCountersign);
+			}
+		}
 
 		COSE_Signer_Free(hSigner);
 	}

@@ -156,7 +156,10 @@ void _COSE_Sign_Release(COSE_SignMessage *p)
 
 	for (pSigner = p->m_signerFirst; pSigner != NULL; pSigner = pSigner2) {
 		pSigner2 = pSigner->m_signerNext;
-		_COSE_SignerInfo_Free(pSigner);
+		_COSE_SignerInfo_Release(pSigner);
+		if (pSigner->m_message.m_refCount == 0) {
+			COSE_FREE(pSigner, &pSigner->m_message.m_allocContext);
+		}
 	}
 
 	_COSE_Release(&p->m_message);
@@ -287,8 +290,9 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 
 	for (pSigner = pMessage->m_signerFirst; pSigner != NULL;
 		 pSigner = pSigner->m_signerNext) {
-		if (!_COSE_Signer_sign(pSigner, pcborBody, pcborProtected, perr))
+		if (!_COSE_Signer_sign(pSigner, pcborBody, pcborProtected, "Signature", perr)) {
 			goto errorReturn;
+		}
 	}
 
 	return true;
@@ -318,7 +322,7 @@ bool COSE_Sign_validate(HCOSE_SIGN hSign,
 	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
-	f = _COSE_Signer_validate(pSign, pSigner, cnContent, cnProtected, perr);
+	f = _COSE_Signer_validate(pSigner, cnContent, cnProtected, "Signature", perr);
 
 	return f;
 

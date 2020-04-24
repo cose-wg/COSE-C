@@ -46,6 +46,7 @@ void MAC0_Corners();
 //  context.c
 extern cn_cbor_context* CreateContext(unsigned int iFailPoint);
 void FreeContext(cn_cbor_context* pContext);
+int IsContextEmpty(cn_cbor_context* pContext);
 #endif
 
 //  test.c

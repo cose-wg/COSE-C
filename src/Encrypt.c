@@ -655,11 +655,13 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 		goto errorReturn;
 
 #ifdef USE_COUNTER_SIGNATURES
+	/*
 	//  Setup Counter Signatures
 	if (!_COSE_CountSign_create(
 			&pcose->m_message, NULL, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
+	*/
 #endif
 
 	//  Build authenticated data

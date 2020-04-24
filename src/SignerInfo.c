@@ -49,7 +49,7 @@ bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
 		return true;
 	}
 
-	_COSE_SignerInfo_Free(pSigner);
+	_COSE_SignerInfo_Release(pSigner);
 
 	_COSE_RemoveFromList(&SignerRoot, &pSigner->m_message);
 
@@ -72,7 +72,7 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback *perror)
 
 	if (!_COSE_SignerInfo_Init(COSE_INIT_FLAGS_NO_CBOR_TAG, pobj,
 			COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
-		_COSE_SignerInfo_Free(pobj);
+		_COSE_SignerInfo_Release(pobj);
 		COSE_FREE(pobj, context);
 		return NULL;
 	}
@@ -108,14 +108,17 @@ COSE_SignerInfo *_COSE_SignerInfo_Init_From_Object(cn_cbor *cbor,
 			&pSigner->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr))
 		goto errorReturn;
 
-	_COSE_InsertInList(&SignerRoot, &pSigner->m_message);
+	if (pIn == NULL) {
+		_COSE_InsertInList(&SignerRoot, &pSigner->m_message);
+	}
 	return pSigner;
 
 errorReturn:
 	if (pSigner != NULL) {
-		_COSE_SignerInfo_Free(pSigner);
-		if (pIn == NULL)
+		_COSE_SignerInfo_Release(pSigner);
+		if (pIn == NULL) {
 			COSE_FREE(pSigner, context);
+		}
 	}
 	return NULL;
 }
@@ -126,6 +129,7 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	const cn_cbor *pcborProtected,
 	const cn_cbor *pcborProtectedSign,
 	const byte *pbExternal,
+	const char const *contextString,
 	size_t cbExternal,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
@@ -140,7 +144,7 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
 
 	cn = cn_cbor_string_create(
-		"Signature", CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		contextString, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
@@ -211,6 +215,7 @@ errorReturn:
 bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 	const cn_cbor *pcborBody,
 	const cn_cbor *pcborProtected,
+	const char const * contextString,
 	cose_errback *perr)
 {
 #ifdef USE_CBOR_CONTEXT
@@ -248,7 +253,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 
 	if (!BuildToBeSigned(&pbToSign, &cbToSign, pcborBody, pcborProtected,
 			pcborProtectedSign, pSigner->m_message.m_pbExternal,
-			pSigner->m_message.m_cbExternal, CBOR_CONTEXT_PARAM_COMMA perr))
+			pSigner->m_message.m_cbExternal, contextString, CBOR_CONTEXT_PARAM_COMMA perr))
 		goto errorReturn;
 
 	switch (alg) {
@@ -286,6 +291,20 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
+	}
+
+	if (pSigner->m_message.m_counterSigners != NULL) {
+		cn_cbor* pSignature = _COSE_arrayget_int(&pSigner->m_message, INDEX_SIGNATURE);
+
+
+		COSE_CounterSign* pCountersign = pSigner->m_message.m_counterSigners;
+		for (; pCountersign != NULL; pCountersign = pCountersign->m_signer.m_message.m_counterSigners) {
+			pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, perr);
+			if (pcborProtectedSign == NULL) goto errorReturn;
+			if (!_COSE_Signer_sign(&pCountersign->m_signer, pSignature, pcborProtectedSign, "CounterSignature", perr)) {
+				goto errorReturn;
+			}
+		}
 	}
 
 	fRet = true;
@@ -349,6 +368,7 @@ bool _COSE_Signer_validate(COSE_SignMessage *pSign,
 	COSE_SignerInfo *pSigner,
 	const cn_cbor *pcborBody,
 	const cn_cbor *pcborProtected,
+	const char const * contextString,
 	cose_errback *perr)
 {
 	byte *pbToBeSigned = NULL;
@@ -386,7 +406,7 @@ bool _COSE_Signer_validate(COSE_SignMessage *pSign,
 	//  Build authenticated data
 	if (!BuildToBeSigned(&pbToBeSigned, &cbToBeSigned, pcborBody,
 			pcborProtected, cnProtected, pSigner->m_message.m_pbExternal,
-			pSigner->m_message.m_cbExternal, CBOR_CONTEXT_PARAM_COMMA perr))
+			pSigner->m_message.m_cbExternal, contextString, CBOR_CONTEXT_PARAM_COMMA perr))
 		goto errorReturn;
 
 	cn_cbor *cnSignature =

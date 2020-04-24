@@ -129,12 +129,20 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	if (pCounter != NULL) {
 		int i;
 		CHECK_CONDITION(pCounter->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
-		cn_cbor* pSig = pCounter->first_child;
-		for (i=0; i<pCounter->length; i++, pCounter = pCounter->next) {
-			cn_cbor* p = cn_cbor_decode(pSig->v.bytes, pSig->length, CBOR_CONTEXT_PARAM_COMMA & errState);
-			COSE_CounterSign* cs = COSE_CounterSign_Init_FromObject(p, CBOR_CONTEXT_PARAM_COMMA & errState);
+		CHECK_CONDITION(pCounter->length > 0, COSE_ERR_INVALID_PARAMETER);
+		if (pCounter->first_child->type == CN_CBOR_ARRAY) {
 
-		    
+			cn_cbor* pSig = pCounter->first_child;
+			for (i = 0; i < pCounter->length; i++, pCounter = pCounter->next) {
+				cn_cbor* p = cn_cbor_decode(pSig->v.bytes, pSig->length, CBOR_CONTEXT_PARAM_COMMA & errState);
+				COSE_CounterSign* cs = _COSE_CounterSign_Init_From_Object(p, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cs = pobj->m_counterSigners;
+				pobj->m_counterSigners = cs;
+			}
+		}
+		else {
+			COSE_CounterSign* cs = _COSE_CounterSign_Init_From_Object(pCounter, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+			pobj->m_counterSigners = cs;
 		}
 	}
 #endif
@@ -163,6 +171,17 @@ void _COSE_Release(COSE *pobj)
 	if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) &&
 		(pobj->m_cborRoot->parent == NULL))
 		CN_CBOR_FREE(pobj->m_cborRoot, context);
+
+	if (pobj->m_counterSigners != NULL) {
+		COSE_CounterSign* p = pobj->m_counterSigners;
+		COSE_CounterSign* p2 = NULL;
+
+		while (p != NULL) {
+			p2 = p->m_next;
+			COSE_CounterSign_Free((HCOSE_COUNTERSIGN)p);
+			p = p2;
+		}
+	}
 }
 
 HCOSE COSE_Decode(const byte *rgbData,

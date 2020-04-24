@@ -450,10 +450,15 @@ bool SetAttributes(HCOSE hHandle,
 				break;
 #endif
 				assert(fRet);
+
+		default:
+			f = false;
+			break;
 		}
+		assert(f);
 	}
 
-	return fRet;
+	return f;
 }
 
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
@@ -805,7 +810,9 @@ void RunMemoryTest(const char* szFileName)
 	bool fValidateDone = false;
 	bool fBuildDone = false;
 
-	for (iFail = 0; (!fValidateDone || !fBuildDone) && (iFail < 3); iFail++) {
+
+
+	for (iFail = 0; (!fValidateDone || !fBuildDone) && (iFail < 100000); iFail++) {
 		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 #if INCLUDE_MAC
 			if (!fValidateDone) {
@@ -814,6 +821,9 @@ void RunMemoryTest(const char* szFileName)
 				ValidateMAC(pControl);
 				if (CFails == 0)
 					fValidateDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 
@@ -823,6 +833,9 @@ void RunMemoryTest(const char* szFileName)
 				BuildMacMessage(pControl);
 				if (CFails == 0)
 					fBuildDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 #else
@@ -837,6 +850,9 @@ void RunMemoryTest(const char* szFileName)
 				ValidateMac0(pControl);
 				if (CFails == 0)
 					fValidateDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 
@@ -846,6 +862,9 @@ void RunMemoryTest(const char* szFileName)
 				BuildMac0Message(pControl);
 				if (CFails == 0)
 					fBuildDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 #else
@@ -860,6 +879,9 @@ void RunMemoryTest(const char* szFileName)
 				ValidateEncrypt(pControl);
 				if (CFails == 0)
 					fValidateDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 
@@ -869,6 +891,9 @@ void RunMemoryTest(const char* szFileName)
 				BuildEncryptMessage(pControl);
 				if (CFails == 0)
 					fBuildDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 #else
@@ -883,6 +908,9 @@ void RunMemoryTest(const char* szFileName)
 				ValidateEnveloped(pControl);
 				if (CFails == 0)
 					fValidateDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 
@@ -892,6 +920,9 @@ void RunMemoryTest(const char* szFileName)
 				BuildEnvelopedMessage(pControl);
 				if (CFails == 0)
 					fBuildDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 #else
@@ -906,6 +937,9 @@ void RunMemoryTest(const char* szFileName)
 				ValidateSigned(pControl);
 				if (CFails == 0)
 					fValidateDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 
@@ -915,6 +949,9 @@ void RunMemoryTest(const char* szFileName)
 				BuildSignedMessage(pControl);
 				if (CFails == 0)
 					fBuildDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 #else
@@ -929,6 +966,9 @@ void RunMemoryTest(const char* szFileName)
 				ValidateSign1(pControl);
 				if (CFails == 0)
 					fValidateDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 
@@ -938,6 +978,9 @@ void RunMemoryTest(const char* szFileName)
 				BuildSign1Message(pControl);
 				if (CFails == 0)
 					fBuildDone = true;
+				if (IsContextEmpty(context) != 0) {
+					CFails += 1;
+				}
 				FreeContext(context);
 			}
 #else
@@ -997,9 +1040,21 @@ void RunFileTest(const char* szFileName)
 #endif
 	} else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 #if INCLUDE_SIGN
+		context = CreateContext(-1);
 		if (ValidateSigned(pControl)) {
+			if (IsContextEmpty(context) != 0) {
+				printf("Memory Cleanup Failure - Validate");
+				// CFails += 1;
+			}
+			FreeContext(context);
+			context = CreateContext(-1);
 			BuildSignedMessage(pControl);
+			if (IsContextEmpty(context) != 0) {
+				printf("Memory Cleanup Failure - Build");
+				// CFails += 1;
+			}
 		}
+		FreeContext(context);
 #endif
 	} else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
 #if INCLUDE_SIGN1
