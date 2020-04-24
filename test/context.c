@@ -14,41 +14,40 @@ typedef unsigned char byte;
 
 typedef struct {
 	cn_cbor_context context;
-	byte * pFirst;
+	byte *pFirst;
 	unsigned int iFailLeft;
 } MyContext;
 
 typedef struct _MyItem {
-	struct _MyItem *	pNext;
-	size_t		size;
-	byte        pad[4];
-	byte        data[4];
+	struct _MyItem *pNext;
+	size_t size;
+	byte pad[4];
+	byte data[4];
 } MyItem;
 
-
-bool CheckMemory(MyContext * pContext)
+bool CheckMemory(MyContext *pContext)
 {
-	MyItem * p;
+	MyItem *p = NULL;
 	//  Walk memory and check every block
 
-	for (p =  (MyItem *) pContext->pFirst; p != NULL; p = p->pNext) {
-		if (p->pad[0] == (byte) 0xab) {
+	for (p = (MyItem *)pContext->pFirst; p != NULL; p = p->pNext) {
+		if (p->pad[0] == (byte)0xab) {
 			//  Block has been freed
 			for (unsigned i = 0; i < p->size + 8; i++) {
-				if (p->pad[i] != (byte) 0xab) {
+				if (p->pad[i] != (byte)0xab) {
 					fprintf(stderr, "Freed block is modified");
 					assert(false);
 				}
 			}
-		} else if (p->pad[0] == (byte) 0xef) {
+		} else if (p->pad[0] == (byte)0xef) {
 			for (unsigned i = 0; i < 4; i++) {
-				if ((p->pad[i] != (byte) 0xef) || (p->pad[i + 4 + p->size] != (byte) 0xef)) {
+				if ((p->pad[i] != (byte)0xef) ||
+					(p->pad[i + 4 + p->size] != (byte)0xef)) {
 					fprintf(stderr, "Curent block was overrun");
 					assert(false);
 				}
 			}
-		}
-		else {
+		} else {
 			fprintf(stderr, "Incorrect pad value");
 			assert(false);
 		}
@@ -57,43 +56,44 @@ bool CheckMemory(MyContext * pContext)
 	return true;
 }
 
-void * MyCalloc(size_t count, size_t size, void * context)
+void *MyCalloc(size_t count, size_t size, void *context)
 {
-	MyItem * pb;
-	MyContext * myContext = (MyContext *)context;
+	MyItem *pb = NULL;
+	MyContext *myContext = (MyContext *)context;
 
 	CheckMemory(myContext);
 
-	if (myContext->iFailLeft == 0) return NULL;
+	if (myContext->iFailLeft == 0)
+		return NULL;
 	myContext->iFailLeft--;
 
-	pb = (MyItem *)malloc(sizeof(MyItem) + count*size);
+	pb = (MyItem *)malloc(sizeof(MyItem) + count * size);
 
-	memset(pb, 0xef, sizeof(MyItem) + count*size);
-	memset(&pb->data, 0, count*size);
+	memset(pb, 0xef, sizeof(MyItem) + count * size);
+	memset(&pb->data, 0, count * size);
 
-	pb->pNext = (struct _MyItem *) myContext->pFirst;
+	pb->pNext = (struct _MyItem *)myContext->pFirst;
 	myContext->pFirst = (byte *)pb;
-	pb->size = count*size;
+	pb->size = count * size;
 
 	return &pb->data;
 }
 
-void MyFree(void * ptr, void * context)
+void MyFree(void *ptr, void *context)
 {
-	MyItem * pb = (MyItem *) ((byte *) ptr - sizeof(MyItem) + 4);
-	MyContext * myContext = (MyContext *)context;
+	MyItem *pb = (MyItem *)((byte *)ptr - sizeof(MyItem) + 4);
+	MyContext *myContext = (MyContext *)context;
 
 	CheckMemory(myContext);
-	if (ptr == NULL) return;
+	if (ptr == NULL)
+		return;
 
 	memset(&pb->pad, 0xab, pb->size + 8);
 }
 
-
-cn_cbor_context * CreateContext(unsigned int iFailPoint)
+cn_cbor_context *CreateContext(unsigned int iFailPoint)
 {
-	MyContext * p = malloc(sizeof(MyContext));
+	MyContext *p = malloc(sizeof(MyContext));
 
 	p->context.calloc_func = MyCalloc;
 	p->context.free_func = MyFree;
@@ -104,15 +104,15 @@ cn_cbor_context * CreateContext(unsigned int iFailPoint)
 	return &p->context;
 }
 
-void FreeContext(cn_cbor_context* pContext)
+void FreeContext(cn_cbor_context *pContext)
 {
-	MyContext * myContext = (MyContext *)pContext;
-	MyItem * pItem;
-	MyItem * pItem2;
+	MyContext *myContext = (MyContext *)pContext;
+	MyItem *pItem;
+	MyItem *pItem2;
 
 	CheckMemory(myContext);
 
-	for (pItem = (MyItem *) myContext->pFirst; pItem != NULL;  pItem = pItem2) {
+	for (pItem = (MyItem *)myContext->pFirst; pItem != NULL; pItem = pItem2) {
 		pItem2 = pItem->pNext;
 		free(pItem);
 	}
@@ -122,4 +122,4 @@ void FreeContext(cn_cbor_context* pContext)
 	return;
 }
 
-#endif // USE_CBOR_CONTEXT
+#endif	// USE_CBOR_CONTEXT
