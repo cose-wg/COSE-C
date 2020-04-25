@@ -41,19 +41,11 @@ bool CheckMemory(MyContext *pContext)
 					assert(false);
 				}
 			}
-<<<<<<< HEAD
 		} else if (p->pad[0] == (byte)0xef) {
 			for (unsigned i = 0; i < 4; i++) {
 				if ((p->pad[i] != (byte)0xef) ||
 					(p->pad[i + 4 + p->size] != (byte)0xef)) {
-					fprintf(stderr, "Curent block was overrun");
-=======
-		}
-		else if (p->pad[0] == (byte) 0xef) {
-			for (i = 0; i < 4; i++) {
-				if ((p->pad[i] != (byte) 0xef) || (p->pad[i + 4 + p->size] != (byte) 0xef)) {
 					fprintf(stderr, "Current block was overrun");
->>>>>>> checkpoint
 					assert(false);
 				}
 			}
@@ -73,18 +65,12 @@ void *MyCalloc(size_t count, size_t size, void *context)
 
 	CheckMemory(myContext);
 
-<<<<<<< HEAD
-	if (myContext->iFailLeft == 0)
-		return NULL;
-	myContext->iFailLeft--;
-=======
 	if (myContext->iFailLeft != -1) {
 		if (myContext->iFailLeft == 0) {
 			return NULL;
 		}
 		myContext->iFailLeft--;
 	}
->>>>>>> checkpoint
 
 	pb = (MyItem *)malloc(sizeof(MyItem) + count * size);
 
@@ -93,12 +79,8 @@ void *MyCalloc(size_t count, size_t size, void *context)
 
 	pb->pNext = (struct _MyItem *)myContext->pFirst;
 	myContext->pFirst = (byte *)pb;
-<<<<<<< HEAD
 	pb->size = count * size;
-=======
-	pb->size = count*size;
 	pb->allocNumber = myContext->allocCount++;
->>>>>>> checkpoint
 
 	return &pb->data;
 }
@@ -147,9 +129,6 @@ void FreeContext(cn_cbor_context *pContext)
 	return;
 }
 
-<<<<<<< HEAD
-#endif	// USE_CBOR_CONTEXT
-=======
 int IsContextEmpty(cn_cbor_context * pContext)
 {
 	MyContext* myContext = (MyContext*)pContext;
@@ -173,4 +152,3 @@ int IsContextEmpty(cn_cbor_context * pContext)
 }
 
 #endif // USE_CBOR_CONTEXT
->>>>>>> checkpoint

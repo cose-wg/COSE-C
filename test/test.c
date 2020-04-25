@@ -464,7 +464,7 @@ bool SetAttributes(HCOSE hHandle,
 		assert(fRet);
 	}
 
-	return f;
+	return fRet;
 }
 
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)

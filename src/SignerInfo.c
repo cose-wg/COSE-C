@@ -23,7 +23,7 @@ bool IsValidSignerHandle(HCOSE_SIGNER h)
 	return _COSE_IsInList(SignerRoot, (COSE *)p);
 }
 
-bool _COSE_SignerInfo_Free(COSE_SignerInfo *pSigner)
+bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner)
 {
 	//  Check ref counting
 	if (pSigner->m_message.m_refCount > 1) {
@@ -129,7 +129,6 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	const cn_cbor *pcborProtected,
 	const cn_cbor *pcborProtectedSign,
 	const byte *pbExternal,
-	const char const *contextString,
 	size_t cbExternal,
 	const char * const contextString,
 	CBOR_CONTEXT_COMMA cose_errback *perr)

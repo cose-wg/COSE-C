@@ -79,12 +79,12 @@ typedef enum {
 
 HCOSE COSE_Decode(const byte* rgbData,
 	size_t cbData,
-	int* type,
+	int* ptype,
 	COSE_object_type struct_type,
 	CBOR_CONTEXT_COMMA cose_errback* perr);	 //  Decode the object
 size_t COSE_Encode(HCOSE msg, byte* rgb, size_t ib, size_t cb);
 
-cn_cbor* COSE_get_cbor(HCOSE hmsg);
+cn_cbor* COSE_get_cbor(HCOSE h);
 
 //  Functions for the signing object
 

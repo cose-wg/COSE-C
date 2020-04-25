@@ -557,7 +557,7 @@ void _COSE_RemoveFromList(COSE **root, COSE *thisMsg)
 	return;
 }
 
-#ifdef DEBUG
+#ifndef NDEBUG
 extern COSE *CountersignRoot;
 extern COSE *SignerRoot;
 extern COSE *SignRoot;
