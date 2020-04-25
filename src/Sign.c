@@ -11,7 +11,7 @@
 
 #if INCLUDE_SIGN
 
-static COSE *SignRoot = NULL;
+COSE *SignRoot = NULL;
 
 /*! \private
  * @brief Test if a HCOSE_SIGN handle is valid
@@ -156,10 +156,7 @@ void _COSE_Sign_Release(COSE_SignMessage *p)
 
 	for (pSigner = p->m_signerFirst; pSigner != NULL; pSigner = pSigner2) {
 		pSigner2 = pSigner->m_signerNext;
-		_COSE_SignerInfo_Release(pSigner);
-		if (pSigner->m_message.m_refCount == 0) {
-			COSE_FREE(pSigner, &pSigner->m_message.m_allocContext);
-		}
+		COSE_Signer_Free((HCOSE_SIGNER) pSigner);
 	}
 
 	_COSE_Release(&p->m_message);

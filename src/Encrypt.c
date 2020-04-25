@@ -654,7 +654,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	if (cbProtected == NULL)
 		goto errorReturn;
 
-#ifdef USE_COUNTER_SIGNATURES
+#ifdef INCLUDE_COUNTERSIGNATURE
 	/*
 	//  Setup Counter Signatures
 	if (!_COSE_CountSign_create(

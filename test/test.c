@@ -449,13 +449,19 @@ bool SetAttributes(HCOSE hHandle,
 					(HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
-				assert(fRet);
 
-		default:
-			f = false;
-			break;
+#if INCLUDE_COUNTERSIGNATURE
+			case Attributes_Countersign_protected:
+				fRet &= COSE_CounterSign_map_put_int(
+					(HCOSE_COUNTERSIGN)hHandle, keyNew, pValueNew, which, NULL);
+				break;
+#endif
+
+			default:
+				assert(false);
+				break;
 		}
-		assert(f);
+		assert(fRet);
 	}
 
 	return f;
@@ -534,6 +540,18 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 					goto returnError;
 				break;
 #endif
+#if INCLUDE_COUNTERSIGNATURE
+			case Attributes_Countersign_protected:
+				if (!COSE_CounterSign_SetExternal((HCOSE_COUNTERSIGN)hMsg,
+						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
+						NULL)) {
+					goto returnError;
+				}
+				break;
+#endif
+			default:
+				assert(false);
+				break;
 		}
 	}
 
@@ -607,6 +625,15 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL))
 					goto returnError;
+				break;
+#endif
+#if INCLUDE_COUNTERSIGNATURE
+			case Attributes_Countersign_protected:
+				if (!COSE_CounterSign_SetExternal((HCOSE_COUNTERSIGN)hMsg,
+						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
+						NULL)) {
+					goto returnError;
+				}
 				break;
 #endif
 		}
@@ -758,6 +785,8 @@ bool Test_cn_cbor_array_replace()
 
 	return true;
 }
+
+bool AreListsEmpty();
 
 void RunCorners()
 {
@@ -996,6 +1025,37 @@ void RunMemoryTest(const char* szFileName)
 #endif
 }
 
+typedef bool (__cdecl *ValidatePtr)(const cn_cbor* pControl);
+
+bool ProcessFile(const cn_cbor* pControl, ValidatePtr validateFunction, ValidatePtr buildFunction)
+{
+	context = CreateContext(-1);
+	if (validateFunction(pControl)) {
+		if (IsContextEmpty(context) != 0) {
+			printf("Memory Cleanup Failure - Validate\n");
+			// CFails += 1;
+		}
+		if (!AreListsEmpty()) {
+			printf("Left over handle - P1\n");
+			CFails += 1;
+		}
+		FreeContext(context);
+		context = CreateContext(-1);
+		buildFunction(pControl);
+		if (IsContextEmpty(context) != 0) {
+			printf("Memory Cleanup Failure - Build\n");
+			// CFails += 1;
+		}
+	}
+	if (!AreListsEmpty()) {
+		printf("Left over handle - P2\n");
+		CFails += 1;
+	}
+	FreeContext(context);
+	context = NULL;
+	return true;
+}
+
 void RunFileTest(const char* szFileName)
 {
 	const cn_cbor* pControl = NULL;
@@ -1022,51 +1082,27 @@ void RunFileTest(const char* szFileName)
 
 	if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 #if INCLUDE_MAC
-		if (ValidateMAC(pControl)) {
-			BuildMacMessage(pControl);
-		}
+		ProcessFile(pControl, ValidateMAC, BuildMacMessage);
 #endif
 	} else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
 #if INCLUDE_MAC0
-		if (ValidateMac0(pControl)) {
-			BuildMac0Message(pControl);
-		}
+		ProcessFile(pControl, ValidateMac0, BuildMac0Message);
 #endif
 	} else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
 #if INCLUDE_ENCRYPT
-		if (ValidateEnveloped(pControl)) {
-			BuildEnvelopedMessage(pControl);
-		}
+		ProcessFile(pControl, ValidateEnveloped, BuildEnvelopedMessage);
 #endif
 	} else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 #if INCLUDE_SIGN
-		context = CreateContext(-1);
-		if (ValidateSigned(pControl)) {
-			if (IsContextEmpty(context) != 0) {
-				printf("Memory Cleanup Failure - Validate");
-				// CFails += 1;
-			}
-			FreeContext(context);
-			context = CreateContext(-1);
-			BuildSignedMessage(pControl);
-			if (IsContextEmpty(context) != 0) {
-				printf("Memory Cleanup Failure - Build");
-				// CFails += 1;
-			}
-		}
-		FreeContext(context);
+		ProcessFile(pControl, ValidateSigned, BuildSignedMessage);
 #endif
 	} else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
 #if INCLUDE_SIGN1
-		if (ValidateSign1(pControl)) {
-			BuildSign1Message(pControl);
-		}
+		ProcessFile(pControl, ValidateSign1, BuildSign1Message);
 #endif
 	} else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
 #if INCLUDE_ENCRYPT0
-		if (ValidateEncrypt(pControl)) {
-			BuildEncryptMessage(pControl);
-		}
+		ProcessFile(pControl, ValidateEncrypt, BuildEncryptMessage);
 #endif
 	}
 }

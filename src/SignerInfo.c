@@ -15,7 +15,7 @@
 
 #if INCLUDE_SIGN
 
-static COSE *SignerRoot = NULL;
+COSE *SignerRoot = NULL;
 
 bool IsValidSignerHandle(HCOSE_SIGNER h)
 {
@@ -131,6 +131,7 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	const byte *pbExternal,
 	const char const *contextString,
 	size_t cbExternal,
+	const char * const contextString,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	cn_cbor *pArray = NULL;
@@ -215,7 +216,7 @@ errorReturn:
 bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 	const cn_cbor *pcborBody,
 	const cn_cbor *pcborProtected,
-	const char const * contextString,
+	const char * const contextString,
 	cose_errback *perr)
 {
 #ifdef USE_CBOR_CONTEXT
@@ -253,7 +254,8 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 
 	if (!BuildToBeSigned(&pbToSign, &cbToSign, pcborBody, pcborProtected,
 			pcborProtectedSign, pSigner->m_message.m_pbExternal,
-			pSigner->m_message.m_cbExternal, contextString, CBOR_CONTEXT_PARAM_COMMA perr))
+			pSigner->m_message.m_cbExternal,
+			contextString, CBOR_CONTEXT_PARAM_COMMA perr))
 		goto errorReturn;
 
 	switch (alg) {
@@ -294,16 +296,50 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 	}
 
 	if (pSigner->m_message.m_counterSigners != NULL) {
-		cn_cbor* pSignature = _COSE_arrayget_int(&pSigner->m_message, INDEX_SIGNATURE);
+		cn_cbor *pSignature =
+			_COSE_arrayget_int(&pSigner->m_message, INDEX_SIGNATURE);
+		int count = 0;
 
-
-		COSE_CounterSign* pCountersign = pSigner->m_message.m_counterSigners;
-		for (; pCountersign != NULL; pCountersign = pCountersign->m_signer.m_message.m_counterSigners) {
-			pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, perr);
-			if (pcborProtectedSign == NULL) goto errorReturn;
-			if (!_COSE_Signer_sign(&pCountersign->m_signer, pSignature, pcborProtectedSign, "CounterSignature", perr)) {
+		COSE_CounterSign *pCountersign = pSigner->m_message.m_counterSigners;
+		for (; pCountersign != NULL;
+			 pCountersign = pCountersign->m_next,
+			 count += 1) {
+			pcborProtectedSign = 
+				_COSE_encode_protected(&pSigner->m_message, perr);
+			if (pcborProtectedSign == NULL) {
 				goto errorReturn;
 			}
+			if (!_COSE_Signer_sign(&pCountersign->m_signer, pSignature,
+					pcborProtectedSign, "CounterSignature", perr)) {
+				goto errorReturn;
+			}
+		}
+
+		if (count == 1) {
+			cn_cbor * cn = COSE_get_cbor((HCOSE)pSigner->m_message.m_counterSigners);
+			CHECK_CONDITION(
+				COSE_Signer_map_put_int((HCOSE_SIGNER)pSigner,
+					COSE_Header_CounterSign, cn, COSE_UNPROTECT_ONLY, perr),
+				COSE_ERR_OUT_OF_MEMORY);
+		}
+		else {
+			cn_cbor_errback cn_error;
+			cn_cbor *cn_counterSign =
+				cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cn_error);
+			CHECK_CONDITION_CBOR(cn_counterSign, cn_error);
+
+			for (pCountersign = pSigner->m_message.m_counterSigners;
+				 pCountersign != NULL;
+				 pCountersign = pCountersign->m_next) {
+				cn_cbor *cn = COSE_get_cbor((HCOSE) pCountersign);
+				CHECK_CONDITION_CBOR(
+					cn_cbor_array_append(cn_counterSign, cn, &cn_error),
+					cn_error);
+			}
+			CHECK_CONDITION(
+				COSE_Signer_map_put_int((HCOSE_SIGNER)pSigner,
+					COSE_Header_CounterSign, cn_counterSign, COSE_UNPROTECT_ONLY, perr),
+				COSE_ERR_OUT_OF_MEMORY);
 		}
 	}
 
@@ -364,17 +400,16 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose,
 		pbExternalData, cbExternalData, perr);
 }
 
-bool _COSE_Signer_validate(COSE_SignMessage *pSign,
-	COSE_SignerInfo *pSigner,
+bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 	const cn_cbor *pcborBody,
 	const cn_cbor *pcborProtected,
-	const char const * contextString,
+	const char * const contextString,
 	cose_errback *perr)
 {
 	byte *pbToBeSigned = NULL;
 	int alg = 0;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = &pSign->m_message.m_allocContext;
+	cn_cbor_context *context = &pSigner->m_message.m_allocContext;
 #else
 	UNUSED(pSign);
 #endif

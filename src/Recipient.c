@@ -68,6 +68,12 @@ bool COSE_Recipient_Free(HCOSE_RECIPIENT hRecipient)
 {
 	if (IsValidRecipientHandle(hRecipient)) {
 		COSE_RecipientInfo *p = (COSE_RecipientInfo *)hRecipient;
+
+		if (p->m_encrypt.m_message.m_refCount > 1) {
+			p->m_encrypt.m_message.m_refCount--;
+			return true;
+		}
+	
 		_COSE_RemoveFromList(&RecipientRoot, &p->m_encrypt.m_message);
 
 		_COSE_Recipient_Free(p);
@@ -134,6 +140,7 @@ void _COSE_Recipient_Free(COSE_RecipientInfo *pRecipient)
 		return;
 	}
 
+	_COSE_Encrypt_Release(&pRecipient->m_encrypt);
 	COSE_FREE(pRecipient, &pRecipient->m_encrypt.m_message.m_allocContext);
 
 	return;

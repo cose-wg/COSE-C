@@ -8,7 +8,7 @@
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
 
-#ifdef USE_COUNTER_SIGNATURES
+#ifdef INCLUDE_COUNTERSIGNATURE
 struct _COSE_COUNTER_SIGN;
 typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
 #endif
@@ -40,10 +40,10 @@ typedef struct _COSE {
 	cn_cbor_context m_allocContext;
 #endif
 	struct _COSE *m_handleList;
-#ifdef USE_COUNTER_SIGNATURES
-	COSE_CounterSign *m_counterSigners;     // Linked list of all counter signatures
+#ifdef INCLUDE_COUNTERSIGNATURE
+	COSE_CounterSign *m_counterSigners;  // Linked list of all counter signatures
 #endif
-#ifdef USE_COUNTER_SIGNATURE1
+#ifdef INCLUDE_COUNTERSIGNATURE1
 	COSE_CounterSign1* m_counterSign1;
 #endif
 } COSE;
@@ -105,7 +105,7 @@ typedef struct {
 #endif
 typedef COSE_MacMessage COSE_Mac0Message;
 
-#ifdef USE_COUNTER_SIGNATURES
+#ifdef INCLUDE_COUNTERSIGNATURE
 typedef struct _COSE_COUNTER_SIGN {
 	COSE_SignerInfo m_signer;
 	COSE_CounterSign *m_next;
@@ -264,7 +264,6 @@ void _COSE_Sign_Release(COSE_SignMessage *p);
 
 //  Signer items
 
-<<<<<<< HEAD
 bool _COSE_SignerInfo_Init(COSE_INIT_FLAGS flags,
 	COSE_SignerInfo *pcose,
 	int msgType,
@@ -278,11 +277,10 @@ COSE_SignerInfo *_COSE_SignerInfo_Init_From_Object(cn_cbor *cbor,
 	COSE_SignerInfo *pIn,
 	CBOR_CONTEXT_COMMA cose_errback *perr);
 bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner);
-bool _COSE_Signer_validate(COSE_SignMessage *pSign,
-	COSE_SignerInfo *pSigner,
+bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 	const cn_cbor *pbContent,
 	const cn_cbor *pbProtected,
-	const char * const contextString,
+	const char * const szContext,
 	cose_errback *perr);
 
 // Sign1 items
@@ -329,7 +327,9 @@ bool _COSE_CounterSign_add(COSE *pMessage,
 bool _COSE_CountSign_create(COSE *pMessage,
 	cn_cbor *pcnBody,
 	CBOR_CONTEXT_COMMA cose_errback *perr);
-COSE_CounterSign * _COSE_CounterSign_Init_From_Object(cn_cbor* cbor, COSE_CounterSign *, CBOR_CONTEXT_COMMA cose_errback* perr);
+COSE_CounterSign * _COSE_CounterSign_Init_From_Object(cn_cbor* cbor,
+	COSE_CounterSign *,
+	CBOR_CONTEXT_COMMA cose_errback* perr);
 
 //
 //  Debugging Items

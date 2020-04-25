@@ -8,7 +8,7 @@
 #include "cose/cose_configure.h"
 #include "crypto.h"
 
-#ifdef USE_COUNTER_SIGNATURES
+#ifdef INCLUDE_COUNTERSIGNATURE
 
 COSE* CountersignRoot = NULL;
 
@@ -51,7 +51,9 @@ COSE_CounterSign * _COSE_CounterSign_Init_From_Object(cn_cbor* cbor, COSE_Counte
 		goto errorReturn;
     }
 
-    _COSE_InsertInList(&CountersignRoot, &pobj->m_signer.m_message);
+	if (pIn == NULL) {
+		_COSE_InsertInList(&CountersignRoot, &pobj->m_signer.m_message);
+	}
 
 	return pobj;
 
@@ -117,8 +119,9 @@ bool _COSE_CounterSign_add(COSE* pMessage, HCOSE_COUNTERSIGN hSigner, cose_errba
 	CHECK_CONDITION(IsValidCounterSignHandle(hSigner), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pSigner->m_signer.m_message.m_counterSigners == NULL, COSE_ERR_INVALID_PARAMETER);
 
-	pSigner->m_signer.m_message.m_counterSigners = pMessage->m_counterSigners;
+	pSigner->m_next = pMessage->m_counterSigners;
 	pMessage->m_counterSigners = pSigner;
+	pSigner->m_signer.m_message.m_refCount += 1;
 	return true;
 
 errorReturn:
@@ -290,6 +293,54 @@ bool COSE_CounterSign_validate(HCOSE_SIGNER hSigner, HCOSE_COUNTERSIGN hCounters
 
 errorReturn:
 	return false;
+}
+
+bool COSE_CounterSign_map_put_int(HCOSE_COUNTERSIGN h,
+	int key,
+	cn_cbor* value,
+	int flags,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidCounterSignHandle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
+
+	return _COSE_map_put(
+		&((COSE_CounterSign*)h)->m_signer.m_message, key, value, flags, perr);
+
+errorReturn:
+	return false;
+}
+
+
+/*!
+ * @brief Set the application external data for authentication
+ *
+ * Signer data objects support the authentication of external application
+ * supplied data.  This function is provided to supply that data to the library.
+ *
+ * The external data is not copied, nor will be it freed when the handle is
+ * released.
+ *
+ * @param hcose  Handle for the COSE MAC data object
+ * @param pbEternalData  point to the external data
+ * @param cbExternalData size of the external data
+ * @param perr  location to return errors
+ * @return result of the operation.
+ */
+
+bool COSE_CounterSign_SetExternal(HCOSE_COUNTERSIGN hcose,
+	const byte* pbExternalData,
+	size_t cbExternalData,
+	cose_errback* perr)
+{
+	if (!IsValidCounterSignHandle(hcose)) {
+		if (perr != NULL)
+			perr->err = COSE_ERR_INVALID_HANDLE;
+		return false;
+	}
+
+	return _COSE_SetExternal(&((COSE_CounterSign*)hcose)->m_signer.m_message,
+		pbExternalData, cbExternalData, perr);
 }
 
 

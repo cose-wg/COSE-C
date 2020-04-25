@@ -124,7 +124,7 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, cbor_error);
 
-#ifdef USE_COUNTER_SIGNATURES
+#ifdef INCLUDE_COUNTERSIGNATURE
 	cn_cbor* pCounter = cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign);
 	if (pCounter != NULL) {
 		int i;
@@ -133,10 +133,9 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		if (pCounter->first_child->type == CN_CBOR_ARRAY) {
 
 			cn_cbor* pSig = pCounter->first_child;
-			for (i = 0; i < pCounter->length; i++, pCounter = pCounter->next) {
-				cn_cbor* p = cn_cbor_decode(pSig->v.bytes, pSig->length, CBOR_CONTEXT_PARAM_COMMA & errState);
-				COSE_CounterSign* cs = _COSE_CounterSign_Init_From_Object(p, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
-				cs = pobj->m_counterSigners;
+			for (i = 0; i < pCounter->length; i++, pSig = pSig->next) {
+				COSE_CounterSign* cs = _COSE_CounterSign_Init_From_Object(pSig, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cs->m_next = pobj->m_counterSigners;
 				pobj->m_counterSigners = cs;
 			}
 		}
@@ -557,3 +556,15 @@ void _COSE_RemoveFromList(COSE **root, COSE *thisMsg)
 	}
 	return;
 }
+
+#ifdef DEBUG
+extern COSE *CountersignRoot;
+extern COSE *SignerRoot;
+extern COSE *SignRoot;
+
+bool AreListsEmpty()
+{
+	return CountersignRoot == NULL && SignerRoot == NULL && SignRoot == NULL;
+}
+
+#endif

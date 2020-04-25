@@ -120,14 +120,16 @@ int _ValidateSigned(const cn_cbor *pControl,
 				goto returnError;
 			}
 
-			for (int counterNo=0; counterNo < count; counterNo++) {
+			for (int counterNo = 0; counterNo < count && counterSigners != NULL;
+				 counterNo++, counterSigners = counterSigners->next) {
 				HCOSE_COUNTERSIGN h = COSE_Signer_get_countersignature(hSigner, counterNo, 0);
 				if (h == NULL) {
 					fFail = true;
 					continue;
 				}
 
-				cn_cbor* pkeyCountersign = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
+				cn_cbor *pkeyCountersign = BuildKey(
+					cn_cbor_mapget_string(counterSigners, "key"), false);
 				if (pkeyCountersign == NULL) {
 					fFail = true;
 					continue;
@@ -249,11 +251,11 @@ int BuildSignedMessage(const cn_cbor *pControl)
 					goto returnError;
 				}
 
-				if (!SetSendingAttributes((HCOSE)hCountersign, countersign, Attributes_Signer_protected)) {
+				if (!SetSendingAttributes((HCOSE)hCountersign, countersign, Attributes_Countersign_protected)) {
 					goto returnError;
 				}
 
-				if (!COSE_Signer_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
 					goto returnError;
 				}
 

@@ -59,6 +59,7 @@ enum {
 	Attributes_Sign_protected,
 	Attributes_Signer_protected,
 	Attributes_Sign1_protected,
+	Attributes_Countersign_protected
 } whichSet;
 
 extern int CFails;

@@ -147,7 +147,6 @@
 #endif
 #endif	// !defined (USE_MBED_TLS)
 
-#define USE_COUNTER_SIGNATURES
 // #define USE_COUNTER_SIGNATURE1
 
 //
@@ -171,4 +170,7 @@
 #endif
 #ifndef INCLUDE_SIGN1
 #define INCLUDE_SIGN1 1
+#endif
+#ifndef INCLUDE_COUNTERSIGNATURE
+#define INCLUDE_COUNTERSIGNATURE 1
 #endif
