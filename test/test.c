@@ -1025,7 +1025,7 @@ void RunMemoryTest(const char* szFileName)
 #endif
 }
 
-typedef bool (__cdecl *ValidatePtr)(const cn_cbor* pControl);
+typedef int (__cdecl *ValidatePtr)(const cn_cbor* pControl);
 
 bool ProcessFile(const cn_cbor* pControl, ValidatePtr validateFunction, ValidatePtr buildFunction)
 {
@@ -1266,10 +1266,12 @@ int main(int argc, char** argv)
 #endif
 	}
 
-	if (CFails > 0)
+	if (CFails > 0) {
 		fprintf(stderr, "Failed %d tests\n", CFails);
-	else
+	}
+	else {
 		fprintf(stderr, "SUCCESS\n");
+	}
 
 	exit(CFails);
 }

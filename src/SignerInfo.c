@@ -294,54 +294,14 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
+#ifdef INCLUDE_COUNTERSIGNATURE
 	if (pSigner->m_message.m_counterSigners != NULL) {
-		cn_cbor *pSignature =
-			_COSE_arrayget_int(&pSigner->m_message, INDEX_SIGNATURE);
-		int count = 0;
-
-		COSE_CounterSign *pCountersign = pSigner->m_message.m_counterSigners;
-		for (; pCountersign != NULL;
-			 pCountersign = pCountersign->m_next,
-			 count += 1) {
-			pcborProtectedSign = 
-				_COSE_encode_protected(&pSigner->m_message, perr);
-			if (pcborProtectedSign == NULL) {
-				goto errorReturn;
-			}
-			if (!_COSE_Signer_sign(&pCountersign->m_signer, pSignature,
-					pcborProtectedSign, "CounterSignature", perr)) {
-				goto errorReturn;
-			}
-		}
-
-		if (count == 1) {
-			cn_cbor * cn = COSE_get_cbor((HCOSE)pSigner->m_message.m_counterSigners);
-			CHECK_CONDITION(
-				COSE_Signer_map_put_int((HCOSE_SIGNER)pSigner,
-					COSE_Header_CounterSign, cn, COSE_UNPROTECT_ONLY, perr),
-				COSE_ERR_OUT_OF_MEMORY);
-		}
-		else {
-			cn_cbor_errback cn_error;
-			cn_cbor *cn_counterSign =
-				cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cn_error);
-			CHECK_CONDITION_CBOR(cn_counterSign, cn_error);
-
-			for (pCountersign = pSigner->m_message.m_counterSigners;
-				 pCountersign != NULL;
-				 pCountersign = pCountersign->m_next) {
-				cn_cbor *cn = COSE_get_cbor((HCOSE) pCountersign);
-				CHECK_CONDITION_CBOR(
-					cn_cbor_array_append(cn_counterSign, cn, &cn_error),
-					cn_error);
-			}
-			CHECK_CONDITION(
-				COSE_Signer_map_put_int((HCOSE_SIGNER)pSigner,
-					COSE_Header_CounterSign, cn_counterSign, COSE_UNPROTECT_ONLY, perr),
-				COSE_ERR_OUT_OF_MEMORY);
+		if (!_COSE_CounterSign_Sign(&pSigner->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
 		}
 	}
-
+#endif
+	
 	fRet = true;
 
 errorReturn:

@@ -555,13 +555,29 @@ bool COSE_CounterSign_map_put_int(HCOSE_COUNTERSIGN cose,
 	cose_errback* errp);
 
 bool COSE_CounterSign_SetExternal(HCOSE_COUNTERSIGN cose, const byte* pbExternalData, size_t cbExternalData, cose_errback* perr);
+bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN,
+	const cn_cbor* pkey,
+	cose_errback* perr);
 
-// HCOSE_COUNTERSIGN COSE_Signer_add_countersignature(HCOSE_SIGNER hSigner, const cn_cbor* pkey, cose_errback* perr);
+	
 HCOSE_COUNTERSIGN COSE_Signer_add_countersignature(HCOSE_SIGNER hSigner, HCOSE_COUNTERSIGN hCountersignature, cose_errback* perr);
-bool COSE_CounterSign_validate(HCOSE_SIGNER hSigner, HCOSE_COUNTERSIGN hCountersignature, cose_errback* perr);
-bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN, const cn_cbor* pkey, cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Signer_get_countersignature(HCOSE_SIGNER hSigner,
+	int index,
+	cose_errback* perr);
+bool COSE_Signer_CounterSign_validate(HCOSE_SIGNER hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Sign_add_countersignature(HCOSE_SIGN hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Sign_get_countersignature(HCOSE_SIGN hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Sign_CounterSign_validate(HCOSE_SIGN hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
 
-HCOSE_COUNTERSIGN COSE_Signer_get_countersignature(HCOSE_SIGNER hSigner, int index, cose_errback* perr);
+
 
 /*
  */

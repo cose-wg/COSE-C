@@ -27,7 +27,7 @@ COSE *SignRoot = NULL;
  *  @returns result of check
  */
 
-static bool IsValidSignHandle(HCOSE_SIGN h)
+bool IsValidSignHandle(HCOSE_SIGN h)
 {
 	COSE_SignMessage *p = (COSE_SignMessage *)h;
 
@@ -261,7 +261,7 @@ errorReturn:
 bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 {
 #ifdef USE_CBOR_CONTEXT
-	// cn_cbor_context * context = NULL;
+	cn_cbor_context * context = NULL;
 #endif
 	COSE_SignMessage *pMessage = (COSE_SignMessage *)h;
 	COSE_SignerInfo *pSigner;
@@ -274,7 +274,7 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 		return false;
 	}
 #ifdef USE_CBOR_CONTEXT
-	//	context = &pMessage->m_message.m_allocContext;
+	context = &pMessage->m_message.m_allocContext;
 #endif
 
 	pcborBody = _COSE_arrayget_int(&pMessage->m_message, INDEX_BODY);
@@ -292,6 +292,15 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 		}
 	}
 
+#ifdef INCLUDE_COUNTERSIGNATURE
+	if (pMessage->m_message.m_counterSigners != NULL) {
+		if (!_COSE_CounterSign_Sign(
+				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+	
 	return true;
 }
 

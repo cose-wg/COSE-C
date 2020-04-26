@@ -9,12 +9,12 @@
 // interface, and they were quite confusing in cn-cbor.h
 
 #ifdef INCLUDE_COUNTERSIGNATURE
-struct _COSE_COUNTER_SIGN;
-typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
+struct CounterSign;
+typedef struct CounterSign COSE_CounterSign;
 #endif
 #ifdef USE_COUNTER_SIGNATURE1
-struct _COSE_COUNTER_SIGN1;
-typedef struct _COSE_COUNTER_SIGN0 COSE_CounterSign1;
+struct CounterSign1;
+typedef struct CounterSign1 COSE_CounterSign1;
 #endif
 
 #define UNUSED(x) ((void)(x))
@@ -106,10 +106,10 @@ typedef struct {
 typedef COSE_MacMessage COSE_Mac0Message;
 
 #ifdef INCLUDE_COUNTERSIGNATURE
-typedef struct _COSE_COUNTER_SIGN {
+struct CounterSign {
 	COSE_SignerInfo m_signer;
 	COSE_CounterSign *m_next;
-} COSE_CounterSign;
+};
 #endif
 
 #ifdef USE_CBOR_CONTEXT
@@ -176,6 +176,7 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg);
 bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h);
 bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
+bool IsValidSignHandle(HCOSE_SIGN h);
 bool IsValidSignerHandle(HCOSE_SIGNER h);
 bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
 
@@ -330,6 +331,9 @@ bool _COSE_CountSign_create(COSE *pMessage,
 COSE_CounterSign * _COSE_CounterSign_Init_From_Object(cn_cbor* cbor,
 	COSE_CounterSign *,
 	CBOR_CONTEXT_COMMA cose_errback* perr);
+bool _COSE_CounterSign_Sign(COSE *baseMessage,
+	CBOR_CONTEXT_COMMA cose_errback *perr);
+
 
 //
 //  Debugging Items
