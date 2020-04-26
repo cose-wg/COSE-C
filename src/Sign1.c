@@ -20,7 +20,7 @@ bool _COSE_Signer0_validate(COSE_Sign1Message *pSign,
 	cose_errback *perr);
 void _COSE_Sign1_Release(COSE_Sign1Message *p);
 
-static COSE *Sign1Root = NULL;
+COSE *Sign1Root = NULL;
 
 /*! \private
  * @brief Test if a HCOSE_SIGN1 handle is valid
@@ -209,7 +209,7 @@ bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose,
 bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 {
 #ifdef USE_CBOR_CONTEXT
-	// cn_cbor_context * context = NULL;
+	cn_cbor_context * context = NULL;
 #endif
 	COSE_Sign1Message *pMessage = (COSE_Sign1Message *)h;
 	const cn_cbor *pcborProtected;
@@ -220,7 +220,7 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 		return false;
 	}
 #ifdef USE_CBOR_CONTEXT
-	//	context = &pMessage->m_message.m_allocContext;
+	context = &pMessage->m_message.m_allocContext;
 #endif
 
 	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
@@ -230,6 +230,15 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 	if (!_COSE_Signer0_sign(pMessage, pKey, perr))
 		goto errorReturn;
 
+#ifdef INCLUDE_COUNTERSIGNATURE
+	if (pMessage->m_message.m_counterSigners != NULL) {
+		if (!_COSE_CounterSign_Sign(
+				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+	
 	return true;
 }
 

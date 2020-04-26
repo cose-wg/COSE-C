@@ -178,6 +178,7 @@ bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h);
 bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
 bool IsValidSignHandle(HCOSE_SIGN h);
 bool IsValidSignerHandle(HCOSE_SIGNER h);
+bool IsValidSign1Handle(HCOSE_SIGN1 h);
 bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,

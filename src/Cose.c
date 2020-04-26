@@ -561,10 +561,11 @@ void _COSE_RemoveFromList(COSE **root, COSE *thisMsg)
 extern COSE *CountersignRoot;
 extern COSE *SignerRoot;
 extern COSE *SignRoot;
+extern COSE *Sign1Root;
 
 bool AreListsEmpty()
 {
-	return CountersignRoot == NULL && SignerRoot == NULL && SignRoot == NULL;
+	return CountersignRoot == NULL && SignerRoot == NULL && SignRoot == NULL && Sign1Root == NULL;
 }
 
 #endif

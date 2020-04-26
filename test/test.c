@@ -1025,7 +1025,7 @@ void RunMemoryTest(const char* szFileName)
 #endif
 }
 
-typedef int (__cdecl *ValidatePtr)(const cn_cbor* pControl);
+typedef int (*ValidatePtr)(const cn_cbor* pControl);
 
 bool ProcessFile(const cn_cbor* pControl, ValidatePtr validateFunction, ValidatePtr buildFunction)
 {

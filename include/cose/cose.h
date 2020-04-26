@@ -567,6 +567,7 @@ HCOSE_COUNTERSIGN COSE_Signer_get_countersignature(HCOSE_SIGNER hSigner,
 bool COSE_Signer_CounterSign_validate(HCOSE_SIGNER hSigner,
 	HCOSE_COUNTERSIGN hCountersignature,
 	cose_errback* perr);
+
 HCOSE_COUNTERSIGN COSE_Sign_add_countersignature(HCOSE_SIGN hSignMsg,
 	HCOSE_COUNTERSIGN hCountersignature,
 	cose_errback* perr);
@@ -577,6 +578,15 @@ bool COSE_Sign_CounterSign_validate(HCOSE_SIGN hSigner,
 	HCOSE_COUNTERSIGN hCountersignature,
 	cose_errback* perr);
 
+HCOSE_COUNTERSIGN COSE_Sign1_add_countersignature(HCOSE_SIGN1 hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Sign1_get_countersignature(HCOSE_SIGN1 hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Sign1_CounterSign_validate(HCOSE_SIGN1 hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
 
 
 /*

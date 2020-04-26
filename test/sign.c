@@ -169,9 +169,9 @@ int _ValidateSigned(const cn_cbor *pControl,
 #if INCLUDE_COUNTERSIGNATURE
 		//  Countersign on Signed Body
 		
-		if (iSigner == (int)pSigners->length - 1) {
+		if (iSigner == 0) {
 			//  Validate counter signatures on signers
-			cn_cbor *countersignList =
+			countersignList =
 				cn_cbor_mapget_string(pSign, "countersign");
 			if (countersignList != NULL) {
 				cn_cbor *countersigners =
@@ -183,14 +183,14 @@ int _ValidateSigned(const cn_cbor *pControl,
 				int count = countersigners->length;
 				bool forward = true;
 
-				if (COSE_Signer_map_get_int(hSigner, COSE_Header_CounterSign,
+				if (COSE_Sign_map_get_int(hSig, COSE_Header_CounterSign,
 						COSE_UNPROTECT_ONLY, 0) == NULL) {
 					goto returnError;
 				}
 
 				for (int counterNo = 0; counterNo < count; counterNo++) {
 					HCOSE_COUNTERSIGN h =
-						COSE_Signer_get_countersignature(hSigner, counterNo, 0);
+						COSE_Sign_get_countersignature(hSig, counterNo, 0);
 					if (h == NULL) {
 						fFail = true;
 						continue;
@@ -211,7 +211,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 						continue;
 					}
 
-					if (COSE_Signer_CounterSign_validate(hSigner, h, 0)) {
+					if (COSE_Sign_CounterSign_validate(hSig, h, 0)) {
 						//  I don't think we have any forced errors yet.
 					}
 					else {
@@ -570,6 +570,69 @@ int _ValidateSign1(const cn_cbor *pControl,
 			fFail = true;
 	}
 
+#if INCLUDE_COUNTERSIGNATURE
+	//  Countersign on Signed Body
+
+	//  Validate counter signatures on signers
+	cn_cbor *	countersignList = cn_cbor_mapget_string(pSign, "countersign");
+	if (countersignList != NULL) {
+		cn_cbor *countersigners =
+			cn_cbor_mapget_string(countersignList, "signers");
+		if (countersigners == NULL) {
+			fFail = true;
+			goto exitHere;
+		}
+		int count = countersigners->length;
+		bool forward = true;
+
+		if (COSE_Sign1_map_get_int(hSig, COSE_Header_CounterSign,
+				COSE_UNPROTECT_ONLY, 0) == NULL) {
+			goto returnError;
+		}
+
+		for (int counterNo = 0; counterNo < count; counterNo++) {
+			HCOSE_COUNTERSIGN h =
+				COSE_Sign1_get_countersignature(hSig, counterNo, 0);
+			if (h == NULL) {
+				fFail = true;
+				goto exitHere;
+			}
+
+			cn_cbor *counterSigner = cn_cbor_index(
+				countersigners, forward ? counterNo : count - counterNo - 1);
+
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
+			if (pkeyCountersign == NULL) {
+				fFail = true;
+				goto exitHere;
+			}
+
+			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+				fFail = true;
+				goto exitHere;
+			}
+
+			if (COSE_Sign1_CounterSign_validate(hSig, h, 0)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (forward && counterNo == 0 && count > 1) {
+					forward = false;
+					counterNo -= 1;
+				}
+				else {
+					fFail = true;
+				}
+			}
+
+			CN_CBOR_FREE(pkeyCountersign, context);
+			COSE_CounterSign_Free(h);
+		}
+	}
+#endif
+	
+
 	COSE_Sign1_Free(hSig);
 
 	if (fFailBody) {
@@ -630,9 +693,48 @@ int BuildSign1Message(const cn_cbor *pControl)
 	if (pkey == NULL)
 		goto returnError;
 
+#ifdef INCLUDE_COUNTERSIGNATURE
+	// On the sign body
+	cn_cbor * countersigns = cn_cbor_mapget_string(pSign, "countersign");
+	if (countersigns != NULL) {
+		countersigns = cn_cbor_mapget_string(countersigns, "signers");
+		cn_cbor *countersign = countersigns->first_child;
+
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Sign1_add_countersignature(hSignObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
+
 	if (!COSE_Sign1_Sign(hSignObj, pkey, NULL))
 		goto returnError;
-
+	
 	size_t cb = COSE_Encode((HCOSE)hSignObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hSignObj, rgb, 0, cb);

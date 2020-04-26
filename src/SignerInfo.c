@@ -369,8 +369,6 @@ bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 	int alg = 0;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pSigner->m_message.m_allocContext;
-#else
-	UNUSED(pSign);
 #endif
 	size_t cbToBeSigned;
 	bool fRet = false;

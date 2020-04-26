@@ -796,6 +796,7 @@ bool HKDF_Extract(COSE *pcose,
 	size_t *pcbDigest,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
+	UNUSED(context);
 	byte rgbSalt[EVP_MAX_MD_SIZE] = {0};
 	int cbSalt;
 	cn_cbor *cnSalt;
