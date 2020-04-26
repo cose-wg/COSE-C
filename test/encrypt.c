@@ -15,6 +15,7 @@
 #include "json.h"
 #include "test.h"
 #include "context.h"
+#include "cose_int.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4127)
@@ -552,6 +553,68 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 			fFail = true;
 	}
 
+#if INCLUDE_COUNTERSIGNATURE
+	//  Countersign on Encrypt0 Body
+
+	//  Validate counter signatures on signers
+	cn_cbor *countersignList = cn_cbor_mapget_string(pEncrypt, "countersign");
+	if (countersignList != NULL) {
+		cn_cbor *countersigners =
+			cn_cbor_mapget_string(countersignList, "signers");
+		if (countersigners == NULL) {
+			fFail = true;
+			goto exitHere;
+		}
+		int count = countersigners->length;
+		bool forward = true;
+
+		if (COSE_Encrypt_map_get_int(hEnc, COSE_Header_CounterSign,
+				COSE_UNPROTECT_ONLY, 0) == NULL) {
+			goto returnError;
+		}
+
+		for (int counterNo = 0; counterNo < count; counterNo++) {
+			HCOSE_COUNTERSIGN h =
+				COSE_Encrypt0_get_countersignature(hEnc, counterNo, 0);
+			if (h == NULL) {
+				fFail = true;
+				goto exitHere;
+			}
+
+			cn_cbor *counterSigner = cn_cbor_index(
+				countersigners, forward ? counterNo : count - counterNo - 1);
+
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
+			if (pkeyCountersign == NULL) {
+				fFail = true;
+				goto exitHere;
+			}
+
+			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+				fFail = true;
+				goto exitHere;
+			}
+
+			if (COSE_Encrypt0_CounterSign_validate(hEnc, h, 0)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (forward && counterNo == 0 && count > 1) {
+					forward = false;
+					counterNo -= 1;
+				}
+				else {
+					fFail = true;
+				}
+			}
+
+			CN_CBOR_FREE(pkeyCountersign, context);
+			COSE_CounterSign_Free(h);
+		}
+	}
+#endif
+
 	COSE_Encrypt_Free(hEnc);
 
 exitHere:
@@ -636,6 +699,45 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 		goto returnError;
 
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
+
+#ifdef INCLUDE_COUNTERSIGNATURE
+	// On the Encrypt0 body
+	cn_cbor *countersigns = cn_cbor_mapget_string(pEncrypt, "countersign");
+	if (countersigns != NULL) {
+		countersigns = cn_cbor_mapget_string(countersigns, "signers");
+		cn_cbor *countersign = countersigns->first_child;
+
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Encrypt0_add_countersignature(hEncObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
 
 	if (!COSE_Encrypt_encrypt(hEncObj, k->v.bytes, k->length, NULL))
 		goto returnError;

@@ -588,8 +588,37 @@ bool COSE_Sign1_CounterSign_validate(HCOSE_SIGN1 hSigner,
 	HCOSE_COUNTERSIGN hCountersignature,
 	cose_errback* perr);
 
+HCOSE_COUNTERSIGN COSE_Encrypt0_add_countersignature(HCOSE_ENCRYPT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Encrypt0_get_countersignature(HCOSE_ENCRYPT hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Encrypt0_CounterSign_validate(HCOSE_ENCRYPT hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
 
-/*
+HCOSE_COUNTERSIGN COSE_Enveloped_add_countersignature(HCOSE_ENVELOPED hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Enveloped_get_countersignature(HCOSE_ENVELOPED hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Enveloped_CounterSign_validate(HCOSE_ENVELOPED hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Recipient_add_countersignature(HCOSE_RECIPIENT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Recipient_get_countersignature(HCOSE_RECIPIENT hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Recipient_CounterSign_validate(HCOSE_RECIPIENT hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+	/*
  */
 
 cn_cbor* cn_cbor_clone(const cn_cbor* pIn,

@@ -18,7 +18,7 @@
 #if INCLUDE_ENCRYPT0 || INCLUDE_MAC0
 void _COSE_Encrypt_Release(COSE_Encrypt *p);
 
-static COSE *EncryptRoot = NULL;
+COSE *EncryptRoot = NULL;
 #endif
 
 #if INCLUDE_ENCRYPT0

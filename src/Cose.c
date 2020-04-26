@@ -562,10 +562,17 @@ extern COSE *CountersignRoot;
 extern COSE *SignerRoot;
 extern COSE *SignRoot;
 extern COSE *Sign1Root;
+extern COSE *EncryptRoot;
+extern COSE *EnvelopedRoot;
+extern COSE *RecipientRoot;
+extern COSE *MacRoot;
+extern COSE *Mac0Root;
 
 bool AreListsEmpty()
 {
-	return CountersignRoot == NULL && SignerRoot == NULL && SignRoot == NULL && Sign1Root == NULL;
+	return CountersignRoot == NULL && SignerRoot == NULL && SignRoot == NULL &&
+		   Sign1Root == NULL && EncryptRoot == NULL && EnvelopedRoot == NULL &&
+		   RecipientRoot == NULL && MacRoot == NULL && Mac0Root == NULL;
 }
 
 #endif

@@ -18,7 +18,7 @@ static bool BuildContextBytes(COSE *pcose,
 #endif
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
-static COSE *RecipientRoot = NULL;
+COSE *RecipientRoot = NULL;
 
 /*! \private
  * @brief Test if a HCOSE_RECIPIENT handle is valid

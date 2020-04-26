@@ -20,7 +20,7 @@
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 void _COSE_Enveloped_Release(COSE_Enveloped *p);
 
-static COSE *EnvelopedRoot = NULL;
+COSE *EnvelopedRoot = NULL;
 #endif
 
 #if INCLUDE_ENCRYPT
@@ -654,16 +654,6 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	if (cbProtected == NULL)
 		goto errorReturn;
 
-#ifdef INCLUDE_COUNTERSIGNATURE
-	/*
-	//  Setup Counter Signatures
-	if (!_COSE_CountSign_create(
-			&pcose->m_message, NULL, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		goto errorReturn;
-	}
-	*/
-#endif
-
 	//  Build authenticated data
 
 	size_t cbAuthData = 0;
@@ -772,6 +762,15 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	}
 #endif	// INCLUDE_ENCRYPT
 
+#ifdef INCLUDE_COUNTERSIGNATURE
+	if (pcose->m_message.m_counterSigners != NULL) {
+		if (!_COSE_CounterSign_Sign(
+				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+	
 	//  Figure out the clean up
 
 	fRet = true;

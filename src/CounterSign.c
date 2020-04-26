@@ -341,7 +341,7 @@ bool _COSE_CounterSign_Sign(COSE * baseMessage, CBOR_CONTEXT_COMMA cose_errback 
 	return fRet;
 }
 
-
+#ifdef INCLUDE_SIGN
 /***************************************************************************************************
  *
  *   SIGNER
@@ -480,7 +480,9 @@ bool COSE_Sign_CounterSign_validate(HCOSE_SIGN hSignMsg,
 errorReturn:
 	return false;
 }
+#endif
 
+#ifdef INCLUDE_SIGN1
 /***************************************************************************************************
  *
  *   SIGN1 MESSAGE
@@ -548,6 +550,214 @@ bool COSE_Sign1_CounterSign_validate(HCOSE_SIGN1 hSignMsg,
 errorReturn:
 	return false;
 }
+#endif
 
+#ifdef INCLUDE_ENCRYPT
+/***************************************************************************************************
+ *
+ *   ENVELOPED MESSAGE
+ */
+HCOSE_COUNTERSIGN COSE_Enveloped_add_countersignature(HCOSE_ENVELOPED hSignMsg,
+	HCOSE_COUNTERSIGN hCountersign,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidEnvelopedHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersign), COSE_ERR_INVALID_HANDLE);
+
+	if (!_COSE_CounterSign_add(
+			&((COSE_Enveloped*)hSignMsg)->m_message, hCountersign, perr)) {
+		goto errorReturn;
+	}
+
+	return hCountersign;
+
+errorReturn:
+	return NULL;
+}
+
+HCOSE_COUNTERSIGN COSE_Enveloped_get_countersignature(HCOSE_ENVELOPED hSignMsg,
+	int index,
+	cose_errback* perr)
+{
+	COSE_CounterSign* p = NULL;
+
+	CHECK_CONDITION(IsValidEnvelopedHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+
+	p = _COSE_Message_get_countersignature(
+		&((COSE_Enveloped*)hSignMsg)->m_message, index, perr);
+
+errorReturn:
+	return (HCOSE_COUNTERSIGN)p;
+}
+
+bool COSE_Enveloped_CounterSign_validate(HCOSE_ENVELOPED hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidEnvelopedHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
+
+	COSE_Enveloped* pSignMsg = (COSE_Enveloped*)hSignMsg;
+	COSE_CounterSign* pCountersign = (COSE_CounterSign*)hCountersignature;
+
+	const cn_cbor* cnContent =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_BODY);
+	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	const cn_cbor* cnProtected =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
+	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
+		cnProtected, "CounterSignature", perr);
+
+	return f;
+
+errorReturn:
+	return false;
+}
+
+/***************************************************************************************************
+ *
+ *   RECIPIENT MESSAGE
+ */
+HCOSE_COUNTERSIGN COSE_Recipient_add_countersignature(HCOSE_RECIPIENT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersign,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidRecipientHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersign), COSE_ERR_INVALID_HANDLE);
+
+	if (!_COSE_CounterSign_add(
+			&((COSE_RecipientInfo*)hSignMsg)->m_encrypt.m_message, hCountersign, perr)) {
+		goto errorReturn;
+	}
+
+	return hCountersign;
+
+errorReturn:
+	return NULL;
+}
+
+HCOSE_COUNTERSIGN COSE_Recipient_get_countersignature(HCOSE_RECIPIENT hSignMsg,
+	int index,
+	cose_errback* perr)
+{
+	COSE_CounterSign* p = NULL;
+
+	CHECK_CONDITION(IsValidRecipientHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+
+	p = _COSE_Message_get_countersignature(
+		&((COSE_RecipientInfo*)hSignMsg)->m_encrypt.m_message, index, perr);
+
+errorReturn:
+	return (HCOSE_COUNTERSIGN)p;
+}
+
+bool COSE_Recipient_CounterSign_validate(HCOSE_RECIPIENT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidRecipientHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
+
+	COSE_RecipientInfo* pSignMsg = (COSE_RecipientInfo*)hSignMsg;
+	COSE_CounterSign* pCountersign = (COSE_CounterSign*)hCountersignature;
+
+	const cn_cbor* cnContent =
+		_COSE_arrayget_int(&pSignMsg->m_encrypt.m_message, INDEX_BODY);
+	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	const cn_cbor* cnProtected =
+		_COSE_arrayget_int(&pSignMsg->m_encrypt.m_message, INDEX_PROTECTED);
+	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
+		cnProtected, "CounterSignature", perr);
+
+	return f;
+
+errorReturn:
+	return false;
+}
+#endif
+
+#ifdef INCLUDE_ENCRYPT0
+/***************************************************************************************************
+ *
+ *   ENCRYPT0 MESSAGE
+ */
+HCOSE_COUNTERSIGN COSE_Encrypt0_add_countersignature(HCOSE_ENCRYPT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersign,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidEncryptHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersign), COSE_ERR_INVALID_HANDLE);
+
+	if (!_COSE_CounterSign_add(
+			&((COSE_SignMessage*)hSignMsg)->m_message, hCountersign, perr)) {
+		goto errorReturn;
+	}
+
+	return hCountersign;
+
+errorReturn:
+	return NULL;
+}
+
+HCOSE_COUNTERSIGN COSE_Encrypt0_get_countersignature(HCOSE_ENCRYPT hSignMsg,
+	int index,
+	cose_errback* perr)
+{
+	COSE_CounterSign* p = NULL;
+
+	CHECK_CONDITION(IsValidEncryptHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+
+	p = _COSE_Message_get_countersignature(
+		&((COSE_SignMessage*)hSignMsg)->m_message, index, perr);
+
+errorReturn:
+	return (HCOSE_COUNTERSIGN)p;
+}
+
+bool COSE_Encrypt0_CounterSign_validate(HCOSE_ENCRYPT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidEncryptHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
+
+	COSE_Encrypt* pSignMsg = (COSE_Encrypt*)hSignMsg;
+	COSE_CounterSign* pCountersign = (COSE_CounterSign*)hCountersignature;
+
+	const cn_cbor* cnContent =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_BODY);
+	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	const cn_cbor* cnProtected =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
+	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
+		cnProtected, "CounterSignature", perr);
+
+	return f;
+
+errorReturn:
+	return false;
+}
+#endif
 #endif
 
