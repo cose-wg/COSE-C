@@ -461,7 +461,7 @@ bool SetAttributes(HCOSE hHandle,
 				assert(false);
 				break;
 		}
-		assert(fRet);
+		// assert(fRet);
 	}
 
 	return fRet;

@@ -31,7 +31,7 @@ FOO Recipients;
 extern FOO Signer[];
 
 #ifdef USE_CBOR_CONTEXT
-#define context NULL
+void* context = NULL;
 #endif
 
 FOO AlgorithmMap[38] = {
