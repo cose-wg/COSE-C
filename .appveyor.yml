@@ -29,8 +29,11 @@ install:
   - git clone --depth 1 git://github.com/cose-wg/Examples Examples
 
 before_build:
-  - set PATH=c:\OpenSSL-v11-Win64;%PATH%
+  - set PATH=c:\OpenSSL-v111-Win64\bin;%PATH%
+  - dir c:\OpenSSL-v11-Win64\bin
   - cmake --version
+  - mkdir build
+  - cd build
   - cmake -DCOSE_C_USE_CONTEXT=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_EMBEDTLS% -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017 Win64" .
 
 build_script:
