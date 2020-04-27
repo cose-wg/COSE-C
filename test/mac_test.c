@@ -355,7 +355,7 @@ int BuildMacMessage(const cn_cbor *pControl)
 			goto returnError;
 		}
 
-	#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 		// On the Recipient
 		cn_cbor *countersigns1 =
 			cn_cbor_mapget_string(pRecipients, "countersign");
@@ -401,7 +401,7 @@ int BuildMacMessage(const cn_cbor *pControl)
 		COSE_Recipient_Free(hRecip);
 	}
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	// On the Evneloped body
 	cn_cbor *countersigns1 = cn_cbor_mapget_string(pMac, "countersign");
 	if (countersigns1 != NULL) {
@@ -796,7 +796,7 @@ int BuildMac0Message(const cn_cbor *pControl)
 		goto returnError;
 	}
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	// On the sign body
 	cn_cbor *countersigns = cn_cbor_mapget_string(pMac, "countersign");
 	if (countersigns != NULL) {

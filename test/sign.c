@@ -354,7 +354,7 @@ int BuildSignedMessage(const cn_cbor *pControl)
 #endif
 		COSE_Signer_Free(hSigner);
 	}
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	// On the sign body
 	cn_cbor * countersigns1 = cn_cbor_mapget_string(pSign, "countersign");
 	if (countersigns1 != NULL) {
@@ -701,7 +701,7 @@ int BuildSign1Message(const cn_cbor *pControl)
 		goto returnError;
 	}
 	
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	// On the sign body
 	cn_cbor * countersigns = cn_cbor_mapget_string(pSign, "countersign");
 	if (countersigns != NULL) {
