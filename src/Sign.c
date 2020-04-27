@@ -292,7 +292,7 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 		}
 	}
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	if (pMessage->m_message.m_counterSigners != NULL) {
 		if (!_COSE_CounterSign_Sign(
 				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {

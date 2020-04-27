@@ -90,6 +90,10 @@ if(versbose)
   set(CMAKE_VERBOSE_MAKEFILE ON)
 endif()
 
+# Control the order of packages - get the latest not the first
+SET(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
+
 ###############################################################################
 # DOCS
 ###############################################################################

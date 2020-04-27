@@ -300,7 +300,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	if (pSigner->m_message.m_counterSigners != NULL) {
 		if (!_COSE_CounterSign_Sign(&pSigner->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;

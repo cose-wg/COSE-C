@@ -8,14 +8,10 @@
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
 
-#ifdef INCLUDE_COUNTERSIGNATURE
 struct CounterSign;
 typedef struct CounterSign COSE_CounterSign;
-#endif
-#ifdef USE_COUNTER_SIGNATURE1
 struct CounterSign1;
 typedef struct CounterSign1 COSE_CounterSign1;
-#endif
 
 #define UNUSED(x) ((void)(x))
 
@@ -40,10 +36,10 @@ typedef struct _COSE {
 	cn_cbor_context m_allocContext;
 #endif
 	struct _COSE *m_handleList;
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	COSE_CounterSign *m_counterSigners;  // Linked list of all counter signatures
 #endif
-#ifdef INCLUDE_COUNTERSIGNATURE1
+#if INCLUDE_COUNTERSIGNATURE1
 	COSE_CounterSign1* m_counterSign1;
 #endif
 } COSE;
@@ -105,12 +101,10 @@ typedef struct {
 #endif
 typedef COSE_MacMessage COSE_Mac0Message;
 
-#ifdef INCLUDE_COUNTERSIGNATURE
 struct CounterSign {
 	COSE_SignerInfo m_signer;
 	COSE_CounterSign *m_next;
 };
-#endif
 
 #ifdef USE_CBOR_CONTEXT
 /**

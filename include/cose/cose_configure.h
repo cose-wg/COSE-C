@@ -147,8 +147,6 @@
 #endif
 #endif	// !defined (USE_MBED_TLS)
 
-// #define USE_COUNTER_SIGNATURE1
-
 //
 //   Define which COSE objects are included
 //
@@ -173,4 +171,7 @@
 #endif
 #ifndef INCLUDE_COUNTERSIGNATURE
 #define INCLUDE_COUNTERSIGNATURE 0
+#endif
+#ifndef INCLUDE_COUNTERSIGNATURE1
+#define INCLUDE_COUNTERSIGNATURE1 0
 #endif

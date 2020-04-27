@@ -698,7 +698,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 		case COSE_Algorithm_AES_CCM_64_64_128:
 			if (!AES_CCM_Encrypt(
 					pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr))
-				goto errorReturn;
+ 				goto errorReturn;
 			break;
 #endif
 
@@ -754,7 +754,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
-#ifdef INCLUDE_ENCRYPT
+#if INCLUDE_ENCRYPT
 	for (pri = pcose->m_recipientFirst; pri != NULL;
 		 pri = pri->m_recipientNext) {
 		if (!_COSE_Recipient_encrypt(pri, pbKey, cbKey, perr))

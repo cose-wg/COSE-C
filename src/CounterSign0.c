@@ -8,7 +8,7 @@
 #include "cose/cose_configure.h"
 #include "crypto.h"
 
-#ifdef USE_COUNTER_SIGNATURE1
+#if USE_COUNTER_SIGNATURE1
 
 extern bool IsValidCounterSign1Handle(HCOSE_COUNTERSIGN1 h);
 
