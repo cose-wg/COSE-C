@@ -759,5 +759,146 @@ errorReturn:
 	return false;
 }
 #endif
+
+#ifdef INCLUDE_MAC0
+/***************************************************************************************************
+ *
+ *   MAC0 MESSAGE
+ */
+HCOSE_COUNTERSIGN COSE_Mac0_add_countersignature(HCOSE_MAC0 hSignMsg,
+	HCOSE_COUNTERSIGN hCountersign,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidMac0Handle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersign), COSE_ERR_INVALID_HANDLE);
+
+	if (!_COSE_CounterSign_add(
+			&((COSE_SignMessage*)hSignMsg)->m_message, hCountersign, perr)) {
+		goto errorReturn;
+	}
+
+	return hCountersign;
+
+errorReturn:
+	return NULL;
+}
+
+HCOSE_COUNTERSIGN COSE_Mac0_get_countersignature(HCOSE_MAC0 hSignMsg,
+	int index,
+	cose_errback* perr)
+{
+	COSE_CounterSign* p = NULL;
+
+	CHECK_CONDITION(IsValidMac0Handle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+
+	p = _COSE_Message_get_countersignature(
+		&((COSE_SignMessage*)hSignMsg)->m_message, index, perr);
+
+errorReturn:
+	return (HCOSE_COUNTERSIGN)p;
+}
+
+bool COSE_Mac0_CounterSign_validate(HCOSE_MAC0 hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidMac0Handle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
+
+	COSE_Mac0Message* pSignMsg = (COSE_Mac0Message*)hSignMsg;
+	COSE_CounterSign* pCountersign = (COSE_CounterSign*)hCountersignature;
+
+	const cn_cbor* cnContent =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_BODY);
+	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	const cn_cbor* cnProtected =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
+	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
+		cnProtected, "CounterSignature", perr);
+
+	return f;
+
+errorReturn:
+	return false;
+}
+#endif
+
+#ifdef INCLUDE_MAC
+/***************************************************************************************************
+ *
+ *   ENCRYPT0 MESSAGE
+ */
+HCOSE_COUNTERSIGN COSE_Mac_add_countersignature(HCOSE_MAC hSignMsg,
+	HCOSE_COUNTERSIGN hCountersign,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidMacHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersign), COSE_ERR_INVALID_HANDLE);
+
+	if (!_COSE_CounterSign_add(
+			&((COSE_MacMessage*)hSignMsg)->m_message, hCountersign, perr)) {
+		goto errorReturn;
+	}
+
+	return hCountersign;
+
+errorReturn:
+	return NULL;
+}
+
+HCOSE_COUNTERSIGN COSE_Mac_get_countersignature(HCOSE_MAC hSignMsg,
+	int index,
+	cose_errback* perr)
+{
+	COSE_CounterSign* p = NULL;
+
+	CHECK_CONDITION(IsValidMacHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+
+	p = _COSE_Message_get_countersignature(
+		&((COSE_MacMessage*)hSignMsg)->m_message, index, perr);
+
+errorReturn:
+	return (HCOSE_COUNTERSIGN)p;
+}
+
+bool COSE_Mac_CounterSign_validate(HCOSE_MAC hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr)
+{
+	CHECK_CONDITION(IsValidMacHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
+
+	COSE_MacMessage* pSignMsg = (COSE_MacMessage*)hSignMsg;
+	COSE_CounterSign* pCountersign = (COSE_CounterSign*)hCountersignature;
+
+	const cn_cbor* cnContent =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_BODY);
+	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	const cn_cbor* cnProtected =
+		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
+	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
+		COSE_ERR_INVALID_PARAMETER);
+
+	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
+		cnProtected, "CounterSignature", perr);
+
+	return f;
+
+errorReturn:
+	return false;
+}
+#endif
+
 #endif
 

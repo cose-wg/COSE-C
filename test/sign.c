@@ -670,31 +670,37 @@ int BuildSign1Message(const cn_cbor *pControl)
 	//
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
-	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE))
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		return 0;
+	}
 
 	HCOSE_SIGN1 hSignObj = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL)
+	if (pInputs == NULL) {
 		goto returnError;
+	}
 	const cn_cbor *pSign = cn_cbor_mapget_string(pInputs, "sign0");
-	if (pSign == NULL)
+	if (pSign == NULL) {
 		goto returnError;
+	}
 
 	const cn_cbor *pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Sign1_SetContent(
-			hSignObj, pContent->v.bytes, pContent->length, NULL))
+			hSignObj, pContent->v.bytes, pContent->length, NULL)) {
 		goto returnError;
+	}
 
 	if (!SetSendingAttributes(
-			(HCOSE)hSignObj, pSign, Attributes_Sign1_protected))
+			(HCOSE)hSignObj, pSign, Attributes_Sign1_protected)) {
 		goto returnError;
+	}
 
 	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
-	if (pkey == NULL)
+	if (pkey == NULL) {
 		goto returnError;
-
+	}
+	
 #ifdef INCLUDE_COUNTERSIGNATURE
 	// On the sign body
 	cn_cbor * countersigns = cn_cbor_mapget_string(pSign, "countersign");

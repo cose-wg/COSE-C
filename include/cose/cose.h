@@ -618,6 +618,26 @@ bool COSE_Recipient_CounterSign_validate(HCOSE_RECIPIENT hSigner,
 	HCOSE_COUNTERSIGN hCountersignature,
 	cose_errback* perr);
 
+HCOSE_COUNTERSIGN COSE_Mac0_add_countersignature(HCOSE_MAC0 hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Mac0_get_countersignature(HCOSE_MAC0 hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Mac0_CounterSign_validate(HCOSE_MAC0 hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Mac_add_countersignature(HCOSE_MAC hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Mac_get_countersignature(HCOSE_MAC hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Mac_CounterSign_validate(HCOSE_MAC hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+	
 	/*
  */
 

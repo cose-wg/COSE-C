@@ -1029,30 +1029,44 @@ typedef int (*ValidatePtr)(const cn_cbor* pControl);
 
 bool ProcessFile(const cn_cbor* pControl, ValidatePtr validateFunction, ValidatePtr buildFunction)
 {
+#ifdef USE_CBOR_CONTEXT
 	context = CreateContext(-1);
+#endif
 	if (validateFunction(pControl)) {
+#ifdef USE_CBOR_CONTEXT
 		if (IsContextEmpty(context) != 0) {
 			printf("Memory Cleanup Failure - Validate\n");
 			// CFails += 1;
 		}
+#endif
+#ifndef NDEBUG
 		if (!AreListsEmpty()) {
 			printf("Left over handle - P1\n");
 			CFails += 1;
 		}
+#endif
+#ifdef USE_CBOR_CONTEXT
 		FreeContext(context);
 		context = CreateContext(-1);
+#endif
 		buildFunction(pControl);
+#ifdef USE_CBOR_CONTEXT
 		if (IsContextEmpty(context) != 0) {
 			printf("Memory Cleanup Failure - Build\n");
 			// CFails += 1;
 		}
+#endif
 	}
+#ifndef NDEBUG
 	if (!AreListsEmpty()) {
 		printf("Left over handle - P2\n");
 		CFails += 1;
 	}
+#endif
+#ifdef USE_CBOR_CONTEXT
 	FreeContext(context);
 	context = NULL;
+#endif
 	return true;
 }
 

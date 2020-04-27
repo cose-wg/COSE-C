@@ -17,7 +17,7 @@ bool IsValidCOSEHandle(HCOSE h)
 }
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,
-	COSE *pobj,
+	COSE *pcose,
 	int msgType,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
@@ -26,48 +26,48 @@ bool _COSE_Init(COSE_INIT_FLAGS flags,
 
 #ifdef USE_CBOR_CONTEXT
 	if (context != NULL)
-		pobj->m_allocContext = *context;
+		pcose->m_allocContext = *context;
 #endif
 
 	CHECK_CONDITION((flags & ~(COSE_INIT_FLAGS_DETACHED_CONTENT |
 								 COSE_INIT_FLAGS_NO_CBOR_TAG)) == 0,
 		COSE_ERR_INVALID_PARAMETER);
 
-	pobj->m_flags = flags;
+	pcose->m_flags = flags;
 
-	pobj->m_protectedMap =
+	pcose->m_protectedMap =
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_protectedMap != NULL, errState);
+	CHECK_CONDITION_CBOR(pcose->m_protectedMap != NULL, errState);
 
-	pobj->m_dontSendMap =
+	pcose->m_dontSendMap =
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, errState);
+	CHECK_CONDITION_CBOR(pcose->m_dontSendMap != NULL, errState);
 
-	pobj->m_cborRoot = pobj->m_cbor =
+	pcose->m_cborRoot = pcose->m_cbor =
 		cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
-	pobj->m_ownMsg = 1;
+	CHECK_CONDITION_CBOR(pcose->m_cbor != NULL, errState);
+	pcose->m_ownMsg = 1;
 
-	pobj->m_msgType = msgType;
+	pcose->m_msgType = msgType;
 
-	pobj->m_unprotectMap =
+	pcose->m_unprotectMap =
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_unprotectMap != NULL, errState);
+	CHECK_CONDITION_CBOR(pcose->m_unprotectMap != NULL, errState);
 	CHECK_CONDITION_CBOR(
-		_COSE_array_replace(pobj, pobj->m_unprotectMap, INDEX_UNPROTECTED,
+		_COSE_array_replace(pcose, pcose->m_unprotectMap, INDEX_UNPROTECTED,
 			CBOR_CONTEXT_PARAM_COMMA & errState),
 		errState);
-	pobj->m_ownUnprotectedMap = false;
+	pcose->m_ownUnprotectedMap = false;
 
 	if (!(flags & COSE_INIT_FLAGS_NO_CBOR_TAG)) {
 		cn_cbor_errback cbor_error;
 		cn_cbor *cn = cn_cbor_tag_create(
-			msgType, pobj->m_cborRoot, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+			msgType, pcose->m_cborRoot, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
-		pobj->m_cborRoot = cn;
+		pcose->m_cborRoot = cn;
 	}
 
-	pobj->m_refCount = 1;
+	pcose->m_refCount = 1;
 
 	return true;
 
@@ -155,24 +155,27 @@ errorReturn:
 	return false;
 }
 
-void _COSE_Release(COSE *pobj)
+void _COSE_Release(COSE *pcose)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = &pobj->m_allocContext;
+	cn_cbor_context *context = &pcose->m_allocContext;
 #endif
 
-	if (pobj->m_protectedMap != NULL)
-		CN_CBOR_FREE(pobj->m_protectedMap, context);
-	if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL))
-		CN_CBOR_FREE(pobj->m_unprotectMap, context);
-	if (pobj->m_dontSendMap != NULL)
-		CN_CBOR_FREE(pobj->m_dontSendMap, context);
-	if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) &&
-		(pobj->m_cborRoot->parent == NULL))
-		CN_CBOR_FREE(pobj->m_cborRoot, context);
-
-	if (pobj->m_counterSigners != NULL) {
-		COSE_CounterSign* p = pobj->m_counterSigners;
+	if (pcose->m_protectedMap != NULL) {
+		CN_CBOR_FREE(pcose->m_protectedMap, context);
+	}
+	if (pcose->m_ownUnprotectedMap && (pcose->m_unprotectMap != NULL)) {
+		CN_CBOR_FREE(pcose->m_unprotectMap, context);
+	}
+	if (pcose->m_dontSendMap != NULL) {
+		CN_CBOR_FREE(pcose->m_dontSendMap, context);
+	}
+	if (pcose->m_ownMsg && (pcose->m_cborRoot != NULL) &&
+		(pcose->m_cborRoot->parent == NULL)) {
+		CN_CBOR_FREE(pcose->m_cborRoot, context);
+	}
+	if (pcose->m_counterSigners != NULL) {
+		COSE_CounterSign* p = pcose->m_counterSigners;
 		COSE_CounterSign* p2 = NULL;
 
 		while (p != NULL) {

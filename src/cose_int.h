@@ -180,21 +180,23 @@ bool IsValidSignHandle(HCOSE_SIGN h);
 bool IsValidSignerHandle(HCOSE_SIGNER h);
 bool IsValidSign1Handle(HCOSE_SIGN1 h);
 bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
+bool IsValidMacHandle(HCOSE_MAC h);
+bool IsValidMac0Handle(HCOSE_MAC0 h);
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,
 	COSE *pcose,
 	int msgType,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
+	CBOR_CONTEXT_COMMA cose_errback *perr);
 bool _COSE_Init_From_Object(COSE *pobj,
 	cn_cbor *pcbor,
-	CBOR_CONTEXT_COMMA cose_errback *perror);
+	CBOR_CONTEXT_COMMA cose_errback *perr);
 void _COSE_Release(COSE *pcose);
 
 cn_cbor *_COSE_map_get_string(COSE *cose,
 	const char *key,
 	int flags,
 	cose_errback *errp);
-cn_cbor *_COSE_map_get_int(COSE *cose, int key, int flags, cose_errback *errp);
+cn_cbor *_COSE_map_get_int(COSE *cose, int key, int flags, cose_errback *perr);
 bool _COSE_map_put(COSE *cose,
 	int key,
 	cn_cbor *value,
@@ -414,8 +416,6 @@ cn_cbor *_COSE_arrayget_int(COSE *pMessage, int index);
 bool cn_cbor_array_replace(cn_cbor *cb_array,
 	cn_cbor *cb_value,
 	int index,
-	CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
-cn_cbor *cn_cbor_bool_create(int boolValue,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
 
 size_t cn_cbor_encode_size(cn_cbor *object);

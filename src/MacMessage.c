@@ -141,6 +141,7 @@ bool COSE_Mac_Free(HCOSE_MAC h)
 	context = &((COSE_MacMessage *)h)->m_message.m_allocContext;
 #endif
 
+
 	_COSE_Mac_Release((COSE_MacMessage *)h);
 
 	COSE_FREE((COSE_MacMessage *)h, context);
@@ -156,7 +157,7 @@ bool _COSE_Mac_Release(COSE_MacMessage *p)
 	for (pRecipient = p->m_recipientFirst; pRecipient != NULL;
 		 pRecipient = pRecipient2) {
 		pRecipient2 = pRecipient->m_recipientNext;
-		_COSE_Recipient_Free(pRecipient);
+		COSE_Recipient_Free((HCOSE_RECIPIENT) pRecipient);
 	}
 
 	_COSE_Release(&p->m_message);
@@ -896,8 +897,9 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose,
 		CHECK_CONDITION(p != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		p = p->m_recipientNext;
 	}
-	if (p != NULL)
+	if (p != NULL) {
 		p->m_encrypt.m_message.m_refCount++;
+	}
 	return (HCOSE_RECIPIENT)p;
 
 errorReturn:
