@@ -34,7 +34,7 @@ before_build:
   - cmake --version
   - mkdir build
   - cd build
-  - cmake -DCOSE_C_USE_CONTEXT=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_EMBEDTLS% -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017 Win64" .
+  - cmake -DCOSE_C_USE_CONTEXT=%USE_CONTEXT% -DCOSE_C_USE_MBEDTLS=%USE_EMBEDTLS% -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017 Win64" ..
 
 build_script:
   - msbuild cose-c.sln
