@@ -318,41 +318,6 @@ int BuildSignedMessage(const cn_cbor *pControl)
 		cn_cbor *countersigns = cn_cbor_mapget_string(pSigners, "countersign");
 		if (countersigns != NULL) {
 			countersigns = cn_cbor_mapget_string(countersigns, "signers");
-			cn_cbor* countersign = countersigns->first_child;
-
-			for (; countersign != NULL; countersign = countersign->next) {
-				cn_cbor* pkeyCountersign = BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
-				if (pkeyCountersign == NULL) {
-					goto returnError;
-				}
-
-				HCOSE_COUNTERSIGN hCountersign = COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-				if (hCountersign == NULL) {
-					goto returnError;
-				}
-
-				if (!SetSendingAttributes((HCOSE)hCountersign, countersign, Attributes_Countersign_protected)) {
-					goto returnError;
-				}
-
-				if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
-					goto returnError;
-				}
-
-				if (!COSE_Signer_add_countersignature(hSigner, hCountersign, NULL)) {
-					goto returnError;
-				}
-
-				COSE_CounterSign_Free(hCountersign);
-			}
-		}
-#endif
-
-#ifdef INCLUDE_COUNTERSIGNATURE
-		// On the sign body
-		countersigns = cn_cbor_mapget_string(pSign, "countersign");
-		if (countersigns != NULL) {
-			countersigns = cn_cbor_mapget_string(countersigns, "signers");
 			cn_cbor *countersign = countersigns->first_child;
 
 			for (; countersign != NULL; countersign = countersign->next) {
@@ -378,22 +343,59 @@ int BuildSignedMessage(const cn_cbor *pControl)
 					goto returnError;
 				}
 
-				if (!COSE_Sign_add_countersignature(
-						hSignObj, hCountersign, NULL)) {
+				if (!COSE_Signer_add_countersignature(
+						hSigner, hCountersign, NULL)) {
 					goto returnError;
 				}
 
 				COSE_CounterSign_Free(hCountersign);
 			}
 		}
-
 #endif
-		
 		COSE_Signer_Free(hSigner);
 	}
+#ifdef INCLUDE_COUNTERSIGNATURE
+	// On the sign body
+	cn_cbor * countersigns1 = cn_cbor_mapget_string(pSign, "countersign");
+	if (countersigns1 != NULL) {
+		countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
+		cn_cbor *countersign = countersigns1->first_child;
 
-	if (!COSE_Sign_Sign(hSignObj, NULL))
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Sign_add_countersignature(hSignObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
+
+	if (!COSE_Sign_Sign(hSignObj, NULL)) {
 		goto returnError;
+	}
 
 	size_t cb = COSE_Encode((HCOSE)hSignObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);

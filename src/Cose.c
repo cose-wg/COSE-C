@@ -508,28 +508,28 @@ cose_error _MapFromCBOR(cn_cbor_errback err)
 	}
 }
 
-void _COSE_InsertInList(COSE **root, COSE *newMsg)
+void _COSE_InsertInList(COSE **rootNode, COSE *newMsg)
 {
-	if (*root == NULL) {
-		*root = newMsg;
+	if (*rootNode == NULL) {
+		*rootNode = newMsg;
 		return;
 	}
 
-	newMsg->m_handleList = *root;
-	*root = newMsg;
+	newMsg->m_handleList = *rootNode;
+	*rootNode = newMsg;
 	return;
 }
 
-bool _COSE_IsInList(const COSE *const root, const COSE *const thisMsg)
+bool _COSE_IsInList(const COSE *const rootNode, const COSE *const thisMsg)
 {
-	if (root == NULL) {
+	if (rootNode == NULL) {
 		return false;
 	}
 	if (thisMsg == NULL) {
 		return false;
 	}
 
-	for (const COSE *walk = root; walk != NULL; walk = walk->m_handleList) {
+	for (const COSE *walk = rootNode; walk != NULL; walk = walk->m_handleList) {
 		if (walk == thisMsg) {
 			return true;
 		}
@@ -537,17 +537,17 @@ bool _COSE_IsInList(const COSE *const root, const COSE *const thisMsg)
 	return false;
 }
 
-void _COSE_RemoveFromList(COSE **root, COSE *thisMsg)
+void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 {
 	COSE *walk;
 
-	if (*root == thisMsg) {
-		*root = thisMsg->m_handleList;
+	if (*rootNode == thisMsg) {
+		*rootNode = thisMsg->m_handleList;
 		thisMsg->m_handleList = NULL;
 		return;
 	}
 
-	for (walk = *root; walk->m_handleList != NULL; walk = walk->m_handleList) {
+	for (walk = *rootNode; walk->m_handleList != NULL; walk = walk->m_handleList) {
 		if (walk->m_handleList == thisMsg) {
 			walk->m_handleList = thisMsg->m_handleList;
 			thisMsg->m_handleList = NULL;
