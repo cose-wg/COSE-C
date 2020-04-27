@@ -201,9 +201,9 @@ bool _COSE_map_put(COSE *cose,
 	int key,
 	cn_cbor *value,
 	int flags,
-	cose_errback *errp);
+	cose_errback *perr);
 
-bool _COSE_SetExternal(COSE *hcose,
+bool _COSE_SetExternal(COSE *pcose,
 	const byte *pbExternalData,
 	size_t cbExternalData,
 	cose_errback *perr);

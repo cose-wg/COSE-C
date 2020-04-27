@@ -4,8 +4,8 @@
 #endif
 
 #include "cose/cose.h"
-#include "cose_int.h"
 #include "cose/cose_configure.h"
+#include "cose_int.h"
 #include "crypto.h"
 
 bool IsValidCOSEHandle(HCOSE h)
@@ -572,7 +572,7 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 }
 
 #ifndef NDEBUG
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 extern COSE *CountersignRoot;
 #endif
 #if INCLUDE_SIGN
@@ -609,9 +609,12 @@ bool AreListsEmpty()
 	fRet &= Sign1Root == NULL;
 #endif
 #if INCLUDE_ENCRYPT
-	fRet &= EncryptRoot == NULL && EnvelopedRoot == NULL;
+	fRet &= EncryptRoot == NULL;
 #endif
 #if INCLUDE_ENCRYPT0
+	fRet &= EnvelopedRoot == NULL;
+#endif
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 	fRet &= RecipientRoot == NULL;
 #endif
 #if INCLUDE_MAC

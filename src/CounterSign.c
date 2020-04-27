@@ -341,7 +341,7 @@ bool _COSE_CounterSign_Sign(COSE * baseMessage, CBOR_CONTEXT_COMMA cose_errback 
 	return fRet;
 }
 
-#ifdef INCLUDE_SIGN
+#if INCLUDE_SIGN
 /***************************************************************************************************
  *
  *   SIGNER
@@ -482,7 +482,7 @@ errorReturn:
 }
 #endif
 
-#ifdef INCLUDE_SIGN1
+#if INCLUDE_SIGN1
 /***************************************************************************************************
  *
  *   SIGN1 MESSAGE
@@ -552,7 +552,7 @@ errorReturn:
 }
 #endif
 
-#ifdef INCLUDE_ENCRYPT
+#if INCLUDE_ENCRYPT
 /***************************************************************************************************
  *
  *   ENVELOPED MESSAGE
@@ -620,7 +620,9 @@ bool COSE_Enveloped_CounterSign_validate(HCOSE_ENVELOPED hSignMsg,
 errorReturn:
 	return false;
 }
+#endif
 
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 /***************************************************************************************************
  *
  *   RECIPIENT MESSAGE
@@ -690,7 +692,7 @@ errorReturn:
 }
 #endif
 
-#ifdef INCLUDE_ENCRYPT0
+#if INCLUDE_ENCRYPT0
 /***************************************************************************************************
  *
  *   ENCRYPT0 MESSAGE
@@ -760,7 +762,7 @@ errorReturn:
 }
 #endif
 
-#ifdef INCLUDE_MAC0
+#if INCLUDE_MAC0
 /***************************************************************************************************
  *
  *   MAC0 MESSAGE
@@ -830,7 +832,7 @@ errorReturn:
 }
 #endif
 
-#ifdef INCLUDE_MAC
+#if INCLUDE_MAC
 /***************************************************************************************************
  *
  *   ENCRYPT0 MESSAGE
