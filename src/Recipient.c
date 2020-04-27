@@ -140,7 +140,7 @@ void _COSE_Recipient_Free(COSE_RecipientInfo *pRecipient)
 		return;
 	}
 
-	_COSE_Encrypt_Release(&pRecipient->m_encrypt);
+	_COSE_Enveloped_Release(&pRecipient->m_encrypt);
 	COSE_FREE(pRecipient, &pRecipient->m_encrypt.m_message.m_allocContext);
 
 	return;
