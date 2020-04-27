@@ -13,8 +13,9 @@
 #include "cose/cose_configure.h"
 #include "crypto.h"
 
-#if INCLUDE_SIGN
+#if INCLUDE_SIGN || INCLUDE_COUNTERSIGNATURE
 
+#if INCLUDE_SIGN
 COSE *SignerRoot = NULL;
 
 bool IsValidSignerHandle(HCOSE_SIGNER h)
@@ -22,6 +23,7 @@ bool IsValidSignerHandle(HCOSE_SIGNER h)
 	COSE_SignerInfo *p = (COSE_SignerInfo *)h;
 	return _COSE_IsInList(SignerRoot, (COSE *)p);
 }
+#endif
 
 bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner)
 {
@@ -36,6 +38,7 @@ bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner)
 	return true;
 }
 
+#if INCLUDE_SIGN
 bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
 {
 	COSE_SignerInfo *pSigner = (COSE_SignerInfo *)hSigner;
@@ -80,6 +83,7 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback *perror)
 	_COSE_InsertInList(&SignerRoot, &pobj->m_message);
 	return (HCOSE_SIGNER)pobj;
 }
+#endif
 
 bool _COSE_SignerInfo_Init(COSE_INIT_FLAGS flags,
 	COSE_SignerInfo *pobj,
@@ -312,6 +316,7 @@ errorReturn:
 	return fRet;
 }
 
+#if INCLUDE_SIGN
 bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
 {
 	COSE_SignerInfo *p;
@@ -358,6 +363,7 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose,
 	return _COSE_SetExternal(&((COSE_SignerInfo *)hcose)->m_message,
 		pbExternalData, cbExternalData, perr);
 }
+#endif
 
 bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 	const cn_cbor *pcborBody,
@@ -454,6 +460,7 @@ errorReturn:
 	return fRet;
 }
 
+#if INCLUDE_SIGN
 cn_cbor *COSE_Signer_map_get_int(HCOSE_SIGNER h,
 	int key,
 	int flags,
@@ -483,5 +490,5 @@ bool COSE_Signer_map_put_int(HCOSE_SIGNER h,
 errorReturn:
 	return false;
 }
-
+#endif
 #endif

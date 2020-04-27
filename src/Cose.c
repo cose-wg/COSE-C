@@ -95,7 +95,7 @@ bool _COSE_Init_From_Object(COSE *pobj,
 
 	//  Check if we have a tag
 	if (pcbor->type == CN_CBOR_TAG) {
-		pcbor = pobj->m_cbor = pcbor->first_child;
+		pobj->m_cbor = pcbor->first_child;
 	}
 
 	pmap = _COSE_arrayget_int(pobj, INDEX_PROTECTED);
@@ -339,7 +339,7 @@ bool _COSE_SetExternal(COSE *pcose,
 	return true;
 }
 
-cn_cbor *_COSE_map_get_int(COSE *pcose,
+cn_cbor *_COSE_map_get_int(COSE *cose,
 	int key,
 	int flags,
 	cose_errback *perr)
@@ -350,23 +350,23 @@ cn_cbor *_COSE_map_get_int(COSE *pcose,
 		perr->err = COSE_ERR_NONE;
 	}
 
-	if ((pcose->m_protectedMap != NULL) && ((flags & COSE_PROTECT_ONLY) != 0)) {
-		p = cn_cbor_mapget_int(pcose->m_protectedMap, key);
+	if ((cose->m_protectedMap != NULL) && ((flags & COSE_PROTECT_ONLY) != 0)) {
+		p = cn_cbor_mapget_int(cose->m_protectedMap, key);
 		if (p != NULL) {
 			return p;
 		}
 	}
 
-	if ((pcose->m_unprotectMap != NULL) &&
+	if ((cose->m_unprotectMap != NULL) &&
 		((flags & COSE_UNPROTECT_ONLY) != 0)) {
-		p = cn_cbor_mapget_int(pcose->m_unprotectMap, key);
+		p = cn_cbor_mapget_int(cose->m_unprotectMap, key);
 		if (p != NULL) {
 			return p;
 		}
 	}
 
-	if ((pcose->m_dontSendMap != NULL) && ((flags & COSE_DONT_SEND) != 0)) {
-		p = cn_cbor_mapget_int(pcose->m_dontSendMap, key);
+	if ((cose->m_dontSendMap != NULL) && ((flags & COSE_DONT_SEND) != 0)) {
+		p = cn_cbor_mapget_int(cose->m_dontSendMap, key);
 	}
 
 	if ((p == NULL) && (perr != NULL)) {
@@ -555,15 +555,13 @@ bool _COSE_IsInList(const COSE *const rootNode, const COSE *const thisMsg)
 
 void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 {
-	COSE *walk;
-
 	if (*rootNode == thisMsg) {
 		*rootNode = thisMsg->m_handleList;
 		thisMsg->m_handleList = NULL;
 		return;
 	}
 
-	for (walk = *rootNode; walk->m_handleList != NULL; walk = walk->m_handleList) {
+	for (COSE *walk = *rootNode; walk->m_handleList != NULL; walk = walk->m_handleList) {
 		if (walk->m_handleList == thisMsg) {
 			walk->m_handleList = thisMsg->m_handleList;
 			thisMsg->m_handleList = NULL;
@@ -574,21 +572,55 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 }
 
 #ifndef NDEBUG
+#ifdef INCLUDE_COUNTERSIGNATURE
 extern COSE *CountersignRoot;
+#endif
+#if INCLUDE_SIGN
 extern COSE *SignerRoot;
 extern COSE *SignRoot;
+#endif
+#if INCLUDE_SIGN1
 extern COSE *Sign1Root;
+#endif
+#if INCLUDE_ENCRYPT0
 extern COSE *EncryptRoot;
+#endif
+#if INCLUDE_ENCRYPT
 extern COSE *EnvelopedRoot;
 extern COSE *RecipientRoot;
+#endif
+#if INCLUDE_MAC
 extern COSE *MacRoot;
+#endif
+#if INCLUDE_MAC0
 extern COSE *Mac0Root;
+#endif
 
 bool AreListsEmpty()
 {
-	return CountersignRoot == NULL && SignerRoot == NULL && SignRoot == NULL &&
-		   Sign1Root == NULL && EncryptRoot == NULL && EnvelopedRoot == NULL &&
-		   RecipientRoot == NULL && MacRoot == NULL && Mac0Root == NULL;
+	bool fRet = true;
+#if INCLUDE_COUNTERSIGNATURE
+	fRet &= CountersignRoot == NULL;
+#endif
+#if INCLUDE_SIGN
+	fRet &= SignerRoot == NULL && SignRoot == NULL;
+#endif
+#if INCLUDE_SIGN1
+	fRet &= Sign1Root == NULL;
+#endif
+#if INCLUDE_ENCRYPT
+	fRet &= EncryptRoot == NULL && EnvelopedRoot == NULL;
+#endif
+#if INCLUDE_ENCRYPT0
+	fRet &= RecipientRoot == NULL;
+#endif
+#if INCLUDE_MAC
+	fRet &= MacRoot == NULL;
+#endif
+#if INCLUDE_MAC0
+	fRet &= Mac0Root == NULL;
+#endif
+	return fRet;
 }
 
 #endif
