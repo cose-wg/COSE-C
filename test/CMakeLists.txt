@@ -111,7 +111,7 @@ add_test(
 if(COSE_C_INCLUDE_COUNTERSIGN)
   add_test(
     NAME Countersign
-    WORKING_DIRECTORY $(CMAKE_SOURCE_DIR)
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND cose_test --dir Examples/countersign)
 endif()
 
