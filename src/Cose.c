@@ -610,10 +610,10 @@ bool AreListsEmpty()
 #if INCLUDE_SIGN1
 	fRet &= Sign1Root == NULL;
 #endif
-#if INCLUDE_ENCRYPT
+#if INCLUDE_ENCRYPT0
 	fRet &= EncryptRoot == NULL;
 #endif
-#if INCLUDE_ENCRYPT0
+#if INCLUDE_ENCRYPT
 	fRet &= EnvelopedRoot == NULL;
 #endif
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
