@@ -762,7 +762,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	}
 #endif	// INCLUDE_ENCRYPT
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	if (pcose->m_message.m_counterSigners != NULL) {
 		if (!_COSE_CounterSign_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
@@ -1054,7 +1054,7 @@ errorReturn:
 	return (HCOSE_RECIPIENT)p;
 }
 
-#ifdef USE_COUNTER_SIGNATURES
+#if USE_COUNTER_SIGNATURES
 bool COSE_Enveloped_AddCounterSigner(HCOSE_ENCRYPT hEnv,
 	HCOSE_COUNTERSIGN hSign,
 	cose_errback *perr)

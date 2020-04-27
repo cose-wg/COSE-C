@@ -206,7 +206,7 @@ bool DecryptMessage(const byte *pbEncoded,
 #endif
 
 
-	#if INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	//  Countersign on Enveloped Body
 
 	//  Validate counter signatures on signers
@@ -386,7 +386,7 @@ HCOSE_RECIPIENT BuildRecipient(const cn_cbor *pRecipient)
 			goto returnError;
 	}
 
-	#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	// On the Recipient 
 	cn_cbor *countersigns1 = cn_cbor_mapget_string(pRecipient, "countersign");
 	if (countersigns1 != NULL) {
@@ -487,7 +487,7 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 		COSE_Recipient_Free(hRecip);
 	}
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	// On the Evneloped body
 	cn_cbor *countersigns1 = cn_cbor_mapget_string(pEnveloped, "countersign");
 	if (countersigns1 != NULL) {
@@ -901,7 +901,7 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	// On the Encrypt0 body
 	cn_cbor *countersigns = cn_cbor_mapget_string(pEncrypt, "countersign");
 	if (countersigns != NULL) {

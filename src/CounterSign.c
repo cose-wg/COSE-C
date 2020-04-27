@@ -8,7 +8,7 @@
 #include "cose/cose_configure.h"
 #include "crypto.h"
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 
 COSE* CountersignRoot = NULL;
 

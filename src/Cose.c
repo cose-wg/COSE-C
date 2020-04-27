@@ -127,7 +127,7 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, cbor_error);
 
-#ifdef INCLUDE_COUNTERSIGNATURE
+#if INCLUDE_COUNTERSIGNATURE
 	cn_cbor* pCounter = cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign);
 	if (pCounter != NULL) {
 		int i;
@@ -177,6 +177,8 @@ void _COSE_Release(COSE *pcose)
 		(pcose->m_cborRoot->parent == NULL)) {
 		CN_CBOR_FREE(pcose->m_cborRoot, context);
 	}
+
+#if INCLUDE_COUNTERSIGNATURE
 	if (pcose->m_counterSigners != NULL) {
 		COSE_CounterSign* p = pcose->m_counterSigners;
 		COSE_CounterSign* p2 = NULL;
@@ -187,6 +189,7 @@ void _COSE_Release(COSE *pcose)
 			p = p2;
 		}
 	}
+#endif
 }
 
 HCOSE COSE_Decode(const byte *rgbData,
