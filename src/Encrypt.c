@@ -18,8 +18,6 @@
 #include "crypto.h"
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
-void _COSE_Enveloped_Release(COSE_Enveloped *p);
-
 COSE *EnvelopedRoot = NULL;
 #endif
 
@@ -93,19 +91,20 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *cbor,
 	COSE_Enveloped *pobj = pIn;
 	cn_cbor *pRecipients = NULL;
 	cose_errback error = {0};
-	if (perr == NULL)
+	if (perr == NULL) {
 		perr = &error;
+	}
 
-	if (pobj == NULL)
+	if (pobj == NULL) {
 		pobj =
 			(COSE_Enveloped *)COSE_CALLOC(1, sizeof(COSE_Enveloped), context);
+	}
 	if (pobj == NULL) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
-		if (pobj != NULL) {
+		if (pIn == NULL && pobj != NULL) {
 			_COSE_Enveloped_Release(pobj);
-			if (pIn == NULL)
-				COSE_FREE(pobj, context);
+			COSE_FREE(pobj, context);
 		}
 		return NULL;
 	}
@@ -132,8 +131,9 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *cbor,
 		}
 	}
 
-	if (pIn == NULL)
+	if (pIn == NULL) {
 		_COSE_InsertInList(&EnvelopedRoot, &pobj->m_message);
+	}
 
 	return (HCOSE_ENVELOPED)pobj;
 }
@@ -147,8 +147,9 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 #endif
 	COSE_Enveloped *p = (COSE_Enveloped *)h;
 
-	if (!IsValidEnvelopedHandle(h))
+	if (!IsValidEnvelopedHandle(h)) {
 		return false;
+	}
 
 	if (p->m_message.m_refCount > 1) {
 		p->m_message.m_refCount--;
@@ -175,8 +176,9 @@ void _COSE_Enveloped_Release(COSE_Enveloped *p)
 	COSE_RecipientInfo *pRecipient1;
 	COSE_RecipientInfo *pRecipient2;
 
-	if (p->pbContent != NULL)
+	if (p->pbContent != NULL) {
 		COSE_FREE((void *)p->pbContent, &p->m_message.m_allocContext);
+	}
 	//	if (p->pbIV != NULL) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
 
 	for (pRecipient1 = p->m_recipientFirst; pRecipient1 != NULL;
@@ -241,8 +243,9 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 	if (cn == NULL) {
 	error:
 	errorReturn:
-		if (pbAuthData != NULL)
+		if (pbAuthData != NULL) {
 			COSE_FREE(pbAuthData, context);
+		}
 		if (pbKeyNew != NULL) {
 			memset(pbKeyNew, 0xff, cbitKey / 8);
 			COSE_FREE(pbKeyNew, context);
@@ -352,13 +355,15 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 				 pRecipX = pRecipX->m_recipientNext) {
 				if (pRecipX == pRecip) {
 					if (!_COSE_Recipient_decrypt(
-							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr))
+							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) {
 						goto errorReturn;
+					}
 					break;
 				} else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
 					if (_COSE_Recipient_decrypt(
-							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr))
+							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) {
 						break;
+					}
 				}
 			}
 			CHECK_CONDITION(pRecipX != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
@@ -366,8 +371,9 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 			for (pRecip = pcose->m_recipientFirst; pRecip != NULL;
 				 pRecip = pRecip->m_recipientNext) {
 				if (_COSE_Recipient_decrypt(
-						pRecip, NULL, alg, cbitKey, pbKeyNew, perr))
+						pRecip, NULL, alg, cbitKey, pbKeyNew, perr)) {
 					break;
+				}
 			}
 			CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		}
@@ -377,8 +383,9 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 	//  Build authenticated data
 
 	if (!_COSE_Encrypt_Build_AAD(
-			&pcose->m_message, &pbAuthData, &cbAuthData, szContext, perr))
+			&pcose->m_message, &pbAuthData, &cbAuthData, szContext, perr)) {
 		goto errorReturn;
+	}
 
 	cn = _COSE_arrayget_int(&pcose->m_message, INDEX_BODY);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -387,88 +394,99 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 #ifdef USE_AES_CCM_16_64_128
 		case COSE_Algorithm_AES_CCM_16_64_128:
 			if (!AES_CCM_Decrypt(pcose, 64, 16, pbKey, cbitKey / 8, cn->v.bytes,
-					cn->length, pbAuthData, cbAuthData, perr))
+					cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_16_64_256
 		case COSE_Algorithm_AES_CCM_16_64_256:
 			if (!AES_CCM_Decrypt(pcose, 64, 16, pbKey, cbitKey / 8, cn->v.bytes,
-					cn->length, pbAuthData, cbAuthData, perr))
+					cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_16_128_128
 		case COSE_Algorithm_AES_CCM_16_128_128:
 			if (!AES_CCM_Decrypt(pcose, 128, 16, pbKey, cbitKey / 8,
-					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr))
+					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_16_128_256
 		case COSE_Algorithm_AES_CCM_16_128_256:
 			if (!AES_CCM_Decrypt(pcose, 128, 16, pbKey, cbitKey / 8,
-					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr))
+					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_64_128
 		case COSE_Algorithm_AES_CCM_64_64_128:
 			if (!AES_CCM_Decrypt(pcose, 64, 64, pbKey, cbitKey / 8, cn->v.bytes,
-					cn->length, pbAuthData, cbAuthData, perr))
+					cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_64_256
 		case COSE_Algorithm_AES_CCM_64_64_256:
 			if (!AES_CCM_Decrypt(pcose, 64, 64, pbKey, cbitKey / 8, cn->v.bytes,
-					cn->length, pbAuthData, cbAuthData, perr))
+					cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_128_128
 		case COSE_Algorithm_AES_CCM_64_128_128:
 			if (!AES_CCM_Decrypt(pcose, 128, 64, pbKey, cbitKey / 8,
-					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr))
+					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_128_256
 		case COSE_Algorithm_AES_CCM_64_128_256:
 			if (!AES_CCM_Decrypt(pcose, 128, 64, pbKey, cbitKey / 8,
-					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr))
+					cn->v.bytes, cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_GCM_128
 		case COSE_Algorithm_AES_GCM_128:
 			if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes,
-					cn->length, pbAuthData, cbAuthData, perr))
+					cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_GCM_192
 		case COSE_Algorithm_AES_GCM_192:
 			if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes,
-					cn->length, pbAuthData, cbAuthData, perr))
+					cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_GCM_256
 		case COSE_Algorithm_AES_GCM_256:
 			if (!AES_GCM_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes,
-					cn->length, pbAuthData, cbAuthData, perr))
+					cn->length, pbAuthData, cbAuthData, perr)) {
 				goto error;
+			}
 			break;
 #endif
 
@@ -477,12 +495,15 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 			break;
 	}
 
-	if (pbAuthData != NULL)
+	if (pbAuthData != NULL) {
 		COSE_FREE(pbAuthData, context);
-	if (pbKeyNew != NULL)
+	}
+	if (pbKeyNew != NULL) {
 		COSE_FREE(pbKeyNew, context);
-	if (perr != NULL)
+	}
+	if (perr != NULL) {
 		perr->err = COSE_ERR_NONE;
+	}
 
 	return true;
 }
@@ -526,8 +547,9 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 	cn_Alg = _COSE_map_get_int(
 		&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn_Alg == NULL)
+	if (cn_Alg == NULL) {
 		goto errorReturn;
+	}
 
 	CHECK_CONDITION((cn_Alg->type != CN_CBOR_TEXT), COSE_ERR_UNKNOWN_ALGORITHM);
 	CHECK_CONDITION(
@@ -629,8 +651,9 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 				pbKeyNew =
 					_COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
 				cbKey = cbitKey / 8;
-				if (pbKeyNew == NULL)
+				if (pbKeyNew == NULL) {
 					goto errorReturn;
+				}
 			} else {
 				t |= 2;
 			}
@@ -651,102 +674,115 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 	const cn_cbor *cbProtected =
 		_COSE_encode_protected(&pcose->m_message, perr);
-	if (cbProtected == NULL)
+	if (cbProtected == NULL) {
 		goto errorReturn;
+	}
 
 	//  Build authenticated data
 
 	size_t cbAuthData = 0;
 	if (!_COSE_Encrypt_Build_AAD(
-			&pcose->m_message, &pbAuthData, &cbAuthData, szContext, perr))
+			&pcose->m_message, &pbAuthData, &cbAuthData, szContext, perr)) {
 		goto errorReturn;
+	}
 
 	switch (alg) {
 #ifdef USE_AES_CCM_16_64_128
 		case COSE_Algorithm_AES_CCM_16_64_128:
 			if (!AES_CCM_Encrypt(
-					pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_16_64_256
 		case COSE_Algorithm_AES_CCM_16_64_256:
 			if (!AES_CCM_Encrypt(
-					pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_16_128_128
 		case COSE_Algorithm_AES_CCM_16_128_128:
 			if (!AES_CCM_Encrypt(
-					pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_16_128_256
 		case COSE_Algorithm_AES_CCM_16_128_256:
 			if (!AES_CCM_Encrypt(
-					pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_64_128
 		case COSE_Algorithm_AES_CCM_64_64_128:
 			if (!AES_CCM_Encrypt(
-					pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr))
- 				goto errorReturn;
+					pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_64_256
 		case COSE_Algorithm_AES_CCM_64_64_256:
 			if (!AES_CCM_Encrypt(
-					pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_128_128
 		case COSE_Algorithm_AES_CCM_64_128_128:
 			if (!AES_CCM_Encrypt(
-					pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_CCM_64_128_256
 		case COSE_Algorithm_AES_CCM_64_128_256:
 			if (!AES_CCM_Encrypt(
-					pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_GCM_128
 		case COSE_Algorithm_AES_GCM_128:
 			if (!AES_GCM_Encrypt(
-					pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_GCM_192
 		case COSE_Algorithm_AES_GCM_192:
 			if (!AES_GCM_Encrypt(
-					pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_AES_GCM_256
 		case COSE_Algorithm_AES_GCM_256:
 			if (!AES_GCM_Encrypt(
-					pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr))
+					pcose, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
@@ -757,8 +793,9 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 #if INCLUDE_ENCRYPT
 	for (pri = pcose->m_recipientFirst; pri != NULL;
 		 pri = pri->m_recipientNext) {
-		if (!_COSE_Recipient_encrypt(pri, pbKey, cbKey, perr))
+		if (!_COSE_Recipient_encrypt(pri, pbKey, cbKey, perr)) {
 			goto errorReturn;
+		}
 	}
 #endif	// INCLUDE_ENCRYPT
 
@@ -776,8 +813,9 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	fRet = true;
 
 errorReturn:
-	if (pbAuthData != NULL)
+	if (pbAuthData != NULL) {
 		COSE_FREE(pbAuthData, context);
+	}
 	if (pbKeyNew != NULL) {
 		memset(pbKeyNew, 0, cbKey);
 		COSE_FREE(pbKeyNew, context);
@@ -842,8 +880,9 @@ bool _COSE_Enveloped_SetContent(COSE_Enveloped *cose,
 	cose->pbContent = pb =
 		(byte *)COSE_CALLOC(cb, 1, &cose->m_message.m_allocContext);
 	if (cose->pbContent == NULL) {
-		if (perror != NULL)
+		if (perror != NULL) {
 			perror->err = COSE_ERR_INVALID_PARAMETER;
+		}
 		return false;
 	}
 	memcpy(pb, rgb, cb);
@@ -870,8 +909,9 @@ cn_cbor *COSE_Enveloped_map_get_int(HCOSE_ENVELOPED h,
 	cose_errback *perror)
 {
 	if (!IsValidEnvelopedHandle(h)) {
-		if (perror != NULL)
+		if (perror != NULL) {
 			perror->err = COSE_ERR_INVALID_HANDLE;
+		}
 		return NULL;
 	}
 
@@ -929,8 +969,9 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc,
 		if (!_COSE_array_replace(&pEncrypt->m_message, pRecipients,
 				INDEX_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA & cbor_error)) {
 			CN_CBOR_FREE(pRecipients, context);
-			if (perr != NULL)
+			if (perr != NULL) {
 				perr->err = _MapFromCBOR(cbor_error);
+			}
 			goto errorReturn;
 		}
 	}
@@ -1021,12 +1062,15 @@ bool _COSE_Encrypt_Build_AAD(COSE *pMessage,
 	return true;
 
 errorReturn:
-	if (pbAuthData != NULL)
+	if (pbAuthData != NULL) {
 		COSE_FREE(pbAuthData, context);
-	if (ptmp != NULL)
+	}
+	if (ptmp != NULL) {
 		CN_CBOR_FREE(ptmp, NULL);
-	if (pAuthData != NULL)
+	}
+	if (pAuthData != NULL) {
 		CN_CBOR_FREE(pAuthData, context);
+	}
 	return false;
 }
 #endif
@@ -1047,8 +1091,9 @@ HCOSE_RECIPIENT COSE_Enveloped_GetRecipient(HCOSE_ENVELOPED cose,
 		CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
 		p = p->m_recipientNext;
 	}
-	if (p != NULL)
+	if (p != NULL) {
 		p->m_encrypt.m_message.m_refCount++;
+	}
 
 errorReturn:
 	return (HCOSE_RECIPIENT)p;
