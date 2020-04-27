@@ -88,12 +88,14 @@ bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 
 	pIV = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, NULL);
 	if ((pIV == NULL) || (pIV->type != CN_CBOR_BYTES)) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_INVALID_PARAMETER;
+		}
 
 	errorReturn:
-		if (rgbOut != NULL)
+		if (rgbOut != NULL) {
 			COSE_FREE(rgbOut, context);
+		}
 		EVP_CIPHER_CTX_free(ctx);
 		return false;
 	}
@@ -220,8 +222,9 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 		pbIV = NULL;
 
 		if (!_COSE_map_put(&pcose->m_message, COSE_Header_IV, cbor_iv_t,
-				COSE_UNPROTECT_ONLY, perr))
+				COSE_UNPROTECT_ONLY, perr)) {
 			goto errorReturn;
+		}
 		cbor_iv_t = NULL;
 	} else {
 		CHECK_CONDITION(
@@ -281,14 +284,18 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 	return true;
 
 errorReturn:
-	if (pbIV != NULL)
+	if (pbIV != NULL) {
 		COSE_FREE(pbIV, context);
-	if (cbor_iv_t != NULL)
+	}
+	if (cbor_iv_t != NULL) {
 		COSE_FREE(cbor_iv_t, context);
-	if (rgbOut != NULL)
+	}
+	if (rgbOut != NULL) {
 		COSE_FREE(rgbOut, context);
-	if (cnTmp != NULL)
+	}
+	if (cnTmp != NULL) {
 		COSE_FREE(cnTmp, context);
+	}
 	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
@@ -321,12 +328,14 @@ bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 
 	pIV = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, NULL);
 	if ((pIV == NULL) || (pIV->type != CN_CBOR_BYTES)) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_INVALID_PARAMETER;
+		}
 
 	errorReturn:
-		if (rgbOut != NULL)
+		if (rgbOut != NULL) {
 			COSE_FREE(rgbOut, context);
+		}
 		EVP_CIPHER_CTX_free(ctx);
 		return false;
 	}
@@ -443,8 +452,9 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		pbIV = NULL;
 
 		if (!_COSE_map_put(&pcose->m_message, COSE_Header_IV, cbor_iv_t,
-				COSE_UNPROTECT_ONLY, perr))
+				COSE_UNPROTECT_ONLY, perr)) {
 			goto errorReturn;
+		}
 		cbor_iv_t = NULL;
 	} else {
 		CHECK_CONDITION(
@@ -509,12 +519,15 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 	return true;
 
 errorReturn:
-	if (pbIV != NULL)
+	if (pbIV != NULL) {
 		COSE_FREE(pbIV, context);
-	if (cbor_iv_t != NULL)
+	}
+	if (cbor_iv_t != NULL) {
 		COSE_FREE(cbor_iv_t, context);
-	if (rgbOut != NULL)
+	}
+	if (rgbOut != NULL) {
 		COSE_FREE(rgbOut, context);
+	}
 	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
@@ -590,10 +603,12 @@ bool AES_CBC_MAC_Create(COSE_MacMessage *pcose,
 	return !f;
 
 errorReturn:
-	if (rgbOut != NULL)
+	if (rgbOut != NULL) {
 		COSE_FREE(rgbOut, context);
-	if (cn != NULL)
+	}
+	if (cn != NULL) {
 		CN_CBOR_FREE(cn, context);
+	}
 	EVP_CIPHER_CTX_free(ctx);
 	return false;
 }
@@ -653,8 +668,9 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage *pcose,
 	cn_cbor *cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
 
-	for (i = 0; i < (unsigned int)TSize; i++)
+	for (i = 0; i < (unsigned int)TSize; i++) {
 		f |= (cn->v.bytes[i] != rgbTag[i]);
+	}
 
 	EVP_CIPHER_CTX_free(ctx);
 	return !f;
@@ -1021,10 +1037,12 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	cn_cbor *cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
 
-	if (cn->length > (int)cbOut)
+	if (cn->length > (int)cbOut) {
 		return false;
-	for (i = 0; i < (unsigned int)TSize / 8; i++)
+	}
+	for (i = 0; i < (unsigned int)TSize / 8; i++) {
 		f |= (cn->v.bytes[i] != rgbOut[i]);
+	}
 
 	HMAC_CTX_free(ctx);
 	return !f;
@@ -1120,8 +1138,9 @@ EC_KEY *ECKey_From(const cn_cbor *pKey, int *cbGroup, cose_errback *perr)
 	return pNewKey;
 
 errorReturn:
-	if (pNewKey != NULL)
+	if (pNewKey != NULL) {
 		EC_KEY_free(pNewKey);
+	}
 	return NULL;
 }
 
@@ -1224,10 +1243,12 @@ cn_cbor *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 	p = NULL;
 
 returnHere:
-	if (pbOut != NULL)
+	if (pbOut != NULL) {
 		COSE_FREE(pbOut, context);
-	if (p != NULL)
+	}
+	if (p != NULL) {
 		CN_CBOR_FREE(p, context);
+	}
 	return pkey;
 
 errorReturn:
@@ -1277,12 +1298,15 @@ bool ECDSA_Sign(COSE *pSigner,
 	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
-		if (pbSig != NULL)
+		if (pbSig != NULL) {
 			COSE_FREE(pbSig, context);
-		if (p != NULL)
+		}
+		if (p != NULL) {
 			CN_CBOR_FREE(p, context);
-		if (eckey != NULL)
+		}
+		if (eckey != NULL) {
 			EC_KEY_free(eckey);
+		}
 		return false;
 	}
 
@@ -1329,8 +1353,9 @@ bool ECDSA_Sign(COSE *pSigner,
 
 	pbSig = NULL;
 
-	if (eckey != NULL)
+	if (eckey != NULL) {
 		EC_KEY_free(eckey);
+	}
 
 	return true;
 }
@@ -1361,12 +1386,15 @@ bool ECDSA_Verify(COSE *pSigner,
 	eckey = ECKey_From(pKey, &cbR, perr);
 	if (eckey == NULL) {
 	errorReturn:
-		if (p != NULL)
+		if (p != NULL) {
 			CN_CBOR_FREE(p, context);
-		if (eckey != NULL)
+		}
+		if (eckey != NULL) {
 			EC_KEY_free(eckey);
-		if (sig != NULL)
+		}
+		if (sig != NULL) {
 			ECDSA_SIG_free(sig);
+		}
 		return false;
 	}
 
@@ -1403,10 +1431,12 @@ bool ECDSA_Verify(COSE *pSigner,
 	CHECK_CONDITION(ECDSA_do_verify(rgbDigest, cbDigest, sig, eckey) == 1,
 		COSE_ERR_CRYPTO_FAIL);
 
-	if (eckey != NULL)
+	if (eckey != NULL) {
 		EC_KEY_free(eckey);
-	if (sig != NULL)
+	}
+	if (sig != NULL) {
 		ECDSA_SIG_free(sig);
+	}
 
 	return true;
 }
@@ -1433,14 +1463,18 @@ bool EdDSA_Sign(COSE *pSigner,
 	p = cn_cbor_mapget_int(pKeyIn, COSE_Key_OPK_Curve);
 	if (p == NULL) {
 	errorReturn:
-		if (mdCtx != NULL)
+		if (mdCtx != NULL) {
 			EVP_MD_CTX_free(mdCtx);
-		if (keyCtx != NULL)
+		}
+		if (keyCtx != NULL) {
 			EVP_PKEY_CTX_free(keyCtx);
-		if (pkey != NULL)
+		}
+		if (pkey != NULL) {
 			EVP_PKEY_free(pkey);
-		if (pbSig != NULL)
+		}
+		if (pbSig != NULL) {
 			COSE_FREE(pbSig, context);
+		}
 		return false;
 	}
 
@@ -1494,14 +1528,18 @@ bool EdDSA_Sign(COSE *pSigner,
 		_COSE_array_replace(pSigner, p, index, CBOR_CONTEXT_PARAM_COMMA NULL),
 		COSE_ERR_CBOR);
 
-	if (mdCtx != NULL)
+	if (mdCtx != NULL) {
 		EVP_MD_CTX_free(mdCtx);
-	if (keyCtx != NULL)
+	}
+	if (keyCtx != NULL) {
 		EVP_PKEY_CTX_free(keyCtx);
-	if (pkey != NULL)
+	}
+	if (pkey != NULL) {
 		EVP_PKEY_free(pkey);
-	if (pbSig != NULL)
+	}
+	if (pbSig != NULL) {
 		COSE_FREE(pbSig, context);
+	}
 
 	return true;
 }
@@ -1519,8 +1557,9 @@ bool EdDSA_Verify(COSE *pSigner,
 	cn_cbor *p = cn_cbor_mapget_int(pKey, COSE_Key_OPK_Curve);
 	if (p == NULL) {
 	errorReturn:
-		if (pkey != NULL)
+		if (pkey != NULL) {
 			EVP_PKEY_free(pkey);
+		}
 		return false;
 	}
 
@@ -1559,10 +1598,12 @@ bool EdDSA_Verify(COSE *pSigner,
 						rgbToSign, cbToSign) == 1,
 		COSE_ERR_CRYPTO_FAIL);
 
-	if (pmdCtx != NULL)
+	if (pmdCtx != NULL) {
 		EVP_MD_CTX_free(pmdCtx);
-	if (pkey != NULL)
+	}
+	if (pkey != NULL) {
 		EVP_PKEY_free(pkey);
+	}
 
 	return true;
 }
@@ -1633,8 +1674,9 @@ bool AES_KW_Encrypt(COSE_RecipientInfo *pcose,
 
 errorReturn:
 	COSE_FREE(cnTmp, context);
-	if (pbOut != NULL)
+	if (pbOut != NULL) {
 		COSE_FREE(pbOut, context);
+	}
 	return false;
 }
 
@@ -1670,17 +1712,20 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	bool fRet = false;
 
 	peckeyPublic = ECKey_From(pKeyPublic, &cbGroup, perr);
-	if (peckeyPublic == NULL)
+	if (peckeyPublic == NULL) {
 		goto errorReturn;
+	}
 
 	if (*ppKeyPrivate == NULL) {
 		{
 			cn_cbor *pCompress = _COSE_map_get_int(
 				pRecipient, COSE_Header_UseCompressedECDH, COSE_BOTH, perr);
-			if (pCompress == NULL)
+			if (pCompress == NULL) {
 				FUseCompressed = false;
-			else
+			}
+			else {
 				FUseCompressed = (pCompress->type == CN_CBOR_TRUE);
+			}
 		}
 		peckeyPrivate = EC_KEY_new();
 		EC_KEY_set_group(peckeyPrivate, EC_KEY_get0_group(peckeyPublic));
@@ -1688,12 +1733,14 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			EC_KEY_generate_key(peckeyPrivate) == 1, COSE_ERR_CRYPTO_FAIL);
 		*ppKeyPrivate =
 			EC_FromKey(peckeyPrivate, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (*ppKeyPrivate == NULL)
+		if (*ppKeyPrivate == NULL) {
 			goto errorReturn;
+		}
 	} else {
 		peckeyPrivate = ECKey_From(*ppKeyPrivate, &cbGroup, perr);
-		if (peckeyPrivate == NULL)
+		if (peckeyPrivate == NULL) {
 			goto errorReturn;
+		}
 	}
 
 	pbsecret = COSE_CALLOC(cbGroup, 1, context);
@@ -1710,12 +1757,15 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	fRet = true;
 
 errorReturn:
-	if (pbsecret != NULL)
+	if (pbsecret != NULL) {
 		COSE_FREE(pbsecret, context);
-	if (peckeyPublic != NULL)
+	}
+	if (peckeyPublic != NULL) {
 		EC_KEY_free(peckeyPublic);
-	if (peckeyPrivate != NULL)
+	}
+	if (peckeyPrivate != NULL) {
 		EC_KEY_free(peckeyPrivate);
+	}
 
 	return fRet;
 }
