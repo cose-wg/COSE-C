@@ -11,11 +11,11 @@ environment:
   matrix:
     - USE_CONTEXT: ON      
       USE_EMBEDTLS: OFF
-      OPENSSL_ROOT_DIR: c:\OpenSSL-v11-Win64\bin
+      CMAKE_FRAMEWORK_PATH: c:\OpenSSL-v11-Win64\bin
 
     - USE_CONTEXT: OFF
       USE_EMBEDTLS: OFF
-      OPENSSL_ROOT_DIR: c:\OpenSSL-v11-Win64\bin
+      CMAKE_FRAMEWORK_PATH: c:\OpenSSL-v11-Win64\bin
 
     - USE_CONTEXT: OFF
       USE_EMBEDTLS: ON
