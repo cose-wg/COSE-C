@@ -131,8 +131,125 @@ int _ValidateMAC(const cn_cbor *pControl,
 			}
 		}
 
+#if INCLUDE_COUNTERSIGNATURE
+		//  Countersign on Encrypt0 Body
+
+		//  Validate counter signatures on signers
+		cn_cbor *countersignList =
+			cn_cbor_mapget_string(pRecipients, "countersign");
+		if (countersignList != NULL) {
+			cn_cbor *countersigners =
+				cn_cbor_mapget_string(countersignList, "signers");
+			if (countersigners == NULL) {
+				goto failTest;
+			}
+			int count = countersigners->length;
+			bool forward = true;
+
+			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_CounterSign,
+					COSE_UNPROTECT_ONLY, 0) == NULL) {
+				goto failTest;
+			}
+
+			for (int counterNo = 0; counterNo < count; counterNo++) {
+				HCOSE_COUNTERSIGN h =
+					COSE_Recipient_get_countersignature(hRecip, counterNo, 0);
+				if (h == NULL) {
+					goto failTest;
+				}
+
+				cn_cbor *counterSigner = cn_cbor_index(countersigners,
+					forward ? counterNo : count - counterNo - 1);
+
+				cn_cbor *pkeyCountersign = BuildKey(
+					cn_cbor_mapget_string(counterSigner, "key"), false);
+				if (pkeyCountersign == NULL) {
+					goto failTest;
+				}
+
+				if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+					goto failTest;
+				}
+
+				if (COSE_Recipient_CounterSign_validate(hRecip, h, 0)) {
+					//  I don't think we have any forced errors yet.
+				}
+				else {
+					if (forward && counterNo == 0 && count > 1) {
+						forward = false;
+						counterNo -= 1;
+					}
+					else {
+						goto failTest;
+					}
+				}
+
+				CN_CBOR_FREE(pkeyCountersign, context);
+				COSE_CounterSign_Free(h);
+			}
+		}
+#endif
+
 		COSE_Recipient_Free(hRecip);
 	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	//  Countersign on Signed Body
+
+	//  Validate counter signatures on signers
+	cn_cbor *countersignList = cn_cbor_mapget_string(pMac, "countersign");
+	if (countersignList != NULL) {
+		cn_cbor *countersigners =
+			cn_cbor_mapget_string(countersignList, "signers");
+		if (countersigners == NULL) {
+			goto failTest;
+		}
+		int count = countersigners->length;
+		bool forward = true;
+
+		if (COSE_Mac_map_get_int(hMAC, COSE_Header_CounterSign,
+				COSE_UNPROTECT_ONLY, 0) == NULL) {
+			goto failTest;
+		}
+
+		for (int counterNo = 0; counterNo < count; counterNo++) {
+			HCOSE_COUNTERSIGN h =
+				COSE_Mac_get_countersignature(hMAC, counterNo, 0);
+			if (h == NULL) {
+				goto failTest;
+			}
+
+			cn_cbor *counterSigner = cn_cbor_index(
+				countersigners, forward ? counterNo : count - counterNo - 1);
+
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto failTest;
+			}
+
+			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+				goto failTest;
+			}
+
+			if (COSE_Mac_CounterSign_validate(hMAC, h, 0)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (forward && counterNo == 0 && count > 1) {
+					forward = false;
+					counterNo -= 1;
+				}
+				else {
+					fFail = true;
+				}
+			}
+
+			CN_CBOR_FREE(pkeyCountersign, context);
+			COSE_CounterSign_Free(h);
+		}
+	}
+#endif
 
 	COSE_Mac_Free(hMAC);
 
@@ -238,8 +355,92 @@ int BuildMacMessage(const cn_cbor *pControl)
 			goto returnError;
 		}
 
+	#ifdef INCLUDE_COUNTERSIGNATURE
+		// On the Recipient
+		cn_cbor *countersigns1 =
+			cn_cbor_mapget_string(pRecipients, "countersign");
+		if (countersigns1 != NULL) {
+			countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
+			cn_cbor *countersign = countersigns1->first_child;
+
+			for (; countersign != NULL; countersign = countersign->next) {
+				cn_cbor *pkeyCountersign =
+					BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+				if (pkeyCountersign == NULL) {
+					goto returnError;
+				}
+
+				HCOSE_COUNTERSIGN hCountersign =
+					COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+				if (hCountersign == NULL) {
+					goto returnError;
+				}
+
+				if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+						Attributes_Countersign_protected)) {
+					goto returnError;
+				}
+
+				if (!COSE_CounterSign_SetKey(
+						hCountersign, pkeyCountersign, NULL)) {
+					goto returnError;
+				}
+
+				if (!COSE_Recipient_add_countersignature(
+						hRecip, hCountersign, NULL)) {
+					goto returnError;
+				}
+
+				COSE_CounterSign_Free(hCountersign);
+			}
+		}
+
+#endif
+		
+
 		COSE_Recipient_Free(hRecip);
 	}
+
+#ifdef INCLUDE_COUNTERSIGNATURE
+	// On the Evneloped body
+	cn_cbor *countersigns1 = cn_cbor_mapget_string(pMac, "countersign");
+	if (countersigns1 != NULL) {
+		countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
+		cn_cbor *countersign = countersigns1->first_child;
+
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Mac_add_countersignature(
+					hMacObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
+	
 
 	if (!COSE_Mac_encrypt(hMacObj, NULL)) {
 		goto returnError;
@@ -454,7 +655,7 @@ int _ValidateMac0(const cn_cbor *pControl,
 	}
 
 #if INCLUDE_COUNTERSIGNATURE
-	//  Countersign on Signed Body
+	//  Countersign on Mac0 Body
 
 	//  Validate counter signatures on signers
 	cn_cbor *countersignList = cn_cbor_mapget_string(pMac, "countersign");
