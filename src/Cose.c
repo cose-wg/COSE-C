@@ -587,6 +587,8 @@ extern COSE *EncryptRoot;
 #endif
 #if INCLUDE_ENCRYPT
 extern COSE *EnvelopedRoot;
+#endif
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
 extern COSE *RecipientRoot;
 #endif
 #if INCLUDE_MAC

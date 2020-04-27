@@ -112,9 +112,11 @@ COSE_SignerInfo *_COSE_SignerInfo_Init_From_Object(cn_cbor *cbor,
 			&pSigner->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr))
 		goto errorReturn;
 
+#if INCLUDE_SIGN
 	if (pIn == NULL) {
 		_COSE_InsertInList(&SignerRoot, &pSigner->m_message);
 	}
+#endif
 	return pSigner;
 
 errorReturn:
