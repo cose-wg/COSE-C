@@ -143,7 +143,9 @@
 // Requires OPEN SSL 1.1.1 to build
 #define USE_EDDSA
 #else
-#pragma message("OPENSSL VERSION IS " #OPENSSL_VERISON_NUMBER)
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#pragma message("OPENSSL VERSION IS " OPENSSL_VERSION_TEXT)
 #endif
 #endif	// !defined (USE_MBED_TLS)
 
