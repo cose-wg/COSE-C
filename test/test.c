@@ -473,6 +473,7 @@ bool SetAttributes(HCOSE hHandle,
 				assert(false);
 				break;
 		}
+		//  If you uncomment this then the memory test will fail.
 		// assert(fRet);
 	}
 

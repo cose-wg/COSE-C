@@ -1103,30 +1103,4 @@ errorReturn:
 	return (HCOSE_RECIPIENT)p;
 }
 
-#if USE_COUNTER_SIGNATURES
-bool COSE_Enveloped_AddCounterSigner(HCOSE_ENCRYPT hEnv,
-	HCOSE_COUNTERSIGN hSign,
-	cose_errback *perr)
-{
-	CHECK_CONDITION(IsValidEncryptHandle(hEnv), COSE_ERR_INVALID_HANDLE);
-	return _COSE_CounterSign_add(
-		&((COSE_Enveloped *)hEnv)->m_message, hSign, perr);
-
-errorReturn:
-	return false;
-}
-
-HCOSE_COUNTERSIGN COSE_Enveloped_GetCounterSigner(HCOSE_ENCRYPT h,
-	int iSigner,
-	cose_errback *perr)
-{
-	CHECK_CONDITION(IsValidEncryptHandle(h), COSE_ERR_INVALID_HANDLE);
-	return _COSE_CounterSign_get(
-		&((COSE_Enveloped *)h)->m_message, iSigner, perr);
-
-errorReturn:
-	return NULL;
-}
-#endif
-
 #endif

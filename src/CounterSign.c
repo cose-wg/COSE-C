@@ -139,6 +139,7 @@ errorReturn:
 	return false;
 }
 
+#if 0
 /// Get the n-th counter signature from the attribute.
 ///
 HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE* pMessage,
@@ -146,9 +147,8 @@ HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE* pMessage,
 	cose_errback* perr)
 {
 	COSE_CounterSign* pSigner = pMessage->m_counterSigners;
-	int i;
 
-	for (i = 0; i < iSigner; i++, pSigner = pSigner->m_next) {
+	for (int i = 0; i < iSigner && pSigner != NULL; i++, pSigner = pSigner->m_next) {
 		CHECK_CONDITION(pSigner != NULL, COSE_ERR_INVALID_PARAMETER);
 	}
 
@@ -157,6 +157,7 @@ HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE* pMessage,
 errorReturn:
 	return false;
 }
+#endif
 
 /// _COSE_CounterSign_create
 ///
