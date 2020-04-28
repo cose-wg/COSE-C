@@ -1,8 +1,13 @@
 #pragma once
 
-#include <stdbool.h>
 #include <cn-cbor/cn-cbor.h>
 #include "cose/cose_configure.h"
+
+#if defined(COSE_C_USE_MBEDTLS)
+#include "mbedtls/ecp.h"
+#endif	// COSE_C_USE_MBEDTLS
+
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -204,6 +209,15 @@ typedef enum {
 	COSE_Curve_Ed25519 = 6,
 	COSE_Curve_Ed448 = 7,
 } COSE_Curves;
+
+#if defined(COSE_C_USE_MBEDTLS)
+typedef struct mbedtls_ecp_keypair eckey_t;
+#else
+typedef struct eckey_t {
+	struct ec_key_st* key;
+	int group;
+} eckey_t;
+#endif	// COSE_C_USE_MBEDTLS
 
 /*
  *  messages dealing with the Enveloped message type
@@ -523,6 +537,12 @@ bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose,
 bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor* pkey, cose_errback* perr);
 bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	const cn_cbor* pkey,
+	cose_errback* perr);
+bool COSE_Sign1_Sign_eckey(HCOSE_SIGN1 h,
+	const eckey_t* pbKey,
+	cose_errback* perr);
+bool COSE_Sign1_validate_eckey(HCOSE_SIGN1 hSign,
+	const eckey_t* pbKey,
 	cose_errback* perr);
 cn_cbor* COSE_Sign1_map_get_int(HCOSE_SIGN1 h,
 	int key,

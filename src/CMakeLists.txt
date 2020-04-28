@@ -19,6 +19,11 @@ endif()
 
 add_library(${PROJECT_NAME})
 
+# some structs look differently depending on the crypto lib used
+# therefore we create the config header file at configure time.
+configure_file(${CMAKE_CURRENT_LIST_DIR}/../include/cose/cose_configure.h.in
+               ${CMAKE_BINARY_DIR}/include/cose/cose_configure.h)
+
 if(COSE_C_USE_MBEDTLS)
   set(cose_crypto mbedtls.c)
 else()
@@ -27,7 +32,7 @@ endif()
 
 set(cose_sources
     ${PROJECT_SOURCE_DIR}/include/cose/cose.h
-    ${PROJECT_SOURCE_DIR}/include/cose/cose_configure.h
+    ${CMAKE_BINARY_DIR}/include/cose/cose_configure.h
     crypto.h
     cose_int.h
     crypto.h
@@ -47,7 +52,8 @@ target_sources(${PROJECT_NAME} PRIVATE ${cose_sources})
 
 target_include_directories(
   ${PROJECT_NAME}
-  PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+  PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+         $<INSTALL_INTERFACE:include>
   PRIVATE ../src)
 target_link_libraries(${PROJECT_NAME} PRIVATE cn-cbor::cn-cbor)
 
@@ -116,6 +122,12 @@ install(
 
 install(
   DIRECTORY ${PROJECT_SOURCE_DIR}/include/cose
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT dev
+  FILES_MATCHING
+  PATTERN "*.h")
+install(
+  DIRECTORY ${CMAKE_BINARY_DIR}/include/cose
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   COMPONENT dev
   FILES_MATCHING

@@ -21,7 +21,7 @@
 #include "json.h"
 #include "test.h"
 
-#ifdef USE_MBED_TLS
+#ifdef COSE_C_USE_MBEDTLS
 #include "mbedtls/entropy.h"
 #endif
 
@@ -1131,7 +1131,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-#ifdef USE_MBED_TLS
+#ifdef COSE_C_USE_MBEDTLS
 	mbedtls_entropy_context entropy;
 	mbedtls_entropy_init(&entropy);
 #endif
