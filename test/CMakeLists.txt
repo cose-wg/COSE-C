@@ -13,6 +13,11 @@ else()
   target_link_libraries(cose_test PRIVATE ${OPENSSL_LIBRARIES})
 endif()
 
+if(COSE_C_OPTIMIZE)
+  # Don't worry about the compiler optimizations
+  add_definitions(-DNDEBUG)
+endif()
+
 if(MSVC)
   target_link_libraries(cose_test PRIVATE ws2_32)
 endif()
