@@ -12,12 +12,14 @@
 
 extern bool IsValidCounterSign1Handle(HCOSE_COUNTERSIGN1 h);
 
-
-bool _COSE_CounterSign1_add(COSE* pMessage, HCOSE_COUNTERSIGN1 hSigner, cose_errback* perr)
+bool _COSE_CounterSign1_add(COSE* pMessage,
+	HCOSE_COUNTERSIGN1 hSigner,
+	cose_errback* perr)
 {
 	COSE_CounterSign1* pSigner = (COSE_CounterSign1*)hSigner;
 
-	CHECK_CONDITION(IsValidCounterSign1Handle(hSigner), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		IsValidCounterSign1Handle(hSigner), COSE_ERR_INVALID_HANDLE);
 
 	pMessage->m_counterSign1 = pSigner;
 	return true;
@@ -35,7 +37,9 @@ HCOSE_COUNTERSIGN _COSE_CounterSign1_get(COSE* pMessage, cose_errback* perr)
 	return (HCOSE_COUNTERSIGN)pSigner;
 }
 
-bool _COSE_CountSign_create(COSE* pMessage, cn_cbor* pcnBody, CBOR_CONTEXT_COMMA cose_errback* perr)
+bool _COSE_CountSign_create(COSE* pMessage,
+	cn_cbor* pcnBody,
+	CBOR_CONTEXT_COMMA cose_errback* perr)
 {
 	cn_cbor* pArray = NULL;
 	cn_cbor_errback cbor_err;
@@ -44,7 +48,8 @@ bool _COSE_CountSign_create(COSE* pMessage, cn_cbor* pcnBody, CBOR_CONTEXT_COMMA
 	cn_cbor* pcn = NULL;
 	cn_cbor* pcn2 = NULL;
 
-	if (pMessage->m_counterSigners == NULL) return true;
+	if (pMessage->m_counterSigners == NULL)
+		return true;
 
 	//  One or more than one?
 	if (pMessage->m_counterSigners->m_signer.m_signerNext != NULL) {
@@ -55,21 +60,26 @@ bool _COSE_CountSign_create(COSE* pMessage, cn_cbor* pcnBody, CBOR_CONTEXT_COMMA
 	pcnProtected = _COSE_arrayget_int(pMessage, INDEX_PROTECTED);
 	CHECK_CONDITION(pcnProtected != NULL, COSE_ERR_INTERNAL);
 
-	for (pSigner = pMessage->m_counterSigners; pSigner != NULL; pSigner = pSigner->m_next) {
-		CHECK_CONDITION(pSigner->m_signer.m_signerNext == NULL, COSE_ERR_INTERNAL);
+	for (pSigner = pMessage->m_counterSigners; pSigner != NULL;
+		 pSigner = pSigner->m_next) {
+		CHECK_CONDITION(
+			pSigner->m_signer.m_signerNext == NULL, COSE_ERR_INTERNAL);
 
-		pcn = cn_cbor_data_create(pcnProtected->v.bytes, pcnProtected->v.count, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
+		pcn = cn_cbor_data_create(pcnProtected->v.bytes, pcnProtected->v.count,
+			CBOR_CONTEXT_PARAM_COMMA & cbor_err);
 		CHECK_CONDITION_CBOR(pcnProtected != NULL, cbor_err);
 
 		pcn2 = cn_cbor_clone(pcnBody, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
 		CHECK_CONDITION_CBOR(pcnBody != NULL, cbor_err);
 
-		if (!_COSE_Signer_sign(&pSigner->m_signer, pcnBody, pcn2, perr)) goto errorReturn;
+		if (!_COSE_Signer_sign(&pSigner->m_signer, pcnBody, pcn2, perr))
+			goto errorReturn;
 		pcn = NULL;
 		pcn2 = NULL;
 
 		if (pArray != NULL) {
-			bool f = cn_cbor_array_append(pArray, pSigner->m_signer.m_message.m_cborRoot, &cbor_err);
+			bool f = cn_cbor_array_append(
+				pArray, pSigner->m_signer.m_message.m_cborRoot, &cbor_err);
 			CHECK_CONDITION_CBOR(f, cbor_err);
 		}
 		else {
@@ -77,17 +87,20 @@ bool _COSE_CountSign_create(COSE* pMessage, cn_cbor* pcnBody, CBOR_CONTEXT_COMMA
 		}
 	}
 
-	if (!_COSE_map_put(pMessage, COSE_Header_CounterSign, pArray, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+	if (!_COSE_map_put(pMessage, COSE_Header_CounterSign, pArray,
+			COSE_UNPROTECT_ONLY, perr))
+		goto errorReturn;
 
 	return true;
 
 errorReturn:
-	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
-	if ((pcn != NULL) && (pcn->parent != NULL)) CN_CBOR_FREE(pcn, context);
-	if ((pcn2 != NULL) && (pcn2->parent != NULL)) CN_CBOR_FREE(pcn2, context);
+	if (pArray != NULL)
+		CN_CBOR_FREE(pArray, context);
+	if ((pcn != NULL) && (pcn->parent != NULL))
+		CN_CBOR_FREE(pcn, context);
+	if ((pcn2 != NULL) && (pcn2->parent != NULL))
+		CN_CBOR_FREE(pcn2, context);
 	return false;
 }
 
 #endif
-
-  

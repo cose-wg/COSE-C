@@ -226,7 +226,8 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 			goto errorReturn;
 		}
 		cbor_iv_t = NULL;
-	} else {
+	}
+	else {
 		CHECK_CONDITION(
 			cbor_iv->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION(cbor_iv->length == NSize, COSE_ERR_INVALID_PARAMETER);
@@ -456,7 +457,8 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 			goto errorReturn;
 		}
 		cbor_iv_t = NULL;
-	} else {
+	}
+	else {
 		CHECK_CONDITION(
 			cbor_iv->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION(cbor_iv->length == 96 / 8, COSE_ERR_INVALID_PARAMETER);
@@ -855,7 +857,8 @@ bool HKDF_Extract(COSE *pcose,
 		CHECK_CONDITION(
 			HMAC_Init_ex(ctx, cnSalt->v.bytes, (int)cnSalt->length, pmd, NULL),
 			COSE_ERR_CRYPTO_FAIL);
-	} else {
+	}
+	else {
 		CHECK_CONDITION(HMAC_Init_ex(ctx, rgbSalt, cbSalt, pmd, NULL),
 			COSE_ERR_CRYPTO_FAIL);
 	}
@@ -1108,13 +1111,16 @@ EC_KEY *ECKey_From(const cn_cbor *pKey, int *cbGroup, cose_errback *perr)
 		cbKey = (*cbGroup * 2) + 1;
 		CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
 		memcpy(rgbKey + p->length + 1, p->v.str, p->length);
-	} else if (p->type == CN_CBOR_TRUE) {
+	}
+	else if (p->type == CN_CBOR_TRUE) {
 		cbKey = (*cbGroup) + 1;
 		rgbKey[0] = POINT_CONVERSION_COMPRESSED + 1;
-	} else if (p->type == CN_CBOR_FALSE) {
+	}
+	else if (p->type == CN_CBOR_FALSE) {
 		cbKey = (*cbGroup) + 1;
 		rgbKey[0] = POINT_CONVERSION_COMPRESSED;
-	} else
+	}
+	else
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 
 	pPoint = EC_POINT_new(ecgroup);
@@ -1196,7 +1202,8 @@ cn_cbor *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 			EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_COMPRESSED,
 				pbOut, cbSize, NULL) == cbSize,
 			COSE_ERR_CRYPTO_FAIL);
-	} else {
+	}
+	else {
 		cbSize = EC_POINT_point2oct(
 			pgroup, pPoint, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
 		CHECK_CONDITION(cbSize > 0, COSE_ERR_CRYPTO_FAIL);
@@ -1223,7 +1230,8 @@ cn_cbor *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 								 CBOR_CONTEXT_PARAM_COMMA & cbor_error),
 			cbor_error);
 		p = NULL;
-	} else {
+	}
+	else {
 		p = cn_cbor_data_create(pbOut + cbSize / 2 + 1, (int)(cbSize / 2),
 			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		pbOut = NULL;  // It is already part of the other one.
@@ -1736,7 +1744,8 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		if (*ppKeyPrivate == NULL) {
 			goto errorReturn;
 		}
-	} else {
+	}
+	else {
 		peckeyPrivate = ECKey_From(*ppKeyPrivate, &cbGroup, perr);
 		if (peckeyPrivate == NULL) {
 			goto errorReturn;

@@ -359,7 +359,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 						goto errorReturn;
 					}
 					break;
-				} else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
+				}
+				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
 					if (_COSE_Recipient_decrypt(
 							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) {
 						break;
@@ -367,7 +368,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 				}
 			}
 			CHECK_CONDITION(pRecipX != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
-		} else {
+		}
+		else {
 			for (pRecip = pcose->m_recipientFirst; pRecip != NULL;
 				 pRecip = pRecip->m_recipientNext) {
 				if (_COSE_Recipient_decrypt(
@@ -654,7 +656,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 				if (pbKeyNew == NULL) {
 					goto errorReturn;
 				}
-			} else {
+			}
+			else {
 				t |= 2;
 			}
 		}
@@ -689,8 +692,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	switch (alg) {
 #ifdef USE_AES_CCM_16_64_128
 		case COSE_Algorithm_AES_CCM_16_64_128:
-			if (!AES_CCM_Encrypt(
-					pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 64, 16, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -698,8 +701,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 #ifdef USE_AES_CCM_16_64_256
 		case COSE_Algorithm_AES_CCM_16_64_256:
-			if (!AES_CCM_Encrypt(
-					pcose, 64, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 64, 16, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -707,8 +710,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 #ifdef USE_AES_CCM_16_128_128
 		case COSE_Algorithm_AES_CCM_16_128_128:
-			if (!AES_CCM_Encrypt(
-					pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 128, 16, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -716,8 +719,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 #ifdef USE_AES_CCM_16_128_256
 		case COSE_Algorithm_AES_CCM_16_128_256:
-			if (!AES_CCM_Encrypt(
-					pcose, 128, 16, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 128, 16, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -725,8 +728,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 #ifdef USE_AES_CCM_64_64_128
 		case COSE_Algorithm_AES_CCM_64_64_128:
-			if (!AES_CCM_Encrypt(
-					pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 64, 64, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -734,8 +737,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 #ifdef USE_AES_CCM_64_64_256
 		case COSE_Algorithm_AES_CCM_64_64_256:
-			if (!AES_CCM_Encrypt(
-					pcose, 64, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 64, 64, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -743,8 +746,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 #ifdef USE_AES_CCM_64_128_128
 		case COSE_Algorithm_AES_CCM_64_128_128:
-			if (!AES_CCM_Encrypt(
-					pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 128, 64, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -752,8 +755,8 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 
 #ifdef USE_AES_CCM_64_128_256
 		case COSE_Algorithm_AES_CCM_64_128_256:
-			if (!AES_CCM_Encrypt(
-					pcose, 128, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!AES_CCM_Encrypt(pcose, 128, 64, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;
@@ -807,7 +810,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 		}
 	}
 #endif
-	
+
 	//  Figure out the clean up
 
 	fRet = true;
@@ -1022,7 +1025,8 @@ bool _COSE_Encrypt_Build_AAD(COSE *pMessage,
 	if ((pItem->length == 1) && (pItem->v.bytes[0] == 0xa0)) {
 		ptmp =
 			cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	} else {
+	}
+	else {
 		ptmp = cn_cbor_data_create(pItem->v.bytes, (int)pItem->length,
 			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}

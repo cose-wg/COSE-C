@@ -74,7 +74,7 @@ bool COSE_Recipient_Free(HCOSE_RECIPIENT hRecipient)
 			p->m_encrypt.m_message.m_refCount--;
 			return true;
 		}
-	
+
 		_COSE_RemoveFromList(&RecipientRoot, &p->m_encrypt.m_message);
 
 		_COSE_Recipient_Free(p);
@@ -230,7 +230,8 @@ static bool HKDF_X(COSE *pCose,
 					goto errorReturn;
 				}
 			}
-		} else {
+		}
+		else {
 			pkeyMessage = _COSE_map_get_int(pCose,
 				fStatic ? COSE_Header_ECDH_STATIC : COSE_Header_ECDH_EPHEMERAL,
 				COSE_BOTH, perr);
@@ -247,7 +248,8 @@ static bool HKDF_X(COSE *pCose,
 #else
 		goto errorReturn;
 #endif
-	} else {
+	}
+	else {
 		CHECK_CONDITION(pKeyPrivate != NULL, COSE_ERR_INVALID_PARAMETER);
 		cn = cn_cbor_mapget_int(pKeyPrivate, COSE_Key_Type);
 		CHECK_CONDITION((cn != NULL) && (cn->type == CN_CBOR_UINT),
@@ -272,13 +274,14 @@ static bool HKDF_X(COSE *pCose,
 		}
 
 		if (!HKDF_Expand(pCose, cbitHash, rgbDigest, cbDigest, pbContext,
-		                 cbContext, pbKey, cbitKey / 8, perr)) {
+				cbContext, pbKey, cbitKey / 8, perr)) {
 			goto errorReturn;
 		}
 #else
 		goto errorReturn;
 #endif
-	} else {
+	}
+	else {
 #ifdef USE_HKDF_AES
 		if (!HKDF_AES_Expand(pCose, cbitHash, pbSecret, cbSecret, pbContext,
 				cbContext, pbKey, cbitKey / 8, perr)) {
@@ -492,7 +495,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 						cnBody->v.bytes, cnBody->length, pbKeyOut, &x, perr)) {
 					goto errorReturn;
 				}
-			} else {
+			}
+			else {
 				CHECK_CONDITION(
 					pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 				int x = cbitKeyOut / 8;
@@ -517,7 +521,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 						cnBody->v.bytes, cnBody->length, pbKeyOut, &x, perr)) {
 					goto errorReturn;
 				}
-			} else {
+			}
+			else {
 				CHECK_CONDITION(
 					pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 				int x = cbitKeyOut / 8;
@@ -542,7 +547,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 						cnBody->v.bytes, cnBody->length, pbKeyOut, &x, perr)) {
 					goto errorReturn;
 				}
-			} else {
+			}
+			else {
 				CHECK_CONDITION(
 					pRecip->m_pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 				int x = cbitKeyOut / 8;
@@ -648,7 +654,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 			}
 
 			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, rgbKey, 128,
-			                    cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
+					cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
 				goto errorReturn;
 			}
 
@@ -664,7 +670,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 			}
 
 			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, rgbKey, 192,
-			                    cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
+					cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
 				goto errorReturn;
 			}
 
@@ -680,7 +686,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 			}
 
 			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, rgbKey, 256,
-			                    cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
+					cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
 				goto errorReturn;
 			}
 
@@ -696,7 +702,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 			}
 
 			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, rgbKey, 128,
-			                    cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
+					cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
 				goto errorReturn;
 			}
 
@@ -712,7 +718,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 			}
 
 			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, rgbKey, 192,
-			                    cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
+					cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
 				goto errorReturn;
 			}
 
@@ -728,7 +734,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 			}
 
 			if (!AES_KW_Decrypt((COSE_Enveloped *)pcose, rgbKey, 256,
-			                    cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
+					cnBody->v.bytes, cnBody->length, pbKeyOut, &cbKey2, perr)) {
 				goto errorReturn;
 			}
 
@@ -889,7 +895,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 					goto errorReturn;
 				}
 				cbKey = cbitKey / 8;
-			} else {
+			}
+			else {
 				t |= 2;
 			}
 		}
@@ -968,7 +975,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 						(int)pK->length * 8, pbContent, (int)cbContent, perr)) {
 					goto errorReturn;
 				}
-			} else {
+			}
+			else {
 				if (!AES_KW_Encrypt(pRecipient, pbKey, (int)cbKey * 8,
 						pbContent, (int)cbContent, perr)) {
 					goto errorReturn;
@@ -986,7 +994,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 						(int)pK->length * 8, pbContent, (int)cbContent, perr)) {
 					goto errorReturn;
 				}
-			} else {
+			}
+			else {
 				if (!AES_KW_Encrypt(pRecipient, pbKey, (int)cbKey * 8,
 						pbContent, (int)cbContent, perr)) {
 					goto errorReturn;
@@ -1004,7 +1013,8 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 						(int)pK->length * 8, pbContent, (int)cbContent, perr)) {
 					goto errorReturn;
 				}
-			} else {
+			}
+			else {
 				if (!AES_KW_Encrypt(pRecipient, pbKey, (int)cbKey * 8,
 						pbContent, (int)cbContent, perr)) {
 					goto errorReturn;
@@ -1316,7 +1326,8 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient,
 		CHECK_CONDITION(cnAlg->type == CN_CBOR_INT &&
 							cnAlg->v.sint == COSE_Algorithm_Direct,
 			COSE_ERR_INVALID_PARAMETER);
-	} else {
+	}
+	else {
 		cn_Temp = cn_cbor_int_create(
 			COSE_Algorithm_Direct, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(cn_Temp != NULL, cbor_error);
@@ -1337,8 +1348,8 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient,
 		CHECK_CONDITION_CBOR(cnTemp != NULL, cbor_error);
 		pbTemp = NULL;
 
-		if (!COSE_Recipient_map_put_int(
-				hRecipient, COSE_Header_KID, cnTemp, COSE_UNPROTECT_ONLY, perr)) {
+		if (!COSE_Recipient_map_put_int(hRecipient, COSE_Header_KID, cnTemp,
+				COSE_UNPROTECT_ONLY, perr)) {
 			goto errorReturn;
 		}
 	}
@@ -1603,7 +1614,8 @@ bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h,
 						~1;
 					break;
 			}
-		} else {
+		}
+		else {
 			((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags &= ~1;
 		}
 	}
@@ -1646,7 +1658,8 @@ static bool BuildContextBytes(COSE *pcose,
 	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_U_name, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	} else {
+	}
+	else {
 		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
@@ -1659,7 +1672,8 @@ static bool BuildContextBytes(COSE *pcose,
 		_COSE_map_get_int(pcose, COSE_Header_KDF_U_nonce, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	} else {
+	}
+	else {
 		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
@@ -1672,7 +1686,8 @@ static bool BuildContextBytes(COSE *pcose,
 		_COSE_map_get_int(pcose, COSE_Header_KDF_U_other, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	} else {
+	}
+	else {
 		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
@@ -1691,7 +1706,8 @@ static bool BuildContextBytes(COSE *pcose,
 	cnParam = _COSE_map_get_int(pcose, COSE_Header_KDF_V_name, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	} else {
+	}
+	else {
 		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
@@ -1704,7 +1720,8 @@ static bool BuildContextBytes(COSE *pcose,
 		_COSE_map_get_int(pcose, COSE_Header_KDF_V_nonce, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	} else {
+	}
+	else {
 		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
@@ -1717,7 +1734,8 @@ static bool BuildContextBytes(COSE *pcose,
 		_COSE_map_get_int(pcose, COSE_Header_KDF_V_other, COSE_BOTH, perr);
 	if (cnParam != NULL) {
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	} else {
+	}
+	else {
 		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);

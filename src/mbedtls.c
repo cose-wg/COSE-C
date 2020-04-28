@@ -132,7 +132,8 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 				COSE_UNPROTECT_ONLY, perr))
 			goto errorReturn;
 		cbor_iv_t = NULL;
-	} else {
+	}
+	else {
 		CHECK_CONDITION(
 			cbor_iv->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION(cbor_iv->length == NSize, COSE_ERR_INVALID_PARAMETER);
@@ -309,7 +310,8 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 				COSE_UNPROTECT_ONLY, perr))
 			goto errorReturn;
 		cbor_iv_t = NULL;
-	} else {
+	}
+	else {
 		CHECK_CONDITION(
 			cbor_iv->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION(cbor_iv->length == 96 / 8, COSE_ERR_INVALID_PARAMETER);
@@ -919,7 +921,8 @@ bool ECKey_From(const cn_cbor *pKey,
 	if (p->type == CN_CBOR_UINT) {
 		CHECK_CONDITION(
 			p->v.uint == COSE_Key_Type_EC2, COSE_ERR_INVALID_PARAMETER);
-	} else {
+	}
+	else {
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
@@ -960,13 +963,16 @@ bool ECKey_From(const cn_cbor *pKey,
 		cbKey = cbGroup * 2 + 1;
 		CHECK_CONDITION(p->length == cbGroup, COSE_ERR_INVALID_PARAMETER);
 		memcpy(rgbKey + p->length + 1, p->v.str, p->length);
-	} else if (p->type == CN_CBOR_TRUE) {
+	}
+	else if (p->type == CN_CBOR_TRUE) {
 		cbKey = cbGroup + 1;
 		rgbKey[0] = 0x03;
-	} else if (p->type == CN_CBOR_FALSE) {
+	}
+	else if (p->type == CN_CBOR_FALSE) {
 		cbKey = cbGroup + 1;
 		rgbKey[0] = 0x02;
-	} else
+	}
+	else
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 
 	CHECK_CONDITION(mbedtls_ecp_point_read_binary(
@@ -1551,7 +1557,8 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 
 		*ppKeyPrivate = pkey;
 		pkey = NULL;
-	} else {
+	}
+	else {
 		p = cn_cbor_mapget_int(*ppKeyPrivate, COSE_Key_EC_d);
 		CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
 

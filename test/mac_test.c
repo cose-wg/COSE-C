@@ -120,13 +120,16 @@ int _ValidateMAC(const cn_cbor *pControl,
 		if (COSE_Mac_validate(hMAC, hRecip, NULL)) {
 			if (fAlgNoSupport) {
 				fFail = true;
-			} else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
+			}
+			else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
 				fFail = true;
 			}
-		} else {
+		}
+		else {
 			if (fAlgNoSupport) {
 				returnCode = 0;
-			} else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
+			}
+			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
 				fFail = true;
 			}
 		}
@@ -396,7 +399,6 @@ int BuildMacMessage(const cn_cbor *pControl)
 		}
 
 #endif
-		
 
 		COSE_Recipient_Free(hRecip);
 	}
@@ -430,8 +432,7 @@ int BuildMacMessage(const cn_cbor *pControl)
 				goto returnError;
 			}
 
-			if (!COSE_Mac_add_countersignature(
-					hMacObj, hCountersign, NULL)) {
+			if (!COSE_Mac_add_countersignature(hMacObj, hCountersign, NULL)) {
 				goto returnError;
 			}
 
@@ -440,7 +441,6 @@ int BuildMacMessage(const cn_cbor *pControl)
 	}
 
 #endif
-	
 
 	if (!COSE_Mac_encrypt(hMacObj, NULL)) {
 		goto returnError;
@@ -477,9 +477,9 @@ int MacMessage()
 	}
 
 	if (!COSE_Mac_map_put_int(hEncObj, COSE_Header_Algorithm,
-	                          cn_cbor_int_create(
-		                          COSE_Algorithm_HMAC_256_256, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                          COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(
+				COSE_Algorithm_HMAC_256_256, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		goto errorReturn;
 	}
 	if (!COSE_Mac_SetContent(hEncObj, (byte *)sz, strlen(sz), NULL)) {
@@ -487,7 +487,7 @@ int MacMessage()
 	}
 
 	HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret,
-	                                                           sizeof(rgbSecret), rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
+		sizeof(rgbSecret), rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hRecip == NULL) {
 		goto errorReturn;
 	}
@@ -642,10 +642,12 @@ int _ValidateMac0(const cn_cbor *pControl,
 		if (fUnsuportedAlg) {
 			fFail = true;
 			fUnsuportedAlg = false;
-		} else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
+		}
+		else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
 			fFail = true;
 		}
-	} else {
+	}
+	else {
 		if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
 			fFail = true;
 		}
@@ -774,7 +776,8 @@ int BuildMac0Message(const cn_cbor *pControl)
 		goto returnError;
 	}
 
-	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC0_protected)) {
+	if (!SetSendingAttributes(
+			(HCOSE)hMacObj, pMac, Attributes_MAC0_protected)) {
 		goto returnError;
 	}
 
@@ -834,8 +837,7 @@ int BuildMac0Message(const cn_cbor *pControl)
 	}
 
 #endif
-	
-	
+
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
@@ -887,7 +889,8 @@ void MAC_Corners()
 	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) {
 		CFails++;
 	}
-	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) {
+	if (COSE_Mac_AddRecipient(
+			(HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) {
 		CFails++;
 	}
 	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) {
@@ -922,7 +925,8 @@ void MAC_Corners()
 	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) {
 		CFails++;
 	}
-	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) {
+	if (COSE_Mac_AddRecipient(
+			(HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) {
 		CFails++;
 	}
 	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) {
@@ -946,8 +950,8 @@ void MAC_Corners()
 		CFails++;
 	}
 	if (!COSE_Mac_map_put_int(hMAC, COSE_Header_Algorithm,
-	                          cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                          COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	hRecipient = COSE_Recipient_from_shared_secret(
@@ -971,8 +975,8 @@ void MAC_Corners()
 		CFails++;
 	}
 	if (!COSE_Mac_map_put_int(hMAC, COSE_Header_Algorithm,
-	                          cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
-	                          COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	hRecipient = COSE_Recipient_from_shared_secret(
@@ -1069,8 +1073,8 @@ void MAC0_Corners()
 		CFails++;
 	}
 	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm,
-	                           cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                           COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), &cose_error),
@@ -1085,8 +1089,8 @@ void MAC0_Corners()
 		CFails++;
 	}
 	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm,
-	                           cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
-	                           COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), &cose_error),

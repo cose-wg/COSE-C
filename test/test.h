@@ -90,7 +90,8 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		if (!bReturn) {                                     \
 			if (cose_error.err != errorReturn)              \
 				onFailure;                                  \
-		} else if (errorReturn != COSE_ERR_NONE)            \
+		}                                                   \
+		else if (errorReturn != COSE_ERR_NONE)              \
 			onFailure;                                      \
 	}
 
@@ -100,6 +101,7 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		if (bReturn == NULL) {                                  \
 			if (cose_error.err != errorReturn)                  \
 				onFailure;                                      \
-		} else if (errorReturn != COSE_ERR_NONE)                \
+		}                                                       \
+		else if (errorReturn != COSE_ERR_NONE)                  \
 			onFailure;                                          \
 	}

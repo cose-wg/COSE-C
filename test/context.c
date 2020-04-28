@@ -41,7 +41,8 @@ bool CheckMemory(MyContext *pContext)
 					assert(false);
 				}
 			}
-		} else if (p->pad[0] == (byte)0xef) {
+		}
+		else if (p->pad[0] == (byte)0xef) {
 			for (unsigned i = 0; i < 4; i++) {
 				if ((p->pad[i] != (byte)0xef) ||
 					(p->pad[i + 4 + p->size] != (byte)0xef)) {
@@ -49,7 +50,8 @@ bool CheckMemory(MyContext *pContext)
 					assert(false);
 				}
 			}
-		} else {
+		}
+		else {
 			fprintf(stderr, "Incorrect pad value");
 			assert(false);
 		}
@@ -91,8 +93,9 @@ void MyFree(void *ptr, void *context)
 	MyContext *myContext = (MyContext *)context;
 
 	CheckMemory(myContext);
-	if (ptr == NULL)
+	if (ptr == NULL) {
 		return;
+	}
 
 	memset(&pb->pad, 0xab, pb->size + 8);
 }
@@ -129,16 +132,15 @@ void FreeContext(cn_cbor_context *pContext)
 	return;
 }
 
-int IsContextEmpty(cn_cbor_context * pContext)
+int IsContextEmpty(cn_cbor_context *pContext)
 {
-	MyContext* myContext = (MyContext*)pContext;
-	MyItem* p;
+	MyContext *myContext = (MyContext *)pContext;
+	MyItem *p;
 	int i = 0;
-
 
 	//  Walk memory and check every block
 
-	for (p = (MyItem*)myContext->pFirst; p != NULL; p = p->pNext) {
+	for (p = (MyItem *)myContext->pFirst; p != NULL; p = p->pNext) {
 		if (p->pad[0] == (byte)0xab) {
 			//  Block has been freed
 		}
@@ -151,4 +153,4 @@ int IsContextEmpty(cn_cbor_context * pContext)
 	return i;
 }
 
-#endif // USE_CBOR_CONTEXT
+#endif	// USE_CBOR_CONTEXT

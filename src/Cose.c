@@ -109,7 +109,8 @@ bool _COSE_Init_From_Object(COSE *pobj,
 			pobj->m_protectedMap =
 				cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 			CHECK_CONDITION(pobj->m_protectedMap, COSE_ERR_OUT_OF_MEMORY);
-		} else {
+		}
+		else {
 			pobj->m_protectedMap = cn_cbor_decode((const byte *)pmap->v.str,
 				pmap->length, CBOR_CONTEXT_PARAM_COMMA & errState);
 			CHECK_CONDITION(
@@ -128,22 +129,25 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, cbor_error);
 
 #if INCLUDE_COUNTERSIGNATURE
-	cn_cbor* pCounter = cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign);
+	cn_cbor *pCounter =
+		cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign);
 	if (pCounter != NULL) {
 		int i;
-		CHECK_CONDITION(pCounter->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(
+			pCounter->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION(pCounter->length > 0, COSE_ERR_INVALID_PARAMETER);
 		if (pCounter->first_child->type == CN_CBOR_ARRAY) {
-
-			cn_cbor* pSig = pCounter->first_child;
+			cn_cbor *pSig = pCounter->first_child;
 			for (i = 0; i < pCounter->length; i++, pSig = pSig->next) {
-				COSE_CounterSign* cs = _COSE_CounterSign_Init_From_Object(pSig, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				COSE_CounterSign *cs = _COSE_CounterSign_Init_From_Object(
+					pSig, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 				cs->m_next = pobj->m_counterSigners;
 				pobj->m_counterSigners = cs;
 			}
 		}
 		else {
-			COSE_CounterSign* cs = _COSE_CounterSign_Init_From_Object(pCounter, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+			COSE_CounterSign *cs = _COSE_CounterSign_Init_From_Object(
+				pCounter, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			pobj->m_counterSigners = cs;
 		}
 	}
@@ -180,8 +184,8 @@ void _COSE_Release(COSE *pcose)
 
 #if INCLUDE_COUNTERSIGNATURE
 	if (pcose->m_counterSigners != NULL) {
-		COSE_CounterSign* p = pcose->m_counterSigners;
-		COSE_CounterSign* p2 = NULL;
+		COSE_CounterSign *p = pcose->m_counterSigners;
+		COSE_CounterSign *p2 = NULL;
 
 		while (p != NULL) {
 			p2 = p->m_next;
@@ -214,14 +218,16 @@ HCOSE COSE_Decode(const byte *rgbData,
 		if (struct_type != 0) {
 			CHECK_CONDITION(struct_type == (COSE_object_type)cbor->v.sint,
 				COSE_ERR_INVALID_PARAMETER);
-		} else {
+		}
+		else {
 			struct_type = cbor->v.uint;
 		}
 
 		*ptype = struct_type;
 
 		cbor = cbor->first_child;
-	} else {
+	}
+	else {
 		*ptype = struct_type;
 	}
 
@@ -342,10 +348,7 @@ bool _COSE_SetExternal(COSE *pcose,
 	return true;
 }
 
-cn_cbor *_COSE_map_get_int(COSE *cose,
-	int key,
-	int flags,
-	cose_errback *perr)
+cn_cbor *_COSE_map_get_int(COSE *cose, int key, int flags, cose_errback *perr)
 {
 	cn_cbor *p = NULL;
 
@@ -482,7 +485,8 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 		CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected,
 							pMessage->m_protectedMap) == cbProtected,
 			COSE_ERR_CBOR);
-	} else {
+	}
+	else {
 		cbProtected = 0;
 	}
 
@@ -497,7 +501,6 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 
 	return pProtected;
 }
-
 
 bool _COSE_array_replace(COSE *pMessage,
 	cn_cbor *cb_value,
@@ -564,7 +567,8 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 		return;
 	}
 
-	for (COSE *walk = *rootNode; walk->m_handleList != NULL; walk = walk->m_handleList) {
+	for (COSE *walk = *rootNode; walk->m_handleList != NULL;
+		 walk = walk->m_handleList) {
 		if (walk->m_handleList == thisMsg) {
 			walk->m_handleList = thisMsg->m_handleList;
 			thisMsg->m_handleList = NULL;

@@ -11,11 +11,9 @@ environment:
   matrix:
     - USE_CONTEXT: ON      
       USE_EMBEDTLS: OFF
-      CMAKE_FRAMEWORK_PATH: c:\OpenSSL-v11-Win64\bin
 
     - USE_CONTEXT: OFF
       USE_EMBEDTLS: OFF
-      CMAKE_FRAMEWORK_PATH: c:\OpenSSL-v11-Win64\bin
 
     - USE_CONTEXT: OFF
       USE_EMBEDTLS: ON
@@ -30,7 +28,7 @@ install:
 
 before_build:
   - set PATH=c:\OpenSSL-v111-Win64\bin;%PATH%
-  - dir c:\OpenSSL-v11-Win64
+  - set OPENSSL_ROOT_DIR=c:\OpenSSL-v111-Win64
   - cmake --version
   - mkdir build
   - cd build
