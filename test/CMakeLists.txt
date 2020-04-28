@@ -13,6 +13,11 @@ else()
   target_link_libraries(cose_test PRIVATE ${OPENSSL_LIBRARIES})
 endif()
 
+if(COSE_C_OPTIMIZE)
+  # Don't worry about the compiler optimizations
+  add_definitions(-DNDEBUG)
+endif()
+
 if(MSVC)
   target_link_libraries(cose_test PRIVATE ws2_32)
 endif()
@@ -108,6 +113,12 @@ add_test(
   NAME sign1
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --dir Examples/sign1-tests)
+if(COSE_C_INCLUDE_COUNTERSIGN)
+  add_test(
+    NAME Countersign
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND cose_test --dir Examples/countersign)
+endif()
 
 add_test(
   NAME corner-cases

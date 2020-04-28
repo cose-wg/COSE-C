@@ -57,8 +57,9 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 	cn_cbor *cb_temp2;
 
 	if (!cb_array || !cb_value || cb_array->type != CN_CBOR_ARRAY) {
-		if (errp != NULL)
+		if (errp != NULL) {
 			errp->err = CN_CBOR_ERR_INVALID_PARAMETER;
+		}
 		return false;
 	}
 
@@ -135,8 +136,9 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 	switch (pIn->type) {
 		case CN_CBOR_TEXT:
 			sz = CN_CBOR_CALLOC(pIn->length + 1, 1, context);
-			if (sz == NULL)
+			if (sz == NULL) {
 				return NULL;
+			}
 			memcpy(sz, pIn->v.str, pIn->length);
 			sz[pIn->length] = 0;
 			pOut = cn_cbor_string_create(sz CBOR_CONTEXT_PARAM, pcn_cbor_error);
@@ -149,8 +151,9 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 
 		case CN_CBOR_BYTES:
 			pb = CN_CBOR_CALLOC((int)pIn->length, 1, context);
-			if (pb == NULL)
+			if (pb == NULL) {
 				return NULL;
+			}
 			memcpy(pb, pIn->v.bytes, pIn->length);
 			pOut = cn_cbor_data_create(
 				pb, (int)pIn->length CBOR_CONTEXT_PARAM, pcn_cbor_error);
@@ -169,8 +172,9 @@ cn_cbor *cn_cbor_tag_create(int tag,
 {
 	cn_cbor *pcnTag = CN_CALLOC(context);
 	if (pcnTag == NULL) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = CN_CBOR_ERR_OUT_OF_MEMORY;
+		}
 		return NULL;
 	}
 
@@ -187,8 +191,9 @@ cn_cbor *cn_cbor_bool_create(int boolValue,
 {
 	cn_cbor *pcn = CN_CALLOC(context);
 	if (pcn == NULL) {
-		if (errp != NULL)
+		if (errp != NULL) {
 			errp->err = CN_CBOR_ERR_OUT_OF_MEMORY;
+		}
 		return NULL;
 	}
 
@@ -200,8 +205,9 @@ cn_cbor *cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback *errp)
 {
 	cn_cbor *pcn = CN_CALLOC(context);
 	if (pcn == NULL) {
-		if (errp != NULL)
+		if (errp != NULL) {
 			errp->err = CN_CBOR_ERR_OUT_OF_MEMORY;
+		}
 		return NULL;
 	}
 	pcn->type = CN_CBOR_NULL;

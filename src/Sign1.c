@@ -20,7 +20,7 @@ bool _COSE_Signer0_validate(COSE_Sign1Message *pSign,
 	cose_errback *perr);
 void _COSE_Sign1_Release(COSE_Sign1Message *p);
 
-static COSE *Sign1Root = NULL;
+COSE *Sign1Root = NULL;
 
 /*! \private
  * @brief Test if a HCOSE_SIGN1 handle is valid
@@ -40,8 +40,9 @@ bool IsValidSign1Handle(HCOSE_SIGN1 h)
 {
 	COSE_Sign1Message *p = (COSE_Sign1Message *)h;
 
-	if (p == NULL)
+	if (p == NULL) {
 		return false;
+	}
 	return _COSE_IsInList(Sign1Root, (COSE *)p);
 }
 
@@ -52,8 +53,9 @@ HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags,
 	COSE_Sign1Message *pobj =
 		(COSE_Sign1Message *)COSE_CALLOC(1, sizeof(COSE_Sign1Message), context);
 	if (pobj == NULL) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_OUT_OF_MEMORY;
+		}
 		return NULL;
 	}
 
@@ -79,12 +81,14 @@ HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor *cbor,
 	COSE_Sign1Message *pobj = pIn;
 	cose_errback error = {0};
 
-	if (perr == NULL)
+	if (perr == NULL) {
 		perr = &error;
+	}
 
-	if (pobj == NULL)
+	if (pobj == NULL) {
 		pobj = (COSE_Sign1Message *)COSE_CALLOC(
 			1, sizeof(COSE_Sign1Message), context);
+	}
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	if (!_COSE_Init_From_Object(
@@ -92,16 +96,18 @@ HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor *cbor,
 		goto errorReturn;
 	}
 
-	if (pIn == NULL)
+	if (pIn == NULL) {
 		_COSE_InsertInList(&Sign1Root, &pobj->m_message);
+	}
 
 	return (HCOSE_SIGN1)pobj;
 
 errorReturn:
 	if (pobj != NULL) {
 		_COSE_Sign1_Release(pobj);
-		if (pIn == NULL)
+		if (pIn == NULL) {
 			COSE_FREE(pobj, context);
+		}
 	}
 	return NULL;
 }
@@ -113,8 +119,9 @@ bool COSE_Sign1_Free(HCOSE_SIGN1 h)
 #endif
 	COSE_Sign1Message *pMessage = (COSE_Sign1Message *)h;
 
-	if (!IsValidSign1Handle(h))
+	if (!IsValidSign1Handle(h)) {
 		return false;
+	}
 
 	//  Check reference counting
 	if (pMessage->m_message.m_refCount > 1) {
@@ -170,8 +177,9 @@ bool COSE_Sign1_SetContent(HCOSE_SIGN1 h,
 	fRet = true;
 
 errorReturn:
-	if (p != NULL)
+	if (p != NULL) {
 		CN_CBOR_FREE(p, context);
+	}
 	return fRet;
 }
 
@@ -197,8 +205,9 @@ bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose,
 	cose_errback *perr)
 {
 	if (!IsValidSign1Handle(hcose)) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_INVALID_HANDLE;
+		}
 		return false;
 	}
 
@@ -209,7 +218,7 @@ bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose,
 bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 {
 #ifdef USE_CBOR_CONTEXT
-	// cn_cbor_context * context = NULL;
+	cn_cbor_context *context = NULL;
 #endif
 	COSE_Sign1Message *pMessage = (COSE_Sign1Message *)h;
 	const cn_cbor *pcborProtected;
@@ -220,15 +229,26 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 		return false;
 	}
 #ifdef USE_CBOR_CONTEXT
-	//	context = &pMessage->m_message.m_allocContext;
+	context = &pMessage->m_message.m_allocContext;
 #endif
 
 	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
-	if (pcborProtected == NULL)
+	if (pcborProtected == NULL) {
 		goto errorReturn;
+	}
 
-	if (!_COSE_Signer0_sign(pMessage, pKey, perr))
+	if (!_COSE_Signer0_sign(pMessage, pKey, perr)) {
 		goto errorReturn;
+	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	if (pMessage->m_message.m_counterSigners != NULL) {
+		if (!_COSE_CounterSign_Sign(
+				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
 
 	return true;
 }
@@ -268,8 +288,9 @@ cn_cbor *COSE_Sign1_map_get_int(HCOSE_SIGN1 h,
 	cose_errback *perror)
 {
 	if (!IsValidSign1Handle(h)) {
-		if (perror != NULL)
+		if (perror != NULL) {
 			perror->err = COSE_ERR_INVALID_HANDLE;
+		}
 		return NULL;
 	}
 
@@ -322,12 +343,14 @@ static bool CreateSign1AAD(COSE_Sign1Message *pMessage,
 	cn2 = _COSE_arrayget_int(&pMessage->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION(cn2 != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	if ((cn2->length == 1) && (cn2->v.bytes[0] == 0xa0))
+	if ((cn2->length == 1) && (cn2->v.bytes[0] == 0xa0)) {
 		cn =
 			cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	else
+	}
+	else {
 		cn = cn_cbor_data_create(cn2->v.bytes, (int)cn2->length,
 			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+	}
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(pArray, cn, &cbor_error), cbor_error);
@@ -361,19 +384,24 @@ static bool CreateSign1AAD(COSE_Sign1Message *pMessage,
 	*pcbToSign = cbToSign;
 	pbToSign = NULL;
 
-	if (cn != NULL)
+	if (cn != NULL) {
 		CN_CBOR_FREE(cn, context);
-	if (pArray != NULL)
+	}
+	if (pArray != NULL) {
 		COSE_FREE(pArray, context);
+	}
 	return true;
 
 errorReturn:
-	if (pbToSign != NULL)
+	if (pbToSign != NULL) {
 		COSE_FREE(pbToSign, context);
-	if (cn != NULL)
+	}
+	if (cn != NULL) {
 		CN_CBOR_FREE(cn, context);
-	if (pArray != NULL)
+	}
+	if (pArray != NULL) {
 		COSE_FREE(pArray, context);
+	}
 	return false;
 }
 
@@ -395,36 +423,44 @@ bool _COSE_Signer0_sign(COSE_Sign1Message *pSigner,
 
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (pArray == NULL) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_OUT_OF_MEMORY;
+		}
 	errorReturn:
-		if (pcborBody2 != NULL)
+		if (pcborBody2 != NULL) {
 			CN_CBOR_FREE(pcborBody2, context);
-		if (pcborProtected2 != NULL)
+		}
+		if (pcborProtected2 != NULL) {
 			CN_CBOR_FREE(pcborProtected2, context);
-		if (pArray != NULL)
+		}
+		if (pArray != NULL) {
 			COSE_FREE(pArray, context);
-		if (pbToSign != NULL)
+		}
+		if (pbToSign != NULL) {
 			COSE_FREE(pbToSign, context);
+		}
 		return false;
 	}
 
 	cn = _COSE_map_get_int(
 		&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn == NULL)
+	if (cn == NULL) {
 		goto errorReturn;
+	}
 
 	if (cn->type == CN_CBOR_TEXT) {
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
-	} else {
+	}
+	else {
 		CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT),
 			COSE_ERR_INVALID_PARAMETER);
 
 		alg = (int)cn->v.uint;
 	}
 
-	if (!CreateSign1AAD(pSigner, &pbToSign, &cbToSign, "Signature1", perr))
+	if (!CreateSign1AAD(pSigner, &pbToSign, &cbToSign, "Signature1", perr)) {
 		goto errorReturn;
+	}
 
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256
@@ -484,12 +520,14 @@ bool _COSE_Signer0_validate(COSE_Sign1Message *pSign,
 
 	cn = _COSE_map_get_int(
 		&pSign->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn == NULL)
+	if (cn == NULL) {
 		goto errorReturn;
+	}
 
 	if (cn->type == CN_CBOR_TEXT) {
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
-	} else {
+	}
+	else {
 		CHECK_CONDITION((cn->type == CN_CBOR_UINT || cn->type == CN_CBOR_INT),
 			COSE_ERR_INVALID_PARAMETER);
 
@@ -498,39 +536,44 @@ bool _COSE_Signer0_validate(COSE_Sign1Message *pSign,
 
 	//  Build protected headers
 
-	if (!CreateSign1AAD(pSign, &pbToSign, &cbToSign, "Signature1", perr))
+	if (!CreateSign1AAD(pSign, &pbToSign, &cbToSign, "Signature1", perr)) {
 		goto errorReturn;
+	}
 
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256
 		case COSE_Algorithm_ECDSA_SHA_256:
 			if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE + 1, pKey, 256,
-					pbToSign, cbToSign, perr))
+					pbToSign, cbToSign, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_ECDSA_SHA_384
 		case COSE_Algorithm_ECDSA_SHA_384:
 			if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE + 1, pKey, 384,
-					pbToSign, cbToSign, perr))
+					pbToSign, cbToSign, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_ECDSA_SHA_512
 		case COSE_Algorithm_ECDSA_SHA_512:
 			if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE + 1, pKey, 512,
-					pbToSign, cbToSign, perr))
+					pbToSign, cbToSign, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
 #ifdef USE_EDDSA
 		case COSE_Algorithm_EdDSA:
 			if (!EdDSA_Verify(&pSign->m_message, INDEX_SIGNATURE + 1, pKey,
-					pbToSign, cbToSign, perr))
+					pbToSign, cbToSign, perr)) {
 				goto errorReturn;
+			}
 			break;
 #endif
 
@@ -542,8 +585,9 @@ bool _COSE_Signer0_validate(COSE_Sign1Message *pSign,
 	fRet = true;
 
 errorReturn:
-	if (pbToSign != NULL)
+	if (pbToSign != NULL) {
 		COSE_FREE(pbToSign, context);
+	}
 
 	return fRet;
 }

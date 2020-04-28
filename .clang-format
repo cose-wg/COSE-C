@@ -8,6 +8,6 @@ BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true
   BeforeCatch: false
-  BeforeElse: false
+  BeforeElse: true
 AlignAfterOpenBracket: false
 SortIncludes: false

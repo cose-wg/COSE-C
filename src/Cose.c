@@ -4,20 +4,21 @@
 #endif
 
 #include "cose/cose.h"
-#include "cose_int.h"
 #include "cose/cose_configure.h"
+#include "cose_int.h"
 #include "crypto.h"
 
 bool IsValidCOSEHandle(HCOSE h)
 {
 	COSE_Encrypt *p = (COSE_Encrypt *)h;
-	if (p == NULL)
+	if (p == NULL) {
 		return false;
+	}
 	return true;
 }
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,
-	COSE *pobj,
+	COSE *pcose,
 	int msgType,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
@@ -25,49 +26,50 @@ bool _COSE_Init(COSE_INIT_FLAGS flags,
 	;
 
 #ifdef USE_CBOR_CONTEXT
-	if (context != NULL)
-		pobj->m_allocContext = *context;
+	if (context != NULL) {
+		pcose->m_allocContext = *context;
+	}
 #endif
 
 	CHECK_CONDITION((flags & ~(COSE_INIT_FLAGS_DETACHED_CONTENT |
 								 COSE_INIT_FLAGS_NO_CBOR_TAG)) == 0,
 		COSE_ERR_INVALID_PARAMETER);
 
-	pobj->m_flags = flags;
+	pcose->m_flags = flags;
 
-	pobj->m_protectedMap =
+	pcose->m_protectedMap =
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_protectedMap != NULL, errState);
+	CHECK_CONDITION_CBOR(pcose->m_protectedMap != NULL, errState);
 
-	pobj->m_dontSendMap =
+	pcose->m_dontSendMap =
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, errState);
+	CHECK_CONDITION_CBOR(pcose->m_dontSendMap != NULL, errState);
 
-	pobj->m_cborRoot = pobj->m_cbor =
+	pcose->m_cborRoot = pcose->m_cbor =
 		cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_cbor != NULL, errState);
-	pobj->m_ownMsg = 1;
+	CHECK_CONDITION_CBOR(pcose->m_cbor != NULL, errState);
+	pcose->m_ownMsg = 1;
 
-	pobj->m_msgType = msgType;
+	pcose->m_msgType = msgType;
 
-	pobj->m_unprotectMap =
+	pcose->m_unprotectMap =
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & errState);
-	CHECK_CONDITION_CBOR(pobj->m_unprotectMap != NULL, errState);
+	CHECK_CONDITION_CBOR(pcose->m_unprotectMap != NULL, errState);
 	CHECK_CONDITION_CBOR(
-		_COSE_array_replace(pobj, pobj->m_unprotectMap, INDEX_UNPROTECTED,
+		_COSE_array_replace(pcose, pcose->m_unprotectMap, INDEX_UNPROTECTED,
 			CBOR_CONTEXT_PARAM_COMMA & errState),
 		errState);
-	pobj->m_ownUnprotectedMap = false;
+	pcose->m_ownUnprotectedMap = false;
 
 	if (!(flags & COSE_INIT_FLAGS_NO_CBOR_TAG)) {
 		cn_cbor_errback cbor_error;
 		cn_cbor *cn = cn_cbor_tag_create(
-			msgType, pobj->m_cborRoot, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+			msgType, pcose->m_cborRoot, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
-		pobj->m_cborRoot = cn;
+		pcose->m_cborRoot = cn;
 	}
 
-	pobj->m_refCount = 1;
+	pcose->m_refCount = 1;
 
 	return true;
 
@@ -84,15 +86,16 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	cn_cbor_errback cbor_error;
 
 #ifdef USE_CBOR_CONTEXT
-	if (context != NULL)
+	if (context != NULL) {
 		pobj->m_allocContext = *context;
+	}
 #endif
 	pobj->m_cborRoot = pcbor;
 	pobj->m_cbor = pcbor;
 
 	//  Check if we have a tag
 	if (pcbor->type == CN_CBOR_TAG) {
-		pcbor = pobj->m_cbor = pcbor->first_child;
+		pobj->m_cbor = pcbor->first_child;
 	}
 
 	pmap = _COSE_arrayget_int(pobj, INDEX_PROTECTED);
@@ -106,7 +109,8 @@ bool _COSE_Init_From_Object(COSE *pobj,
 			pobj->m_protectedMap =
 				cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 			CHECK_CONDITION(pobj->m_protectedMap, COSE_ERR_OUT_OF_MEMORY);
-		} else {
+		}
+		else {
 			pobj->m_protectedMap = cn_cbor_decode((const byte *)pmap->v.str,
 				pmap->length, CBOR_CONTEXT_PARAM_COMMA & errState);
 			CHECK_CONDITION(
@@ -124,6 +128,31 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(pobj->m_dontSendMap != NULL, cbor_error);
 
+#if INCLUDE_COUNTERSIGNATURE
+	cn_cbor *pCounter =
+		cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign);
+	if (pCounter != NULL) {
+		int i;
+		CHECK_CONDITION(
+			pCounter->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(pCounter->length > 0, COSE_ERR_INVALID_PARAMETER);
+		if (pCounter->first_child->type == CN_CBOR_ARRAY) {
+			cn_cbor *pSig = pCounter->first_child;
+			for (i = 0; i < pCounter->length; i++, pSig = pSig->next) {
+				COSE_CounterSign *cs = _COSE_CounterSign_Init_From_Object(
+					pSig, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cs->m_next = pobj->m_counterSigners;
+				pobj->m_counterSigners = cs;
+			}
+		}
+		else {
+			COSE_CounterSign *cs = _COSE_CounterSign_Init_From_Object(
+				pCounter, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+			pobj->m_counterSigners = cs;
+		}
+	}
+#endif
+
 	pobj->m_ownMsg = true;
 	pobj->m_refCount = 1;
 
@@ -133,21 +162,38 @@ errorReturn:
 	return false;
 }
 
-void _COSE_Release(COSE *pobj)
+void _COSE_Release(COSE *pcose)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = &pobj->m_allocContext;
+	cn_cbor_context *context = &pcose->m_allocContext;
 #endif
 
-	if (pobj->m_protectedMap != NULL)
-		CN_CBOR_FREE(pobj->m_protectedMap, context);
-	if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL))
-		CN_CBOR_FREE(pobj->m_unprotectMap, context);
-	if (pobj->m_dontSendMap != NULL)
-		CN_CBOR_FREE(pobj->m_dontSendMap, context);
-	if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) &&
-		(pobj->m_cborRoot->parent == NULL))
-		CN_CBOR_FREE(pobj->m_cborRoot, context);
+	if (pcose->m_protectedMap != NULL) {
+		CN_CBOR_FREE(pcose->m_protectedMap, context);
+	}
+	if (pcose->m_ownUnprotectedMap && (pcose->m_unprotectMap != NULL)) {
+		CN_CBOR_FREE(pcose->m_unprotectMap, context);
+	}
+	if (pcose->m_dontSendMap != NULL) {
+		CN_CBOR_FREE(pcose->m_dontSendMap, context);
+	}
+	if (pcose->m_ownMsg && (pcose->m_cborRoot != NULL) &&
+		(pcose->m_cborRoot->parent == NULL)) {
+		CN_CBOR_FREE(pcose->m_cborRoot, context);
+	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	if (pcose->m_counterSigners != NULL) {
+		COSE_CounterSign *p = pcose->m_counterSigners;
+		COSE_CounterSign *p2 = NULL;
+
+		while (p != NULL) {
+			p2 = p->m_next;
+			COSE_CounterSign_Free((HCOSE_COUNTERSIGN)p);
+			p = p2;
+		}
+	}
+#endif
 }
 
 HCOSE COSE_Decode(const byte *rgbData,
@@ -172,13 +218,16 @@ HCOSE COSE_Decode(const byte *rgbData,
 		if (struct_type != 0) {
 			CHECK_CONDITION(struct_type == (COSE_object_type)cbor->v.sint,
 				COSE_ERR_INVALID_PARAMETER);
-		} else
+		}
+		else {
 			struct_type = cbor->v.uint;
+		}
 
 		*ptype = struct_type;
 
 		cbor = cbor->first_child;
-	} else {
+	}
+	else {
 		*ptype = struct_type;
 	}
 
@@ -270,8 +319,9 @@ errorReturn:
 
 size_t COSE_Encode(HCOSE msg, byte *rgb, size_t ib, size_t cb)
 {
-	if (rgb == NULL)
+	if (rgb == NULL) {
 		return cn_cbor_encode_size(((COSE *)msg)->m_cbor) + ib;
+	}
 	ssize_t size = cn_cbor_encoder_write(rgb, ib, cb, ((COSE *)msg)->m_cbor);
 	return size >= 0 ? size : 0;
 }
@@ -279,8 +329,9 @@ size_t COSE_Encode(HCOSE msg, byte *rgb, size_t ib, size_t cb)
 cn_cbor *COSE_get_cbor(HCOSE h)
 {
 	COSE *msg = (COSE *)h;
-	if (!IsValidCOSEHandle(h))
+	if (!IsValidCOSEHandle(h)) {
 		return NULL;
+	}
 
 	return msg->m_cbor;
 }
@@ -297,35 +348,36 @@ bool _COSE_SetExternal(COSE *pcose,
 	return true;
 }
 
-cn_cbor *_COSE_map_get_int(COSE *pcose,
-	int key,
-	int flags,
-	cose_errback *perror)
+cn_cbor *_COSE_map_get_int(COSE *cose, int key, int flags, cose_errback *perr)
 {
 	cn_cbor *p = NULL;
 
-	if (perror != NULL)
-		perror->err = COSE_ERR_NONE;
-
-	if ((pcose->m_protectedMap != NULL) && ((flags & COSE_PROTECT_ONLY) != 0)) {
-		p = cn_cbor_mapget_int(pcose->m_protectedMap, key);
-		if (p != NULL)
-			return p;
+	if (perr != NULL) {
+		perr->err = COSE_ERR_NONE;
 	}
 
-	if ((pcose->m_unprotectMap != NULL) &&
+	if ((cose->m_protectedMap != NULL) && ((flags & COSE_PROTECT_ONLY) != 0)) {
+		p = cn_cbor_mapget_int(cose->m_protectedMap, key);
+		if (p != NULL) {
+			return p;
+		}
+	}
+
+	if ((cose->m_unprotectMap != NULL) &&
 		((flags & COSE_UNPROTECT_ONLY) != 0)) {
-		p = cn_cbor_mapget_int(pcose->m_unprotectMap, key);
-		if (p != NULL)
+		p = cn_cbor_mapget_int(cose->m_unprotectMap, key);
+		if (p != NULL) {
 			return p;
+		}
 	}
 
-	if ((pcose->m_dontSendMap != NULL) && ((flags & COSE_DONT_SEND) != 0)) {
-		p = cn_cbor_mapget_int(pcose->m_dontSendMap, key);
+	if ((cose->m_dontSendMap != NULL) && ((flags & COSE_DONT_SEND) != 0)) {
+		p = cn_cbor_mapget_int(cose->m_dontSendMap, key);
 	}
 
-	if ((p == NULL) && (perror != NULL))
-		perror->err = COSE_ERR_INVALID_PARAMETER;
+	if ((p == NULL) && (perr != NULL)) {
+		perr->err = COSE_ERR_INVALID_PARAMETER;
+	}
 
 	return p;
 }
@@ -337,13 +389,15 @@ cn_cbor *_COSE_map_get_str(COSE *pcose,
 {
 	cn_cbor *p = NULL;
 
-	if (perror != NULL)
+	if (perror != NULL) {
 		perror->err = COSE_ERR_NONE;
+	}
 
 	if ((pcose->m_protectedMap != NULL) && ((flags & COSE_PROTECT_ONLY) != 0)) {
 		p = cn_cbor_mapget_string(pcose->m_protectedMap, key);
-		if (p != NULL)
+		if (p != NULL) {
 			return p;
+		}
 	}
 
 	if ((pcose->m_unprotectMap != NULL) &&
@@ -358,39 +412,39 @@ cn_cbor *_COSE_map_get_str(COSE *pcose,
 	return p;
 }
 
-bool _COSE_map_put(COSE *pCose,
+bool _COSE_map_put(COSE *cose,
 	int key,
 	cn_cbor *value,
 	int flags,
 	cose_errback *perr)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = &pCose->m_allocContext;
+	cn_cbor_context *context = &cose->m_allocContext;
 #endif
 	cn_cbor_errback error;
 	bool f = false;
 	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_protectedMap, key) == NULL,
+	CHECK_CONDITION(cn_cbor_mapget_int(cose->m_protectedMap, key) == NULL,
 		COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_unprotectMap, key) == NULL,
+	CHECK_CONDITION(cn_cbor_mapget_int(cose->m_unprotectMap, key) == NULL,
 		COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_dontSendMap, key) == NULL,
+	CHECK_CONDITION(cn_cbor_mapget_int(cose->m_dontSendMap, key) == NULL,
 		COSE_ERR_INVALID_PARAMETER);
 
 	switch (flags) {
 		case COSE_PROTECT_ONLY:
-			f = cn_cbor_mapput_int(pCose->m_protectedMap, key, value,
+			f = cn_cbor_mapput_int(cose->m_protectedMap, key, value,
 				CBOR_CONTEXT_PARAM_COMMA & error);
 			break;
 
 		case COSE_UNPROTECT_ONLY:
-			f = cn_cbor_mapput_int(pCose->m_unprotectMap, key, value,
+			f = cn_cbor_mapput_int(cose->m_unprotectMap, key, value,
 				CBOR_CONTEXT_PARAM_COMMA & error);
 			break;
 
 		case COSE_DONT_SEND:
-			f = cn_cbor_mapput_int(pCose->m_dontSendMap, key, value,
+			f = cn_cbor_mapput_int(cose->m_dontSendMap, key, value,
 				CBOR_CONTEXT_PARAM_COMMA & error);
 			break;
 
@@ -417,8 +471,9 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED);
 	if ((pProtected != NULL) && (pProtected->type != CN_CBOR_INVALID)) {
 	errorReturn:
-		if (pbProtected != NULL)
+		if (pbProtected != NULL) {
 			COSE_FREE(pbProtected, context);
+		}
 		return pProtected;
 	}
 
@@ -430,7 +485,8 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 		CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected,
 							pMessage->m_protectedMap) == cbProtected,
 			COSE_ERR_CBOR);
-	} else {
+	}
+	else {
 		cbProtected = 0;
 	}
 
@@ -445,109 +501,6 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 
 	return pProtected;
 }
-
-#ifdef USE_COUNTER_SIGNATURES
-bool _COSE_CounterSign_add(COSE *pMessage,
-	HCOSE_COUNTERSIGN hSigner,
-	cose_errback *perr)
-{
-	COSE_CounterSign *pSigner = (COSE_CounterSign *)hSigner;
-
-	CHECK_CONDITION(IsValidCounterSignHandle(hSigner), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(
-		pSigner->m_signer.m_signerNext == NULL, COSE_ERR_INVALID_PARAMETER);
-
-	pSigner = pMessage->m_counterSigners;
-	pMessage->m_counterSigners = pSigner;
-	return true;
-
-errorReturn:
-	return false;
-}
-
-HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE *pMessage,
-	int iSigner,
-	cose_errback *perr)
-{
-	COSE_CounterSign *pSigner = pMessage->m_counterSigners;
-	int i;
-
-	for (i = 0; i < iSigner; i++, pSigner = pSigner->m_next) {
-		CHECK_CONDITION(pSigner != NULL, COSE_ERR_INVALID_PARAMETER);
-	}
-
-	return (HCOSE_COUNTERSIGN)pSigner;
-
-errorReturn:
-	return false;
-}
-
-bool _COSE_CountSign_create(COSE *pMessage,
-	cn_cbor *pcnBody,
-	CBOR_CONTEXT_COMMA cose_errback *perr)
-{
-	cn_cbor *pArray = NULL;
-	cn_cbor_errback cbor_err;
-	COSE_CounterSign *pSigner = NULL;
-	cn_cbor *pcnProtected = NULL;
-	cn_cbor *pcn = NULL;
-	cn_cbor *pcn2 = NULL;
-
-	if (pMessage->m_counterSigners == NULL)
-		return true;
-
-	//  One or more than one?
-	if (pMessage->m_counterSigners->m_signer.m_signerNext != NULL) {
-		pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cbor_err);
-		CHECK_CONDITION_CBOR(pArray != NULL, cbor_err);
-	}
-
-	pcnProtected = _COSE_arrayget_int(pMessage, INDEX_PROTECTED);
-	CHECK_CONDITION(pcnProtected != NULL, COSE_ERR_INTERNAL);
-
-	for (pSigner = pMessage->m_counterSigners; pSigner != NULL;
-		 pSigner = pSigner->m_next) {
-		CHECK_CONDITION(
-			pSigner->m_signer.m_signerNext == NULL, COSE_ERR_INTERNAL);
-
-		pcn = cn_cbor_data_create(pcnProtected->v.bytes, pcnProtected->v.count,
-			CBOR_CONTEXT_PARAM_COMMA & cbor_err);
-		CHECK_CONDITION_CBOR(pcnProtected != NULL, cbor_err);
-
-		pcn2 = cn_cbor_clone(pcnBody, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
-		CHECK_CONDITION_CBOR(pcnBody != NULL, cbor_err);
-
-		if (!_COSE_Signer_sign(&pSigner->m_signer, pcnBody, pcn2, perr))
-			goto errorReturn;
-		pcn = NULL;
-		pcn2 = NULL;
-
-		if (pArray != NULL) {
-			bool f = cn_cbor_array_append(
-				pArray, pSigner->m_signer.m_message.m_cborRoot, &cbor_err);
-			CHECK_CONDITION_CBOR(f, cbor_err);
-		} else {
-			pArray = pSigner->m_signer.m_message.m_cborRoot;
-		}
-	}
-
-	if (!_COSE_map_put(pMessage, COSE_Header_CounterSign, pArray,
-			COSE_UNPROTECT_ONLY, perr))
-		goto errorReturn;
-
-	return true;
-
-errorReturn:
-	if (pArray != NULL)
-		CN_CBOR_FREE(pArray, context);
-	if ((pcn != NULL) && (pcn->parent != NULL))
-		CN_CBOR_FREE(pcn, context);
-	if ((pcn2 != NULL) && (pcn2->parent != NULL))
-		CN_CBOR_FREE(pcn2, context);
-	return false;
-}
-
-#endif
 
 bool _COSE_array_replace(COSE *pMessage,
 	cn_cbor *cb_value,
@@ -577,28 +530,28 @@ cose_error _MapFromCBOR(cn_cbor_errback err)
 	}
 }
 
-void _COSE_InsertInList(COSE **root, COSE *newMsg)
+void _COSE_InsertInList(COSE **rootNode, COSE *newMsg)
 {
-	if (*root == NULL) {
-		*root = newMsg;
+	if (*rootNode == NULL) {
+		*rootNode = newMsg;
 		return;
 	}
 
-	newMsg->m_handleList = *root;
-	*root = newMsg;
+	newMsg->m_handleList = *rootNode;
+	*rootNode = newMsg;
 	return;
 }
 
-bool _COSE_IsInList(const COSE *const root, const COSE *const thisMsg)
+bool _COSE_IsInList(const COSE *const rootNode, const COSE *const thisMsg)
 {
-	if (root == NULL) {
+	if (rootNode == NULL) {
 		return false;
 	}
 	if (thisMsg == NULL) {
 		return false;
 	}
 
-	for (const COSE *walk = root; walk != NULL; walk = walk->m_handleList) {
+	for (const COSE *walk = rootNode; walk != NULL; walk = walk->m_handleList) {
 		if (walk == thisMsg) {
 			return true;
 		}
@@ -606,17 +559,16 @@ bool _COSE_IsInList(const COSE *const root, const COSE *const thisMsg)
 	return false;
 }
 
-void _COSE_RemoveFromList(COSE **root, COSE *thisMsg)
+void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 {
-	COSE *walk;
-
-	if (*root == thisMsg) {
-		*root = thisMsg->m_handleList;
+	if (*rootNode == thisMsg) {
+		*rootNode = thisMsg->m_handleList;
 		thisMsg->m_handleList = NULL;
 		return;
 	}
 
-	for (walk = *root; walk->m_handleList != NULL; walk = walk->m_handleList) {
+	for (COSE *walk = *rootNode; walk->m_handleList != NULL;
+		 walk = walk->m_handleList) {
 		if (walk->m_handleList == thisMsg) {
 			walk->m_handleList = thisMsg->m_handleList;
 			thisMsg->m_handleList = NULL;
@@ -625,3 +577,62 @@ void _COSE_RemoveFromList(COSE **root, COSE *thisMsg)
 	}
 	return;
 }
+
+#ifndef NDEBUG
+#if INCLUDE_COUNTERSIGNATURE
+extern COSE *CountersignRoot;
+#endif
+#if INCLUDE_SIGN
+extern COSE *SignerRoot;
+extern COSE *SignRoot;
+#endif
+#if INCLUDE_SIGN1
+extern COSE *Sign1Root;
+#endif
+#if INCLUDE_ENCRYPT0
+extern COSE *EncryptRoot;
+#endif
+#if INCLUDE_ENCRYPT
+extern COSE *EnvelopedRoot;
+#endif
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
+extern COSE *RecipientRoot;
+#endif
+#if INCLUDE_MAC
+extern COSE *MacRoot;
+#endif
+#if INCLUDE_MAC0
+extern COSE *Mac0Root;
+#endif
+
+bool AreListsEmpty()
+{
+	bool fRet = true;
+#if INCLUDE_COUNTERSIGNATURE
+	fRet &= CountersignRoot == NULL;
+#endif
+#if INCLUDE_SIGN
+	fRet &= SignerRoot == NULL && SignRoot == NULL;
+#endif
+#if INCLUDE_SIGN1
+	fRet &= Sign1Root == NULL;
+#endif
+#if INCLUDE_ENCRYPT0
+	fRet &= EncryptRoot == NULL;
+#endif
+#if INCLUDE_ENCRYPT
+	fRet &= EnvelopedRoot == NULL;
+#endif
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
+	fRet &= RecipientRoot == NULL;
+#endif
+#if INCLUDE_MAC
+	fRet &= MacRoot == NULL;
+#endif
+#if INCLUDE_MAC0
+	fRet &= Mac0Root == NULL;
+#endif
+	return fRet;
+}
+
+#endif

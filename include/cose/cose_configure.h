@@ -143,12 +143,11 @@
 // Requires OPEN SSL 1.1.1 to build
 #define USE_EDDSA
 #else
-#pragma message("OPENSSL VERSION IS ")
-#pragma message(OPENSSL_VERISON_NUMBER)
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#pragma message("OPENSSL VERSION IS " OPENSSL_VERSION_TEXT)
 #endif
 #endif	// !defined (USE_MBED_TLS)
-
-//#define USE_COUNTER_SIGNATURES
 
 //
 //   Define which COSE objects are included
@@ -171,4 +170,10 @@
 #endif
 #ifndef INCLUDE_SIGN1
 #define INCLUDE_SIGN1 1
+#endif
+#ifndef INCLUDE_COUNTERSIGNATURE
+#define INCLUDE_COUNTERSIGNATURE 1
+#endif
+#ifndef INCLUDE_COUNTERSIGNATURE1
+#define INCLUDE_COUNTERSIGNATURE1 0
 #endif

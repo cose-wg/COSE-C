@@ -8,10 +8,10 @@
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
 
-#ifdef USE_COUNTER_SIGNATURES
-struct _COSE_COUNTER_SIGN;
-typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
-#endif
+struct CounterSign;
+typedef struct CounterSign COSE_CounterSign;
+struct CounterSign1;
+typedef struct CounterSign1 COSE_CounterSign1;
 
 #define UNUSED(x) ((void)(x))
 
@@ -36,8 +36,12 @@ typedef struct _COSE {
 	cn_cbor_context m_allocContext;
 #endif
 	struct _COSE *m_handleList;
-#ifdef USE_COUNTER_SIGNATURES
-	COSE_CounterSign *m_counterSigners;
+#if INCLUDE_COUNTERSIGNATURE
+	COSE_CounterSign
+		*m_counterSigners;	// Linked list of all counter signatures
+#endif
+#if INCLUDE_COUNTERSIGNATURE1
+	COSE_CounterSign1 *m_counterSign1;
 #endif
 } COSE;
 
@@ -98,12 +102,10 @@ typedef struct {
 #endif
 typedef COSE_MacMessage COSE_Mac0Message;
 
-#ifdef USE_COUNTER_SIGNATURES
-typedef struct _COSE_COUNTER_SIGN {
+struct CounterSign {
 	COSE_SignerInfo m_signer;
 	COSE_CounterSign *m_next;
-} COSE_CounterSign;
-#endif
+};
 
 #ifdef USE_CBOR_CONTEXT
 /**
@@ -169,30 +171,34 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg);
 bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h);
 bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
+bool IsValidSignHandle(HCOSE_SIGN h);
 bool IsValidSignerHandle(HCOSE_SIGNER h);
+bool IsValidSign1Handle(HCOSE_SIGN1 h);
 bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
+bool IsValidMacHandle(HCOSE_MAC h);
+bool IsValidMac0Handle(HCOSE_MAC0 h);
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,
 	COSE *pcose,
 	int msgType,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
+	CBOR_CONTEXT_COMMA cose_errback *perr);
 bool _COSE_Init_From_Object(COSE *pobj,
 	cn_cbor *pcbor,
-	CBOR_CONTEXT_COMMA cose_errback *perror);
+	CBOR_CONTEXT_COMMA cose_errback *perr);
 void _COSE_Release(COSE *pcose);
 
 cn_cbor *_COSE_map_get_string(COSE *cose,
 	const char *key,
 	int flags,
 	cose_errback *errp);
-cn_cbor *_COSE_map_get_int(COSE *cose, int key, int flags, cose_errback *errp);
+cn_cbor *_COSE_map_get_int(COSE *cose, int key, int flags, cose_errback *perr);
 bool _COSE_map_put(COSE *cose,
 	int key,
 	cn_cbor *value,
 	int flags,
-	cose_errback *errp);
+	cose_errback *perr);
 
-bool _COSE_SetExternal(COSE *hcose,
+bool _COSE_SetExternal(COSE *pcose,
 	const byte *pbExternalData,
 	size_t cbExternalData,
 	cose_errback *perr);
@@ -264,15 +270,16 @@ bool _COSE_SignerInfo_Init(COSE_INIT_FLAGS flags,
 bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 	const cn_cbor *pcborBody,
 	const cn_cbor *pcborProtected,
+	const char *const contextString,
 	cose_errback *perr);
 COSE_SignerInfo *_COSE_SignerInfo_Init_From_Object(cn_cbor *cbor,
 	COSE_SignerInfo *pIn,
 	CBOR_CONTEXT_COMMA cose_errback *perr);
-bool _COSE_SignerInfo_Free(COSE_SignerInfo *pSigner);
-bool _COSE_Signer_validate(COSE_SignMessage *pSign,
-	COSE_SignerInfo *pSigner,
+bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner);
+bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 	const cn_cbor *pbContent,
 	const cn_cbor *pbProtected,
+	const char *const szContext,
 	cose_errback *perr);
 
 // Sign1 items
@@ -318,6 +325,11 @@ bool _COSE_CounterSign_add(COSE *pMessage,
 	cose_errback *perr);
 bool _COSE_CountSign_create(COSE *pMessage,
 	cn_cbor *pcnBody,
+	CBOR_CONTEXT_COMMA cose_errback *perr);
+COSE_CounterSign *_COSE_CounterSign_Init_From_Object(cn_cbor *cbor,
+	COSE_CounterSign *,
+	CBOR_CONTEXT_COMMA cose_errback *perr);
+bool _COSE_CounterSign_Sign(COSE *baseMessage,
 	CBOR_CONTEXT_COMMA cose_errback *perr);
 
 //
@@ -398,8 +410,6 @@ cn_cbor *_COSE_arrayget_int(COSE *pMessage, int index);
 bool cn_cbor_array_replace(cn_cbor *cb_array,
 	cn_cbor *cb_value,
 	int index,
-	CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
-cn_cbor *cn_cbor_bool_create(int boolValue,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
 
 size_t cn_cbor_encode_size(cn_cbor *object);

@@ -29,6 +29,7 @@
 *.x86_64
 *.hex
 a.bat
+clang-format.bat
 
 # Debug files
 *.dSYM/
@@ -59,6 +60,7 @@ build
 *.VC.opendb
 .vs
 .vscode
+CMakeSettings.json
 
 # CMake and CTest directories
 project_cn-cbor-prefix

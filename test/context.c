@@ -16,9 +16,11 @@ typedef struct {
 	cn_cbor_context context;
 	byte *pFirst;
 	unsigned int iFailLeft;
+	int allocCount;
 } MyContext;
 
 typedef struct _MyItem {
+	int allocNumber;
 	struct _MyItem *pNext;
 	size_t size;
 	byte pad[4];
@@ -39,15 +41,17 @@ bool CheckMemory(MyContext *pContext)
 					assert(false);
 				}
 			}
-		} else if (p->pad[0] == (byte)0xef) {
+		}
+		else if (p->pad[0] == (byte)0xef) {
 			for (unsigned i = 0; i < 4; i++) {
 				if ((p->pad[i] != (byte)0xef) ||
 					(p->pad[i + 4 + p->size] != (byte)0xef)) {
-					fprintf(stderr, "Curent block was overrun");
+					fprintf(stderr, "Current block was overrun");
 					assert(false);
 				}
 			}
-		} else {
+		}
+		else {
 			fprintf(stderr, "Incorrect pad value");
 			assert(false);
 		}
@@ -63,9 +67,12 @@ void *MyCalloc(size_t count, size_t size, void *context)
 
 	CheckMemory(myContext);
 
-	if (myContext->iFailLeft == 0)
-		return NULL;
-	myContext->iFailLeft--;
+	if (myContext->iFailLeft != -1) {
+		if (myContext->iFailLeft == 0) {
+			return NULL;
+		}
+		myContext->iFailLeft--;
+	}
 
 	pb = (MyItem *)malloc(sizeof(MyItem) + count * size);
 
@@ -75,6 +82,7 @@ void *MyCalloc(size_t count, size_t size, void *context)
 	pb->pNext = (struct _MyItem *)myContext->pFirst;
 	myContext->pFirst = (byte *)pb;
 	pb->size = count * size;
+	pb->allocNumber = myContext->allocCount++;
 
 	return &pb->data;
 }
@@ -85,8 +93,9 @@ void MyFree(void *ptr, void *context)
 	MyContext *myContext = (MyContext *)context;
 
 	CheckMemory(myContext);
-	if (ptr == NULL)
+	if (ptr == NULL) {
 		return;
+	}
 
 	memset(&pb->pad, 0xab, pb->size + 8);
 }
@@ -100,6 +109,7 @@ cn_cbor_context *CreateContext(unsigned int iFailPoint)
 	p->context.context = p;
 	p->pFirst = NULL;
 	p->iFailLeft = iFailPoint;
+	p->allocCount = 0;
 
 	return &p->context;
 }
@@ -120,6 +130,27 @@ void FreeContext(cn_cbor_context *pContext)
 	free(myContext);
 
 	return;
+}
+
+int IsContextEmpty(cn_cbor_context *pContext)
+{
+	MyContext *myContext = (MyContext *)pContext;
+	MyItem *p;
+	int i = 0;
+
+	//  Walk memory and check every block
+
+	for (p = (MyItem *)myContext->pFirst; p != NULL; p = p->pNext) {
+		if (p->pad[0] == (byte)0xab) {
+			//  Block has been freed
+		}
+		else {
+			//  This block has not been freed
+			i += 1;
+		}
+	}
+
+	return i;
 }
 
 #endif	// USE_CBOR_CONTEXT

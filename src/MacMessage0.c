@@ -18,7 +18,7 @@
 
 #if INCLUDE_MAC0
 
-static COSE *Mac0Root = NULL;
+COSE *Mac0Root = NULL;
 
 /*! \private
  * @brief Test if a HCOSE_MAC0 handle is valid
@@ -76,12 +76,14 @@ HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *cbor,
 	cn_cbor *pRecipients = NULL;
 	// cn_cbor * tmp;
 	cose_errback error = {COSE_ERR_NONE};
-	if (perr == NULL)
+	if (perr == NULL) {
 		perr = &error;
+	}
 
-	if (pobj == NULL)
+	if (pobj == NULL) {
 		pobj = (COSE_Mac0Message *)COSE_CALLOC(
 			1, sizeof(COSE_Mac0Message), context);
+	}
 	if (pobj == NULL) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
@@ -114,8 +116,9 @@ bool COSE_Mac0_Free(HCOSE_MAC0 h)
 #endif
 	COSE_Mac0Message *p = (COSE_Mac0Message *)h;
 
-	if (!IsValidMac0Handle(h))
+	if (!IsValidMac0Handle(h)) {
 		return false;
+	}
 
 	if (p->m_message.m_refCount > 1) {
 		p->m_message.m_refCount--;
@@ -168,8 +171,9 @@ bool COSE_Mac0_SetContent(HCOSE_MAC0 cose,
 	return true;
 
 errorReturn:
-	if (ptmp != NULL)
+	if (ptmp != NULL) {
 		CN_CBOR_FREE(ptmp, context);
+	}
 	return false;
 }
 
@@ -195,8 +199,9 @@ bool COSE_Mac0_SetExternal(HCOSE_MAC0 hcose,
 	cose_errback *perr)
 {
 	if (!IsValidMac0Handle(hcose)) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_INVALID_PARAMETER;
+		}
 		return false;
 	}
 
@@ -210,8 +215,9 @@ cn_cbor *COSE_Mac0_map_get_int(HCOSE_MAC0 h,
 	cose_errback *perror)
 {
 	if (!IsValidMac0Handle(h)) {
-		if (perror != NULL)
+		if (perror != NULL) {
 			perror->err = COSE_ERR_INVALID_PARAMETER;
+		}
 		return NULL;
 	}
 
@@ -226,8 +232,9 @@ bool COSE_Mac0_map_put_int(HCOSE_MAC0 h,
 	cose_errback *perror)
 {
 	if (!IsValidMac0Handle(h) || (value == NULL)) {
-		if (perror != NULL)
+		if (perror != NULL) {
 			perror->err = COSE_ERR_INVALID_PARAMETER;
+		}
 		return false;
 	}
 

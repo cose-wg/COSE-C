@@ -15,6 +15,7 @@
 #include "json.h"
 #include "test.h"
 #include "context.h"
+#include "cose_int.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4127)
@@ -35,22 +36,24 @@ bool DecryptMessage(const byte *pbEncoded,
 	HCOSE_RECIPIENT hRecip1 = NULL;
 	HCOSE_RECIPIENT hRecip2 = NULL;
 	bool fRet = false;
-	int type;
+	int type = 0;
 	cose_errback cose_err;
-	cn_cbor *pkey;
+	cn_cbor *pkey = NULL;
 	bool fNoSupport = false;
 
 	hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type,
 		COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA & cose_err);
 	if (hEnc == NULL) {
-		if (fFailBody && (cose_err.err == COSE_ERR_INVALID_PARAMETER))
+		if (fFailBody && (cose_err.err == COSE_ERR_INVALID_PARAMETER)) {
 			return true;
+		}
 		goto errorReturn;
 	}
 
 	if (!SetReceivingAttributes(
-			(HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected))
+			(HCOSE)hEnc, pEnveloped, Attributes_Enveloped_protected)) {
 		goto errorReturn;
+	}
 
 	cn_cbor *alg = COSE_Enveloped_map_get_int(
 		hEnc, COSE_Header_Algorithm, COSE_BOTH, NULL);
@@ -59,26 +62,32 @@ bool DecryptMessage(const byte *pbEncoded,
 	}
 
 	hRecip1 = COSE_Enveloped_GetRecipient(hEnc, iRecipient1, NULL);
-	if (hRecip1 == NULL)
+	if (hRecip1 == NULL) {
 		goto errorReturn;
+	}
 	if (!SetReceivingAttributes(
-			(HCOSE)hRecip1, pRecipient1, Attributes_Recipient_protected))
+			(HCOSE)hRecip1, pRecipient1, Attributes_Recipient_protected)) {
 		goto errorReturn;
+	}
 
 	if (pRecipient2 != NULL) {
 		pkey = BuildKey(cn_cbor_mapget_string(pRecipient2, "key"), false);
-		if (pkey == NULL)
+		if (pkey == NULL) {
 			goto errorReturn;
+		}
 
 		hRecip2 = COSE_Recipient_GetRecipient(hRecip1, iRecipient2, NULL);
-		if (hRecip2 == NULL)
+		if (hRecip2 == NULL) {
 			goto errorReturn;
+		}
 
 		if (!SetReceivingAttributes(
-				(HCOSE)hRecip2, pRecipient2, Attributes_Recipient_protected))
+				(HCOSE)hRecip2, pRecipient2, Attributes_Recipient_protected)) {
 			goto errorReturn;
-		if (!COSE_Recipient_SetKey(hRecip2, pkey, NULL))
+		}
+		if (!COSE_Recipient_SetKey(hRecip2, pkey, NULL)) {
 			goto errorReturn;
+		}
 
 		cn_cbor *cnStatic = cn_cbor_mapget_string(pRecipient2, "sender_key");
 		if (cnStatic != NULL) {
@@ -90,12 +99,15 @@ bool DecryptMessage(const byte *pbEncoded,
 		}
 
 		hRecip = hRecip2;
-	} else {
+	}
+	else {
 		pkey = BuildKey(cn_cbor_mapget_string(pRecipient1, "key"), false);
-		if (pkey == NULL)
+		if (pkey == NULL) {
 			goto errorReturn;
-		if (!COSE_Recipient_SetKey(hRecip1, pkey, NULL))
+		}
+		if (!COSE_Recipient_SetKey(hRecip1, pkey, NULL)) {
 			goto errorReturn;
+		}
 
 		cn_cbor *cnStatic = cn_cbor_mapget_string(pRecipient1, "sender_key");
 		if (cnStatic != NULL) {
@@ -111,45 +123,205 @@ bool DecryptMessage(const byte *pbEncoded,
 
 	if (!fFailBody) {
 		cn_cbor *cn = cn_cbor_mapget_string(pRecipient1, "fail");
-		if (cn != NULL && (cn->type == CN_CBOR_TRUE))
+		if (cn != NULL && (cn->type == CN_CBOR_TRUE)) {
 			fFailBody = true;
+		}
 		if (fFailBody && (pRecipient2 != NULL)) {
 			cn = cn_cbor_mapget_string(pRecipient2, "fail");
-			if (cn != NULL && (cn->type == CN_CBOR_TRUE))
+			if (cn != NULL && (cn->type == CN_CBOR_TRUE)) {
 				fFailBody = true;
+			}
 		}
 
 		if (hRecip2 != NULL) {
 			alg = COSE_Recipient_map_get_int(
 				hRecip2, COSE_Header_Algorithm, COSE_BOTH, NULL);
-			if (!IsAlgorithmSupported(alg))
+			if (!IsAlgorithmSupported(alg)) {
 				fNoSupport = true;
+			}
 		}
 		alg = COSE_Recipient_map_get_int(
 			hRecip1, COSE_Header_Algorithm, COSE_BOTH, NULL);
-		if (!IsAlgorithmSupported(alg))
+		if (!IsAlgorithmSupported(alg)) {
 			fNoSupport = true;
+		}
 	}
 
 	if (COSE_Enveloped_decrypt(hEnc, hRecip, NULL)) {
 		fRet = !fFailBody;
-	} else {
-		if (fNoSupport)
+	}
+	else {
+		if (fNoSupport) {
 			fRet = false;
-		else
+		}
+		else {
 			fRet = fFailBody;
+		}
 	}
 
-	if (!fRet && !fNoSupport)
+#if INCLUDE_COUNTERSIGNATURE
+	//  Countersign on Encrypt0 Body
+
+	//  Validate counter signatures on signers
+	cn_cbor *countersignList =
+		cn_cbor_mapget_string(pRecipient1, "countersign");
+	if (countersignList != NULL) {
+		cn_cbor *countersigners =
+			cn_cbor_mapget_string(countersignList, "signers");
+		if (countersigners == NULL) {
+			fRet = false;
+			goto errorReturn;
+		}
+		int count = countersigners->length;
+		bool forward = true;
+
+		if (COSE_Recipient_map_get_int(hRecip1, COSE_Header_CounterSign,
+				COSE_UNPROTECT_ONLY, 0) == NULL) {
+			goto errorReturn;
+		}
+
+		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSupportSign = false;
+
+			HCOSE_COUNTERSIGN h =
+				COSE_Recipient_get_countersignature(hRecip1, counterNo, 0);
+			if (h == NULL) {
+				fRet = false;
+				continue;
+			}
+
+			cn_cbor *counterSigner = cn_cbor_index(
+				countersigners, forward ? counterNo : count - counterNo - 1);
+
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
+			if (pkeyCountersign == NULL) {
+				fRet = false;
+				COSE_CounterSign_Free(h);
+				continue;
+			}
+
+			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+				fRet = false;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
+			}
+
+			alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				noSupportSign = true;
+				fNoSupport = true;
+			}
+
+			if (COSE_Recipient_CounterSign_validate(hRecip1, h, 0)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (forward && counterNo == 0 && count > 1) {
+					forward = false;
+					counterNo -= 1;
+				}
+				else {
+					fRet = !noSupportSign;
+				}
+			}
+
+			CN_CBOR_FREE(pkeyCountersign, context);
+			COSE_CounterSign_Free(h);
+		}
+	}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE
+	//  Countersign on Enveloped Body
+
+	//  Validate counter signatures on signers
+	countersignList = cn_cbor_mapget_string(pEnveloped, "countersign");
+	if (countersignList != NULL) {
+		cn_cbor *countersigners =
+			cn_cbor_mapget_string(countersignList, "signers");
+		if (countersigners == NULL) {
+			fRet = false;
+			goto errorReturn;
+		}
+		int count = countersigners->length;
+		bool forward = true;
+
+		if (COSE_Enveloped_map_get_int(hEnc, COSE_Header_CounterSign,
+				COSE_UNPROTECT_ONLY, 0) == NULL) {
+			fRet = false;
+			goto errorReturn;
+		}
+
+		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSupportSign = false;
+			HCOSE_COUNTERSIGN h =
+				COSE_Enveloped_get_countersignature(hEnc, counterNo, 0);
+			if (h == NULL) {
+				fRet = false;
+				continue;
+			}
+
+			cn_cbor *counterSigner = cn_cbor_index(
+				countersigners, forward ? counterNo : count - counterNo - 1);
+
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
+			if (pkeyCountersign == NULL) {
+				fRet = false;
+				COSE_CounterSign_Free(h);
+				continue;
+			}
+
+			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+				fRet = false;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
+			}
+
+			alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				noSupportSign = true;
+				fNoSupport = true;
+			}
+
+			if (COSE_Enveloped_CounterSign_validate(hEnc, h, 0)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (forward && counterNo == 0 && count > 1) {
+					forward = false;
+					counterNo -= 1;
+				}
+				else {
+					fRet = !noSupportSign;
+				}
+			}
+
+			CN_CBOR_FREE(pkeyCountersign, context);
+			COSE_CounterSign_Free(h);
+		}
+	}
+#endif
+
+	if (!fRet && !fNoSupport) {
 		CFails++;
+	}
 
 errorReturn:
-	if (hEnc != NULL)
+	if (hEnc != NULL) {
 		COSE_Enveloped_Free(hEnc);
-	if (hRecip1 != NULL)
+	}
+	if (hRecip1 != NULL) {
 		COSE_Recipient_Free(hRecip1);
-	if (hRecip2 != NULL)
+	}
+	if (hRecip2 != NULL) {
 		COSE_Recipient_Free(hRecip2);
+	}
 
 	return fRet;
 }
@@ -171,15 +343,18 @@ int _ValidateEnveloped(const cn_cbor *pControl,
 		fFailBody = true;
 	}
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP))
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
 		goto errorReturn;
+	}
 	pEnveloped = cn_cbor_mapget_string(pInput, "enveloped");
-	if ((pEnveloped == NULL) || (pEnveloped->type != CN_CBOR_MAP))
+	if ((pEnveloped == NULL) || (pEnveloped->type != CN_CBOR_MAP)) {
 		goto errorReturn;
+	}
 
 	pRecipients = cn_cbor_mapget_string(pEnveloped, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY))
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) {
 		goto errorReturn;
+	}
 
 	iRecipient = (int)pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
@@ -187,15 +362,18 @@ int _ValidateEnveloped(const cn_cbor *pControl,
 		cn_cbor *pRecip2 = cn_cbor_mapget_string(pRecipients, "recipients");
 		if (pRecip2 == NULL) {
 			if (DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped,
-					pRecipients, iRecipient, NULL, 0))
+					pRecipients, iRecipient, NULL, 0)) {
 				passCount++;
-		} else {
+			}
+		}
+		else {
 			int iRecipient2 = (int)(pRecip2->length - 1);
 			pRecip2 = pRecip2->first_child;
 			for (; pRecip2 != NULL; pRecip2 = pRecip2->next, iRecipient2--) {
 				if (DecryptMessage(pbEncoded, cbEncoded, fFailBody, pEnveloped,
-						pRecipients, iRecipient, pRecip2, iRecipient2))
+						pRecipients, iRecipient, pRecip2, iRecipient2)) {
 					passCount++;
+				}
 			}
 		}
 	}
@@ -218,31 +396,37 @@ HCOSE_RECIPIENT BuildRecipient(const cn_cbor *pRecipient)
 {
 	HCOSE_RECIPIENT hRecip =
 		COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hRecip == NULL)
+	if (hRecip == NULL) {
 		goto returnError;
+	}
 
 	if (!SetSendingAttributes(
-			(HCOSE)hRecip, pRecipient, Attributes_Recipient_protected))
+			(HCOSE)hRecip, pRecipient, Attributes_Recipient_protected)) {
 		goto returnError;
+	}
 
 	cn_cbor *cnKey = cn_cbor_mapget_string(pRecipient, "key");
 	if (cnKey != NULL) {
 		cn_cbor *pkey = BuildKey(cnKey, true);
-		if (pkey == NULL)
+		if (pkey == NULL) {
 			goto returnError;
+		}
 
-		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL))
+		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
 			goto returnError;
+		}
 	}
 
 	cnKey = cn_cbor_mapget_string(pRecipient, "recipients");
 	if (cnKey != NULL) {
 		for (cnKey = cnKey->first_child; cnKey != NULL; cnKey = cnKey->next) {
 			HCOSE_RECIPIENT hRecip2 = BuildRecipient(cnKey);
-			if (hRecip2 == NULL)
+			if (hRecip2 == NULL) {
 				goto returnError;
-			if (!COSE_Recipient_AddRecipient(hRecip, hRecip2, NULL))
+			}
+			if (!COSE_Recipient_AddRecipient(hRecip, hRecip2, NULL)) {
 				goto returnError;
+			}
 			COSE_Recipient_Free(hRecip2);
 		}
 	}
@@ -252,9 +436,50 @@ HCOSE_RECIPIENT BuildRecipient(const cn_cbor *pRecipient)
 		cn_cbor *pSendKey = BuildKey(pSenderKey, false);
 		cn_cbor *pKid = cn_cbor_mapget_string(pSenderKey, "kid");
 		if (!COSE_Recipient_SetSenderKey(
-				hRecip, pSendKey, (pKid == NULL) ? 2 : 1, NULL))
+				hRecip, pSendKey, (pKid == NULL) ? 2 : 1, NULL)) {
 			goto returnError;
+		}
 	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	// On the Recipient
+	cn_cbor *countersigns1 = cn_cbor_mapget_string(pRecipient, "countersign");
+	if (countersigns1 != NULL) {
+		countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
+		cn_cbor *countersign = countersigns1->first_child;
+
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Recipient_add_countersignature(
+					hRecip, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
 
 	return hRecip;
 
@@ -272,62 +497,103 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 	//
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
-	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE))
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		return 0;
+	}
 
 	HCOSE_ENVELOPED hEncObj =
 		COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL)
+	if (pInputs == NULL) {
 		goto returnError;
+	}
 	const cn_cbor *pEnveloped = cn_cbor_mapget_string(pInputs, "enveloped");
-	if (pEnveloped == NULL)
+	if (pEnveloped == NULL) {
 		goto returnError;
+	}
 
 	const cn_cbor *pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Enveloped_SetContent(
-			hEncObj, pContent->v.bytes, pContent->length, NULL))
+			hEncObj, pContent->v.bytes, pContent->length, NULL)) {
 		goto returnError;
+	}
 
 	if (!SetSendingAttributes(
-			(HCOSE)hEncObj, pEnveloped, Attributes_Enveloped_protected))
+			(HCOSE)hEncObj, pEnveloped, Attributes_Enveloped_protected)) {
 		goto returnError;
-
-#if 0
-	const cn_cbor * pCounterSign = cn_cbor_mapget_string(pEnveloped, "countersign");
-	if (pCounterSign != NULL) {
-		HCOSE_COUNTERSIGN hCSign = BuildCounterSign(pCounterSign);
-		if (hCSign == NULL) goto returnError;
-		if (!COSE_Enveloped_AddCounterSigner(hEncObj, hCSign, NULL)) goto returnError;
 	}
-#endif
 
 	const cn_cbor *pAlg =
 		COSE_Enveloped_map_get_int(hEncObj, 1, COSE_BOTH, NULL);
-	if (pAlg == NULL)
+	if (pAlg == NULL) {
 		goto returnError;
+	}
 
 	const cn_cbor *pRecipients =
 		cn_cbor_mapget_string(pEnveloped, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY))
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) {
 		goto returnError;
+	}
 
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != NULL;
 		 iRecipient++, pRecipients = pRecipients->next) {
 		HCOSE_RECIPIENT hRecip = BuildRecipient(pRecipients);
-		if (hRecip == NULL)
+		if (hRecip == NULL) {
 			goto returnError;
+		}
 
-		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL))
+		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL)) {
 			goto returnError;
+		}
 
 		COSE_Recipient_Free(hRecip);
 	}
 
-	if (!COSE_Enveloped_encrypt(hEncObj, NULL))
+#if INCLUDE_COUNTERSIGNATURE
+	// On the Evneloped body
+	cn_cbor *countersigns1 = cn_cbor_mapget_string(pEnveloped, "countersign");
+	if (countersigns1 != NULL) {
+		countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
+		cn_cbor *countersign = countersigns1->first_child;
+
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Enveloped_add_countersignature(
+					hEncObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
+
+	if (!COSE_Enveloped_encrypt(hEncObj, NULL)) {
 		goto returnError;
+	}
 
 	size_t cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
@@ -358,39 +624,49 @@ int EncryptMessage()
 	char *sz = "This is the content to be used";
 	HCOSE_RECIPIENT hRecip = NULL;
 
-	if (hEncObj == NULL)
+	if (hEncObj == NULL) {
 		goto errorReturn;
+	}
 	if (!COSE_Enveloped_map_put_int(hEncObj, COSE_Header_Algorithm,
 			cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128,
 				CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_PROTECT_ONLY, NULL))
+			COSE_PROTECT_ONLY, NULL)) {
 		goto errorReturn;
-	if (!COSE_Enveloped_SetContent(hEncObj, (byte *)sz, strlen(sz), NULL))
+	}
+	if (!COSE_Enveloped_SetContent(hEncObj, (byte *)sz, strlen(sz), NULL)) {
 		goto errorReturn;
+	}
 	if (!COSE_Enveloped_map_put_int(hEncObj, COSE_Header_IV,
 			cn_cbor_data_create(rgbKid, 13, CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_UNPROTECT_ONLY, NULL))
+			COSE_UNPROTECT_ONLY, NULL)) {
 		goto errorReturn;
+	}
 
 	hRecip = COSE_Recipient_from_shared_secret(
 		rgbSecret, cbSecret, rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hRecip == NULL)
+	if (hRecip == NULL) {
 		goto errorReturn;
-	if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL))
+	}
+	if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL)) {
 		goto errorReturn;
+	}
 
-	if (!COSE_Enveloped_encrypt(hEncObj, NULL))
+	if (!COSE_Enveloped_encrypt(hEncObj, NULL)) {
 		goto errorReturn;
+	}
 
 	cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0);
-	if (cb < 1)
+	if (cb < 1) {
 		goto errorReturn;
+	}
 	rgb = (byte *)malloc(cb);
-	if (rgb == NULL)
+	if (rgb == NULL) {
 		goto errorReturn;
+	}
 	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
-	if (cb < 1)
+	if (cb < 1) {
 		goto errorReturn;
+	}
 
 	COSE_Recipient_Free(hRecip);
 	hRecip = NULL;
@@ -418,21 +694,25 @@ int EncryptMessage()
 	int typ;
 	hEncObj = (HCOSE_ENVELOPED)COSE_Decode(rgb, (int)cb, &typ,
 		COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEncObj == NULL)
+	if (hEncObj == NULL) {
 		goto errorReturn;
+	}
 
 	int iRecipient = 0;
 	do {
 		hRecip = COSE_Enveloped_GetRecipient(hEncObj, iRecipient, NULL);
-		if (hRecip == NULL)
+		if (hRecip == NULL) {
 			break;
+		}
 
 		if (!COSE_Recipient_SetKey_secret(
-				hRecip, rgbSecret, cbSecret, NULL, 0, NULL))
+				hRecip, rgbSecret, cbSecret, NULL, 0, NULL)) {
 			goto errorReturn;
+		}
 
-		if (!COSE_Enveloped_decrypt(hEncObj, hRecip, NULL))
+		if (!COSE_Enveloped_decrypt(hEncObj, hRecip, NULL)) {
 			goto errorReturn;
+		}
 
 		COSE_Recipient_Free(hRecip);
 		hRecip = NULL;
@@ -445,10 +725,12 @@ int EncryptMessage()
 	return 1;
 
 errorReturn:
-	if (hEncObj != NULL)
+	if (hEncObj != NULL) {
 		COSE_Enveloped_Free(hEncObj);
-	if (hRecip != NULL)
+	}
+	if (hRecip != NULL) {
 		COSE_Recipient_Free(hRecip);
+	}
 	CFails++;
 	return 0;
 }
@@ -477,15 +759,18 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		fFailBody = true;
 	}
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP))
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
 		goto returnError;
+	}
 	pEncrypt = cn_cbor_mapget_string(pInput, "encrypted");
-	if ((pEncrypt == NULL) || (pEncrypt->type != CN_CBOR_MAP))
+	if ((pEncrypt == NULL) || (pEncrypt->type != CN_CBOR_MAP)) {
 		goto returnError;
+	}
 
 	pRecipients = cn_cbor_mapget_string(pEncrypt, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY))
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) {
 		goto returnError;
+	}
 
 	pRecipients = pRecipients->first_child;
 
@@ -493,29 +778,36 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		hEnc = (HCOSE_ENCRYPT)COSE_Decode(pbEncoded, cbEncoded, &type,
 			COSE_encrypt_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hEnc == NULL) {
-			if (fFailBody)
+			if (fFailBody) {
 				return 0;
-			else
+			}
+			else {
 				goto returnError;
+			}
 		}
-	} else {
+	}
+	else {
 		hEnc = COSE_Encrypt_Init_From_Object(
 			pcnEncoded, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hEnc == NULL) {
-			if (fFailBody)
+			if (fFailBody) {
 				return 0;
-			else
+			}
+			else {
 				goto returnError;
+			}
 		}
 	}
 
 	if (!SetReceivingAttributes(
-			(HCOSE)hEnc, pEncrypt, Attributes_Encrypt_protected))
+			(HCOSE)hEnc, pEncrypt, Attributes_Encrypt_protected)) {
 		goto returnError;
+	}
 
 	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
-	if (pkey == NULL)
+	if (pkey == NULL) {
 		goto returnError;
+	}
 
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
 	if (k == NULL) {
@@ -536,20 +828,99 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		if (!fAlgSupport) {
 			fFail = true;
 			fAlgSupport = false;
-		} else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
+		}
+		else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
 			fFail = true;
 		}
 
 		size_t cb;
-		byte *pb;
+		const byte *pb;
 		pb = COSE_Encrypt_GetContent(hEnc, &cb, NULL);
-	} else {
+	}
+	else {
 		if (fAlgSupport) {
 			fFail = true;
 			fAlgSupport = false;
-		} else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE))
+		}
+		else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
 			fFail = true;
+		}
 	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	//  Countersign on Encrypt0 Body
+
+	//  Validate counter signatures on signers
+	cn_cbor *countersignList = cn_cbor_mapget_string(pEncrypt, "countersign");
+	if (countersignList != NULL) {
+		cn_cbor *countersigners =
+			cn_cbor_mapget_string(countersignList, "signers");
+		if (countersigners == NULL) {
+			fFail = true;
+			goto exitHere;
+		}
+		int count = countersigners->length;
+		bool forward = true;
+
+		if (COSE_Encrypt_map_get_int(hEnc, COSE_Header_CounterSign,
+				COSE_UNPROTECT_ONLY, 0) == NULL) {
+			goto returnError;
+		}
+
+		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSupportSign = false;
+			bool failThis = false;
+
+			HCOSE_COUNTERSIGN h =
+				COSE_Encrypt0_get_countersignature(hEnc, counterNo, 0);
+			if (h == NULL) {
+				fFail = true;
+				continue;
+			}
+
+			cn_cbor *counterSigner = cn_cbor_index(
+				countersigners, forward ? counterNo : count - counterNo - 1);
+
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
+			if (pkeyCountersign == NULL) {
+				fFail = true;
+				COSE_CounterSign_Free(h);
+				continue;
+			}
+
+			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+				fFail = true;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
+			}
+
+			alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				noSupportSign = true;
+				fAlgSupport = false;
+			}
+
+			if (COSE_Encrypt0_CounterSign_validate(hEnc, h, 0)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (forward && counterNo == 0 && count > 1) {
+					forward = false;
+					counterNo -= 1;
+				}
+				else {
+					fFail = true;
+				}
+			}
+
+			CN_CBOR_FREE(pkeyCountersign, context);
+			COSE_CounterSign_Free(h);
+		}
+	}
+#endif
 
 	COSE_Encrypt_Free(hEnc);
 
@@ -557,17 +928,21 @@ exitHere:
 
 	if (fAlgSupport) {
 		if (fFailBody) {
-			if (!fFail)
+			if (!fFail) {
 				fFail = true;
-			else
+			}
+			else {
 				fFail = false;
+			}
 		}
-	} else {
+	}
+	else {
 		fFail = false;
 	}
 
-	if (fFail)
+	if (fFail) {
 		CFails += 1;
+	}
 	return fAlgSupport ? 1 : 0;
 
 returnError:
@@ -582,13 +957,15 @@ int ValidateEncrypt(const cn_cbor *pControl)
 	int fRet;
 
 	fRet = _ValidateEncrypt(pControl, pbEncoded, cbEncoded, NULL);
-	if (!fRet)
+	if (!fRet) {
 		return fRet;
+	}
 
 	cn_cbor *cbor =
 		cn_cbor_decode(pbEncoded, cbEncoded, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (cbor == NULL)
+	if (cbor == NULL) {
 		return false;
+	}
 
 	return _ValidateEncrypt(pControl, NULL, 0, cbor);
 }
@@ -600,44 +977,93 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 	//
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
-	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE))
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		return 0;
+	}
 
 	HCOSE_ENCRYPT hEncObj = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL)
+	if (pInputs == NULL) {
 		goto returnError;
+	}
 	const cn_cbor *pEncrypt = cn_cbor_mapget_string(pInputs, "encrypted");
-	if (pEncrypt == NULL)
+	if (pEncrypt == NULL) {
 		goto returnError;
+	}
 
 	const cn_cbor *pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Encrypt_SetContent(
-			hEncObj, pContent->v.bytes, pContent->length, NULL))
+			hEncObj, pContent->v.bytes, pContent->length, NULL)) {
 		goto returnError;
+	}
 
 	if (!SetSendingAttributes(
-			(HCOSE)hEncObj, pEncrypt, Attributes_Encrypt_protected))
+			(HCOSE)hEncObj, pEncrypt, Attributes_Encrypt_protected)) {
 		goto returnError;
+	}
 
 	const cn_cbor *pAlg = COSE_Encrypt_map_get_int(hEncObj, 1, COSE_BOTH, NULL);
-	if (pAlg == NULL)
+	if (pAlg == NULL) {
 		goto returnError;
+	}
 
 	const cn_cbor *pRecipients = cn_cbor_mapget_string(pEncrypt, "recipients");
-	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY))
+	if ((pRecipients == NULL) || (pRecipients->type != CN_CBOR_ARRAY)) {
 		goto returnError;
+	}
 
 	pRecipients = pRecipients->first_child;
 	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
-	if (pkey == NULL)
+	if (pkey == NULL) {
 		goto returnError;
+	}
 
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
 
-	if (!COSE_Encrypt_encrypt(hEncObj, k->v.bytes, k->length, NULL))
+#if INCLUDE_COUNTERSIGNATURE
+	// On the Encrypt0 body
+	cn_cbor *countersigns = cn_cbor_mapget_string(pEncrypt, "countersign");
+	if (countersigns != NULL) {
+		countersigns = cn_cbor_mapget_string(countersigns, "signers");
+		cn_cbor *countersign = countersigns->first_child;
+
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Encrypt0_add_countersignature(
+					hEncObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
+
+	if (!COSE_Encrypt_encrypt(hEncObj, k->v.bytes, k->length, NULL)) {
 		goto returnError;
+	}
 
 	size_t cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
@@ -759,10 +1185,12 @@ void Enveloped_Corners()
 	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncrypt, NULL, 10, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	if (!COSE_Enveloped_Free(hEncrypt))
+	if (!COSE_Enveloped_Free(hEncrypt)) {
 		CFails++;
-	if (!COSE_Recipient_Free(hRecipient))
+	}
+	if (!COSE_Recipient_Free(hRecipient)) {
 		CFails++;
+	}
 
 	//
 	//  Unsupported algorithm
@@ -770,8 +1198,9 @@ void Enveloped_Corners()
 	//  Bad Int algorithm
 
 	hEncrypt = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEncrypt == NULL)
+	if (hEncrypt == NULL) {
 		CFails++;
+	}
 	CHECK_RETURN(
 		COSE_Enveloped_SetContent(hEncrypt, (byte *)"Message", 7, &cose_error),
 		COSE_ERR_NONE, CFails++);
@@ -781,8 +1210,9 @@ void Enveloped_Corners()
 		COSE_ERR_NONE, CFails++);
 	hRecipient = COSE_Recipient_from_shared_secret(
 		rgb, sizeof(rgb), rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hRecipient == NULL)
+	if (hRecipient == NULL) {
 		CFails++;
+	}
 	CHECK_RETURN(COSE_Enveloped_AddRecipient(hEncrypt, hRecipient, &cose_error),
 		COSE_ERR_NONE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_encrypt(hEncrypt, &cose_error),
@@ -791,8 +1221,9 @@ void Enveloped_Corners()
 	COSE_Enveloped_Free(hEncrypt);
 
 	hEncrypt = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEncrypt == NULL)
+	if (hEncrypt == NULL) {
 		CFails++;
+	}
 	CHECK_RETURN(
 		COSE_Enveloped_SetContent(hEncrypt, (byte *)"Message", 7, &cose_error),
 		COSE_ERR_NONE, CFails++);
@@ -803,8 +1234,9 @@ void Enveloped_Corners()
 		COE_ERR_NONE, CFails++);
 	hRecipient = COSE_Recipient_from_shared_secret(
 		rgb, sizeof(rgb), rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hRecipient == NULL)
+	if (hRecipient == NULL) {
 		CFails++;
+	}
 	CHECK_RETURN(COSE_Enveloped_AddRecipient(hEncrypt, hRecipient, &cose_error),
 		COSE_ERR_NONE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_encrypt(hEncrypt, &cose_error),
@@ -837,22 +1269,29 @@ void Encrypt_Corners()
 
 	//  NULL Handle checks
 
-	if (COSE_Encrypt_SetContent(hEncrypt, rgb, 10, NULL))
+	if (COSE_Encrypt_SetContent(hEncrypt, rgb, 10, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL))
+	}
+	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL))
+	}
+	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_SetExternal(hEncrypt, rgb, 10, NULL))
+	}
+	if (COSE_Encrypt_SetExternal(hEncrypt, rgb, 10, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL))
+	}
+	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) {
 		CFails++;
-	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL))
+	}
+	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL)) {
 		CFails++;
-	if (COSE_Encrypt_Free((HCOSE_ENCRYPT)hEncrypt))
+	}
+	if (COSE_Encrypt_Free((HCOSE_ENCRYPT)hEncrypt)) {
 		CFails++;
+	}
 
-		//  Wrong type of handle checks
+	//  Wrong type of handle checks
 
 #if INCLUDE_MAC
 	hEncrypt = (HCOSE_ENCRYPT)COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
@@ -860,46 +1299,59 @@ void Encrypt_Corners()
 	hEncrypt = (HCOSE_ENCRYPT)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
 
-	if (COSE_Encrypt_SetContent(hEncrypt, rgb, 10, NULL))
+	if (COSE_Encrypt_SetContent(hEncrypt, rgb, 10, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL))
+	}
+	if (COSE_Encrypt_map_get_int(hEncrypt, 1, COSE_BOTH, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL))
+	}
+	if (COSE_Encrypt_map_put_int(hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL))
+	}
+	if (COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), NULL)) {
 		CFails++;
-	if (COSE_Encrypt_SetExternal(hEncrypt, rgb, 10, NULL))
+	}
+	if (COSE_Encrypt_SetExternal(hEncrypt, rgb, 10, NULL)) {
 		CFails++;
-	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL))
+	}
+	if (COSE_Encrypt_decrypt(hEncrypt, rgb, sizeof(rgb), NULL)) {
 		CFails++;
-	if (COSE_Encrypt_Free(hEncrypt))
+	}
+	if (COSE_Encrypt_Free(hEncrypt)) {
 		CFails++;
+	}
 
 	//
 	//  Unsupported algorithm
 
 	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEncrypt == NULL)
+	if (hEncrypt == NULL) {
 		CFails++;
-	if (!COSE_Encrypt_SetContent(hEncrypt, (byte *)"Message", 7, NULL))
+	}
+	if (!COSE_Encrypt_SetContent(hEncrypt, (byte *)"Message", 7, NULL)) {
 		CFails++;
+	}
 	if (!COSE_Encrypt_map_put_int(hEncrypt, COSE_Header_Algorithm,
 			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_PROTECT_ONLY, NULL))
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
+	}
 	CHECK_FAILURE(COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);
 
 	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hEncrypt == NULL)
+	if (hEncrypt == NULL) {
 		CFails++;
-	if (!COSE_Encrypt_SetContent(hEncrypt, (byte *)"Message", 7, NULL))
+	}
+	if (!COSE_Encrypt_SetContent(hEncrypt, (byte *)"Message", 7, NULL)) {
 		CFails++;
+	}
 	if (!COSE_Encrypt_map_put_int(hEncrypt, COSE_Header_Algorithm,
 			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_PROTECT_ONLY, NULL))
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
+	}
 	CHECK_FAILURE(COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);

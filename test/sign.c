@@ -16,6 +16,7 @@
 #include "json.h"
 #include "test.h"
 #include "context.h"
+#include "cose_int.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4127)
@@ -42,15 +43,18 @@ int _ValidateSigned(const cn_cbor *pControl,
 		fFailBody = true;
 	}
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP))
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
 		goto returnError;
+	}
 	pSign = cn_cbor_mapget_string(pInput, "sign");
-	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP))
+	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) {
 		goto returnError;
+	}
 
 	pSigners = cn_cbor_mapget_string(pSign, "signers");
-	if ((pSigners == NULL) || (pSigners->type != CN_CBOR_ARRAY))
+	if ((pSigners == NULL) || (pSigners->type != CN_CBOR_ARRAY)) {
 		goto returnError;
+	}
 
 	iSigner = (int)pSigners->length - 1;
 	pSigners = pSigners->first_child;
@@ -58,14 +62,17 @@ int _ValidateSigned(const cn_cbor *pControl,
 		hSig = (HCOSE_SIGN)COSE_Decode(pbEncoded, cbEncoded, &type,
 			COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hSig == NULL) {
-			if (fFailBody)
+			if (fFailBody) {
 				return 0;
-			else
+			}
+			else {
 				goto returnError;
+			}
 		}
 		if (!SetReceivingAttributes(
-				(HCOSE)hSig, pSign, Attributes_Sign_protected))
+				(HCOSE)hSig, pSign, Attributes_Sign_protected)) {
 			goto returnError;
+		}
 
 		cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
 		if (pkey == NULL) {
@@ -79,8 +86,9 @@ int _ValidateSigned(const cn_cbor *pControl,
 			continue;
 		}
 		if (!SetReceivingAttributes(
-				(HCOSE)hSigner, pSigners, Attributes_Signer_protected))
+				(HCOSE)hSigner, pSigners, Attributes_Signer_protected)) {
 			goto returnError;
+		}
 
 		if (!COSE_Signer_SetKey(hSigner, pkey, NULL)) {
 			fFail = true;
@@ -89,36 +97,194 @@ int _ValidateSigned(const cn_cbor *pControl,
 
 		cn_cbor *alg = COSE_Signer_map_get_int(
 			hSigner, COSE_Header_Algorithm, COSE_BOTH, 0);
-		if (!IsAlgorithmSupported(alg))
+		if (!IsAlgorithmSupported(alg)) {
 			fNoSupportAlg = true;
+		}
 
 		pFail = cn_cbor_mapget_string(pSigners, "fail");
 		if (COSE_Sign_validate(hSig, hSigner, NULL)) {
 			if (fNoSupportAlg) {
 				fFail = true;
-			} else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE))
+			}
+			else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
 				fFail = true;
-		} else {
+			}
+		}
+		else {
 			if (fNoSupportAlg) {
 				fFailBody = false;
 				fFail = false;
-			} else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE))
+			}
+			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
 				fFail = true;
+			}
 		}
+
+#if INCLUDE_COUNTERSIGNATURE
+		//  Validate counter signatures on signers
+		cn_cbor *countersignList =
+			cn_cbor_mapget_string(pSigners, "countersign");
+		if (countersignList != NULL) {
+			cn_cbor *countersigners =
+				cn_cbor_mapget_string(countersignList, "signers");
+			if (countersigners == NULL) {
+				fFail = true;
+				continue;
+			}
+			int count = countersigners->length;
+			bool forward = true;
+
+			if (COSE_Signer_map_get_int(hSigner, COSE_Header_CounterSign,
+					COSE_UNPROTECT_ONLY, 0) == NULL) {
+				goto returnError;
+			}
+
+			for (int counterNo = 0; counterNo < count; counterNo++) {
+				bool noSignAlg = false;
+
+				HCOSE_COUNTERSIGN h =
+					COSE_Signer_get_countersignature(hSigner, counterNo, 0);
+				if (h == NULL) {
+					fFail = true;
+					continue;
+				}
+
+				cn_cbor *counterSigner = cn_cbor_index(countersigners,
+					forward ? counterNo : count - counterNo - 1);
+
+				cn_cbor *pkeyCountersign = BuildKey(
+					cn_cbor_mapget_string(counterSigner, "key"), false);
+				if (pkeyCountersign == NULL) {
+					fFail = true;
+					COSE_CounterSign_Free(h);
+					continue;
+				}
+
+				if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+					fFail = true;
+					COSE_CounterSign_Free(h);
+					CN_CBOR_FREE(pkeyCountersign, context);
+					continue;
+				}
+
+				alg = COSE_CounterSign_map_get_int(
+					h, COSE_Header_Algorithm, COSE_BOTH, 0);
+				if (!IsAlgorithmSupported(alg)) {
+					fNoSupportAlg = true;
+					noSignAlg = true;
+				}
+
+				if (COSE_Signer_CounterSign_validate(hSigner, h, 0)) {
+					//  I don't think we have any forced errors yet.
+				}
+				else {
+					if (forward && counterNo == 0 && count > 1) {
+						forward = false;
+						counterNo -= 1;
+					}
+					else {
+						fFail |= !noSignAlg;
+					}
+				}
+
+				CN_CBOR_FREE(pkeyCountersign, context);
+				COSE_CounterSign_Free(h);
+			}
+		}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE
+		//  Countersign on Signed Body
+
+		if (iSigner == 0) {
+			//  Validate counter signatures on signers
+			countersignList = cn_cbor_mapget_string(pSign, "countersign");
+			if (countersignList != NULL) {
+				cn_cbor *countersigners =
+					cn_cbor_mapget_string(countersignList, "signers");
+				if (countersigners == NULL) {
+					fFail = true;
+					continue;
+				}
+				int count = countersigners->length;
+				bool forward = true;
+
+				if (COSE_Sign_map_get_int(hSig, COSE_Header_CounterSign,
+						COSE_UNPROTECT_ONLY, 0) == NULL) {
+					goto returnError;
+				}
+
+				for (int counterNo = 0; counterNo < count; counterNo++) {
+					bool noSignAlg = false;
+
+					HCOSE_COUNTERSIGN h =
+						COSE_Sign_get_countersignature(hSig, counterNo, 0);
+					if (h == NULL) {
+						fFail = true;
+						continue;
+					}
+
+					cn_cbor *counterSigner = cn_cbor_index(countersigners,
+						forward ? counterNo : count - counterNo - 1);
+
+					cn_cbor *pkeyCountersign = BuildKey(
+						cn_cbor_mapget_string(counterSigner, "key"), false);
+					if (pkeyCountersign == NULL) {
+						fFail = true;
+						COSE_CounterSign_Free(h);
+						continue;
+					}
+
+					if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+						fFail = true;
+						COSE_CounterSign_Free(h);
+						CN_CBOR_FREE(pkeyCountersign, context);
+						continue;
+					}
+
+					alg = COSE_CounterSign_map_get_int(
+						h, COSE_Header_Algorithm, COSE_BOTH, 0);
+					if (!IsAlgorithmSupported(alg)) {
+						fNoSupportAlg = true;
+						noSignAlg = true;
+					}
+
+					if (COSE_Sign_CounterSign_validate(hSig, h, 0)) {
+						//  I don't think we have any forced errors yet.
+					}
+					else {
+						if (forward && counterNo == 0 && count > 1) {
+							forward = false;
+							counterNo -= 1;
+						}
+						else {
+							fFail |= !noSignAlg;
+						}
+					}
+
+					CN_CBOR_FREE(pkeyCountersign, context);
+					COSE_CounterSign_Free(h);
+				}
+			}
+		}
+#endif
 
 		COSE_Sign_Free(hSig);
 		COSE_Signer_Free(hSigner);
 	}
 
 	if (fFailBody) {
-		if (!fFail)
+		if (!fFail) {
 			fFail = true;
-		else
+		}
+		else {
 			fFail = false;
+		}
 	}
 
-	if (fFail)
+	if (fFail) {
 		CFails += 1;
+	}
 	return fNoSupportAlg ? 0 : 1;
 
 returnError:
@@ -143,56 +309,145 @@ int BuildSignedMessage(const cn_cbor *pControl)
 	//
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
-	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE))
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		return 0;
+	}
 
 	HCOSE_SIGN hSignObj = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL)
+	if (pInputs == NULL) {
 		goto returnError;
+	}
 	const cn_cbor *pSign = cn_cbor_mapget_string(pInputs, "sign");
-	if (pSign == NULL)
+	if (pSign == NULL) {
 		goto returnError;
+	}
 
 	const cn_cbor *pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Sign_SetContent(
-			hSignObj, pContent->v.bytes, pContent->length, NULL))
+			hSignObj, pContent->v.bytes, pContent->length, NULL)) {
 		goto returnError;
+	}
 
 	if (!SetSendingAttributes(
-			(HCOSE)hSignObj, pSign, Attributes_Sign_protected))
+			(HCOSE)hSignObj, pSign, Attributes_Sign_protected)) {
 		goto returnError;
+	}
 
 	const cn_cbor *pSigners = cn_cbor_mapget_string(pSign, "signers");
-	if ((pSigners == NULL) || (pSigners->type != CN_CBOR_ARRAY))
+	if ((pSigners == NULL) || (pSigners->type != CN_CBOR_ARRAY)) {
 		goto returnError;
+	}
 
 	pSigners = pSigners->first_child;
 	for (iSigner = 0; pSigners != NULL; iSigner++, pSigners = pSigners->next) {
 		cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
-		if (pkey == NULL)
+		if (pkey == NULL) {
 			goto returnError;
+		}
 
 		HCOSE_SIGNER hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-		if (hSigner == NULL)
+		if (hSigner == NULL) {
 			goto returnError;
+		}
 
 		if (!SetSendingAttributes(
-				(HCOSE)hSigner, pSigners, Attributes_Signer_protected))
+				(HCOSE)hSigner, pSigners, Attributes_Signer_protected)) {
 			goto returnError;
+		}
 
-		if (!COSE_Signer_SetKey(hSigner, pkey, NULL))
+		if (!COSE_Signer_SetKey(hSigner, pkey, NULL)) {
 			goto returnError;
+		}
 
-		if (!COSE_Sign_AddSigner(hSignObj, hSigner, NULL))
+		if (!COSE_Sign_AddSigner(hSignObj, hSigner, NULL)) {
 			goto returnError;
+		}
 
+#if INCLUDE_COUNTERSIGNATURE
+		//  On the signer object
+		cn_cbor *countersigns = cn_cbor_mapget_string(pSigners, "countersign");
+		if (countersigns != NULL) {
+			countersigns = cn_cbor_mapget_string(countersigns, "signers");
+			cn_cbor *countersign = countersigns->first_child;
+
+			for (; countersign != NULL; countersign = countersign->next) {
+				cn_cbor *pkeyCountersign =
+					BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+				if (pkeyCountersign == NULL) {
+					goto returnError;
+				}
+
+				HCOSE_COUNTERSIGN hCountersign =
+					COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+				if (hCountersign == NULL) {
+					goto returnError;
+				}
+
+				if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+						Attributes_Countersign_protected)) {
+					goto returnError;
+				}
+
+				if (!COSE_CounterSign_SetKey(
+						hCountersign, pkeyCountersign, NULL)) {
+					goto returnError;
+				}
+
+				if (!COSE_Signer_add_countersignature(
+						hSigner, hCountersign, NULL)) {
+					goto returnError;
+				}
+
+				COSE_CounterSign_Free(hCountersign);
+			}
+		}
+#endif
 		COSE_Signer_Free(hSigner);
 	}
+#if INCLUDE_COUNTERSIGNATURE
+	// On the sign body
+	cn_cbor *countersigns1 = cn_cbor_mapget_string(pSign, "countersign");
+	if (countersigns1 != NULL) {
+		countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
+		cn_cbor *countersign = countersigns1->first_child;
 
-	if (!COSE_Sign_Sign(hSignObj, NULL))
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Sign_add_countersignature(hSignObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
+
+	if (!COSE_Sign_Sign(hSignObj, NULL)) {
 		goto returnError;
+	}
 
 	size_t cb = COSE_Encode((HCOSE)hSignObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
@@ -326,23 +581,29 @@ int _ValidateSign1(const cn_cbor *pControl,
 		fFailBody = true;
 	}
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP))
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
 		goto returnError;
+	}
 	pSign = cn_cbor_mapget_string(pInput, "sign0");
-	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP))
+	if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) {
 		goto returnError;
+	}
 
 	hSig = (HCOSE_SIGN1)COSE_Decode(pbEncoded, cbEncoded, &type,
 		COSE_sign1_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSig == NULL) {
-		if (fFailBody)
+		if (fFailBody) {
 			return 0;
-		else
+		}
+		else {
 			goto returnError;
+		}
 	}
 
-	if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign1_protected))
+	if (!SetReceivingAttributes(
+			(HCOSE)hSig, pSign, Attributes_Sign1_protected)) {
 		goto returnError;
+	}
 
 	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
 	if (pkey == NULL) {
@@ -352,36 +613,119 @@ int _ValidateSign1(const cn_cbor *pControl,
 
 	cn_cbor *alg =
 		COSE_Sign1_map_get_int(hSig, COSE_Header_Algorithm, COSE_BOTH, NULL);
-	if (!IsAlgorithmSupported(alg))
+	if (!IsAlgorithmSupported(alg)) {
 		fNoAlgSupport = true;
+	}
 
 	pFail = cn_cbor_mapget_string(pInput, "fail");
 	if (COSE_Sign1_validate(hSig, pkey, NULL)) {
 		if (fNoAlgSupport) {
 			fFail = true;
-		} else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE))
+		}
+		else if ((pFail != NULL) && (pFail->type != CN_CBOR_TRUE)) {
 			fFail = true;
-	} else {
+		}
+	}
+	else {
 		if (fNoAlgSupport) {
 			fFailBody = false;
 			fFail = false;
-		} else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE))
+		}
+		else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
 			fFail = true;
+		}
 	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	//  Countersign on Signed Body
+
+	//  Validate counter signatures on signers
+	cn_cbor *countersignList = cn_cbor_mapget_string(pSign, "countersign");
+	if (countersignList != NULL) {
+		cn_cbor *countersigners =
+			cn_cbor_mapget_string(countersignList, "signers");
+		if (countersigners == NULL) {
+			fFail = true;
+			goto exitHere;
+		}
+		int count = countersigners->length;
+		bool forward = true;
+
+		if (COSE_Sign1_map_get_int(hSig, COSE_Header_CounterSign,
+				COSE_UNPROTECT_ONLY, 0) == NULL) {
+			goto returnError;
+		}
+
+		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSignAlg = false;
+
+			HCOSE_COUNTERSIGN h =
+				COSE_Sign1_get_countersignature(hSig, counterNo, 0);
+			if (h == NULL) {
+				fFail = true;
+				continue;
+			}
+
+			cn_cbor *counterSigner = cn_cbor_index(
+				countersigners, forward ? counterNo : count - counterNo - 1);
+
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
+			if (pkeyCountersign == NULL) {
+				fFail = true;
+				COSE_CounterSign_Free(h);
+				continue;
+			}
+
+			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
+				fFail = true;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
+			}
+
+			alg = COSE_Sign1_map_get_int(
+				hSig, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				fNoAlgSupport = true;
+				noSignAlg = true;
+			}
+
+			if (COSE_Sign1_CounterSign_validate(hSig, h, 0)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (forward && counterNo == 0 && count > 1) {
+					forward = false;
+					counterNo -= 1;
+				}
+				else {
+					fFail |= !noSignAlg;
+				}
+			}
+
+			CN_CBOR_FREE(pkeyCountersign, context);
+			COSE_CounterSign_Free(h);
+		}
+	}
+#endif
 
 	COSE_Sign1_Free(hSig);
 
 	if (fFailBody) {
-		if (!fFail)
+		if (!fFail) {
 			fFail = true;
-		else
+		}
+		else {
 			fFail = false;
+		}
 	}
 
 exitHere:
 
-	if (fFail)
+	if (fFail) {
 		CFails += 1;
+	}
 	return fNoAlgSupport ? 0 : 1;
 
 returnError:
@@ -404,33 +748,80 @@ int BuildSign1Message(const cn_cbor *pControl)
 	//
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
-	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE))
+	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
 		return 0;
+	}
 
 	HCOSE_SIGN1 hSignObj = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
-	if (pInputs == NULL)
+	if (pInputs == NULL) {
 		goto returnError;
+	}
 	const cn_cbor *pSign = cn_cbor_mapget_string(pInputs, "sign0");
-	if (pSign == NULL)
+	if (pSign == NULL) {
 		goto returnError;
+	}
 
 	const cn_cbor *pContent = cn_cbor_mapget_string(pInputs, "plaintext");
 	if (!COSE_Sign1_SetContent(
-			hSignObj, pContent->v.bytes, pContent->length, NULL))
+			hSignObj, pContent->v.bytes, pContent->length, NULL)) {
 		goto returnError;
+	}
 
 	if (!SetSendingAttributes(
-			(HCOSE)hSignObj, pSign, Attributes_Sign1_protected))
+			(HCOSE)hSignObj, pSign, Attributes_Sign1_protected)) {
 		goto returnError;
+	}
 
 	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pSign, "key"), false);
-	if (pkey == NULL)
+	if (pkey == NULL) {
 		goto returnError;
+	}
 
-	if (!COSE_Sign1_Sign(hSignObj, pkey, NULL))
+#if INCLUDE_COUNTERSIGNATURE
+	// On the sign body
+	cn_cbor *countersigns = cn_cbor_mapget_string(pSign, "countersign");
+	if (countersigns != NULL) {
+		countersigns = cn_cbor_mapget_string(countersigns, "signers");
+		cn_cbor *countersign = countersigns->first_child;
+
+		for (; countersign != NULL; countersign = countersign->next) {
+			cn_cbor *pkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+			if (pkeyCountersign == NULL) {
+				goto returnError;
+			}
+
+			HCOSE_COUNTERSIGN hCountersign =
+				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (hCountersign == NULL) {
+				goto returnError;
+			}
+
+			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+					Attributes_Countersign_protected)) {
+				goto returnError;
+			}
+
+			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				goto returnError;
+			}
+
+			if (!COSE_Sign1_add_countersignature(
+					hSignObj, hCountersign, NULL)) {
+				goto returnError;
+			}
+
+			COSE_CounterSign_Free(hCountersign);
+		}
+	}
+
+#endif
+
+	if (!COSE_Sign1_Sign(hSignObj, pkey, NULL)) {
 		goto returnError;
+	}
 
 	size_t cb = COSE_Encode((HCOSE)hSignObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
@@ -594,54 +985,69 @@ void Sign_Corners()
 	//  Unsupported algorithm
 
 	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hSign == NULL)
+	if (hSign == NULL) {
 		CFails++;
+	}
 	hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hSigner == NULL)
+	if (hSigner == NULL) {
 		CFails++;
+	}
 
-	if (!COSE_Sign_SetContent(hSign, (byte *)"Message", 7, NULL))
+	if (!COSE_Sign_SetContent(hSign, (byte *)"Message", 7, NULL)) {
 		CFails++;
+	}
 	if (!COSE_Signer_map_put_int(hSigner, COSE_Header_Algorithm,
 			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_PROTECT_ONLY, NULL))
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
-	if (!COSE_Sign_AddSigner(hSign, hSigner, NULL))
+	}
+	if (!COSE_Sign_AddSigner(hSign, hSigner, NULL)) {
 		CFails++;
+	}
 	CHECK_FAILURE(COSE_Sign_Sign(hSign, &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
-	if (COSE_Sign_GetSigner(hSign, 9, NULL))
+	if (COSE_Sign_GetSigner(hSign, 9, NULL)) {
 		CFails++;
+	}
 	COSE_Sign_Free(hSign);
 	COSE_Signer_Free(hSigner);
 
 	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hSign == NULL)
+	if (hSign == NULL) {
 		CFails++;
+	}
 	hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hSigner == NULL)
+	if (hSigner == NULL) {
 		CFails++;
+	}
 
-	if (!COSE_Sign_SetContent(hSign, (byte *)"Message", 7, NULL))
+	if (!COSE_Sign_SetContent(hSign, (byte *)"Message", 7, NULL)) {
 		CFails++;
+	}
 	if (!COSE_Signer_map_put_int(hSigner, COSE_Header_Algorithm,
 			cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_PROTECT_ONLY, NULL))
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
-	if (!COSE_Sign_AddSigner(hSign, hSigner, NULL))
+	}
+	if (!COSE_Sign_AddSigner(hSign, hSigner, NULL)) {
 		CFails++;
+	}
 	CHECK_FAILURE(COSE_Sign_Sign(hSign, &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
-	if (COSE_Sign_GetSigner(hSign, 9, NULL))
+	if (COSE_Sign_GetSigner(hSign, 9, NULL)) {
 		CFails++;
+	}
 
 	cn = COSE_Signer_map_get_int(
 		hSigner, COSE_Header_Algorithm, COSE_BOTH, &cose_error);
 	if (cn != NULL) {
-		if (cn->type != CN_CBOR_TEXT)
+		if (cn->type != CN_CBOR_TEXT) {
 			CFails++;
-	} else
+		}
+	}
+	else {
 		CFails++;
+	}
 
 	return;
 }
@@ -724,31 +1130,37 @@ void Sign1_Corners()
 	//  Unsupported algorithm
 
 	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hSign == NULL)
+	if (hSign == NULL) {
 		CFails++;
+	}
 
 	cn = cn_cbor_int_create(15, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (!COSE_Sign1_SetContent(hSign, (byte *)"Message", 7, NULL))
+	if (!COSE_Sign1_SetContent(hSign, (byte *)"Message", 7, NULL)) {
 		CFails++;
+	}
 	if (!COSE_Sign1_map_put_int(hSign, COSE_Header_Algorithm,
 			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_PROTECT_ONLY, NULL))
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
+	}
 	CHECK_FAILURE(COSE_Sign1_Sign(hSign, cn, &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Sign1_Free(hSign);
 
 	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	if (hSign == NULL)
+	if (hSign == NULL) {
 		CFails++;
+	}
 
-	if (!COSE_Sign1_SetContent(hSign, (byte *)"Message", 7, NULL))
+	if (!COSE_Sign1_SetContent(hSign, (byte *)"Message", 7, NULL)) {
 		CFails++;
+	}
 
 	if (!COSE_Sign1_map_put_int(hSign, COSE_Header_Algorithm,
 			cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
-			COSE_PROTECT_ONLY, NULL))
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
+	}
 	CHECK_FAILURE(COSE_Sign1_Sign(hSign, cn, &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 

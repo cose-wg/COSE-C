@@ -20,6 +20,7 @@ typedef struct _cose_recipient* HCOSE_RECIPIENT;
 typedef struct _cose_mac* HCOSE_MAC;
 typedef struct _cose_mac0* HCOSE_MAC0;
 typedef struct _cose_counterSignature* HCOSE_COUNTERSIGN;
+typedef struct _cose_counterSignature1* HCOSE_COUNTERSIGN1;
 
 /**
  * All of the different kinds of errors
@@ -70,19 +71,20 @@ typedef enum {
 	COSE_encrypt_object = 16,
 	COSE_mac_object = 97,
 	COSE_mac0_object = 17,
-	COSE_recipient_object = -1
+	COSE_recipient_object = -1,
+	COSE_countersign_object = -2,
 } COSE_object_type;
 
 //  Generic functions for the COSE library
 
 HCOSE COSE_Decode(const byte* rgbData,
 	size_t cbData,
-	int* type,
+	int* ptype,
 	COSE_object_type struct_type,
 	CBOR_CONTEXT_COMMA cose_errback* perr);	 //  Decode the object
 size_t COSE_Encode(HCOSE msg, byte* rgb, size_t ib, size_t cb);
 
-cn_cbor* COSE_get_cbor(HCOSE hmsg);
+cn_cbor* COSE_get_cbor(HCOSE h);
 
 //  Functions for the signing object
 
@@ -538,7 +540,7 @@ bool COSE_Sign1_map_put_int(HCOSE_SIGN1 cose,
  * Counter Signature Routines
  */
 
-HCOSE_COUNTERSIGN COSE_CounterSign_Init(COSE_INIT_FLAGS flags,
+HCOSE_COUNTERSIGN COSE_CounterSign_Init(
 	CBOR_CONTEXT_COMMA cose_errback* perr);
 bool COSE_CounterSign_Free(HCOSE_COUNTERSIGN cose);
 
@@ -552,7 +554,91 @@ bool COSE_CounterSign_map_put_int(HCOSE_COUNTERSIGN cose,
 	int flags,
 	cose_errback* errp);
 
-/*
+bool COSE_CounterSign_SetExternal(HCOSE_COUNTERSIGN cose, const byte* pbExternalData, size_t cbExternalData, cose_errback* perr);
+bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN,
+	const cn_cbor* pkey,
+	cose_errback* perr);
+
+	
+HCOSE_COUNTERSIGN COSE_Signer_add_countersignature(HCOSE_SIGNER hSigner, HCOSE_COUNTERSIGN hCountersignature, cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Signer_get_countersignature(HCOSE_SIGNER hSigner,
+	int index,
+	cose_errback* perr);
+bool COSE_Signer_CounterSign_validate(HCOSE_SIGNER hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Sign_add_countersignature(HCOSE_SIGN hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Sign_get_countersignature(HCOSE_SIGN hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Sign_CounterSign_validate(HCOSE_SIGN hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Sign1_add_countersignature(HCOSE_SIGN1 hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Sign1_get_countersignature(HCOSE_SIGN1 hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Sign1_CounterSign_validate(HCOSE_SIGN1 hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Encrypt0_add_countersignature(HCOSE_ENCRYPT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Encrypt0_get_countersignature(HCOSE_ENCRYPT hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Encrypt0_CounterSign_validate(HCOSE_ENCRYPT hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Enveloped_add_countersignature(HCOSE_ENVELOPED hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Enveloped_get_countersignature(HCOSE_ENVELOPED hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Enveloped_CounterSign_validate(HCOSE_ENVELOPED hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Recipient_add_countersignature(HCOSE_RECIPIENT hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Recipient_get_countersignature(HCOSE_RECIPIENT hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Recipient_CounterSign_validate(HCOSE_RECIPIENT hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Mac0_add_countersignature(HCOSE_MAC0 hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Mac0_get_countersignature(HCOSE_MAC0 hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Mac0_CounterSign_validate(HCOSE_MAC0 hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+
+HCOSE_COUNTERSIGN COSE_Mac_add_countersignature(HCOSE_MAC hSignMsg,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+HCOSE_COUNTERSIGN COSE_Mac_get_countersignature(HCOSE_MAC hSignMsg,
+	int index,
+	cose_errback* perr);
+bool COSE_Mac_CounterSign_validate(HCOSE_MAC hSigner,
+	HCOSE_COUNTERSIGN hCountersignature,
+	cose_errback* perr);
+	
+	/*
  */
 
 cn_cbor* cn_cbor_clone(const cn_cbor* pIn,

@@ -46,6 +46,7 @@ void MAC0_Corners();
 //  context.c
 extern cn_cbor_context* CreateContext(unsigned int iFailPoint);
 void FreeContext(cn_cbor_context* pContext);
+int IsContextEmpty(cn_cbor_context* pContext);
 #endif
 
 //  test.c
@@ -58,6 +59,7 @@ enum {
 	Attributes_Sign_protected,
 	Attributes_Signer_protected,
 	Attributes_Sign1_protected,
+	Attributes_Countersign_protected
 } whichSet;
 
 extern int CFails;
@@ -88,7 +90,8 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		if (!bReturn) {                                     \
 			if (cose_error.err != errorReturn)              \
 				onFailure;                                  \
-		} else if (errorReturn != COSE_ERR_NONE)            \
+		}                                                   \
+		else if (errorReturn != COSE_ERR_NONE)              \
 			onFailure;                                      \
 	}
 
@@ -98,6 +101,7 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		if (bReturn == NULL) {                                  \
 			if (cose_error.err != errorReturn)                  \
 				onFailure;                                      \
-		} else if (errorReturn != COSE_ERR_NONE)                \
+		}                                                       \
+		else if (errorReturn != COSE_ERR_NONE)                  \
 			onFailure;                                          \
 	}

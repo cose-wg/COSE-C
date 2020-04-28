@@ -6,12 +6,15 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   endif()
   if(COSE_C_OPTIMIZE)
     add_definitions(-Os)
+    add_definitions(-DNDEBUG)
   endif()
-  add_definitions(-DNDEBUG)
 elseif(MSVC)
   add_definitions(/W4)
   if(COSE_C_FATAL_WARNINGS)
     add_definitions(/WX)
+  endif()
+  if(COSE_C_OPTIMIZE)
+    add_definitions(-DNDEBUG)
   endif()
 else()
   message(FATAL_ERROR "unhandled compiler id: ${CMAKE_C_COMPILER_ID}")
@@ -32,6 +35,8 @@ set(cose_sources
     cose_int.h
     crypto.h
     Cose.c
+    CounterSign.c
+    CounterSign0.c
     MacMessage.c
     MacMessage0.c
     Sign.c

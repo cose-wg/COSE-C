@@ -54,9 +54,11 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				break;
 
 			case '"':
-				for (ib2 = ib + 1; ib2 < cch; ib2++)
-					if (rgch[ib2] == '"')
+				for (ib2 = ib + 1; ib2 < cch; ib2++) {
+					if (rgch[ib2] == '"') {
 						break;
+					}
+				}
 				rgch[ib2] = 0;
 				node = cn_cbor_string_create(
 					&rgch[ib + 1], CBOR_CONTEXT_PARAM_COMMA NULL);
@@ -65,8 +67,9 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				break;
 
 			case 't':
-				if (strncmp(&rgch[ib], "true", 4) != 0)
+				if (strncmp(&rgch[ib], "true", 4) != 0) {
 					goto error;
+				}
 				node =
 					cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 				node->type = CN_CBOR_TRUE;
@@ -74,8 +77,9 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				break;
 
 			case 'f':
-				if (strncmp(&rgch[ib], "false", 5) != 0)
+				if (strncmp(&rgch[ib], "false", 5) != 0) {
 					goto error;
+				}
 				node =
 					cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 				node->type = CN_CBOR_FALSE;
@@ -95,10 +99,12 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 			case '-':
 				node = cn_cbor_int_create(
 					atol(&rgch[ib]), CBOR_CONTEXT_PARAM_COMMA NULL);
-				if (rgch[ib] == '-')
+				if (rgch[ib] == '-') {
 					ib++;
-				while (isdigit(rgch[ib]))
+				}
+				while (isdigit(rgch[ib])) {
 					ib++;
+				}
 				ib--;
 				break;
 
@@ -113,7 +119,8 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 			if (parent->last_child != NULL) {
 				parent->last_child->next = node;
 				parent->last_child = node;
-			} else {
+			}
+			else {
 				parent->first_child = node;
 			}
 			parent->last_child = node;
@@ -125,8 +132,9 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 		}
 		if (parent == NULL) {
 			parent = node;
-			if (root == NULL)
+			if (root == NULL) {
 				root = node;
+			}
 		}
 	}
 
@@ -169,8 +177,9 @@ char *base64_encode(const unsigned char *data,
 	*output_length = 4 * ((input_length + 2) / 3);
 
 	char *encoded_data = malloc(*output_length);
-	if (encoded_data == NULL)
+	if (encoded_data == NULL) {
 		return NULL;
+	}
 
 	for (size_t i = 0, j = 0; i < input_length;) {
 		uint32_t octet_a = i < input_length ? (unsigned char)data[i++] : 0;
@@ -185,8 +194,9 @@ char *base64_encode(const unsigned char *data,
 		encoded_data[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
 	}
 
-	for (int i = 0; i < mod_table[input_length % 3]; i++)
+	for (int i = 0; i < mod_table[input_length % 3]; i++) {
 		encoded_data[*output_length - 1 - i] = '=';
+	}
 
 	return encoded_data;
 }
@@ -197,8 +207,9 @@ unsigned char *base64_decode(const char *data,
 {
 	char *p = NULL;
 
-	if (decoding_table == NULL)
+	if (decoding_table == NULL) {
 		build_decoding_table();
+	}
 
 	if (input_length % 4 != 0) {
 		int c = 4 - (input_length % 4);
@@ -210,15 +221,18 @@ unsigned char *base64_decode(const char *data,
 	}
 
 	*output_length = input_length / 4 * 3;
-	if (data[input_length - 1] == '=')
+	if (data[input_length - 1] == '=') {
 		(*output_length)--;
-	if (data[input_length - 2] == '=')
+	}
+	if (data[input_length - 2] == '=') {
 		(*output_length)--;
+	}
 
 	unsigned char *decoded_data = malloc(*output_length);
 	if (decoded_data == NULL) {
-		if (p != NULL)
+		if (p != NULL) {
 			free(p);
+		}
 		return NULL;
 	}
 
@@ -235,12 +249,15 @@ unsigned char *base64_decode(const char *data,
 		uint32_t triple = (sextet_a << 3 * 6) + (sextet_b << 2 * 6) +
 						  (sextet_c << 1 * 6) + (sextet_d << 0 * 6);
 
-		if (j < *output_length)
+		if (j < *output_length) {
 			decoded_data[j++] = (triple >> 2 * 8) & 0xFF;
-		if (j < *output_length)
+		}
+		if (j < *output_length) {
 			decoded_data[j++] = (triple >> 1 * 8) & 0xFF;
-		if (j < *output_length)
+		}
+		if (j < *output_length) {
 			decoded_data[j++] = (triple >> 0 * 8) & 0xFF;
+		}
 	}
 
 	free(p);
@@ -251,8 +268,9 @@ static void build_decoding_table()
 {
 	decoding_table = malloc(256);
 
-	for (int i = 0; i < 64; i++)
+	for (int i = 0; i < 64; i++) {
 		decoding_table[(int)encoding_table[i]] = (unsigned char)i;
+	}
 }
 
 void base64_cleanup()
@@ -278,18 +296,23 @@ unsigned char *hex_decode(const char *data,
 	for (unsigned int i = 0, j = 0; i < input_length; i++) {
 		int c;
 
-		if ('0' <= data[i] && data[i] <= '9')
+		if ('0' <= data[i] && data[i] <= '9') {
 			c = data[i] - '0';
-		else if ('A' <= data[i] && data[i] <= 'F')
+		}
+		else if ('A' <= data[i] && data[i] <= 'F') {
 			c = data[i] - 'A' + 10;
-		else if ('a' <= data[i] && data[i] <= 'f')
+		}
+		else if ('a' <= data[i] && data[i] <= 'f') {
 			c = data[i] - 'a' + 10;
-		else
+		}
+		else {
 			return NULL;
+		}
 
 		if ((i & 0x1) == 0) {
 			decoded_data[j] = ((unsigned char)c << 4);
-		} else {
+		}
+		else {
 			decoded_data[j++] |= (unsigned char)c;
 		}
 	}
