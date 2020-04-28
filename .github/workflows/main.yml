@@ -9,7 +9,6 @@ jobs:
       matrix:
         # os: [ubuntu-18.04, windows-2019, macos-10.15]
         os: [ubuntu-18.04, windows-2019]
-        # os: [ubuntu-18.04]
         USE_MBEDTLS: ["ON", "OFF"]
         USE_CONTEXT: ["ON", "OFF"]
         CMAKE_OPTIONS:
@@ -68,6 +67,21 @@ jobs:
         working-directory: ${{runner.workspace}}/build
         shell: bash
         run: cmake --build .
+
+      - name: get test data
+        if: startsWith(matrix.os, 'ubuntu')
+        working-directory: ${{runner.workspace}}
+        shell: bash
+        run: |
+          cd $GITHUB_WORKSPACE
+          git clone --depth 1 git://github.com/cose-wg/Examples Examples
+
+      - name: Test
+        if: startsWith(matrix.os, 'ubuntu')
+        working-directory: ${{runner.workspace}}/build
+        shell: bash
+        run: |
+          ctest --verbose
 
   clang-tidy:
     runs-on: ${{ matrix.os }}
