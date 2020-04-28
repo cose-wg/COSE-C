@@ -36,9 +36,9 @@ bool DecryptMessage(const byte *pbEncoded,
 	HCOSE_RECIPIENT hRecip1 = NULL;
 	HCOSE_RECIPIENT hRecip2 = NULL;
 	bool fRet = false;
-	int type;
+	int type = 0;
 	cose_errback cose_err;
-	cn_cbor *pkey;
+	cn_cbor *pkey = NULL;
 	bool fNoSupport = false;
 
 	hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type,
@@ -181,11 +181,13 @@ bool DecryptMessage(const byte *pbEncoded,
 		}
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSupportSign = false;
+			
 			HCOSE_COUNTERSIGN h =
 				COSE_Recipient_get_countersignature(hRecip1, counterNo, 0);
 			if (h == NULL) {
 				fRet = false;
-				goto errorReturn;
+				continue;
 			}
 
 			cn_cbor *counterSigner = cn_cbor_index(
@@ -195,13 +197,23 @@ bool DecryptMessage(const byte *pbEncoded,
 				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
 			if (pkeyCountersign == NULL) {
 				fRet = false;
-				goto errorReturn;
+				COSE_CounterSign_Free(h);
+				continue;
 			}
 
 			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
 				fRet = false;
-				goto errorReturn;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
 			}
+
+			alg = COSE_CounterSign_map_get_int(h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				noSupportSign = true;
+				fNoSupport = true;
+			}
+	
 
 			if (COSE_Recipient_CounterSign_validate(hRecip1, h, 0)) {
 				//  I don't think we have any forced errors yet.
@@ -212,7 +224,7 @@ bool DecryptMessage(const byte *pbEncoded,
 					counterNo -= 1;
 				}
 				else {
-					fRet = false;
+					fRet = !noSupportSign;
 				}
 			}
 
@@ -244,11 +256,12 @@ bool DecryptMessage(const byte *pbEncoded,
 		}
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSupportSign = false;
 			HCOSE_COUNTERSIGN h =
 				COSE_Enveloped_get_countersignature(hEnc, counterNo, 0);
 			if (h == NULL) {
 				fRet = false;
-				goto errorReturn;
+				continue;
 			}
 
 			cn_cbor *counterSigner = cn_cbor_index(
@@ -258,14 +271,24 @@ bool DecryptMessage(const byte *pbEncoded,
 				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
 			if (pkeyCountersign == NULL) {
 				fRet = false;
-				goto errorReturn;
+				COSE_CounterSign_Free(h);
+				continue;
 			}
 
 			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
 				fRet = false;
-				goto errorReturn;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
 			}
 
+			alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				noSupportSign = true;
+				fNoSupport = true;
+			}
+			
 			if (COSE_Enveloped_CounterSign_validate(hEnc, h, 0)) {
 				//  I don't think we have any forced errors yet.
 			}
@@ -275,7 +298,7 @@ bool DecryptMessage(const byte *pbEncoded,
 					counterNo -= 1;
 				}
 				else {
-					fRet = false;
+					fRet = !noSupportSign;
 				}
 			}
 
@@ -845,11 +868,14 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		}
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSupportSign = false;
+			bool failThis = false;
+			
 			HCOSE_COUNTERSIGN h =
 				COSE_Encrypt0_get_countersignature(hEnc, counterNo, 0);
 			if (h == NULL) {
 				fFail = true;
-				goto exitHere;
+				continue;
 			}
 
 			cn_cbor *counterSigner = cn_cbor_index(
@@ -859,14 +885,24 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
 			if (pkeyCountersign == NULL) {
 				fFail = true;
-				goto exitHere;
+				COSE_CounterSign_Free(h);
+				continue;
 			}
 
 			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
 				fFail = true;
-				goto exitHere;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
 			}
 
+			alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				noSupportSign = true;
+				fAlgSupport = false;
+			}
+			
 			if (COSE_Encrypt0_CounterSign_validate(hEnc, h, 0)) {
 				//  I don't think we have any forced errors yet.
 			}

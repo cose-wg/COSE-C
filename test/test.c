@@ -88,9 +88,7 @@ NameMap RgCurveNames[7] = {{"P-256", 1}, {"P-384", 2}, {"P-521", 3},
 
 int MapName(const cn_cbor* p, NameMap* rgMap, unsigned int cMap)
 {
-	unsigned int i;
-
-	for (i = 0; i < cMap; i++) {
+	for (unsigned int i = 0; i < cMap; i++) {
 		if (strcmp(rgMap[i].sz, p->v.str) == 0) {
 			return rgMap[i].i;
 		}
@@ -125,9 +123,8 @@ byte* FromHex(const char* rgch, int cch)
 {
 	byte* pb = malloc(cch / 2);
 	const char* pb2 = rgch;
-	int i;
 
-	for (i = 0; i < cch; i += 2) {
+	for (int i = 0; i < cch; i += 2) {
 		pb[i / 2] = fromHex(pb2[i]) * 16 + fromHex(pb2[i + 1]);
 	}
 
@@ -270,13 +267,11 @@ int IsAlgorithmSupported(const cn_cbor* alg)
 		case -999:	// Unsupported algorithm for testing.
 			return true;
 	}
-	return true;
 }
 
 byte* GetCBOREncoding(const cn_cbor* pControl, int* pcbEncoded)
 {
 	const cn_cbor* pOutputs = cn_cbor_mapget_string(pControl, "output");
-	const cn_cbor* pCBOR;
 	byte* pb = NULL;
 	const byte* pb2;
 	int i;
@@ -286,7 +281,7 @@ byte* GetCBOREncoding(const cn_cbor* pControl, int* pcbEncoded)
 		exit(1);
 	}
 
-	pCBOR = cn_cbor_mapget_string(pOutputs, "cbor");
+	const cn_cbor* pCBOR = cn_cbor_mapget_string(pOutputs, "cbor");
 	if ((pCBOR == NULL) || (pCBOR->type != CN_CBOR_TEXT)) {
 		fprintf(stderr, "Invalid cbor object");
 		exit(1);

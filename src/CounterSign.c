@@ -41,8 +41,9 @@ COSE_CounterSign* _COSE_CounterSign_Init_From_Object(cn_cbor* cbor,
 	COSE_CounterSign* pobj = pIn;
 
 	cose_errback error = {0};
-	if (perr == NULL)
+	if (perr == NULL) {
 		perr = &error;
+	}
 
 	if (pobj == NULL) {
 		pobj = (COSE_CounterSign*)COSE_CALLOC(
@@ -174,8 +175,9 @@ bool _COSE_CounterSign_create(COSE* pMessage,
 	cn_cbor* pcn = NULL;
 	cn_cbor* pcn2 = NULL;
 
-	if (pMessage->m_counterSigners == NULL)
+	if (pMessage->m_counterSigners == NULL) {
 		return true;
+	}
 
 	//  One or more than one?
 	if (pMessage->m_counterSigners->m_signer.m_signerNext != NULL) {
@@ -199,8 +201,9 @@ bool _COSE_CounterSign_create(COSE* pMessage,
 		CHECK_CONDITION_CBOR(pcnBody != NULL, cbor_err);
 
 		if (!_COSE_Signer_sign(
-				&pSigner->m_signer, pcnBody, pcn2, "CounterSignature", perr))
+				&pSigner->m_signer, pcnBody, pcn2, "CounterSignature", perr)) {
 			goto errorReturn;
+		}
 		pcn = NULL;
 		pcn2 = NULL;
 
@@ -215,18 +218,22 @@ bool _COSE_CounterSign_create(COSE* pMessage,
 	}
 
 	if (!_COSE_map_put(pMessage, COSE_Header_CounterSign, pArray,
-			COSE_UNPROTECT_ONLY, perr))
+			COSE_UNPROTECT_ONLY, perr)) {
 		goto errorReturn;
+	}
 
 	return true;
 
 errorReturn:
-	if (pArray != NULL)
+	if (pArray != NULL) {
 		CN_CBOR_FREE(pArray, context);
-	if ((pcn != NULL) && (pcn->parent != NULL))
+	}
+	if ((pcn != NULL) && (pcn->parent != NULL)) {
 		CN_CBOR_FREE(pcn, context);
-	if ((pcn2 != NULL) && (pcn2->parent != NULL))
+	}
+	if ((pcn2 != NULL) && (pcn2->parent != NULL)) {
 		CN_CBOR_FREE(pcn2, context);
+	}
 	return false;
 }
 
@@ -306,8 +313,9 @@ bool COSE_CounterSign_SetExternal(HCOSE_COUNTERSIGN hcose,
 	cose_errback* perr)
 {
 	if (!IsValidCounterSignHandle(hcose)) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_INVALID_HANDLE;
+		}
 		return false;
 	}
 
@@ -364,6 +372,35 @@ bool _COSE_CounterSign_Sign(COSE* baseMessage,
 errorReturn:
 	return fRet;
 }
+
+/*! brief Retrieve header parameter from an enveloped message structure
+ *
+ * Retrieve a header parameter from the message.
+ * Retrieved object is the same as the one in the message - do not delete it
+ *
+ * @param[in]	h	Handle of recipient object
+ * @param[in]    key	Key to look for
+ * @param[in]	flags	What buckets should we look for the message
+ * @param[out]	perror	Location to return error codes
+ * @return	Object which is found or NULL
+ */
+
+cn_cbor* COSE_CounterSign_map_get_int(HCOSE_COUNTERSIGN h,
+	int key,
+	int flags,
+	cose_errback* perror)
+{
+	if (!IsValidCounterSignHandle(h)) {
+		if (perror != NULL) {
+			perror->err = COSE_ERR_INVALID_HANDLE;
+		}
+		return NULL;
+	}
+
+	return _COSE_map_get_int(
+		&((COSE_CounterSign*)h)->m_signer.m_message, key, flags, perror);
+}
+
 
 #if INCLUDE_SIGN
 /***************************************************************************************************

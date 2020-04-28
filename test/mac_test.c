@@ -155,10 +155,19 @@ int _ValidateMAC(const cn_cbor *pControl,
 			}
 
 			for (int counterNo = 0; counterNo < count; counterNo++) {
+				bool noSignSupport = false;
 				HCOSE_COUNTERSIGN h =
 					COSE_Recipient_get_countersignature(hRecip, counterNo, 0);
 				if (h == NULL) {
-					goto failTest;
+					continue;
+				}
+
+				alg = COSE_CounterSign_map_get_int(
+					h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+				if (!IsAlgorithmSupported(alg)) {
+					fAlgNoSupport = true;
+					noSignSupport = true;
+					returnCode = 0;
 				}
 
 				cn_cbor *counterSigner = cn_cbor_index(countersigners,
@@ -167,11 +176,16 @@ int _ValidateMAC(const cn_cbor *pControl,
 				cn_cbor *pkeyCountersign = BuildKey(
 					cn_cbor_mapget_string(counterSigner, "key"), false);
 				if (pkeyCountersign == NULL) {
-					goto failTest;
+					fFail = true;
+					COSE_CounterSign_Free(h);
+					continue;
 				}
 
 				if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
-					goto failTest;
+					fFail = true;
+					CN_CBOR_FREE(pkeyCountersign, context);
+					COSE_CounterSign_Free(h);
+					continue;
 				}
 
 				if (COSE_Recipient_CounterSign_validate(hRecip, h, 0)) {
@@ -183,7 +197,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 						counterNo -= 1;
 					}
 					else {
-						goto failTest;
+						fFail |= !noSignSupport;
 					}
 				}
 
@@ -216,10 +230,13 @@ int _ValidateMAC(const cn_cbor *pControl,
 		}
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSignSupport = false;
+			
 			HCOSE_COUNTERSIGN h =
 				COSE_Mac_get_countersignature(hMAC, counterNo, 0);
 			if (h == NULL) {
-				goto failTest;
+				fFail = true;
+				continue;
 			}
 
 			cn_cbor *counterSigner = cn_cbor_index(
@@ -228,11 +245,24 @@ int _ValidateMAC(const cn_cbor *pControl,
 			cn_cbor *pkeyCountersign =
 				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
 			if (pkeyCountersign == NULL) {
-				goto failTest;
+				fFail = true;
+				COSE_CounterSign_Free(h);
+				continue;
 			}
 
 			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
-				goto failTest;
+				fFail = true;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
+			}
+
+			cn_cbor *alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				fAlgNoSupport = true;
+				noSignSupport = true;
+				returnCode = 0;
 			}
 
 			if (COSE_Mac_CounterSign_validate(hMAC, h, 0)) {
@@ -244,7 +274,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 					counterNo -= 1;
 				}
 				else {
-					fFail = true;
+					fFail |= !noSignSupport;
 				}
 			}
 
@@ -265,7 +295,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 		}
 	}
 
-	if (fFail) {
+	if (fFail && !fAlgNoSupport) {
 		CFails += 1;
 	}
 	return returnCode;
@@ -678,11 +708,13 @@ int _ValidateMac0(const cn_cbor *pControl,
 		}
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSignAlg = false;
+			
 			HCOSE_COUNTERSIGN h =
 				COSE_Mac0_get_countersignature(hMAC, counterNo, 0);
 			if (h == NULL) {
 				fFail = true;
-				goto exitHere;
+				continue;
 			}
 
 			cn_cbor *counterSigner = cn_cbor_index(
@@ -692,13 +724,24 @@ int _ValidateMac0(const cn_cbor *pControl,
 				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
 			if (pkeyCountersign == NULL) {
 				fFail = true;
-				goto exitHere;
+				COSE_CounterSign_Free(h);
+				continue;
 			}
 
 			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
 				fFail = true;
-				goto exitHere;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
 			}
+
+			alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				fUnsuportedAlg = true;
+				noSignAlg = true;
+			}
+			
 
 			if (COSE_Mac0_CounterSign_validate(hMAC, h, 0)) {
 				//  I don't think we have any forced errors yet.
@@ -709,7 +752,7 @@ int _ValidateMac0(const cn_cbor *pControl,
 					counterNo -= 1;
 				}
 				else {
-					fFail = true;
+					fFail |= !noSignAlg;
 				}
 			}
 
@@ -733,7 +776,7 @@ exitHere:
 	if (fFail) {
 		CFails += 1;
 	}
-	return 0;
+	return fUnsuportedAlg ? 0 : 1;
 
 errorReturn:
 	CFails += 1;

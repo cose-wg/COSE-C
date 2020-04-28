@@ -140,6 +140,8 @@ int _ValidateSigned(const cn_cbor *pControl,
 			}
 
 			for (int counterNo = 0; counterNo < count; counterNo++) {
+				bool noSignAlg = false;
+				
 				HCOSE_COUNTERSIGN h =
 					COSE_Signer_get_countersignature(hSigner, counterNo, 0);
 				if (h == NULL) {
@@ -154,14 +156,24 @@ int _ValidateSigned(const cn_cbor *pControl,
 					cn_cbor_mapget_string(counterSigner, "key"), false);
 				if (pkeyCountersign == NULL) {
 					fFail = true;
+					COSE_CounterSign_Free(h);
 					continue;
 				}
 
 				if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
 					fFail = true;
+					COSE_CounterSign_Free(h);
+					CN_CBOR_FREE(pkeyCountersign, context);
 					continue;
 				}
 
+				alg = COSE_CounterSign_map_get_int(
+					h, COSE_Header_Algorithm, COSE_BOTH, 0);
+				if (!IsAlgorithmSupported(alg)) {
+					fNoSupportAlg = true;
+					noSignAlg = true;
+				}
+				
 				if (COSE_Signer_CounterSign_validate(hSigner, h, 0)) {
 					//  I don't think we have any forced errors yet.
 				}
@@ -171,7 +183,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 						counterNo -= 1;
 					}
 					else {
-						fFail = true;
+						fFail |= !noSignAlg;
 					}
 				}
 
@@ -203,6 +215,8 @@ int _ValidateSigned(const cn_cbor *pControl,
 				}
 
 				for (int counterNo = 0; counterNo < count; counterNo++) {
+					bool noSignAlg = false;
+					
 					HCOSE_COUNTERSIGN h =
 						COSE_Sign_get_countersignature(hSig, counterNo, 0);
 					if (h == NULL) {
@@ -217,14 +231,24 @@ int _ValidateSigned(const cn_cbor *pControl,
 						cn_cbor_mapget_string(counterSigner, "key"), false);
 					if (pkeyCountersign == NULL) {
 						fFail = true;
+						COSE_CounterSign_Free(h);
 						continue;
 					}
 
 					if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
 						fFail = true;
+						COSE_CounterSign_Free(h);
+						CN_CBOR_FREE(pkeyCountersign, context);
 						continue;
 					}
 
+				alg = COSE_CounterSign_map_get_int(
+						h, COSE_Header_Algorithm, COSE_BOTH, 0);
+					if (!IsAlgorithmSupported(alg)) {
+						fNoSupportAlg = true;
+						noSignAlg = true;
+					}
+					
 					if (COSE_Sign_CounterSign_validate(hSig, h, 0)) {
 						//  I don't think we have any forced errors yet.
 					}
@@ -234,7 +258,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 							counterNo -= 1;
 						}
 						else {
-							fFail = true;
+							fFail |= !noSignAlg;
 						}
 					}
 
@@ -632,11 +656,13 @@ int _ValidateSign1(const cn_cbor *pControl,
 		}
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
+			bool noSignAlg = false;
+			
 			HCOSE_COUNTERSIGN h =
 				COSE_Sign1_get_countersignature(hSig, counterNo, 0);
 			if (h == NULL) {
 				fFail = true;
-				goto exitHere;
+				continue;
 			}
 
 			cn_cbor *counterSigner = cn_cbor_index(
@@ -646,12 +672,22 @@ int _ValidateSign1(const cn_cbor *pControl,
 				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
 			if (pkeyCountersign == NULL) {
 				fFail = true;
-				goto exitHere;
+				COSE_CounterSign_Free(h);
+				continue;
 			}
 
 			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
 				fFail = true;
-				goto exitHere;
+				COSE_CounterSign_Free(h);
+				CN_CBOR_FREE(pkeyCountersign, context);
+				continue;
+			}
+
+			alg = COSE_Sign1_map_get_int(
+				hSig, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			if (!IsAlgorithmSupported(alg)) {
+				fNoAlgSupport = true;
+				noSignAlg = true;
 			}
 
 			if (COSE_Sign1_CounterSign_validate(hSig, h, 0)) {
@@ -663,7 +699,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 					counterNo -= 1;
 				}
 				else {
-					fFail = true;
+					fFail |= !noSignAlg;
 				}
 			}
 
