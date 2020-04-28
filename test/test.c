@@ -488,11 +488,11 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 		goto returnError;
 	}
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unprotected"),
-	                   COSE_UNPROTECT_ONLY, base, true)) {
+			COSE_UNPROTECT_ONLY, base, true)) {
 		goto returnError;
 	}
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unsent"),
-	                   COSE_DONT_SEND, base, false)) {
+			COSE_DONT_SEND, base, false)) {
 		goto returnError;
 	}
 
@@ -743,8 +743,8 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-							                        RgStringKeys[i].keyNew, p,
-							                        CBOR_CONTEXT_PARAM_COMMA NULL)) {
+									RgStringKeys[i].keyNew, p,
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
 								return NULL;
 							}
 							break;
@@ -762,8 +762,8 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-							                        RgStringKeys[i].keyNew, p,
-							                        CBOR_CONTEXT_PARAM_COMMA NULL)) {
+									RgStringKeys[i].keyNew, p,
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
 								return NULL;
 							}
 							break;
@@ -776,8 +776,8 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-							                        RgStringKeys[i].keyNew, p,
-							                        CBOR_CONTEXT_PARAM_COMMA NULL)) {
+									RgStringKeys[i].keyNew, p,
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
 								return NULL;
 							}
 							break;
@@ -794,8 +794,8 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-							                        RgStringKeys[i].keyNew, p,
-							                        CBOR_CONTEXT_PARAM_COMMA NULL)) {
+									RgStringKeys[i].keyNew, p,
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
 								return NULL;
 							}
 							break;

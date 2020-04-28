@@ -557,8 +557,8 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 
 #ifdef USE_HMAC_256_64
 		case COSE_Algorithm_HMAC_256_64:
-			if (!HMAC_Create(
-					pcose, 256, 64, pbKey, cbKey, pbAuthData, cbAuthData, perr)) {
+			if (!HMAC_Create(pcose, 256, 64, pbKey, cbKey, pbAuthData,
+					cbAuthData, perr)) {
 				goto errorReturn;
 			}
 			break;

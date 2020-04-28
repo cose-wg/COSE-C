@@ -401,7 +401,6 @@ cn_cbor* COSE_CounterSign_map_get_int(HCOSE_COUNTERSIGN h,
 		&((COSE_CounterSign*)h)->m_signer.m_message, key, flags, perror);
 }
 
-
 #if INCLUDE_SIGN
 /***************************************************************************************************
  *

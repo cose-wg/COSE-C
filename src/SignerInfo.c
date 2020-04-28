@@ -165,7 +165,7 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	}
 	else {
 		cn = cn_cbor_data_create(pcborProtected->v.bytes,
-		                         (int)pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+			(int)pcborProtected->length, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(
@@ -179,8 +179,8 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	}
 	else {
 		cn = cn_cbor_data_create(pcborProtectedSign->v.bytes,
-		                         (int)pcborProtectedSign->length,
-		                         CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+			(int)pcborProtectedSign->length,
+			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(
@@ -271,9 +271,9 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 	}
 
 	if (!BuildToBeSigned(&pbToSign, &cbToSign, pcborBody, pcborProtected,
-	                     pcborProtectedSign, pSigner->m_message.m_pbExternal,
-	                     pSigner->m_message.m_cbExternal, contextString,
-	                     CBOR_CONTEXT_PARAM_COMMA perr)) {
+			pcborProtectedSign, pSigner->m_message.m_pbExternal,
+			pSigner->m_message.m_cbExternal, contextString,
+			CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 

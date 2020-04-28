@@ -349,7 +349,7 @@ static bool CreateSign1AAD(COSE_Sign1Message *pMessage,
 	}
 	else {
 		cn = cn_cbor_data_create(cn2->v.bytes, (int)cn2->length,
-		                         CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cn != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(

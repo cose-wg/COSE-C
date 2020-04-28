@@ -302,7 +302,7 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 	}
 
 	for (pSigner = pMessage->m_signerFirst; pSigner != NULL;
-	     pSigner = pSigner->m_signerNext) {
+		 pSigner = pSigner->m_signerNext) {
 		if (!_COSE_Signer_sign(
 				pSigner, pcborBody, pcborProtected, "Signature", perr)) {
 			goto errorReturn;

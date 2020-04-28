@@ -231,7 +231,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
 			bool noSignSupport = false;
-			
+
 			HCOSE_COUNTERSIGN h =
 				COSE_Mac_get_countersignature(hMAC, counterNo, 0);
 			if (h == NULL) {
@@ -709,7 +709,7 @@ int _ValidateMac0(const cn_cbor *pControl,
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
 			bool noSignAlg = false;
-			
+
 			HCOSE_COUNTERSIGN h =
 				COSE_Mac0_get_countersignature(hMAC, counterNo, 0);
 			if (h == NULL) {
@@ -741,7 +741,6 @@ int _ValidateMac0(const cn_cbor *pControl,
 				fUnsuportedAlg = true;
 				noSignAlg = true;
 			}
-			
 
 			if (COSE_Mac0_CounterSign_validate(hMAC, h, 0)) {
 				//  I don't think we have any forced errors yet.
@@ -838,7 +837,6 @@ int BuildMac0Message(const cn_cbor *pControl)
 
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
 
-
 #if INCLUDE_COUNTERSIGNATURE
 	// On the sign body
 	cn_cbor *countersigns = cn_cbor_mapget_string(pMac, "countersign");
@@ -881,7 +879,7 @@ int BuildMac0Message(const cn_cbor *pControl)
 	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) {
 		goto returnError;
 	}
-	
+
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);

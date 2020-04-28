@@ -141,7 +141,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 
 			for (int counterNo = 0; counterNo < count; counterNo++) {
 				bool noSignAlg = false;
-				
+
 				HCOSE_COUNTERSIGN h =
 					COSE_Signer_get_countersignature(hSigner, counterNo, 0);
 				if (h == NULL) {
@@ -173,7 +173,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 					fNoSupportAlg = true;
 					noSignAlg = true;
 				}
-				
+
 				if (COSE_Signer_CounterSign_validate(hSigner, h, 0)) {
 					//  I don't think we have any forced errors yet.
 				}
@@ -216,7 +216,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 
 				for (int counterNo = 0; counterNo < count; counterNo++) {
 					bool noSignAlg = false;
-					
+
 					HCOSE_COUNTERSIGN h =
 						COSE_Sign_get_countersignature(hSig, counterNo, 0);
 					if (h == NULL) {
@@ -242,13 +242,13 @@ int _ValidateSigned(const cn_cbor *pControl,
 						continue;
 					}
 
-				alg = COSE_CounterSign_map_get_int(
+					alg = COSE_CounterSign_map_get_int(
 						h, COSE_Header_Algorithm, COSE_BOTH, 0);
 					if (!IsAlgorithmSupported(alg)) {
 						fNoSupportAlg = true;
 						noSignAlg = true;
 					}
-					
+
 					if (COSE_Sign_CounterSign_validate(hSig, h, 0)) {
 						//  I don't think we have any forced errors yet.
 					}
@@ -590,7 +590,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 	}
 
 	hSig = (HCOSE_SIGN1)COSE_Decode(pbEncoded, cbEncoded, &type,
-	                                COSE_sign1_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+		COSE_sign1_object, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSig == NULL) {
 		if (fFailBody) {
 			return 0;
@@ -600,7 +600,8 @@ int _ValidateSign1(const cn_cbor *pControl,
 		}
 	}
 
-	if (!SetReceivingAttributes((HCOSE)hSig, pSign, Attributes_Sign1_protected)) {
+	if (!SetReceivingAttributes(
+			(HCOSE)hSig, pSign, Attributes_Sign1_protected)) {
 		goto returnError;
 	}
 
@@ -657,7 +658,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
 			bool noSignAlg = false;
-			
+
 			HCOSE_COUNTERSIGN h =
 				COSE_Sign1_get_countersignature(hSig, counterNo, 0);
 			if (h == NULL) {
@@ -996,8 +997,8 @@ void Sign_Corners()
 		CFails++;
 	}
 	if (!COSE_Signer_map_put_int(hSigner, COSE_Header_Algorithm,
-	                             cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                             COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	if (!COSE_Sign_AddSigner(hSign, hSigner, NULL)) {
@@ -1024,8 +1025,8 @@ void Sign_Corners()
 		CFails++;
 	}
 	if (!COSE_Signer_map_put_int(hSigner, COSE_Header_Algorithm,
-	                             cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
-	                             COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	if (!COSE_Sign_AddSigner(hSign, hSigner, NULL)) {
@@ -1138,8 +1139,8 @@ void Sign1_Corners()
 		CFails++;
 	}
 	if (!COSE_Sign1_map_put_int(hSign, COSE_Header_Algorithm,
-	                            cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                            COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	CHECK_FAILURE(COSE_Sign1_Sign(hSign, cn, &cose_error),
@@ -1156,8 +1157,8 @@ void Sign1_Corners()
 	}
 
 	if (!COSE_Sign1_map_put_int(hSign, COSE_Header_Algorithm,
-	                            cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
-	                            COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	CHECK_FAILURE(COSE_Sign1_Sign(hSign, cn, &cose_error),

@@ -182,7 +182,7 @@ bool DecryptMessage(const byte *pbEncoded,
 
 		for (int counterNo = 0; counterNo < count; counterNo++) {
 			bool noSupportSign = false;
-			
+
 			HCOSE_COUNTERSIGN h =
 				COSE_Recipient_get_countersignature(hRecip1, counterNo, 0);
 			if (h == NULL) {
@@ -208,12 +208,12 @@ bool DecryptMessage(const byte *pbEncoded,
 				continue;
 			}
 
-			alg = COSE_CounterSign_map_get_int(h, COSE_Header_Algorithm, COSE_BOTH, NULL);
+			alg = COSE_CounterSign_map_get_int(
+				h, COSE_Header_Algorithm, COSE_BOTH, NULL);
 			if (!IsAlgorithmSupported(alg)) {
 				noSupportSign = true;
 				fNoSupport = true;
 			}
-	
 
 			if (COSE_Recipient_CounterSign_validate(hRecip1, h, 0)) {
 				//  I don't think we have any forced errors yet.
@@ -288,7 +288,7 @@ bool DecryptMessage(const byte *pbEncoded,
 				noSupportSign = true;
 				fNoSupport = true;
 			}
-			
+
 			if (COSE_Enveloped_CounterSign_validate(hEnc, h, 0)) {
 				//  I don't think we have any forced errors yet.
 			}
@@ -628,17 +628,17 @@ int EncryptMessage()
 		goto errorReturn;
 	}
 	if (!COSE_Enveloped_map_put_int(hEncObj, COSE_Header_Algorithm,
-	                                cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128,
-	                                                   CBOR_CONTEXT_PARAM_COMMA NULL),
-	                                COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(COSE_Algorithm_AES_CCM_16_64_128,
+				CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		goto errorReturn;
 	}
 	if (!COSE_Enveloped_SetContent(hEncObj, (byte *)sz, strlen(sz), NULL)) {
 		goto errorReturn;
 	}
 	if (!COSE_Enveloped_map_put_int(hEncObj, COSE_Header_IV,
-	                                cn_cbor_data_create(rgbKid, 13, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                                COSE_UNPROTECT_ONLY, NULL)) {
+			cn_cbor_data_create(rgbKid, 13, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_UNPROTECT_ONLY, NULL)) {
 		goto errorReturn;
 	}
 
@@ -870,7 +870,7 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		for (int counterNo = 0; counterNo < count; counterNo++) {
 			bool noSupportSign = false;
 			bool failThis = false;
-			
+
 			HCOSE_COUNTERSIGN h =
 				COSE_Encrypt0_get_countersignature(hEnc, counterNo, 0);
 			if (h == NULL) {
@@ -902,7 +902,7 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 				noSupportSign = true;
 				fAlgSupport = false;
 			}
-			
+
 			if (COSE_Encrypt0_CounterSign_validate(hEnc, h, 0)) {
 				//  I don't think we have any forced errors yet.
 			}
@@ -1332,8 +1332,8 @@ void Encrypt_Corners()
 		CFails++;
 	}
 	if (!COSE_Encrypt_map_put_int(hEncrypt, COSE_Header_Algorithm,
-	                              cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                              COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	CHECK_FAILURE(COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), &cose_error),
@@ -1348,8 +1348,8 @@ void Encrypt_Corners()
 		CFails++;
 	}
 	if (!COSE_Encrypt_map_put_int(hEncrypt, COSE_Header_Algorithm,
-	                              cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
-	                              COSE_PROTECT_ONLY, NULL)) {
+			cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL),
+			COSE_PROTECT_ONLY, NULL)) {
 		CFails++;
 	}
 	CHECK_FAILURE(COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), &cose_error),
