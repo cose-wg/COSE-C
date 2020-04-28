@@ -51,6 +51,10 @@ set(exec_prefix ${CMAKE_INSTALL_PREFIX}/bin)
 set(libdir ${CMAKE_INSTALL_PREFIX}/lib)
 set(includedir ${CMAKE_INSTALL_PREFIX}/include)
 
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 11)
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
   if(COSE_C_OPTIMIZE)
     set(CMAKE_BUILD_TYPE MinSizeRel)
