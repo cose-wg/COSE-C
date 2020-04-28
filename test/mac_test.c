@@ -838,9 +838,6 @@ int BuildMac0Message(const cn_cbor *pControl)
 
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
 
-	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) {
-		goto returnError;
-	}
 
 #if INCLUDE_COUNTERSIGNATURE
 	// On the sign body
@@ -881,6 +878,10 @@ int BuildMac0Message(const cn_cbor *pControl)
 
 #endif
 
+	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) {
+		goto returnError;
+	}
+	
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte *rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
