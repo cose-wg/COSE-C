@@ -3,7 +3,7 @@
 #include "cose_int.h"
 #include "crypto.h"
 
-#if USE_BCRYPT
+#if COSE_C_USE_BCRYPT
 
 #include <Windows.h>
 
@@ -77,4 +77,4 @@ bool AES_CCM_Encrypt(COSE_Encrypt *pcose,
 	return true;
 }
 
-#endif	// USE_BCRYPT
+#endif	// COSE_C_USE_BCRYPT

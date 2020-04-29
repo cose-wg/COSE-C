@@ -7,7 +7,7 @@
 #include <memory.h>
 #include <stdbool.h>
 
-#ifdef USE_OPEN_SSL
+#ifdef COSE_C_USE_OPENSSL
 
 #include <openssl/evp.h>
 #include <openssl/aes.h>
@@ -1779,4 +1779,4 @@ errorReturn:
 	return fRet;
 }
 
-#endif	// USE_OPEN_SSL
+#endif	// COSE_C_USE_OPENSSL
