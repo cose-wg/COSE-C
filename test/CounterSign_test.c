@@ -9,6 +9,8 @@
 #include <cose/cose_configure.h>
 #include <cn-cbor/cn-cbor.h>
 
+#if INCLUDE_COUNTERSIGNATURE
+
 #include "test.h"
 #include "cose_int.h"
 
@@ -85,3 +87,4 @@ void CounterSign_Corners()
 
 	
 }
+#endif
