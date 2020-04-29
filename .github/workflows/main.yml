@@ -2,6 +2,14 @@ name: CMake
 
 on: [push, pull_request]
 
+# on: 
+#   push:
+#     branches:    
+#       - master        
+#   pull_request:
+#     branches:    
+#       - master
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -24,7 +32,12 @@ jobs:
           choco install openssl cmake
 
       - name: Create Build directory
-        run: cmake -E make_directory $GITHUB_WORKSPACE/build
+        shell: bash
+        run: |
+          pwd
+          echo "$GITHUB_WORKSPACE/build"
+          cmake -E make_directory $GITHUB_WORKSPACE/build
+          cd $GITHUB_WORKSPACE/build
 
       - name: Configure CMake
         shell: bash
