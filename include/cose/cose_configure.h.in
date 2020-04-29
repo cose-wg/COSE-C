@@ -154,7 +154,7 @@
 #define TOSTRING(x) STRINGIFY(x)
 #pragma message("OPENSSL VERSION IS " OPENSSL_VERSION_TEXT)
 #endif
-#endif  // !defined (COSE_C_USE_MBEDTLS)
+#endif  // defined (COSE_C_USE_OPENSSL)
 
 //
 //   Define which COSE objects are included
