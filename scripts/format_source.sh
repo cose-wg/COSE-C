@@ -37,7 +37,7 @@ find "$PROJECT_PATH" \
 -not \( -path "*/third_party/*" -prune \) \
 -not \( -path "*Coverity_Model.c*" -prune \) \
 -not \( -path "*/docs/*" -prune \) \
-\( -name "*.h" -o -name "*.hpp" -o -name "*.c" -o -name "*.cpp" \) \
+\( -name "*.h.in" -o -name "*.h" -o -name "*.hpp" -o -name "*.c" -o -name "*.cpp" \) \
 | xargs $format -i
 
 
