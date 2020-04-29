@@ -50,7 +50,7 @@ jobs:
           -DCOSE_C_COVERALLS=OFF \
           -DCOSE_C_BUILD_TESTS=ON \
           -DBUILD_SHARED_LIBS=OFF \
-          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_BUILD_TYPE=Debug \
           ${{matrix.CMAKE_OPTIONS}} \
           -DCOSE_C_USE_MBEDTLS=${{matrix.USE_MBEDTLS}}
 
@@ -83,5 +83,5 @@ jobs:
           ls -al
           cd $GITHUB_WORKSPACE/build
           ls -al
-          ctest -C Release --verbose
+          ctest -C Debug --verbose
 
