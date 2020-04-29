@@ -1,6 +1,6 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test)
 
-add_executable(cose_test test.c json.c encrypt.c sign.c context.c mac_test.c)
+add_executable(cose_test test.c json.c encrypt.c sign.c context.c mac_test.c CounterSign_test.c)
 
 target_link_libraries(cose_test PRIVATE cose-c::cose-c cn-cbor::cn-cbor)
 
@@ -176,3 +176,10 @@ add_test(
   NAME Memory-sign-eddsa
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --memory Examples/eddsa-examples/eddsa-01.json)
+
+if(COSE_C_INCLUDE_COUNTERSIGN)
+  add_test(
+    NAME Memory-Countersign
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND cose_test --memory Examples/countersign/mac0-01.json)
+endif()

@@ -25,8 +25,6 @@ bool _COSE_CounterSign_Free(COSE_CounterSign* pSigner)
 		return true;
 	}
 
-	_COSE_RemoveFromList(&CountersignRoot, &pSigner->m_signer.m_message);
-
 	_COSE_SignerInfo_Release(&pSigner->m_signer);
 
 	COSE_FREE(pSigner, &pSigner->m_signer.m_message.m_allocContext);
@@ -54,7 +52,11 @@ COSE_CounterSign* _COSE_CounterSign_Init_From_Object(cn_cbor* cbor,
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 	if (!_COSE_SignerInfo_Init_From_Object(
 			cbor, &pobj->m_signer, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		goto errorReturn;
+		_COSE_SignerInfo_Release(&pobj->m_signer);
+		if (pIn == NULL) {
+			COSE_FREE(pobj, context);
+		}
+		return NULL;
 	}
 
 	if (pIn == NULL) {
@@ -112,6 +114,8 @@ bool COSE_CounterSign_Free(HCOSE_COUNTERSIGN h)
 		return true;
 	}
 
+	_COSE_RemoveFromList(&CountersignRoot, &p->m_signer.m_message);
+	
 	fRet = _COSE_CounterSign_Free(p);
 
 errorReturn:
@@ -127,8 +131,7 @@ bool _COSE_CounterSign_add(COSE* pMessage,
 	COSE_CounterSign* pSigner = (COSE_CounterSign*)hSigner;
 
 	CHECK_CONDITION(IsValidCounterSignHandle(hSigner), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(pSigner->m_signer.m_message.m_counterSigners == NULL,
-		COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(pSigner->m_next == NULL, COSE_ERR_INVALID_PARAMETER);
 
 	pSigner->m_next = pMessage->m_counterSigners;
 	pMessage->m_counterSigners = pSigner;
