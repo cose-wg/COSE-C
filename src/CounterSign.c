@@ -142,26 +142,10 @@ errorReturn:
 	return false;
 }
 
+
 #if 0
-/// Get the n-th counter signature from the attribute.
-///
-HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE* pMessage,
-	int iSigner,
-	cose_errback* perr)
-{
-	COSE_CounterSign* pSigner = pMessage->m_counterSigners;
-
-	for (int i = 0; i < iSigner && pSigner != NULL; i++, pSigner = pSigner->m_next) {
-		CHECK_CONDITION(pSigner != NULL, COSE_ERR_INVALID_PARAMETER);
-	}
-
-	return (HCOSE_COUNTERSIGN)pSigner;
-
-errorReturn:
-	return false;
-}
-#endif
-
+I Don't remember why I wrote this and if I don't need it any more.
+Keep for a little while and then delete
 /// _COSE_CounterSign_create
 ///
 ///	Create the CounterSign attribute based on the set of countersignatures added
@@ -240,6 +224,7 @@ errorReturn:
 	}
 	return false;
 }
+#endif
 
 bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN h,
 	const cn_cbor* pkey,
