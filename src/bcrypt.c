@@ -1,7 +1,7 @@
 #include "cose/cose.h"
 #include "cose/cose_configure.h"
 #include "cose_int.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
 #if COSE_C_USE_BCRYPT
 

@@ -36,9 +36,8 @@ endif()
 set(cose_sources
     ${PROJECT_SOURCE_DIR}/include/cose/cose.h
     ${CMAKE_BINARY_DIR}/include/cose/cose_configure.h
-    crypto.h
+    cose_crypto.h
     cose_int.h
-    crypto.h
     Cose.c
     CounterSign.c
     CounterSign0.c
