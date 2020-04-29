@@ -26,9 +26,10 @@ void CounterSign_Corners()
 	
 	hCounterSign = COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 	hBadHandle = (HCOSE_COUNTERSIGN)COSE_CALLOC(1, sizeof(COSE), context);
+#if INCLUDE_SIGN1
 	HCOSE_SIGN1 hSign1 =
 		COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA & cose_error);
-
+#endif
 	//  Look for invalid parameter
 	//		Null handle checks
 	//		bad handle checks
@@ -57,6 +58,7 @@ void CounterSign_Corners()
 					  COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
+#if INCLUDE_SIGN1
 	CHECK_FAILURE(COSE_Sign1_add_countersignature(hSign1, hBadHandle, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	((COSE_CounterSign *)hCounterSign)->m_next = (COSE_CounterSign *)hBadHandle;
@@ -69,7 +71,8 @@ void CounterSign_Corners()
 	COSE_Sign1_add_countersignature(hSign1, hCounterSign, &cose_error);
 	CHECK_FAILURE(COSE_Sign1_get_countersignature(hSign1, 3, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
-
+#endif
+	
 	CHECK_FAILURE(
 		COSE_CounterSign_SetExternal(hNULL, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -82,9 +85,8 @@ void CounterSign_Corners()
 	CHECK_RETURN(!COSE_CounterSign_Free(hBadHandle), false, CFails++);
 
 	COSE_CounterSign_Free(hCounterSign);
+#if INCLUDE_SIGN1
 	COSE_Sign1_Free(hSign1);
-
-
-	
+#endif	
 }
 #endif
