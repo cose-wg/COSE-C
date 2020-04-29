@@ -953,6 +953,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -966,6 +972,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -985,6 +997,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -998,6 +1016,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1017,6 +1041,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -1030,6 +1060,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1049,6 +1085,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -1062,6 +1104,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1081,6 +1129,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -1094,6 +1148,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1101,8 +1161,8 @@ void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
+		CFails = 0;
 	}
-	CFails = 0;
 	context = NULL;
 #else
 	return;

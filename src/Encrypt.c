@@ -962,6 +962,7 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc,
 
 	pRecip->m_recipientNext = pEncrypt->m_recipientFirst;
 	pEncrypt->m_recipientFirst = pRecip;
+	pRecip->m_encrypt.m_message.m_refCount++;
 
 	pRecipients = _COSE_arrayget_int(&pEncrypt->m_message, INDEX_RECIPIENTS);
 	if (pRecipients == NULL) {
@@ -983,7 +984,6 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc,
 							 pRecip->m_encrypt.m_message.m_cbor, &cbor_error),
 		cbor_error);
 
-	pRecip->m_encrypt.m_message.m_refCount++;
 
 	return true;
 
