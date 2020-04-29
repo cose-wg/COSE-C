@@ -6,7 +6,7 @@
 #include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
 #if INCLUDE_COUNTERSIGNATURE
 
