@@ -24,12 +24,13 @@ jobs:
           choco install openssl cmake
 
       - name: Create Build directory
-        run: cmake -E make_directory ${{runner.workspace}}/build
+        run: cmake -E make_directory $GITHUB_WORKSPACE/build
 
       - name: Configure CMake
         shell: bash
-        working-directory: ${{runner.workspace}}/build
+        # working-directory: ${{runner.workspace}}/build
         run: |
+          cd $GITHUB_WORKSPACE/build
           cmake $GITHUB_WORKSPACE \
           -DCOSE_C_USE_CONTEXT=${{matrix.USE_CONTEXT}} \
           -DCOSE_C_BUILD_DOCS=OFF \
@@ -41,12 +42,14 @@ jobs:
           -DCOSE_C_USE_MBEDTLS=${{matrix.USE_MBEDTLS}}
 
       - name: Build
-        working-directory: ${{runner.workspace}}/build
+        # working-directory: ${{runner.workspace}}/build
         shell: bash
-        run: cmake --build .
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          cmake --build .
 
       - name: get test data
-        working-directory: ${{runner.workspace}}
+        # working-directory: ${{runner.workspace}}
         shell: bash
         run: |
           echo $GITHUB_WORKSPACE
@@ -57,8 +60,15 @@ jobs:
           ls -al
 
       - name: Test
-        working-directory: ${{runner.workspace}}/build
+        # working-directory: ${{runner.workspace}}/build
         shell: bash
         run: |
+          pwd
+          ls -al
+          cd $GITHUB_WORKSPACE
+          pwd
+          ls -al
+          cd $GITHUB_WORKSPACE/build
+          ls -al
           ctest -C Release --verbose
 
