@@ -36,6 +36,7 @@ jobs:
           -DCOSE_C_COVERALLS=OFF \
           -DCOSE_C_BUILD_TESTS=ON \
           -DBUILD_SHARED_LIBS=OFF \
+          -DCMAKE_BUILD_TYPE=Release \
           ${{matrix.CMAKE_OPTIONS}} \
           -DCOSE_C_USE_MBEDTLS=${{matrix.USE_MBEDTLS}}
 
@@ -59,5 +60,5 @@ jobs:
         working-directory: ${{runner.workspace}}/build
         shell: bash
         run: |
-          ctest --verbose
+          ctest -C Release --verbose
 
