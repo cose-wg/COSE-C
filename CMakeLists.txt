@@ -83,7 +83,7 @@ endif()
 if(NOT COSE_C_INCLUDE_SIGN1)
   add_definitions(-DINCLUDE_SIGN1=0)
 endif()
-if (NOT COSE_C_INCLUDE_COUNTERSIGN)
+if(NOT COSE_C_INCLUDE_COUNTERSIGN)
   add_definitions(-DINCLUDE_COUNTERSIGN=0)
 endif()
 if(COSE_C_USE_CONTEXT)
@@ -98,8 +98,8 @@ if(versbose)
 endif()
 
 # Control the order of packages - get the latest not the first
-SET(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
-SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
+set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 
 ###############################################################################
 # DOCS
@@ -186,7 +186,8 @@ else()
 endif()
 
 if(COSE_C_USE_MBEDTLS)
-  add_definitions(-DUSE_MBED_TLS)
+  add_definitions(-DCOSE_C_USE_MBEDTLS)
+  set(COSE_C_USE_OPENSSL OFF)
 
   if(COSE_C_USE_FIND_PACKAGE)
     find_package(MbedTLS)
@@ -219,6 +220,7 @@ if(COSE_C_USE_MBEDTLS)
   endif()
 else()
   find_package(OpenSSL REQUIRED)
+  set(COSE_C_USE_OPENSSL ON)
 endif()
 
 ###############################################################################
@@ -272,3 +274,5 @@ message(STATUS "CMAKE_CXX_COMPILER:..............${CMAKE_CXX_COMPILER}")
 message(STATUS "CLANG_TIDY_EXE:..................${CLANG_TIDY_EXE}")
 message(STATUS "project_cn_cbor_SOURCE_DIR:......${project_cn_cbor_SOURCE_DIR}")
 message(STATUS "project_cn_cbor_BINARY_DIR:......${project_cn_cbor_BINARY_DIR}")
+message(STATUS "project_mbedtls_SOURCE_DIR:......${project_mbedtls_SOURCE_DIR}")
+message(STATUS "project_mbedtls_BINARY_DIR:......${project_mbedtls_BINARY_DIR}")

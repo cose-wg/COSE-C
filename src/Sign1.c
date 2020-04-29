@@ -1,4 +1,4 @@
-/** \file Sign.c
+/** \file Sign1.c
  * Contains implementation of the functions related to HCOSE_SIGN handle
  * objects.
  */
@@ -12,10 +12,10 @@
 
 #if INCLUDE_SIGN1
 
-bool _COSE_Signer0_sign(COSE_Sign1Message *pSigner,
+bool _COSE_Signer1_sign(COSE_Sign1Message *pSigner,
 	const cn_cbor *pKey,
 	cose_errback *perr);
-bool _COSE_Signer0_validate(COSE_Sign1Message *pSign,
+bool _COSE_Signer1_validate(COSE_Sign1Message *pSign,
 	const cn_cbor *pKey,
 	cose_errback *perr);
 void _COSE_Sign1_Release(COSE_Sign1Message *p);
@@ -237,7 +237,7 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 		goto errorReturn;
 	}
 
-	if (!_COSE_Signer0_sign(pMessage, pKey, perr)) {
+	if (!_COSE_Signer1_sign(pMessage, pKey, perr)) {
 		goto errorReturn;
 	}
 
@@ -274,7 +274,7 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
-	f = _COSE_Signer0_validate(pSign, pKey, perr);
+	f = _COSE_Signer1_validate(pSign, pKey, perr);
 
 	return f;
 
@@ -405,7 +405,7 @@ errorReturn:
 	return false;
 }
 
-bool _COSE_Signer0_sign(COSE_Sign1Message *pSigner,
+bool _COSE_Signer1_sign(COSE_Sign1Message *pSigner,
 	const cn_cbor *pKey,
 	cose_errback *perr)
 {
@@ -501,7 +501,7 @@ bool _COSE_Signer0_sign(COSE_Sign1Message *pSigner,
 	return f;
 }
 
-bool _COSE_Signer0_validate(COSE_Sign1Message *pSign,
+bool _COSE_Signer1_validate(COSE_Sign1Message *pSign,
 	const cn_cbor *pKey,
 	cose_errback *perr)
 {

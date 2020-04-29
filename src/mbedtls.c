@@ -9,7 +9,7 @@
 #endif
 #include <stdlib.h>
 
-#ifdef USE_MBED_TLS
+#ifdef COSE_C_USE_MBEDTLS
 
 #include "mbedtls/ccm.h"
 #include "mbedtls/md.h"
@@ -1600,4 +1600,4 @@ errorReturn:
 	return fRet;
 }
 #endif	// USE_ECDH
-#endif	// USE_MBED_TLS
+#endif	// COSE_C_USE_MBEDTLS
