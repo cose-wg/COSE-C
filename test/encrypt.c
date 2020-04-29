@@ -545,6 +545,7 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 		}
 
 		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, NULL)) {
+			COSE_Recipient_Free(hRecip);
 			goto returnError;
 		}
 
@@ -573,15 +574,18 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 
 			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
 					Attributes_Countersign_protected)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_Enveloped_add_countersignature(
 					hEncObj, hCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
@@ -606,6 +610,10 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 	return f;
 
 returnError:
+	if (hEncObj != NULL) {
+		COSE_Enveloped_Free(hEncObj);
+	}
+	
 	CFails += 1;
 	return 0;
 }
@@ -748,7 +756,7 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 	const cn_cbor *pFail;
 	const cn_cbor *pEncrypt;
 	const cn_cbor *pRecipients;
-	HCOSE_ENCRYPT hEnc;
+	HCOSE_ENCRYPT hEnc = NULL;
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
@@ -922,9 +930,11 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 	}
 #endif
 
-	COSE_Encrypt_Free(hEnc);
 
 exitHere:
+	if (hEnc != NULL) {
+		COSE_Encrypt_Free(hEnc);
+	}
 
 	if (fAlgSupport) {
 		if (fFailBody) {
@@ -946,6 +956,10 @@ exitHere:
 	return fAlgSupport ? 1 : 0;
 
 returnError:
+	if (hEnc != NULL) {
+		COSE_Encrypt_Free(hEnc);
+	}
+
 	CFails += 1;
 	return 0;
 }
@@ -1043,15 +1057,18 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 
 			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
 					Attributes_Countersign_protected)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_Encrypt0_add_countersignature(
 					hEncObj, hCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
@@ -1076,6 +1093,10 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 	return f;
 
 returnError:
+	if (hEncObj != NULL) {
+		COSE_Encrypt_Free(hEncObj);
+	}
+	
 	CFails += 1;
 	return 1;
 }
