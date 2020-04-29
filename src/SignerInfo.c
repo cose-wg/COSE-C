@@ -123,11 +123,9 @@ COSE_SignerInfo *_COSE_SignerInfo_Init_From_Object(cn_cbor *cbor,
 	return pSigner;
 
 errorReturn:
-	if (pSigner != NULL) {
+	if (pSigner != NULL && pIn == NULL) {
 		_COSE_SignerInfo_Release(pSigner);
-		if (pIn == NULL) {
-			COSE_FREE(pSigner, context);
-		}
+		COSE_FREE(pSigner, context);
 	}
 	return NULL;
 }

@@ -865,6 +865,9 @@ void RunCorners()
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 	Recipient_Corners();
 #endif
+#if INCLUDE_COUNTERSIGNATURE
+	CounterSign_Corners();
+#endif
 }
 
 void RunMemoryTest(const char* szFileName)
@@ -906,6 +909,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -919,6 +928,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
