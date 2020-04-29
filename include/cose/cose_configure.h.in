@@ -10,18 +10,18 @@
 
 // make sure we only use one crypto library
 #if defined(COSE_C_USE_MBEDTLS)
-	#if defined(COSE_C_USE_OPENSSL) || defined(COSE_C_USE_BCRYPT)
-		#error Only Define One Crypto Package
-	#endif
+#if defined(COSE_C_USE_OPENSSL) || defined(COSE_C_USE_BCRYPT)
+#error Only Define One Crypto Package
+#endif
 #elif defined(COSE_C_USE_BCRYPT)
-	#if defined(COSE_C_USE_OPENSSL)
-		#error Only Define One Crypto Package
-	#endif
+#if defined(COSE_C_USE_OPENSSL)
+#error Only Define One Crypto Package
+#endif
 #endif
 
 // verify that we have a supported version of openssl
 #if defined(COSE_C_USE_OPENSSL)
-	#include <openssl/opensslv.h>
+#include <openssl/opensslv.h>
 #endif
 
 //
@@ -76,7 +76,7 @@
 #define USE_AES_CBC_MAC_256_64
 #define USE_AES_CBC_MAC_256_128
 
-#endif	// !defined(COSE_C_USE_MBEDTLS)
+#endif  // !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which ECDH algorithms are to be used
@@ -92,7 +92,7 @@
 #define USE_ECDH 1
 #define USE_HKDF_SHA2 1
 #endif
-#endif	// !defined(COSE_C_USE_MBEDTLS)
+#endif  // !defined(COSE_C_USE_MBEDTLS)
 
 #if !defined(COSE_C_USE_MBEDTLS)
 #define USE_ECDH_ES_A128KW
@@ -107,7 +107,7 @@
 #define USE_ECDH 1
 #define USE_HKDF_AES 1
 #endif
-#endif	// !defined(COSE_C_USE_MBEDTLS)
+#endif  // !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which Key Wrap functions are to be used
@@ -117,7 +117,7 @@
 #define USE_AES_KW_128
 #define USE_AES_KW_192
 #define USE_AES_KW_256
-#endif	// !defined(COSE_C_USE_MBEDTLS)
+#endif  // !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which of the DIRECT + KDF algorithms are to be used
@@ -135,7 +135,7 @@
 #if defined(USE_Direct_HKDF_AES_128) || defined(USE_Direct_KDF_AES_256)
 #define USE_HKDF_AES 1
 #endif
-#endif	// !defined(COSE_C_USE_MBEDTLS)
+#endif  // !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which of the signature algorithms are to be used
@@ -145,16 +145,16 @@
 #define USE_ECDSA_SHA_384
 #define USE_ECDSA_SHA_512
 #if defined(COSE_C_USE_OPENSSL)
-	//  MBEDTLS currently supports ECDH for X25519 but not EdDSA
-	#if OPENSSL_VERSION_NUMBER > 0x10100000L
-		// Requires OPEN SSL 1.1.1 to build
-		#define USE_EDDSA
-	#else
-		#define STRINGIFY(x) #x
-		#define TOSTRING(x) STRINGIFY(x)
-		#pragma message("OPENSSL VERSION IS " OPENSSL_VERSION_TEXT)
-	#endif
-#endif	// !defined (COSE_C_USE_MBEDTLS)
+//  MBEDTLS currently supports ECDH for X25519 but not EdDSA
+#if OPENSSL_VERSION_NUMBER > 0x10100000L
+// Requires OPEN SSL 1.1.1 to build
+#define USE_EDDSA
+#else
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#pragma message("OPENSSL VERSION IS " OPENSSL_VERSION_TEXT)
+#endif
+#endif  // !defined (COSE_C_USE_MBEDTLS)
 
 //
 //   Define which COSE objects are included
