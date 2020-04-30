@@ -186,7 +186,6 @@ else()
 endif()
 
 if(COSE_C_USE_MBEDTLS)
-  add_definitions(-DCOSE_C_USE_MBEDTLS)
   set(COSE_C_USE_OPENSSL OFF)
 
   if(COSE_C_USE_FIND_PACKAGE)

@@ -551,8 +551,9 @@ bool HKDF_Extract(COSE *pcose,
 	}
 
 	pmd = mbedtls_md_info_from_type(mdType);
-	if (pmd == NULL)
+	if (pmd == NULL) {
 		goto errorReturn;
+	}
 
 	cbSalt = 0;
 	byte *pbSalt = NULL;
@@ -612,11 +613,12 @@ bool HKDF_Expand(COSE *pcose,
 	}
 
 	pmd = mbedtls_md_info_from_type(mdType);
-	if (pmd == NULL)
+	if (pmd == NULL) {
 		goto errorReturn;
+	}
 
 	if (mbedtls_hkdf_expand(
-			pmd, pbPRK, cbPRK, pbInfo, cbInfo, pbOutput, cbOutput) != 0) {
+		    pmd, pbPRK, cbPRK, pbInfo, cbInfo, pbOutput, cbOutput) != 0) {
 		goto errorReturn;
 	}
 
@@ -772,10 +774,10 @@ bool ECKey_From(const cn_cbor *pKey,
 	cose_errback *perr)
 {
 	byte rgbKey[MBEDTLS_ECP_MAX_PT_LEN];
-	int cbKey;
-	int cbGroup;
+	int cbKey = 0;
+	int cbGroup = 0;
 	const cn_cbor *p;
-	mbedtls_ecp_group_id groupId;
+	mbedtls_ecp_group_id groupId = 0;
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_Type);
 	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -809,7 +811,7 @@ bool ECKey_From(const cn_cbor *pKey,
 	}
 	CHECK_CONDITION(mbedtls_ecp_group_load(&keypair->grp, groupId) == 0,
 		COSE_ERR_INVALID_PARAMETER);
-	cbGroup = (keypair->grp.nbits + 7) / 8;
+	cbGroup = (int) (keypair->grp.nbits + 7) / 8;
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_X);
 	CHECK_CONDITION(
@@ -826,15 +828,24 @@ bool ECKey_From(const cn_cbor *pKey,
 		memcpy(rgbKey + p->length + 1, p->v.str, p->length);
 	}
 	else if (p->type == CN_CBOR_TRUE) {
+		perr->err = COSE_ERR_NO_COMPRESSED_POINTS;
+		goto errorReturn;
+		/*
 		cbKey = cbGroup + 1;
 		rgbKey[0] = 0x03;
+		*/
 	}
 	else if (p->type == CN_CBOR_FALSE) {
+		perr->err = COSE_ERR_NO_COMPRESSED_POINTS;
+		goto errorReturn;
+		/*
 		cbKey = cbGroup + 1;
 		rgbKey[0] = 0x02;
+		*/
 	}
-	else
+	else {
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
 
 	CHECK_CONDITION(mbedtls_ecp_point_read_binary(
 						&keypair->grp, &keypair->Q, rgbKey, cbKey) == 0,
@@ -1028,6 +1039,7 @@ bool AES_KW_Decrypt(COSE_Enveloped *pcose,
 	cose_errback *perr)
 {
 	mbedtls_nist_kw_context ctx;
+	size_t cbKeyOut = 0;
 
 	mbedtls_nist_kw_init(&ctx);
 
@@ -1037,9 +1049,10 @@ bool AES_KW_Decrypt(COSE_Enveloped *pcose,
 
 	CHECK_CONDITION0(
 		mbedtls_nist_kw_unwrap(&ctx, MBEDTLS_KW_MODE_KW, pbCipherText,
-			cbCipherText, pbKeyOut, pcbKeyOut, cbCipherText - 8),
+			cbCipherText, pbKeyOut, &cbKeyOut, cbCipherText - 8),
 		COSE_ERR_CRYPTO_FAIL);
 
+	*pcbKeyOut = (int)cbKeyOut;
 	mbedtls_nist_kw_free(&ctx);
 	return true;
 
@@ -1069,7 +1082,7 @@ bool AES_KW_Encrypt(COSE_RecipientInfo *pcose,
 	CHECK_CONDITION(pbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION0(mbedtls_nist_kw_setkey(
-						 &ctx, MBEDTLS_CIPHER_ID_AES, pbKeyIn, cbitKey, FALSE),
+						 &ctx, MBEDTLS_CIPHER_ID_AES, pbKeyIn, cbitKey, TRUE),
 		COSE_ERR_CRYPTO_FAIL);
 
 	CHECK_CONDITION0(mbedtls_nist_kw_wrap(&ctx, MBEDTLS_KW_MODE_KW, pbContent,
@@ -1090,8 +1103,9 @@ bool AES_KW_Encrypt(COSE_RecipientInfo *pcose,
 
 errorReturn:
 	COSE_FREE(cnTmp, context);
-	if (pbOut != NULL)
+	if (pbOut != NULL) {
 		COSE_FREE(pbOut, context);
+	}
 	mbedtls_nist_kw_free(&ctx);
 	return false;
 }
@@ -1188,7 +1202,7 @@ int rand_bytes2(void *pv, unsigned char *pb, size_t cb)
 #if USE_ECDH
 /*!
  *
- * @param[in] pRecipent	Pointer to the message object
+ * @param[in] pRecipient	Pointer to the message object
  * @param[in] ppKeyPrivate	Address of key with private portion
  * @param[in] pKeyPublic	Address of the key w/o a private portion
  * @param[in/out] ppbSecret	pointer to buffer to hold the computed secret
@@ -1205,18 +1219,20 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	size_t *pcbSecret,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
-	int cbGroup;
-	int cbsecret;
+	UNUSED(pRecipient);
+	
+	int cbGroup = 0;
+	int cbsecret = 0;
 	byte *pbsecret = NULL;
 	bool fRet = false;
-	mbedtls_ecp_group_id groupId;
+	mbedtls_ecp_group_id groupId = 0;
 	mbedtls_ecp_keypair keypair;
 	mbedtls_ecdh_context ctx;
 	mbedtls_mpi d;
 	cn_cbor *p = NULL;
 	mbedtls_mpi z;
 	cn_cbor *pkey = NULL;
-	int cose_group;
+	int cose_group = 0;
 
 	mbedtls_mpi_init(&z);
 	mbedtls_ecdh_init(&ctx);
@@ -1255,18 +1271,11 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	CHECK_CONDITION0(
 		mbedtls_ecp_group_load(&group, groupId), COSE_ERR_INVALID_PARAMETER);
 
-	if (!ECKey_From(pKeyPublic, &keypair, perr))
+	if (!ECKey_From(pKeyPublic, &keypair, perr)) {
 		goto errorReturn;
+	}
 
 	if (*ppKeyPrivate == NULL) {
-		{
-			cn_cbor *pCompress = _COSE_map_get_int(
-				pRecipient, COSE_Header_UseCompressedECDH, COSE_BOTH, perr);
-			if (pCompress == NULL)
-				FUseCompressed = false;
-			else
-				FUseCompressed = (pCompress->type == CN_CBOR_TRUE);
-		}
 		mbedtls_ecp_keypair privateKeyPair;
 		mbedtls_ecp_keypair_init(&privateKeyPair);
 
@@ -1340,6 +1349,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		CHECK_CONDITION(p->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION0(mbedtls_mpi_read_binary(&d, p->v.bytes, p->length),
 			COSE_ERR_CRYPTO_FAIL);
+		p = NULL;
 	}
 
 	CHECK_CONDITION0(
@@ -1360,12 +1370,15 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	fRet = true;
 
 errorReturn:
-	if (pbsecret != NULL)
+	if (pbsecret != NULL) {
 		COSE_FREE(pbsecret, context);
-	if (pkey != NULL)
+	}
+	if (pkey != NULL) {
 		CN_CBOR_FREE(pkey, context);
-	if (p != NULL)
-		CN_CBOR_FREE(pkey, context);
+	}
+	if (p != NULL) {
+		CN_CBOR_FREE(p, context);
+	}
 
 	mbedtls_mpi_free(&d);
 	mbedtls_mpi_free(&z);

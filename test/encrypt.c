@@ -147,11 +147,15 @@ bool DecryptMessage(const byte *pbEncoded,
 		}
 	}
 
-	if (COSE_Enveloped_decrypt(hEnc, hRecip, NULL)) {
+	if (COSE_Enveloped_decrypt(hEnc, hRecip, &cose_err)) {
 		fRet = !fFailBody;
 	}
 	else {
-		if (fNoSupport) {
+		if (cose_err.err == COSE_ERR_NO_COMPRESSED_POINTS || cose_err.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+			fRet = false;
+			fNoSupport = true;
+		}
+		else if (fNoSupport) {
 			fRet = false;
 		}
 		else {
