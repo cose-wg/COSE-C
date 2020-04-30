@@ -20,11 +20,13 @@
 #include "mbedtls/ecp.h"
 #include "mbedtls/ecdh.h"
 #include "mbedtls/nist_kw.h"
+#include "mbedtls/hkdf.h"
 
 static bool FUseCompressed = true;
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 
+#ifdef INCLUDE_AES_CCM
 bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	int TSize,
 	int LSize,
@@ -52,12 +54,14 @@ bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	//  Setup the IV/Nonce and put it into the message
 	pIV = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, NULL);
 	if ((pIV == NULL) || (pIV->type != CN_CBOR_BYTES)) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_INVALID_PARAMETER;
+		}
 
 	errorReturn:
-		if (rgbOut != NULL)
+		if (rgbOut != NULL) {
 			COSE_FREE(rgbOut, context);
+		}
 		mbedtls_ccm_free(&ctx);
 		return false;
 	}
@@ -129,8 +133,9 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 		pbIV = NULL;
 
 		if (!_COSE_map_put(&pcose->m_message, COSE_Header_IV, cbor_iv_t,
-				COSE_UNPROTECT_ONLY, perr))
+				COSE_UNPROTECT_ONLY, perr)) {
 			goto errorReturn;
+		}
 		cbor_iv_t = NULL;
 	}
 	else {
@@ -172,18 +177,25 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 	return true;
 
 errorReturn:
-	if (pbIV != NULL)
+	if (pbIV != NULL) {
 		COSE_FREE(pbIV, context);
-	if (cbor_iv_t != NULL)
+	}
+	if (cbor_iv_t != NULL) {
 		COSE_FREE(cbor_iv_t, context);
-	if (rgbOut != NULL)
+	}
+	if (rgbOut != NULL) {
 		COSE_FREE(rgbOut, context);
-	if (cnTmp != NULL)
+	}
+	if (cnTmp != NULL) {
 		COSE_FREE(cnTmp, context);
+	}
 	mbedtls_ccm_free(&ctx);
 	return false;
 }
+#endif
 
+
+#ifdef USE_AES_GCM
 bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 	const byte *pbKey,
 	size_t cbKey,
@@ -210,12 +222,14 @@ bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 
 	pIV = _COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, NULL);
 	if ((pIV == NULL) || (pIV->type != CN_CBOR_BYTES)) {
-		if (perr != NULL)
+		if (perr != NULL) {
 			perr->err = COSE_ERR_INVALID_PARAMETER;
+		}
 
 	errorReturn:
-		if (rgbOut != NULL)
+		if (rgbOut != NULL) {
 			COSE_FREE(rgbOut, context);
+		}
 		mbedtls_gcm_free(&ctx);
 		return false;
 	}
@@ -258,9 +272,10 @@ bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 
 	//  CHECK TAG HERE
 	bool f = false;
-	byte *pb = pbCrypto + cbOut;
-	for (int i = 0; i < (unsigned int)TSize; i++)
+	const byte *pb = pbCrypto + cbOut;
+	for (int i = 0; i < (unsigned int)TSize; i++) {
 		f |= (pb[i] != tag[i]);
+	}
 	CHECK_CONDITION(!f, COSE_ERR_CRYPTO_FAIL);
 
 	mbedtls_gcm_free(&ctx);
@@ -307,8 +322,9 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		pbIV = NULL;
 
 		if (!_COSE_map_put(&pcose->m_message, COSE_Header_IV, cbor_iv_t,
-				COSE_UNPROTECT_ONLY, perr))
+				COSE_UNPROTECT_ONLY, perr)) {
 			goto errorReturn;
+		}
 		cbor_iv_t = NULL;
 	}
 	else {
@@ -362,140 +378,22 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 	return true;
 
 errorReturn:
-	if (pbIV != NULL)
+	if (pbIV != NULL) {
 		COSE_FREE(pbIV, context);
-	if (cbor_iv_t != NULL)
+	}
+	if (cbor_iv_t != NULL) {
 		COSE_FREE(cbor_iv_t, context);
-	if (rgbOut != NULL)
+	}
+	if (rgbOut != NULL) {
 		COSE_FREE(rgbOut, context);
+	}
 	mbedtls_gcm_free(&ctx);
 	return false;
 }
-/*
 
-bool AES_CBC_MAC_Create(COSE_MacMessage * pcose, int TSize, const byte * pbKey,
-size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback * perr)
-{
-	const EVP_CIPHER * pcipher = NULL;
-	EVP_CIPHER_CTX ctx;
-	int cbOut;
-	byte rgbIV[16] = { 0 };
-	byte * rgbOut = NULL;
-	bool f = false;
-	unsigned int i;
-	cn_cbor * cn = NULL;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = &pcose->m_message.m_allocContext;
 #endif
 
-	EVP_CIPHER_CTX_init(&ctx);
 
-	rgbOut = COSE_CALLOC(16, 1, context);
-	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
-
-	switch (cbKey*8) {
-	case 128:
-		pcipher = EVP_aes_128_cbc();
-		break;
-
-	case 256:
-		pcipher = EVP_aes_256_cbc();
-		break;
-
-	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-	}
-
-	//  Setup and run the OpenSSL code
-
-	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pbKey, rgbIV),
-COSE_ERR_CRYPTO_FAIL);
-
-	for (i = 0; i < (unsigned int)cbAuthData / 16; i++) {
-		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, pbAuthData + (i
-* 16), 16), COSE_ERR_CRYPTO_FAIL);
-	}
-	if (cbAuthData % 16 != 0) {
-		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, pbAuthData + (i
-* 16), cbAuthData % 16), COSE_ERR_CRYPTO_FAIL);
-		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbOut, &cbOut, rgbIV, 16 -
-(cbAuthData % 16)), COSE_ERR_CRYPTO_FAIL);
-	}
-
-	cn = cn_cbor_data_create(rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(cn != NULL, COSE_ERR_OUT_OF_MEMORY);
-	rgbOut = NULL;
-
-	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cn, INDEX_MAC_TAG,
-CBOR_CONTEXT_PARAM_COMMA NULL), COSE_ERR_CBOR); cn = NULL;
-
-	EVP_CIPHER_CTX_cleanup(&ctx);
-	return !f;
-
-errorReturn:
-	if (rgbOut != NULL) COSE_FREE(rgbOut, context);
-	if (cn != NULL) CN_CBOR_FREE(cn, context);
-	EVP_CIPHER_CTX_cleanup(&ctx);
-	return false;
-}
-
-bool AES_CBC_MAC_Validate(COSE_MacMessage * pcose, int TSize, const byte *
-pbKey, size_t cbKey, const byte * pbAuthData, size_t cbAuthData, cose_errback *
-perr)
-{
-	const EVP_CIPHER * pcipher = NULL;
-	EVP_CIPHER_CTX ctx;
-	int cbOut;
-	byte rgbIV[16] = { 0 };
-	byte rgbTag[16] = { 0 };
-	bool f = false;
-	unsigned int i;
-
-	switch (cbKey*8) {
-	case 128:
-		pcipher = EVP_aes_128_cbc();
-		break;
-
-	case 256:
-		pcipher = EVP_aes_256_cbc();
-		break;
-
-	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-	}
-
-	//  Setup and run the OpenSSL code
-
-	EVP_CIPHER_CTX_init(&ctx);
-	CHECK_CONDITION(EVP_EncryptInit_ex(&ctx, pcipher, NULL, pbKey, rgbIV),
-COSE_ERR_CRYPTO_FAIL);
-
-	TSize /= 8;
-
-	for (i = 0; i < (unsigned int) cbAuthData / 16; i++) {
-		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut,
-pbAuthData+(i*16), 16), COSE_ERR_CRYPTO_FAIL);
-	}
-	if (cbAuthData % 16 != 0) {
-		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, pbAuthData + (i
-* 16), cbAuthData % 16), COSE_ERR_CRYPTO_FAIL);
-		CHECK_CONDITION(EVP_EncryptUpdate(&ctx, rgbTag, &cbOut, rgbIV, 16 -
-(cbAuthData % 16)), COSE_ERR_CRYPTO_FAIL);
-	}
-
-	cn_cbor * cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
-	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
-
-	for (i = 0; i < (unsigned int)TSize; i++) f |= (cn->v.bytes[i] !=
-rgbTag[i]);
-
-	EVP_CIPHER_CTX_cleanup(&ctx);
-	return !f;
-
-errorReturn:
-	EVP_CIPHER_CTX_cleanup(&ctx);
-	return false;
-}
 
 #if 0
 //  We are doing CBC-MAC not CMAC at this time
@@ -549,6 +447,7 @@ errorReturn:
 }
 #endif
 
+#ifdef USE_HKDF_AES
 bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t
 cbPRK, const byte * pbInfo, size_t cbInfo, byte * pbOutput, size_t cbOutput,
 cose_errback * perr)
@@ -610,8 +509,9 @@ errorReturn:
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	return false;
 }
-*/
+#endif
 
+#if defined(USE_HKDF_SHA2)
 bool HKDF_Extract(COSE *pcose,
 	const byte *pbKey,
 	size_t cbKey,
@@ -722,52 +622,10 @@ bool HKDF_Expand(COSE *pcose,
 
 	return true;
 }
-/*
-void dump_output(byte* b, size_t s){
-	for(int i = 0; i < s; i++){
-		printf("%02x", *b);
-		b++;
-	}
-	printf("\n");
-}
+#endif
 
-void diff(unsigned char* a, size_t a_l, unsigned char* b, size_t b_l){
-	size_t s;
-	s = (a_l < b_l) ? a_l : b_l;
-	unsigned char* tmp = a;
-	printf("size = %d\n",s );
-//	printf("%02x\n", *tmp);
-	int i;
-	for(i = 0; i < s; ++i){
-		printf("%02x", *tmp);
-		tmp++;
-	}
-	printf("\n");
 
-	tmp = b;
-	for(i = 0; i < s; ++i){
-		printf("%02x", *tmp);
-		tmp++;
-	}
-	printf("\n");
-
-	for(i = 0; i < s; ++i){
-
-		if(*a != *b){
-			printf("^^");
-
-		} else {
-			printf("__");
-
-		}
-
-		a++;
-		b++;
-	}
-	printf("\n");
-}
-*/
-
+#ifdef USE_HMAC
 bool HMAC_Create(COSE_MacMessage *pcose,
 	int HSize,
 	int TSize,
@@ -887,10 +745,12 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	cn_cbor *cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_CBOR);
 
-	if (cn->length > (int)cbOut)
+	if (cn->length > (int)cbOut) {
 		return false;
-	for (i = 0; i < (unsigned int)TSize / 8; i++)
+	}
+	for (i = 0; i < (unsigned int)TSize / 8; i++) {
 		f |= (cn->v.bytes[i] != rgbOut[i]);
+	}
 
 	mbedtls_md_free(&contx);
 	return !f;
@@ -900,6 +760,7 @@ errorReturn:
 	mbedtls_md_free(&contx);
 	return false;
 }
+#endif
 
 #define COSE_Key_EC_Curve -1
 #define COSE_Key_EC_X -2
@@ -992,94 +853,6 @@ errorReturn:
 	return false;
 }
 
-/*
-cn_cbor * EC_FromKey(const EC_KEY * pKey, CBOR_CONTEXT_COMMA cose_errback *
-perr)
-{
-	cn_cbor * pkey = NULL;
-	const EC_GROUP * pgroup;
-	int cose_group;
-	cn_cbor * p = NULL;
-	cn_cbor_errback cbor_error;
-	const EC_POINT * pPoint;
-	size_t cbSize;
-	byte * pbOut = NULL;
-
-	pgroup = EC_KEY_get0_group(pKey);
-	CHECK_CONDITION(pgroup != NULL, COSE_ERR_INVALID_PARAMETER);
-
-	switch (EC_GROUP_get_curve_name(pgroup)) {
-	case NID_X9_62_prime256v1:		cose_group = 1;		break;
-	case NID_secp384r1: cose_group = 2; break;
-	case NID_secp521r1: cose_group = 3; break;
-
-	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-	}
-
-	pkey = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(pkey != NULL, cbor_error);
-
-	p = cn_cbor_int_create(cose_group, CBOR_CONTEXT_PARAM_COMMA &cbor_error);
-	CHECK_CONDITION_CBOR(p != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Curve, p,
-CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error); p = NULL;
-
-	pPoint = EC_KEY_get0_public_key(pKey);
-	CHECK_CONDITION(pPoint != NULL, COSE_ERR_INVALID_PARAMETER);
-
-	if (FUseCompressed) {
-		cbSize = EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_COMPRESSED,
-NULL, 0, NULL); CHECK_CONDITION(cbSize > 0, COSE_ERR_CRYPTO_FAIL); pbOut =
-COSE_CALLOC(cbSize, 1, context); CHECK_CONDITION(pbOut != NULL,
-COSE_ERR_OUT_OF_MEMORY); CHECK_CONDITION(EC_POINT_point2oct(pgroup, pPoint,
-POINT_CONVERSION_COMPRESSED, pbOut, cbSize, NULL) == cbSize,
-COSE_ERR_CRYPTO_FAIL);
-	}
-	else {
-		cbSize = EC_POINT_point2oct(pgroup, pPoint,
-POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL); CHECK_CONDITION(cbSize > 0,
-COSE_ERR_CRYPTO_FAIL); pbOut = COSE_CALLOC(cbSize, 1, context);
-		CHECK_CONDITION(pbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
-		CHECK_CONDITION(EC_POINT_point2oct(pgroup, pPoint,
-POINT_CONVERSION_UNCOMPRESSED, pbOut, cbSize, NULL) == cbSize,
-COSE_ERR_CRYPTO_FAIL);
-	}
-	p = cn_cbor_data_create(pbOut+1, (int) (cbSize / 2),
-CBOR_CONTEXT_PARAM_COMMA &cbor_error); CHECK_CONDITION_CBOR(p != NULL,
-cbor_error); CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_X, p,
-CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error); p = NULL;
-
-	if (FUseCompressed) {
-		p = cn_cbor_bool_create(pbOut[0] & 1, CBOR_CONTEXT_PARAM_COMMA
-&cbor_error); CHECK_CONDITION_CBOR(p != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Y, p,
-CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error); p = NULL;
-	}
-	else {
-		p = cn_cbor_data_create(pbOut + cbSize / 2 + 1, (int)(cbSize / 2),
-CBOR_CONTEXT_PARAM_COMMA &cbor_error); pbOut = NULL;   // It is already part of
-the other one. CHECK_CONDITION_CBOR(p != NULL, cbor_error);
-		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Y, p,
-CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error); p = NULL;
-	}
-
-	p = cn_cbor_int_create(COSE_Key_Type_EC2, CBOR_CONTEXT_PARAM_COMMA
-&cbor_error); CHECK_CONDITION_CBOR(p != NULL, cbor_error);
-	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_Type, p,
-CBOR_CONTEXT_PARAM_COMMA &cbor_error), cbor_error); p = NULL;
-
-returnHere:
-	if (pbOut != NULL) COSE_FREE(pbOut, context);
-	if (p != NULL) CN_CBOR_FREE(p, context);
-	return pkey;
-
-errorReturn:
-	CN_CBOR_FREE(pkey, context);
-	pkey = NULL;
-	goto returnHere;
-}
-*/
 
 bool ECDSA_Sign(COSE *pSigner,
 	int index,
@@ -1109,8 +882,9 @@ bool ECDSA_Sign(COSE *pSigner,
 	mbedtls_mpi_init(&r);
 	mbedtls_mpi_init(&s);
 
-	if (!ECKey_From(pKey, &keypair, perr))
+	if (!ECKey_From(pKey, &keypair, perr)) {
 		goto errorReturn;
+	}
 
 	CHECK_CONDITION(keypair.d.n != 0, COSE_ERR_INVALID_PARAMETER);
 
@@ -1194,8 +968,9 @@ bool ECDSA_Verify(COSE *pSigner,
 	mbedtls_mpi_init(&r);
 	mbedtls_mpi_init(&s);
 
-	if (!ECKey_From(pKey, &keypair, perr))
+	if (!ECKey_From(pKey, &keypair, perr)) {
 		goto errorReturn;
+	}
 
 	switch (cbitDigest) {
 		case 256:
@@ -1242,7 +1017,7 @@ errorReturn:
 	return result;
 }
 
-#ifdef MBEDTLS_NIST_KW_C
+#if defined(MBEDTLS_NIST_KW_C)
 bool AES_KW_Decrypt(COSE_Enveloped *pcose,
 	const byte *pbKeyIn,
 	size_t cbitKey,
@@ -1320,7 +1095,7 @@ errorReturn:
 	mbedtls_nist_kw_free(&ctx);
 	return false;
 }
-#endif	// MBEDTLS_NIST_KW_C
+#endif
 
 /*
 //#include <stdio.h> //TODO
@@ -1372,7 +1147,7 @@ len ) { const unsigned char *p = data; memcpy( buf, p + test_offset, len );
  }
 */
 
-mbedtls_ctr_drbg_context ctx;
+mbedtls_ctr_drbg_context ctxRandom;
 int ctx_setup = 0;
 mbedtls_entropy_context entropy;
 
@@ -1383,9 +1158,9 @@ void rand_bytes(byte *pb, size_t cb)
 	if (!ctx_setup) {
 		mbedtls_entropy_init(&entropy);
 
-		mbedtls_ctr_drbg_init(&ctx);
+		mbedtls_ctr_drbg_init(&ctxRandom);
 
-		mbedtls_ctr_drbg_seed_entropy_len(&ctx, mbedtls_entropy_func,
+		mbedtls_ctr_drbg_seed_entropy_len(&ctxRandom, mbedtls_entropy_func,
 			(void *)&entropy, nonce_pers_pr, 16, 32);
 
 		ctx_setup = 1;
@@ -1394,7 +1169,7 @@ void rand_bytes(byte *pb, size_t cb)
 	// mbedtls_ctr_drbg_set_prediction_resistance( &ctx, MBEDTLS_CTR_DRBG_PR_ON
 	// );
 
-	mbedtls_ctr_drbg_random(&ctx, pb, cb);
+	mbedtls_ctr_drbg_random(&ctxRandom, pb, cb);
 	// mbedtls_ctr_drbg_random( &ctx, buf, MBEDTLS_CTR_DRBG_BLOCKSIZE );
 	// memcmp( buf, result_pr, MBEDTLS_CTR_DRBG_BLOCKSIZE ) );
 
