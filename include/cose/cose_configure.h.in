@@ -24,6 +24,10 @@
 #include <openssl/opensslv.h>
 #endif
 
+#if defined(COSE_C_USE_MBEDTLS)
+#include <mbedtls/config.h>
+#endif
+
 //
 //  Define which AES GCM algorithms are being used
 //
@@ -82,7 +86,6 @@
 //  Define which ECDH algorithms are to be used
 //
 
-#if !defined(COSE_C_USE_MBEDTLS)
 #define USE_ECDH_ES_HKDF_256
 #define USE_ECDH_ES_HKDF_512
 #define USE_ECDH_SS_HKDF_256
@@ -92,9 +95,8 @@
 #define USE_ECDH 1
 #define USE_HKDF_SHA2 1
 #endif
-#endif  // !defined(COSE_C_USE_MBEDTLS)
 
-#if !defined(COSE_C_USE_MBEDTLS)
+#if !defined(COSE_C_USE_MBEDTLS) || defined(MBEDTLS_NIST_KW_C)
 #define USE_ECDH_ES_A128KW
 #define USE_ECDH_ES_A192KW
 #define USE_ECDH_ES_A256KW
@@ -113,7 +115,7 @@
 //  Define which Key Wrap functions are to be used
 //
 
-#if !defined(COSE_C_USE_MBEDTLS)
+#if !defined(COSE_C_USE_MBEDTLS) || defined(MBEDTLS_NIST_KW_C)
 #define USE_AES_KW_128
 #define USE_AES_KW_192
 #define USE_AES_KW_256
@@ -123,15 +125,15 @@
 //  Define which of the DIRECT + KDF algorithms are to be used
 //
 
-#if !defined(COSE_C_USE_MBEDTLS)
 #define USE_Direct_HKDF_HMAC_SHA_256
 #define USE_Direct_HKDF_HMAC_SHA_512
-#define USE_Direct_HKDF_AES_128
-#define USE_Direct_HKDF_AES_256
 #if defined(USE_Direct_HKDF_HMAC_SHA_256) || \
 	defined(USE_Direct_HKDF_HMAC_SHA_512)
 #define USE_HKDF_SHA2 1
 #endif
+#if !defined(COSE_C_USE_MBEDTLS)
+#define USE_Direct_HKDF_AES_128
+#define USE_Direct_HKDF_AES_256
 #if defined(USE_Direct_HKDF_AES_128) || defined(USE_Direct_KDF_AES_256)
 #define USE_HKDF_AES 1
 #endif
