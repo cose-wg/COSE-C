@@ -349,7 +349,9 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 		//  If there is a recipient - ask it for the key
 
 		if (pRecip != NULL) {
-			COSE_RecipientInfo *pRecipX;
+			COSE_RecipientInfo *pRecipX = NULL;
+			cose_errback errorLocal;
+			int errorFound = 0;
 
 			for (pRecipX = pcose->m_recipientFirst; pRecipX != NULL;
 				 pRecipX = pRecipX->m_recipientNext) {
@@ -362,10 +364,15 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 				}
 				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
 					if (_COSE_Recipient_decrypt(
-							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) {
+							pRecipX, pRecip, alg, cbitKey, pbKeyNew, &errorLocal)) {
 						break;
 					}
 				}
+				errorFound = errorLocal.err;
+			}
+			if (errorFound != 0) {
+				perr->err = errorFound;
+				goto errorReturn;
 			}
 			CHECK_CONDITION(pRecipX != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		}

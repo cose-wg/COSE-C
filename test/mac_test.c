@@ -35,6 +35,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 	bool fFailBody = false;
 	bool fAlgNoSupport = false;
 	int returnCode = 1;
+	cose_errback error;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -117,7 +118,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 			fAlgNoSupport = true;
 		}
 
-		if (COSE_Mac_validate(hMAC, hRecip, NULL)) {
+		if (COSE_Mac_validate(hMAC, hRecip, &error)) {
 			if (fAlgNoSupport) {
 				fFail = true;
 			}
@@ -126,7 +127,11 @@ int _ValidateMAC(const cn_cbor *pControl,
 			}
 		}
 		else {
-			if (fAlgNoSupport) {
+			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS || error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+				fAlgNoSupport = true;
+				returnCode = 0;
+			}
+			else if (fAlgNoSupport) {
 				returnCode = 0;
 			}
 			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
