@@ -39,7 +39,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	cose_errback *perr)
 {
 	mbedtls_ccm_context ctx;
-	int cbOut;
+	int cbOut = 0;
 	byte *rgbOut = NULL;
 	int NSize = 15 - (LSize / 8);
 	byte rgbIV[15] = {0};
