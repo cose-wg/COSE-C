@@ -635,7 +635,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback *perr)
 	if (perr == NULL) {
 		perr = &error;
 	}
-	
+
 	COSE_MacMessage *pcose = (COSE_MacMessage *)h;
 	COSE_RecipientInfo *pRecip = (COSE_RecipientInfo *)hRecip;
 

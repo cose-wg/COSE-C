@@ -151,7 +151,8 @@ bool DecryptMessage(const byte *pbEncoded,
 		fRet = !fFailBody;
 	}
 	else {
-		if (cose_err.err == COSE_ERR_NO_COMPRESSED_POINTS || cose_err.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+		if (cose_err.err == COSE_ERR_NO_COMPRESSED_POINTS ||
+			cose_err.err == COSE_ERR_UNKNOWN_ALGORITHM) {
 			fRet = false;
 			fNoSupport = true;
 		}
@@ -617,7 +618,7 @@ returnError:
 	if (hEncObj != NULL) {
 		COSE_Enveloped_Free(hEncObj);
 	}
-	
+
 	CFails += 1;
 	return 0;
 }
@@ -934,7 +935,6 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 	}
 #endif
 
-
 exitHere:
 	if (hEnc != NULL) {
 		COSE_Encrypt_Free(hEnc);
@@ -1100,7 +1100,7 @@ returnError:
 	if (hEncObj != NULL) {
 		COSE_Encrypt_Free(hEncObj);
 	}
-	
+
 	CFails += 1;
 	return 1;
 }

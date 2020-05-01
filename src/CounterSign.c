@@ -115,7 +115,7 @@ bool COSE_CounterSign_Free(HCOSE_COUNTERSIGN h)
 	}
 
 	_COSE_RemoveFromList(&CountersignRoot, &p->m_signer.m_message);
-	
+
 	fRet = _COSE_CounterSign_Free(p);
 
 errorReturn:
@@ -141,7 +141,6 @@ bool _COSE_CounterSign_add(COSE* pMessage,
 errorReturn:
 	return false;
 }
-
 
 #if 0
 I Don't remember why I wrote this and if I don't need it any more.

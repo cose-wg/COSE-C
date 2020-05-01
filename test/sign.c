@@ -141,7 +141,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 			for (int counterNo = 0; counterNo < count; counterNo++) {
 				bool noSignAlg = false;
 
-				h =	COSE_Signer_get_countersignature(hSigner, counterNo, 0);
+				h = COSE_Signer_get_countersignature(hSigner, counterNo, 0);
 				if (h == NULL) {
 					fFail = true;
 					continue;
@@ -292,7 +292,7 @@ returnError:
 	if (hSig != NULL) {
 		COSE_Sign_Free(hSig);
 	}
-	
+
 	CFails += 1;
 	return 0;
 }
@@ -309,7 +309,7 @@ int BuildSignedMessage(const cn_cbor *pControl)
 {
 	int iSigner;
 	HCOSE_SIGNER hSigner = NULL;
-	
+
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
 	//
@@ -479,7 +479,7 @@ returnError:
 	if (hSigner != NULL) {
 		COSE_Signer_Free(hSigner);
 	}
-	
+
 	CFails += 1;
 	return 1;
 }
@@ -728,7 +728,6 @@ int _ValidateSign1(const cn_cbor *pControl,
 		}
 	}
 #endif
-
 
 	if (fFailBody) {
 		if (!fFail) {

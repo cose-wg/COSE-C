@@ -474,14 +474,14 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 		CHECK_CONDITION(pbKeyX != NULL, COSE_ERR_OUT_OF_MEMORY);
 		cose_errback error = {COSE_ERR_NONE};
 		int errorFound = false;
-		
+
 		for (pRecip2 = pcose->m_recipientFirst; pRecip2 != NULL;
 			 pRecip2 = pRecip->m_recipientNext) {
 			if (_COSE_Recipient_decrypt(
 					pRecip2, NULL, alg, cbitKeyX, pbKeyX, &error)) {
 				break;
 			}
-			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS || 
+			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS ||
 				error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
 				errorFound = error.err;
 			}

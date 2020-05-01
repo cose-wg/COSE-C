@@ -363,8 +363,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 					break;
 				}
 				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
-					if (_COSE_Recipient_decrypt(
-							pRecipX, pRecip, alg, cbitKey, pbKeyNew, &errorLocal)) {
+					if (_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey,
+							pbKeyNew, &errorLocal)) {
 						break;
 					}
 				}
@@ -990,7 +990,6 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc,
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients,
 							 pRecip->m_encrypt.m_message.m_cbor, &cbor_error),
 		cbor_error);
-
 
 	return true;
 

@@ -194,7 +194,6 @@ errorReturn:
 }
 #endif
 
-
 #ifdef USE_AES_GCM
 bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 	const byte *pbKey,
@@ -392,8 +391,6 @@ errorReturn:
 }
 #endif
 
-
-
 #if defined(USE_HKDF_SHA2)
 bool HKDF_Extract(COSE *pcose,
 	const byte *pbKey,
@@ -501,14 +498,13 @@ bool HKDF_Expand(COSE *pcose,
 	}
 
 	if (mbedtls_hkdf_expand(
-		    pmd, pbPRK, cbPRK, pbInfo, cbInfo, pbOutput, cbOutput) != 0) {
+			pmd, pbPRK, cbPRK, pbInfo, cbInfo, pbOutput, cbOutput) != 0) {
 		goto errorReturn;
 	}
 
 	return true;
 }
 #endif
-
 
 #ifdef USE_HMAC
 bool HMAC_Create(COSE_MacMessage *pcose,
@@ -694,7 +690,7 @@ bool ECKey_From(const cn_cbor *pKey,
 	}
 	CHECK_CONDITION(mbedtls_ecp_group_load(&keypair->grp, groupId) == 0,
 		COSE_ERR_INVALID_PARAMETER);
-	cbGroup = (int) (keypair->grp.nbits + 7) / 8;
+	cbGroup = (int)(keypair->grp.nbits + 7) / 8;
 
 	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_X);
 	CHECK_CONDITION(
@@ -746,7 +742,6 @@ bool ECKey_From(const cn_cbor *pKey,
 errorReturn:
 	return false;
 }
-
 
 bool ECDSA_Sign(COSE *pSigner,
 	int index,
@@ -1103,7 +1098,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	UNUSED(pRecipient);
-	
+
 	int cbGroup = 0;
 	int cbsecret = 0;
 	byte *pbsecret = NULL;

@@ -127,7 +127,8 @@ int _ValidateMAC(const cn_cbor *pControl,
 			}
 		}
 		else {
-			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS || error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS ||
+				error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
 				fAlgNoSupport = true;
 				returnCode = 0;
 			}
@@ -322,7 +323,7 @@ int BuildMacMessage(const cn_cbor *pControl)
 {
 	int iRecipient = 0;
 	HCOSE_RECIPIENT hRecip = NULL;
-	
+
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
 	//
@@ -776,7 +777,6 @@ int _ValidateMac0(const cn_cbor *pControl,
 	}
 #endif
 
-
 	if (fFailBody) {
 		if (!fFail) {
 			fFail = true;
@@ -785,12 +785,12 @@ int _ValidateMac0(const cn_cbor *pControl,
 			fFail = false;
 		}
 	}
-	
+
 exitHere:
 	if (hMAC != NULL) {
 		COSE_Mac0_Free(hMAC);
 	}
-	
+
 	if (fFail) {
 		CFails += 1;
 	}
