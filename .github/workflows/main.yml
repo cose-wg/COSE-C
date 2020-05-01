@@ -18,6 +18,7 @@ jobs:
         os: [ubuntu-18.04, windows-2019]
         USE_MBEDTLS: ["ON", "OFF"]
         USE_CONTEXT: ["ON", "OFF"]
+        COMPILER: ["gcc", "clang"]
         CMAKE_OPTIONS:
           [
             "-DCOSE_C_INCLUDE_ENCRYPT=ON -DCOSE_C_INCLUDE_ENCRYPT0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=OFF -DCOSE_C_INCLUDE_COUNTERSIGN=OFF",
@@ -47,6 +48,13 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt install cmake-data
+
+      - name: setup clang (linux)
+        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.COMPILER, 'clang')
+        run: |
+          sudo apt install clang
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100
+          sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 100
 
       - name: Create Build directory
         shell: bash
