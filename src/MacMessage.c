@@ -13,7 +13,7 @@
 #include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
 #if INCLUDE_MAC
 
@@ -630,6 +630,12 @@ errorReturn:
 #if INCLUDE_MAC
 bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback *perr)
 {
+	cose_errback error;
+
+	if (perr == NULL) {
+		perr = &error;
+	}
+
 	COSE_MacMessage *pcose = (COSE_MacMessage *)h;
 	COSE_RecipientInfo *pRecip = (COSE_RecipientInfo *)hRecip;
 

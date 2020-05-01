@@ -21,7 +21,7 @@
 #include "json.h"
 #include "test.h"
 
-#ifdef USE_MBED_TLS
+#ifdef COSE_C_USE_MBEDTLS
 #include "mbedtls/entropy.h"
 #endif
 
@@ -865,6 +865,9 @@ void RunCorners()
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 	Recipient_Corners();
 #endif
+#if INCLUDE_COUNTERSIGNATURE
+	CounterSign_Corners();
+#endif
 }
 
 void RunMemoryTest(const char* szFileName)
@@ -906,6 +909,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -919,6 +928,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -938,6 +953,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -951,6 +972,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -970,6 +997,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -983,6 +1016,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1002,6 +1041,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -1015,6 +1060,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1034,6 +1085,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -1047,6 +1104,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1066,6 +1129,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 
@@ -1079,6 +1148,12 @@ void RunMemoryTest(const char* szFileName)
 				if (IsContextEmpty(context) != 0) {
 					CFails += 1;
 				}
+#ifndef NDEBUG
+				if (!AreListsEmpty()) {
+					CFails += 1;
+					break;
+				}
+#endif
 				FreeContext(context);
 			}
 #else
@@ -1086,8 +1161,8 @@ void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
+		CFails = 0;
 	}
-	CFails = 0;
 	context = NULL;
 #else
 	return;
@@ -1315,7 +1390,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-#ifdef USE_MBED_TLS
+#ifdef COSE_C_USE_MBEDTLS
 	mbedtls_entropy_context entropy;
 	mbedtls_entropy_init(&entropy);
 #endif

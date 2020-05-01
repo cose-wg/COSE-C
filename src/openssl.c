@@ -1,13 +1,13 @@
 #include "cose/cose.h"
 #include "cose/cose_configure.h"
 #include "cose_int.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
 #include <assert.h>
 #include <memory.h>
 #include <stdbool.h>
 
-#ifdef USE_OPEN_SSL
+#ifdef COSE_C_USE_OPENSSL
 
 #include <openssl/evp.h>
 #include <openssl/aes.h>
@@ -1779,4 +1779,4 @@ errorReturn:
 	return fRet;
 }
 
-#endif	// USE_OPEN_SSL
+#endif	// COSE_C_USE_OPENSSL

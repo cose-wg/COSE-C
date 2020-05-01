@@ -31,12 +31,14 @@ int _ValidateSigned(const cn_cbor *pControl,
 	const cn_cbor *pFail;
 	const cn_cbor *pSign;
 	const cn_cbor *pSigners;
-	HCOSE_SIGN hSig;
+	HCOSE_SIGN hSig = NULL;
+	HCOSE_SIGNER hSigner = NULL;
 	int type;
 	int iSigner;
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fNoSupportAlg = false;
+	HCOSE_COUNTERSIGN h = NULL;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -76,14 +78,12 @@ int _ValidateSigned(const cn_cbor *pControl,
 
 		cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pSigners, "key"), false);
 		if (pkey == NULL) {
-			fFail = true;
-			continue;
+			goto returnError;
 		}
 
 		HCOSE_SIGNER hSigner = COSE_Sign_GetSigner(hSig, iSigner, NULL);
 		if (hSigner == NULL) {
-			fFail = true;
-			continue;
+			goto returnError;
 		}
 		if (!SetReceivingAttributes(
 				(HCOSE)hSigner, pSigners, Attributes_Signer_protected)) {
@@ -91,8 +91,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 		}
 
 		if (!COSE_Signer_SetKey(hSigner, pkey, NULL)) {
-			fFail = true;
-			continue;
+			goto returnError;
 		}
 
 		cn_cbor *alg = COSE_Signer_map_get_int(
@@ -142,8 +141,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 			for (int counterNo = 0; counterNo < count; counterNo++) {
 				bool noSignAlg = false;
 
-				HCOSE_COUNTERSIGN h =
-					COSE_Signer_get_countersignature(hSigner, counterNo, 0);
+				h = COSE_Signer_get_countersignature(hSigner, counterNo, 0);
 				if (h == NULL) {
 					fFail = true;
 					continue;
@@ -288,6 +286,13 @@ int _ValidateSigned(const cn_cbor *pControl,
 	return fNoSupportAlg ? 0 : 1;
 
 returnError:
+	if (hSigner != NULL) {
+		COSE_Signer_Free(hSigner);
+	}
+	if (hSig != NULL) {
+		COSE_Sign_Free(hSig);
+	}
+
 	CFails += 1;
 	return 0;
 }
@@ -303,6 +308,7 @@ int ValidateSigned(const cn_cbor *pControl)
 int BuildSignedMessage(const cn_cbor *pControl)
 {
 	int iSigner;
+	HCOSE_SIGNER hSigner = NULL;
 
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
@@ -347,7 +353,7 @@ int BuildSignedMessage(const cn_cbor *pControl)
 			goto returnError;
 		}
 
-		HCOSE_SIGNER hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+		hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hSigner == NULL) {
 			goto returnError;
 		}
@@ -387,16 +393,19 @@ int BuildSignedMessage(const cn_cbor *pControl)
 
 				if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
 						Attributes_Countersign_protected)) {
+					COSE_CounterSign_Free(hCountersign);
 					goto returnError;
 				}
 
 				if (!COSE_CounterSign_SetKey(
 						hCountersign, pkeyCountersign, NULL)) {
+					COSE_CounterSign_Free(hCountersign);
 					goto returnError;
 				}
 
 				if (!COSE_Signer_add_countersignature(
 						hSigner, hCountersign, NULL)) {
+					COSE_CounterSign_Free(hCountersign);
 					goto returnError;
 				}
 
@@ -428,14 +437,17 @@ int BuildSignedMessage(const cn_cbor *pControl)
 
 			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
 					Attributes_Countersign_protected)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_Sign_add_countersignature(hSignObj, hCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
@@ -461,6 +473,13 @@ int BuildSignedMessage(const cn_cbor *pControl)
 	return f;
 
 returnError:
+	if (hSignObj != NULL) {
+		COSE_Sign_Free(hSignObj);
+	}
+	if (hSigner != NULL) {
+		COSE_Signer_Free(hSigner);
+	}
+
 	CFails += 1;
 	return 1;
 }
@@ -710,8 +729,6 @@ int _ValidateSign1(const cn_cbor *pControl,
 	}
 #endif
 
-	COSE_Sign1_Free(hSig);
-
 	if (fFailBody) {
 		if (!fFail) {
 			fFail = true;
@@ -722,6 +739,9 @@ int _ValidateSign1(const cn_cbor *pControl,
 	}
 
 exitHere:
+	if (hSig != NULL) {
+		COSE_Sign1_Free(hSig);
+	}
 
 	if (fFail) {
 		CFails += 1;
@@ -729,6 +749,10 @@ exitHere:
 	return fNoAlgSupport ? 0 : 1;
 
 returnError:
+	if (hSig != NULL) {
+		COSE_Sign1_Free(hSig);
+	}
+
 	CFails += 1;
 	return 0;
 }
@@ -801,15 +825,18 @@ int BuildSign1Message(const cn_cbor *pControl)
 
 			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
 					Attributes_Countersign_protected)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_Sign1_add_countersignature(
 					hSignObj, hCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
@@ -835,6 +862,9 @@ int BuildSign1Message(const cn_cbor *pControl)
 	return f;
 
 returnError:
+	if (hSignObj != NULL) {
+		COSE_Sign1_Free(hSignObj);
+	}
 	CFails += 1;
 	return 1;
 }

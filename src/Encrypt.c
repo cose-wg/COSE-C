@@ -15,7 +15,7 @@
 #include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 COSE *EnvelopedRoot = NULL;
@@ -349,7 +349,9 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 		//  If there is a recipient - ask it for the key
 
 		if (pRecip != NULL) {
-			COSE_RecipientInfo *pRecipX;
+			COSE_RecipientInfo *pRecipX = NULL;
+			cose_errback errorLocal;
+			int errorFound = 0;
 
 			for (pRecipX = pcose->m_recipientFirst; pRecipX != NULL;
 				 pRecipX = pRecipX->m_recipientNext) {
@@ -361,11 +363,16 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 					break;
 				}
 				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
-					if (_COSE_Recipient_decrypt(
-							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) {
+					if (_COSE_Recipient_decrypt(pRecipX, pRecip, alg, cbitKey,
+							pbKeyNew, &errorLocal)) {
 						break;
 					}
 				}
+				errorFound = errorLocal.err;
+			}
+			if (errorFound != 0) {
+				perr->err = errorFound;
+				goto errorReturn;
 			}
 			CHECK_CONDITION(pRecipX != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 		}
@@ -962,6 +969,7 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc,
 
 	pRecip->m_recipientNext = pEncrypt->m_recipientFirst;
 	pEncrypt->m_recipientFirst = pRecip;
+	pRecip->m_encrypt.m_message.m_refCount++;
 
 	pRecipients = _COSE_arrayget_int(&pEncrypt->m_message, INDEX_RECIPIENTS);
 	if (pRecipients == NULL) {
@@ -982,8 +990,6 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc,
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients,
 							 pRecip->m_encrypt.m_message.m_cbor, &cbor_error),
 		cbor_error);
-
-	pRecip->m_encrypt.m_message.m_refCount++;
 
 	return true;
 

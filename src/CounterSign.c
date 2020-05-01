@@ -6,7 +6,7 @@
 #include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
 #if INCLUDE_COUNTERSIGNATURE
 
@@ -24,8 +24,6 @@ bool _COSE_CounterSign_Free(COSE_CounterSign* pSigner)
 		pSigner->m_signer.m_message.m_refCount--;
 		return true;
 	}
-
-	_COSE_RemoveFromList(&CountersignRoot, &pSigner->m_signer.m_message);
 
 	_COSE_SignerInfo_Release(&pSigner->m_signer);
 
@@ -54,7 +52,11 @@ COSE_CounterSign* _COSE_CounterSign_Init_From_Object(cn_cbor* cbor,
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 	if (!_COSE_SignerInfo_Init_From_Object(
 			cbor, &pobj->m_signer, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		goto errorReturn;
+		_COSE_SignerInfo_Release(&pobj->m_signer);
+		if (pIn == NULL) {
+			COSE_FREE(pobj, context);
+		}
+		return NULL;
 	}
 
 	if (pIn == NULL) {
@@ -112,6 +114,8 @@ bool COSE_CounterSign_Free(HCOSE_COUNTERSIGN h)
 		return true;
 	}
 
+	_COSE_RemoveFromList(&CountersignRoot, &p->m_signer.m_message);
+
 	fRet = _COSE_CounterSign_Free(p);
 
 errorReturn:
@@ -127,8 +131,7 @@ bool _COSE_CounterSign_add(COSE* pMessage,
 	COSE_CounterSign* pSigner = (COSE_CounterSign*)hSigner;
 
 	CHECK_CONDITION(IsValidCounterSignHandle(hSigner), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(pSigner->m_signer.m_message.m_counterSigners == NULL,
-		COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(pSigner->m_next == NULL, COSE_ERR_INVALID_PARAMETER);
 
 	pSigner->m_next = pMessage->m_counterSigners;
 	pMessage->m_counterSigners = pSigner;
@@ -140,25 +143,8 @@ errorReturn:
 }
 
 #if 0
-/// Get the n-th counter signature from the attribute.
-///
-HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE* pMessage,
-	int iSigner,
-	cose_errback* perr)
-{
-	COSE_CounterSign* pSigner = pMessage->m_counterSigners;
-
-	for (int i = 0; i < iSigner && pSigner != NULL; i++, pSigner = pSigner->m_next) {
-		CHECK_CONDITION(pSigner != NULL, COSE_ERR_INVALID_PARAMETER);
-	}
-
-	return (HCOSE_COUNTERSIGN)pSigner;
-
-errorReturn:
-	return false;
-}
-#endif
-
+I Don't remember why I wrote this and if I don't need it any more.
+Keep for a little while and then delete
 /// _COSE_CounterSign_create
 ///
 ///	Create the CounterSign attribute based on the set of countersignatures added
@@ -237,6 +223,7 @@ errorReturn:
 	}
 	return false;
 }
+#endif
 
 bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN h,
 	const cn_cbor* pkey,

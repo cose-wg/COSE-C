@@ -1,9 +1,9 @@
 #include "cose/cose.h"
 #include "cose/cose_configure.h"
 #include "cose_int.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
-#if USE_BCRYPT
+#if COSE_C_USE_BCRYPT
 
 #include <Windows.h>
 
@@ -77,4 +77,4 @@ bool AES_CCM_Encrypt(COSE_Encrypt *pcose,
 	return true;
 }
 
-#endif	// USE_BCRYPT
+#endif	// COSE_C_USE_BCRYPT

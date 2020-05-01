@@ -46,7 +46,9 @@ typedef enum cose_error {
 	/** Internal Error */
 	COSE_ERR_INTERNAL,
 	/** Type is not supported */
-	COSE_ERR_UNSUPPORTED_COSE_TYPE
+	COSE_ERR_UNSUPPORTED_COSE_TYPE,
+	/** Compressed points are not supported */
+	COSE_ERR_NO_COMPRESSED_POINTS
 } cose_error;
 
 typedef enum cose_init_flags {

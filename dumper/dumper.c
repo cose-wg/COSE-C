@@ -237,8 +237,9 @@ void Indent(FILE* fp, int depth)
 {
 	int i;
 
-	for (i = 0; i < depth; i++)
+	for (i = 0; i < depth; i++) {
 		WrapPrintF(fp, "  ");
+	}
 }
 
 void PrintUsage()
@@ -254,8 +255,9 @@ void DumpBytes(FILE* fp, const cn_cbor* cbor)
 
 	for (i = 0; i < cbor->length; i++) {
 		if ((cbor->v.bytes[i] < 32) || (cbor->v.bytes[i] > 126) ||
-			(cbor->v.bytes[i] == '\''))
+			(cbor->v.bytes[i] == '\'')) {
 			fText = false;
+		}
 	}
 
 	if (fText && (cbor->length > 0)) {
@@ -290,8 +292,9 @@ void DumpTree(const cn_cbor* cbor,
 	if (pFOO != NULL) {
 		switch (pFOO->type) {
 			case CN_CBOR_TAG:
-				if (cbor->type != CN_CBOR_TAG)
+				if (cbor->type != CN_CBOR_TAG) {
 					pFOO = NULL;
+				}
 				break;
 			default:
 				break;
@@ -299,10 +302,12 @@ void DumpTree(const cn_cbor* cbor,
 	}
 
 	if (fField && (pFOO != NULL) && (pFOO->fieldName != NULL)) {
-		if (fInComment)
+		if (fInComment) {
 			WrapPrintF(out, "\\ %s \\ ", pFOO->fieldName);
-		else
+		}
+		else {
 			WrapPrintF(out, "/ %s / ", pFOO->fieldName);
+		}
 	}
 
 	switch (cbor->type) {
@@ -321,16 +326,21 @@ void DumpTree(const cn_cbor* cbor,
 			WrapPrintF(out, "[");
 			cbor2 = cbor->first_child;
 			for (i = 0; i < cbor->length; i++, cbor2 = cbor2->next) {
-				if (i != 0)
+				if (i != 0) {
 					WrapPrintF(out, ", ");
-				if (pFOO == NULL)
+				}
+				if (pFOO == NULL) {
 					pFoo2 = NULL;
-				else if (pFOO->count == 1)
+				}
+				else if (pFOO->count == 1) {
 					pFoo2 = pFOO->children;
-				else if (i >= pFOO->count)
+				}
+				else if (i >= pFOO->count) {
 					pFoo2 = NULL;
-				else
+				}
+				else {
 					pFoo2 = &pFOO->children[i];
+				}
 
 				WrapPrintF(out, "\n");
 				Indent(out, depth + 1);
@@ -364,23 +374,28 @@ void DumpTree(const cn_cbor* cbor,
 					//  Locate the right entry in foo
 					for (i2 = 0, pFoo2 = pFOO->children; i2 < pFOO->count;
 						 pFoo2++, i2 += 1) {
-						if ((unsigned)pFoo2->type != cbor2->type)
+						if ((unsigned)pFoo2->type != cbor2->type) {
 							continue;
+						}
 						switch (cbor2->type) {
 							case CN_CBOR_UINT:
 								if ((group != 0) && (pFoo2->group != 0) &&
-									(pFoo2->group != group))
+									(pFoo2->group != group)) {
 									continue;
-								if (pFoo2->value == (int)cbor2->v.uint)
+								}
+								if (pFoo2->value == (int)cbor2->v.uint) {
 									i2 = pFOO->count + 1;
+								}
 								break;
 
 							case CN_CBOR_INT:
 								if ((group != 0) && (pFoo2->group != 0) &&
-									(pFoo2->group != group))
+									(pFoo2->group != group)) {
 									continue;
-								if (pFoo2->value == cbor2->v.sint)
+								}
+								if (pFoo2->value == cbor2->v.sint) {
 									i2 = pFOO->count + 1;
+								}
 								break;
 
 							default:
@@ -388,14 +403,17 @@ void DumpTree(const cn_cbor* cbor,
 								break;
 						}
 
-						if (i2 == pFOO->count + 1)
+						if (i2 == pFOO->count + 1) {
 							break;
+						}
 					}
-					if (i2 == pFOO->count)
+					if (i2 == pFOO->count) {
 						pFoo2 = NULL;
+					}
 				}
-				if (i != 0)
+				if (i != 0) {
 					WrapPrintF(out, ", ");
+				}
 				WrapPrintF(out, "\n");
 				Indent(out, depth + 1);
 				DumpTree(cbor2, out, pFoo2, depth + 1, true, false, fInComment);
@@ -432,10 +450,12 @@ void DumpTree(const cn_cbor* cbor,
 					if ((pFoo2->type == CN_CBOR_INT) &&
 						(pFoo2->value == cbor->v.sint)) {
 						if (pFoo2->fieldName != NULL) {
-							if (fInComment)
+							if (fInComment) {
 								WrapPrintF(out, " \\ %s \\", pFoo2->fieldName);
-							else
+							}
+							else {
 								WrapPrintF(out, " / %s /", pFoo2->fieldName);
+							}
 						}
 						break;
 					}
@@ -451,10 +471,12 @@ void DumpTree(const cn_cbor* cbor,
 					if ((pFoo2->type == CN_CBOR_UINT) &&
 						(pFoo2->value == (int)cbor->v.uint)) {
 						if (pFoo2->fieldName != NULL) {
-							if (fInComment)
+							if (fInComment) {
 								WrapPrintF(out, " \\ %s \\", pFoo2->fieldName);
-							else
+							}
+							else {
 								WrapPrintF(out, " / %s /", pFoo2->fieldName);
+							}
 						}
 						break;
 					}
@@ -504,27 +526,36 @@ int main(int argc, char** argv)
 			if (strcmp(&argv[i][1], "someoption") == 0) {
 			} else if (strcmp(&argv[i][1], "xml=yes") == 0) {
 				forXML = true;
-			} else if (strcmp(&argv[i][1], "xml=no") == 0)
+			} else if (strcmp(&argv[i][1], "xml=no") == 0) {
 				forXML = false;
+			}
 			else if (strncmp(&argv[i][1], "wrap=", 5) == 0) {
 				WrapLineAt = atoi(&argv[i][6]);
 			} else if (strncmp(&argv[i][1], "type=", 5) == 0) {
-				if (strcmp(&argv[i][1], "type=encrypt") == 0)
+				if (strcmp(&argv[i][1], "type=encrypt") == 0) {
 					root = &EncryptedMessage;
-				else if (strcmp(&argv[i][1], "type=envelope") == 0)
+				}
+				else if (strcmp(&argv[i][1], "type=envelope") == 0) {
 					root = &EnvelopedMessage;
-				else if (strcmp(&argv[i][1], "type=signed") == 0)
+				}
+				else if (strcmp(&argv[i][1], "type=signed") == 0) {
 					root = &SignedMessage;
-				else if (strcmp(&argv[i][1], "type=mac") == 0)
+				}
+				else if (strcmp(&argv[i][1], "type=mac") == 0) {
 					root = &MacMessage;
-				else if (strcmp(&argv[i][1], "type=mac0") == 0)
+				}
+				else if (strcmp(&argv[i][1], "type=mac0") == 0) {
 					root = &Mac0Message;
-				else if (strcmp(&argv[i][1], "type=keyset") == 0)
+				}
+				else if (strcmp(&argv[i][1], "type=keyset") == 0) {
 					root = &KeySet;
-				else if (strcmp(&argv[i][1], "type=key") == 0)
+				}
+				else if (strcmp(&argv[i][1], "type=key") == 0) {
 					root = &Key;
-				else
+				}
+				else {
 					PrintUsage();
+				}
 			} else {
 				PrintUsage();
 				exit(1);
@@ -560,8 +591,9 @@ int main(int argc, char** argv)
 					 //  OPEN_O_BINARY);
 #endif
 	}
-	if (out == NULL)
+	if (out == NULL) {
 		out = stdout;
+	}
 
 	// Read the input to a buffer - needed for the parser
 

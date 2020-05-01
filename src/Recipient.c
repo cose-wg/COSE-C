@@ -6,7 +6,7 @@
 #include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
-#include "crypto.h"
+#include "cose_crypto.h"
 
 #if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
 static bool BuildContextBytes(COSE *pcose,
@@ -472,13 +472,23 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 		CHECK_CONDITION(cbitKeyX != 0, COSE_ERR_INVALID_PARAMETER);
 		pbKeyX = COSE_CALLOC(cbitKeyX / 8, 1, context);
 		CHECK_CONDITION(pbKeyX != NULL, COSE_ERR_OUT_OF_MEMORY);
+		cose_errback error = {COSE_ERR_NONE};
+		int errorFound = false;
 
 		for (pRecip2 = pcose->m_recipientFirst; pRecip2 != NULL;
 			 pRecip2 = pRecip->m_recipientNext) {
 			if (_COSE_Recipient_decrypt(
-					pRecip2, NULL, alg, cbitKeyX, pbKeyX, perr)) {
+					pRecip2, NULL, alg, cbitKeyX, pbKeyX, &error)) {
 				break;
 			}
+			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS ||
+				error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+				errorFound = error.err;
+			}
+		}
+		if (errorFound) {
+			perr->err = errorFound;
+			goto errorReturn;
 		}
 		CHECK_CONDITION(pRecip2 != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
 	}

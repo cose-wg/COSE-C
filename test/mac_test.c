@@ -35,6 +35,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 	bool fFailBody = false;
 	bool fAlgNoSupport = false;
 	int returnCode = 1;
+	cose_errback error;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -117,7 +118,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 			fAlgNoSupport = true;
 		}
 
-		if (COSE_Mac_validate(hMAC, hRecip, NULL)) {
+		if (COSE_Mac_validate(hMAC, hRecip, &error)) {
 			if (fAlgNoSupport) {
 				fFail = true;
 			}
@@ -126,7 +127,12 @@ int _ValidateMAC(const cn_cbor *pControl,
 			}
 		}
 		else {
-			if (fAlgNoSupport) {
+			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS ||
+				error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+				fAlgNoSupport = true;
+				returnCode = 0;
+			}
+			else if (fAlgNoSupport) {
 				returnCode = 0;
 			}
 			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) {
@@ -316,6 +322,7 @@ int ValidateMAC(const cn_cbor *pControl)
 int BuildMacMessage(const cn_cbor *pControl)
 {
 	int iRecipient = 0;
+	HCOSE_RECIPIENT hRecip = NULL;
 
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
@@ -361,8 +368,7 @@ int BuildMacMessage(const cn_cbor *pControl)
 			goto returnError;
 		}
 
-		HCOSE_RECIPIENT hRecip =
-			COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+		hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hRecip == NULL) {
 			goto returnError;
 		}
@@ -431,6 +437,7 @@ int BuildMacMessage(const cn_cbor *pControl)
 #endif
 
 		COSE_Recipient_Free(hRecip);
+		hRecip = NULL;
 	}
 
 #if INCLUDE_COUNTERSIGNATURE
@@ -455,14 +462,17 @@ int BuildMacMessage(const cn_cbor *pControl)
 
 			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
 					Attributes_Countersign_protected)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_Mac_add_countersignature(hMacObj, hCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
@@ -488,6 +498,12 @@ int BuildMacMessage(const cn_cbor *pControl)
 	return f;
 
 returnError:
+	if (hMacObj != NULL) {
+		COSE_Mac_Free(hMacObj);
+	}
+	if (hRecip != NULL) {
+		COSE_Recipient_Free(hRecip);
+	}
 	CFails += 1;
 	return 1;
 }
@@ -761,8 +777,6 @@ int _ValidateMac0(const cn_cbor *pControl,
 	}
 #endif
 
-	COSE_Mac0_Free(hMAC);
-
 	if (fFailBody) {
 		if (!fFail) {
 			fFail = true;
@@ -771,13 +785,21 @@ int _ValidateMac0(const cn_cbor *pControl,
 			fFail = false;
 		}
 	}
+
 exitHere:
+	if (hMAC != NULL) {
+		COSE_Mac0_Free(hMAC);
+	}
+
 	if (fFail) {
 		CFails += 1;
 	}
 	return fUnsuportedAlg ? 0 : 1;
 
 errorReturn:
+	if (hMAC != NULL) {
+		COSE_Mac0_Free(hMAC);
+	}
 	CFails += 1;
 	return (fFail || fUnsuportedAlg) ? 0 : 1;
 }
@@ -859,14 +881,17 @@ int BuildMac0Message(const cn_cbor *pControl)
 
 			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
 					Attributes_Countersign_protected)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
 			if (!COSE_Mac0_add_countersignature(hMacObj, hCountersign, NULL)) {
+				COSE_CounterSign_Free(hCountersign);
 				goto returnError;
 			}
 
@@ -892,6 +917,7 @@ int BuildMac0Message(const cn_cbor *pControl)
 	return f;
 
 returnError:
+	COSE_Mac0_Free(hMacObj);
 	CFails += 1;
 	return 1;
 }
