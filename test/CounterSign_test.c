@@ -23,7 +23,7 @@ void CounterSign_Corners()
 	byte rgb[10];
 
 	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
-	
+
 	hCounterSign = COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 	hBadHandle = (HCOSE_COUNTERSIGN)COSE_CALLOC(1, sizeof(COSE), context);
 #if INCLUDE_SIGN1
@@ -59,7 +59,8 @@ void CounterSign_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 #if INCLUDE_SIGN1
-	CHECK_FAILURE(COSE_Sign1_add_countersignature(hSign1, hBadHandle, &cose_error),
+	CHECK_FAILURE(
+		COSE_Sign1_add_countersignature(hSign1, hBadHandle, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	((COSE_CounterSign *)hCounterSign)->m_next = (COSE_CounterSign *)hBadHandle;
 	CHECK_FAILURE(
@@ -72,7 +73,7 @@ void CounterSign_Corners()
 	CHECK_FAILURE(COSE_Sign1_get_countersignature(hSign1, 3, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 #endif
-	
+
 	CHECK_FAILURE(
 		COSE_CounterSign_SetExternal(hNULL, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -80,13 +81,12 @@ void CounterSign_Corners()
 		COSE_CounterSign_SetExternal(hBadHandle, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	COSE_CounterSign_SetExternal(hCounterSign, rgb, sizeof(rgb), &cose_error);
-	
-	
+
 	CHECK_RETURN(!COSE_CounterSign_Free(hBadHandle), false, CFails++);
 
 	COSE_CounterSign_Free(hCounterSign);
 #if INCLUDE_SIGN1
 	COSE_Sign1_Free(hSign1);
-#endif	
+#endif
 }
 #endif
