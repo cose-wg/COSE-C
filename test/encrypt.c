@@ -928,7 +928,6 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 				}
 			}
 
-			CN_CBOR_FREE(pkeyCountersign, context);
 			COSE_CounterSign_Free(h);
 		}
 	}

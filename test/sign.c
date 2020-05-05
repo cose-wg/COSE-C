@@ -722,7 +722,6 @@ int _ValidateSign1(const cn_cbor *pControl,
 				}
 			}
 
-			CN_CBOR_FREE(pkeyCountersign, context);
 			COSE_CounterSign_Free(h);
 		}
 	}

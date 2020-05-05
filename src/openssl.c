@@ -1551,8 +1551,8 @@ bool EdDSA_Sign(COSE *pSigner,
 		EVP_DigestSign(mdCtx, pbSig, &cb2, rgbToSign, cbToSign) == 1,
 		COSE_ERR_CRYPTO_FAIL);
 
-	p = cn_cbor_data_create(
-		pbSig, (int)cb2, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+	p = cn_cbor_data_create2(
+		pbSig, (int)cb2, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION(p != NULL, COSE_ERR_OUT_OF_MEMORY);
 	pbSig = NULL;
 

@@ -207,7 +207,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 					}
 				}
 
-				CN_CBOR_FREE(pkeyCountersign, context);
 				COSE_CounterSign_Free(h);
 			}
 		}
@@ -284,7 +283,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 				}
 			}
 
-			CN_CBOR_FREE(pkeyCountersign, context);
 			COSE_CounterSign_Free(h);
 		}
 	}
@@ -772,7 +770,6 @@ int _ValidateMac0(const cn_cbor *pControl,
 				}
 			}
 
-			CN_CBOR_FREE(pkeyCountersign, context);
 			COSE_CounterSign_Free(h);
 		}
 	}

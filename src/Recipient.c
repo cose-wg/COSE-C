@@ -1437,6 +1437,10 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h,
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	p = (COSE_RecipientInfo *)h;
+	if (p->m_pkey != NULL) {
+		CN_CBOR_FREE((cn_cbor *) p->m_pkey, &p->m_encrypt.m_message.m_allocContext);
+	}
+	
 	p->m_pkey = pKey;
 
 	return true;
