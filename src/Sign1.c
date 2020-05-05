@@ -388,7 +388,7 @@ static bool CreateSign1AAD(COSE_Sign1Message *pMessage,
 		CN_CBOR_FREE(cn, context);
 	}
 	if (pArray != NULL) {
-		COSE_FREE(pArray, context);
+		CN_CBOR_FREE(pArray, context);
 	}
 	return true;
 
@@ -400,7 +400,7 @@ errorReturn:
 		CN_CBOR_FREE(cn, context);
 	}
 	if (pArray != NULL) {
-		COSE_FREE(pArray, context);
+		CN_CBOR_FREE(pArray, context);
 	}
 	return false;
 }

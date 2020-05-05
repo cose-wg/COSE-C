@@ -233,7 +233,6 @@ bool DecryptMessage(const byte *pbEncoded,
 				}
 			}
 
-			CN_CBOR_FREE(pkeyCountersign, context);
 			COSE_CounterSign_Free(h);
 		}
 	}
@@ -307,7 +306,6 @@ bool DecryptMessage(const byte *pbEncoded,
 				}
 			}
 
-			CN_CBOR_FREE(pkeyCountersign, context);
 			COSE_CounterSign_Free(h);
 		}
 	}
@@ -758,9 +756,10 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 	cn_cbor *pcnEncoded)
 {
 	const cn_cbor *pInput = cn_cbor_mapget_string(pControl, "input");
-	const cn_cbor *pFail;
-	const cn_cbor *pEncrypt;
-	const cn_cbor *pRecipients;
+	const cn_cbor *pFail = NULL;
+	const cn_cbor *pEncrypt = NULL;
+	const cn_cbor *pRecipients = NULL;
+	cn_cbor *pkey = NULL;	
 	HCOSE_ENCRYPT hEnc = NULL;
 	int type;
 	bool fFail = false;
@@ -817,7 +816,7 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		goto returnError;
 	}
 
-	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
+	pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 	if (pkey == NULL) {
 		goto returnError;
 	}
@@ -939,6 +938,9 @@ exitHere:
 	if (hEnc != NULL) {
 		COSE_Encrypt_Free(hEnc);
 	}
+	if (pkey != NULL) {
+		CN_CBOR_FREE(pkey, context);
+	}
 
 	if (fAlgSupport) {
 		if (fFailBody) {
@@ -990,6 +992,7 @@ int ValidateEncrypt(const cn_cbor *pControl)
 
 int BuildEncryptMessage(const cn_cbor *pControl)
 {
+	cn_cbor *pkey = NULL;
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
 	//
@@ -1032,7 +1035,7 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 	}
 
 	pRecipients = pRecipients->first_child;
-	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
+	pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 	if (pkey == NULL) {
 		goto returnError;
 	}
@@ -1093,12 +1096,21 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 	COSE_Encrypt_Free(hEncObj);
 
 	int f = _ValidateEncrypt(pControl, rgb, cb, NULL);
+
+	if (pkey != NULL) {
+		CN_CBOR_FREE(pkey, context);
+	}
+	
 	free(rgb);
 	return f;
 
 returnError:
 	if (hEncObj != NULL) {
 		COSE_Encrypt_Free(hEncObj);
+	}
+
+	if (pkey != NULL) {
+		CN_CBOR_FREE(pkey, context);
 	}
 
 	CFails += 1;

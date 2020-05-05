@@ -883,6 +883,10 @@ errorReturn:
 		COSE_FREE(pbKeyNew, context);
 	}
 
+	if (pbAuthData != NULL) {
+		COSE_FREE(pbAuthData, context);
+	}
+
 	return fRet;
 }
 #endif

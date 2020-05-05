@@ -146,6 +146,15 @@ void _COSE_Recipient_Free(COSE_RecipientInfo *pRecipient)
 	}
 
 	_COSE_Enveloped_Release(&pRecipient->m_encrypt);
+	if (pRecipient->m_pkey != NULL) {
+		CN_CBOR_FREE((cn_cbor *)pRecipient->m_pkey,
+			&pRecipient->m_encrypt.m_message.m_allocContext);
+	}
+	if (pRecipient->m_pkeyStatic != NULL) {
+		CN_CBOR_FREE((cn_cbor *) pRecipient->m_pkeyStatic,
+			&pRecipient->m_encrypt.m_message.m_allocContext);
+	}
+
 	COSE_FREE(pRecipient, &pRecipient->m_encrypt.m_message.m_allocContext);
 
 	return;
@@ -352,6 +361,9 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 		}
 		if (pbSecret != NULL) {
 			COSE_FREE(pbSecret, context);
+		}
+		if (pbKeyX != NULL) {
+			COSE_FREE(pbKeyX, context);
 		}
 		return false;
 	}
@@ -754,6 +766,10 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 			break;
+	}
+
+	if (pbKeyX != NULL) {
+		COSE_FREE(pbKeyX, context);
 	}
 
 	return true;
@@ -1670,7 +1686,7 @@ static bool BuildContextBytes(COSE *pcose,
 		cnT = cn_cbor_clone(cnParam, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	else {
-		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		cnT = cn_cbor_null_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	}
 	CHECK_CONDITION_CBOR(cnT != NULL, cbor_error);
 	CHECK_CONDITION_CBOR(

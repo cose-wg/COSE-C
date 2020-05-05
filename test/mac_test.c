@@ -625,10 +625,11 @@ int _ValidateMac0(const cn_cbor *pControl,
 	size_t cbEncoded)
 {
 	const cn_cbor *pInput = cn_cbor_mapget_string(pControl, "input");
-	const cn_cbor *pFail;
-	const cn_cbor *pMac;
-	const cn_cbor *pRecipients;
-	HCOSE_MAC0 hMAC;
+	const cn_cbor *pFail = NULL;
+	const cn_cbor *pMac = NULL;
+	const cn_cbor *pRecipients = NULL;
+	cn_cbor *pkey = NULL;	
+	HCOSE_MAC0 hMAC = NULL;
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
@@ -669,7 +670,7 @@ int _ValidateMac0(const cn_cbor *pControl,
 
 	pRecipients = pRecipients->first_child;
 
-	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
+	pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 	if (pkey == NULL) {
 		fFail = true;
 		goto exitHere;
@@ -787,6 +788,9 @@ int _ValidateMac0(const cn_cbor *pControl,
 	}
 
 exitHere:
+	if (pkey != NULL) {
+		CN_CBOR_FREE(pkey, context);
+	}
 	if (hMAC != NULL) {
 		COSE_Mac0_Free(hMAC);
 	}
@@ -814,6 +818,8 @@ int ValidateMac0(const cn_cbor *pControl)
 
 int BuildMac0Message(const cn_cbor *pControl)
 {
+	cn_cbor *pkey = NULL;
+
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
 	//
@@ -852,7 +858,7 @@ int BuildMac0Message(const cn_cbor *pControl)
 
 	pRecipients = pRecipients->first_child;
 
-	cn_cbor *pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
+	pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 	if (pkey == NULL) {
 		goto returnError;
 	}
@@ -910,6 +916,7 @@ int BuildMac0Message(const cn_cbor *pControl)
 	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
 
 	COSE_Mac0_Free(hMacObj);
+	CN_CBOR_FREE(pkey, context);
 
 	int f = _ValidateMac0(pControl, rgb, cb);
 
@@ -917,6 +924,9 @@ int BuildMac0Message(const cn_cbor *pControl)
 	return f;
 
 returnError:
+	if (pkey != NULL) {
+		CN_CBOR_FREE(pkey, context);
+	}
 	COSE_Mac0_Free(hMacObj);
 	CFails += 1;
 	return 1;

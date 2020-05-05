@@ -121,6 +121,7 @@ byte fromHex(char c)
 
 byte* FromHex(const char* rgch, int cch)
 {
+	// M00BUG - Why is this using malloc?  It does not get freed anyplace.
 	byte* pb = malloc(cch / 2);
 	const char* pb2 = rgch;
 
@@ -499,7 +500,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != NULL) {
-		cn_cbor* pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
+		cn_cbor* pcn = pExternal;
 		if (pcn == NULL) {
 			goto returnError;
 		}
@@ -594,11 +595,12 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != NULL) {
-		cn_cbor* pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
+		cn_cbor* pcn = pExternal;
 		if (pcn == NULL) {
 			goto returnError;
 		}
 		switch (base) {
+			
 #if INCLUDE_ENCRYPT0
 			case Attributes_Encrypt_protected:
 				if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg,

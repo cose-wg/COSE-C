@@ -127,8 +127,8 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 		CHECK_CONDITION(pbIV != NULL, COSE_ERR_OUT_OF_MEMORY);
 		rand_bytes(pbIV, NSize);
 		memcpy(rgbIV, pbIV, NSize);
-		cbor_iv_t = cn_cbor_data_create(
-			pbIV, NSize, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		cbor_iv_t = cn_cbor_data_create2(
+			pbIV, NSize, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(cbor_iv_t != NULL, cbor_error);
 		pbIV = NULL;
 
@@ -162,8 +162,8 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 						&rgbOut[pcose->cbContent], TSize),
 		COSE_ERR_CRYPTO_FAIL);
 
-	cnTmp = cn_cbor_data_create(
-		rgbOut, (int)pcose->cbContent + TSize, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cnTmp = cn_cbor_data_create2(
+		rgbOut, (int)pcose->cbContent + TSize, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	rgbOut = NULL;
 
@@ -315,8 +315,8 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		CHECK_CONDITION(pbIV != NULL, COSE_ERR_OUT_OF_MEMORY);
 		rand_bytes(pbIV, 96 / 8);
 		memcpy(rgbIV, pbIV, 96 / 8);
-		cbor_iv_t = cn_cbor_data_create(
-			pbIV, 96 / 8, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		cbor_iv_t = cn_cbor_data_create2(
+			pbIV, 96 / 8, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(cbor_iv_t != NULL, cbor_error);
 		pbIV = NULL;
 
@@ -365,8 +365,8 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		mbedtls_gcm_finish(&ctx, &rgbOut[pcose->cbContent], 128 / 8),
 		COSE_ERR_CRYPTO_FAIL);
 
-	cn_cbor *cnTmp = cn_cbor_data_create(
-		rgbOut, (int)pcose->cbContent + 128 / 8, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor *cnTmp = cn_cbor_data_create2(
+		rgbOut, (int)pcose->cbContent + 128 / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	rgbOut = NULL;
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cnTmp, INDEX_BODY,
@@ -374,6 +374,10 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		COSE_ERR_CBOR);
 
 	mbedtls_gcm_free(&ctx);
+	
+	if (pbIV != NULL) {
+		COSE_FREE(pbIV, context);
+	}
 	return true;
 
 errorReturn:
@@ -521,6 +525,7 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	mbedtls_md_context_t contx;
 	const char *md_name;
 	const struct mbedtls_md_info_t *info;
+	cn_cbor *cbor = NULL;
 
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
@@ -543,6 +548,9 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 
 	if (0) {
 	errorReturn:
+		if (cbor != NULL) {
+			COSE_FREE(cbor, context);
+		}
 		COSE_FREE(rgbOut, context);
 		mbedtls_md_free(&contx);
 		return false;
@@ -562,9 +570,10 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	CHECK_CONDITION(
 		!(mbedtls_md_hmac_finish(&contx, rgbOut)), COSE_ERR_CRYPTO_FAIL);
 
-	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message,
-						cn_cbor_data_create(
-							rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL),
+cbor =
+		cn_cbor_data_create(rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL);
+	CHECK_CONDITION(cbor != NULL, COSE_ERR_OUT_OF_MEMORY);
+		CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cbor,
 						INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL),
 		COSE_ERR_CBOR);
 
@@ -633,10 +642,14 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 		f |= (cn->v.bytes[i] != rgbOut[i]);
 	}
 
+	COSE_FREE(rgbOut, context);
 	mbedtls_md_free(&contx);
 	return !f;
 
 errorReturn:
+	if (rgbOut != NULL) {
+		COSE_FREE(rgbOut, context);
+	}
 	COSE_FREE(rgbOut, context);
 	mbedtls_md_free(&contx);
 	return false;

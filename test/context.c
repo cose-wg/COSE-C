@@ -91,10 +91,23 @@ void MyFree(void *ptr, void *context)
 {
 	MyItem *pb = (MyItem *)((byte *)ptr - sizeof(MyItem) + 4);
 	MyContext *myContext = (MyContext *)context;
+	MyItem *pItem = NULL;
 
 	CheckMemory(myContext);
 	if (ptr == NULL) {
 		return;
+	}
+
+	for (pItem = (MyItem *)myContext->pFirst; pItem != NULL;
+		 pItem = pItem->pNext) {
+		if (pItem == pb) {
+			break;
+		}
+	}
+
+	if (pItem == NULL) {
+		//  Not an item we allocated
+		assert(false);
 	}
 
 	memset(&pb->pad, 0xab, pb->size + 8);

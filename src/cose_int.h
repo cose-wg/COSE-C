@@ -59,7 +59,7 @@ typedef struct {
 
 struct _SignerInfo {
 	COSE m_message;
-	const cn_cbor *m_pkey;
+	cn_cbor *m_pkey;
 	COSE_SignerInfo *m_signerNext;
 };
 
@@ -406,6 +406,29 @@ bool _COSE_array_replace(COSE *pMessage,
 cn_cbor *_COSE_arrayget_int(COSE *pMessage, int index);
 
 ///  NEW CBOR FUNCTIONS
+
+#ifndef CN_CBOR_VERSION
+static inline cn_cbor * cn_cbor_string_create2(const char * sz, int flags, CBOR_CONTEXT_COMMA cn_cbor_errback * perr)
+{
+	return cn_cbor_string_create(sz,
+#ifdef USE_CBOR_CONTEXT
+		context,
+#endif
+		perr);
+}
+
+static inline cn_cbor *cn_cbor_data_create2(const byte *pb, int cb,
+	int flags,
+	CBOR_CONTEXT_COMMA cn_cbor_errback *perr)
+{
+	return cn_cbor_data_create(pb, cb,
+#ifdef USE_CBOR_CONTEXT
+		context,
+#endif
+		perr);
+}
+
+#endif
 
 bool cn_cbor_array_replace(cn_cbor *cb_array,
 	cn_cbor *cb_value,

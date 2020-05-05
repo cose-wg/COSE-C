@@ -645,13 +645,15 @@ bool COSE_Mac_CounterSign_validate(HCOSE_MAC hSigner,
 
 cn_cbor* cn_cbor_clone(const cn_cbor* pIn,
 	CBOR_CONTEXT_COMMA cn_cbor_errback* perr);
+#ifndef CN_CBOR_VERSION
 cn_cbor* cn_cbor_tag_create(int tag,
 	cn_cbor* child,
 	CBOR_CONTEXT_COMMA cn_cbor_errback* perr);
 cn_cbor* cn_cbor_bool_create(int boolValue,
 	CBOR_CONTEXT_COMMA cn_cbor_errback* errp);
 cn_cbor* cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback* errp);
-
+#endif
+	
 #ifdef __cplusplus
 }
 #endif

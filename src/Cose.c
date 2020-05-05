@@ -203,14 +203,13 @@ HCOSE COSE_Decode(const byte *rgbData,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	cn_cbor *cbor = NULL;
-	cn_cbor *cborRoot = NULL;
 	cn_cbor_errback cbor_err;
 	HCOSE h;
 
 	CHECK_CONDITION(
 		(rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
 
-	cbor = cborRoot =
+	cbor = 
 		cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
 	CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
 
@@ -222,10 +221,14 @@ HCOSE COSE_Decode(const byte *rgbData,
 		else {
 			struct_type = cbor->v.uint;
 		}
-
 		*ptype = struct_type;
 
-		cbor = cbor->first_child;
+		cn_cbor *ptag = cbor;
+		cbor = ptag->first_child;
+		ptag->first_child = NULL;
+		ptag->last_child = NULL;
+		cbor->parent = NULL;
+		CN_CBOR_FREE(ptag, context);
 	}
 	else {
 		*ptype = struct_type;
@@ -249,7 +252,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign_object:
 #if INCLUDE_SIGN
 			h = (HCOSE)_COSE_Sign_Init_From_Object(
-				cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -261,7 +264,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign1_object:
 #if INCLUDE_SIGN1
 			h = (HCOSE)_COSE_Sign1_Init_From_Object(
-				cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -490,8 +493,8 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 		cbProtected = 0;
 	}
 
-	pProtected = cn_cbor_data_create(
-		pbProtected, cbProtected, CBOR_CONTEXT_PARAM_COMMA NULL);
+	pProtected = cn_cbor_data_create2(
+		pbProtected, cbProtected, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(pProtected != NULL, COSE_ERR_OUT_OF_MEMORY);
 	pbProtected = NULL;
 
