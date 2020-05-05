@@ -316,7 +316,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 	return h;
 
 errorReturn:
-	COSE_FREE(cbor, context);
+	CN_CBOR_FREE(cbor, context);
 	return NULL;
 }
 

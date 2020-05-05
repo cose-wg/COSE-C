@@ -570,11 +570,12 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	CHECK_CONDITION(
 		!(mbedtls_md_hmac_finish(&contx, rgbOut)), COSE_ERR_CRYPTO_FAIL);
 
-cbor =
-		cn_cbor_data_create(rgbOut, TSize / 8, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cbor = cn_cbor_data_create2(
+		rgbOut, TSize / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cbor != NULL, COSE_ERR_OUT_OF_MEMORY);
-		CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cbor,
-						INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL),
+	rgbOut = NULL;
+	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cbor, INDEX_MAC_TAG,
+						CBOR_CONTEXT_PARAM_COMMA NULL),
 		COSE_ERR_CBOR);
 
 	mbedtls_md_free(&contx);
@@ -1201,8 +1202,8 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
 		memcpy(pbsecret, buff + 1, cbSize);
 
-		p = cn_cbor_data_create(
-			pbsecret, (int)cbSize, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		p = cn_cbor_data_create2(
+			pbsecret, (int)cbSize, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != NULL, cbor_error);
 		pbsecret = NULL;
 		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_X, p,
@@ -1214,9 +1215,10 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
 		memcpy(pbsecret, buff + 1 + cbSize, cbSize);
 
-		p = cn_cbor_data_create(
-			pbsecret, cbSize, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		p = cn_cbor_data_create2(
+			pbsecret, cbSize, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != NULL, cbor_error);
+		pbsecret = NULL;
 		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Y, p,
 								 CBOR_CONTEXT_PARAM_COMMA & cbor_error),
 			cbor_error);
