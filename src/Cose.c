@@ -236,11 +236,13 @@ HCOSE COSE_Decode(const byte *rgbData,
 
 	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
+	cn_cbor *cbor2 = cbor;
+	cbor = NULL;
 	switch (*ptype) {
 		case COSE_enveloped_object:
 #if INCLUDE_ENCRYPT
 			h = (HCOSE)_COSE_Enveloped_Init_From_Object(
-				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor2, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -252,7 +254,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign_object:
 #if INCLUDE_SIGN
 			h = (HCOSE)_COSE_Sign_Init_From_Object(
-				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor2, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -264,7 +266,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign1_object:
 #if INCLUDE_SIGN1
 			h = (HCOSE)_COSE_Sign1_Init_From_Object(
-				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor2, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -276,7 +278,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_mac_object:
 #if INCLUDE_MAC
 			h = (HCOSE)_COSE_Mac_Init_From_Object(
-				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor2, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -288,7 +290,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_mac0_object:
 #if INCLUDE_MAC0
 			h = (HCOSE)_COSE_Mac0_Init_From_Object(
-				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor2, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -300,7 +302,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_encrypt_object:
 #if INCLUDE_ENCRYPT0
 			h = (HCOSE)_COSE_Encrypt_Init_From_Object(
-				cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor2, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == NULL) {
 				goto errorReturn;
 			}
@@ -316,6 +318,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 	return h;
 
 errorReturn:
+	// M00TODO - break up the init and allocation above for memory tests.
 	CN_CBOR_FREE(cbor, context);
 	return NULL;
 }
