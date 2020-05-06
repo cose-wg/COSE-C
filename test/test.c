@@ -872,7 +872,7 @@ void RunCorners()
 #endif
 }
 
-void RunMemoryTest(const char* szFileName)
+static void RunMemoryTest(const char* szFileName)
 {
 #ifdef USE_CBOR_CONTEXT
 	unsigned int iFail;

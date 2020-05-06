@@ -38,6 +38,17 @@ option(COSE_C_INCLUDE_MAC0 "Include COSE_MAC0" ON)
 option(COSE_C_INCLUDE_SIGN "Include COSE_SIGN" ON)
 option(COSE_C_INCLUDE_SIGN1 "Include COSE_SIGN1" ON)
 option(COSE_C_INCLUDE_COUNTERSIGN "Include COSE_COUNTERSIGN" OFF)
+option(COSE_C_VALGRIND_MEMORY_CHECK "use Valgrind to check memory, \
+  run `ctest -D ExperimentalMemCheck` then after build to run tests with valgrind" OFF)
+
+if(COSE_C_VALGRIND_MEMORY_CHECK)
+  find_program(MEMORYCHECK_COMMAND valgrind)
+  if(NOT MEMORYCHECK_COMMAND)
+    message(FATAL_ERROR "valgrind not found.")
+  endif()
+  set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
+  set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/valgrind_suppress.txt")
+endif()
 
 set(COSE_C_USE_SANITIZER
     "none"
@@ -46,16 +57,9 @@ set(COSE_C_USE_SANITIZER
       " \
     Name of the sanitizer which the user whats to use \
     This behaviour is the same is turning on one the sanitizer flags below \
-    This option is a convenience option \ 
+    This option is a convenience option \
     ")
-set_property(
-  CACHE COSE_C_USE_SANITIZER
-  PROPERTY STRINGS
-           none
-           address
-           memory
-           leak
-           undefined)
+set_property(CACHE COSE_C_USE_SANITIZER PROPERTY STRINGS none address memory leak undefined)
 
 set(COSE_C_USE_ADDRESS_SANITIZER OFF)
 set(COSE_C_USE_MEMORY_SANITIZER OFF)
@@ -317,6 +321,7 @@ message(STATUS "COSE_C_USE_ADDRESS_SANITIZER:....${COSE_C_USE_ADDRESS_SANITIZER}
 message(STATUS "COSE_C_USE_MEMORY_SANITIZER:.....${COSE_C_USE_MEMORY_SANITIZER}")
 message(STATUS "COSE_C_USE_LEAK_SANITIZER:.......${COSE_C_USE_LEAK_SANITIZER}")
 message(STATUS "COSE_C_USE_UNDEFINED_SANITIZER:..${COSE_C_USE_UNDEFINED_SANITIZER}")
+message(STATUS "COSE_C_VALGRIND_MEMORY_CHECK:....${COSE_C_VALGRIND_MEMORY_CHECK}")
 message(STATUS "project_cn_cbor_SOURCE_DIR:......${project_cn_cbor_SOURCE_DIR}")
 message(STATUS "project_cn_cbor_BINARY_DIR:......${project_cn_cbor_BINARY_DIR}")
 message(STATUS "project_mbedtls_SOURCE_DIR:......${project_mbedtls_SOURCE_DIR}")
