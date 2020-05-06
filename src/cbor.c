@@ -39,12 +39,12 @@
  * Replace the i-th element in the array.
  * Extend the array if necessary so it has enough elements.
  *
- * @param[in]    cn_cbor *		Array to use
- * @param[in]	const cn_cbor *	New item to be placed in the array
- * @param[in]	int				Zero based index to be used
- * @param[in]	context	*		Context based allocation structure
- * @param[in,out] cn_cbor_errback * CBOR error return on failure
- * returns	    bool			Did we succeed?
+ * @param[in]   cb_array		Array to use
+ * @param[in]	cb_value    	New item to be placed in the array
+ * @param[in]	index			Zero based index to be used
+ * @param[in]	CBOR_CONTEXT	Context based allocation structure
+ * @param[in,out] errp			CBOR error return on failure
+ * returns						Did we succeed?
  */
 
 bool cn_cbor_array_replace(cn_cbor *cb_array,
@@ -141,7 +141,7 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 			}
 			memcpy(sz, pIn->v.str, pIn->length);
 			sz[pIn->length] = 0;
-			pOut = cn_cbor_string_create(sz CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			pOut = cn_cbor_string_create2(sz, 0 CBOR_CONTEXT_PARAM, pcn_cbor_error);
 			break;
 
 		case CN_CBOR_UINT:
@@ -155,8 +155,8 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 				return NULL;
 			}
 			memcpy(pb, pIn->v.bytes, pIn->length);
-			pOut = cn_cbor_data_create(
-				pb, (int)pIn->length CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			pOut = cn_cbor_data_create2(
+				pb, (int)pIn->length, 0 CBOR_CONTEXT_PARAM, pcn_cbor_error);
 			break;
 
 		default:
@@ -166,6 +166,7 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 	return pOut;
 }
 
+#ifndef CN_CBOR_VERSION
 cn_cbor *cn_cbor_tag_create(int tag,
 	cn_cbor *child,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *perr)
@@ -213,6 +214,7 @@ cn_cbor *cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback *errp)
 	pcn->type = CN_CBOR_NULL;
 	return pcn;
 }
+#endif
 
 size_t cn_cbor_encode_size(cn_cbor *object)
 {

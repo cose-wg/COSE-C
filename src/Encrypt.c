@@ -350,7 +350,7 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 
 		if (pRecip != NULL) {
 			COSE_RecipientInfo *pRecipX = NULL;
-			cose_errback errorLocal;
+			cose_errback errorLocal = {0};
 			int errorFound = 0;
 
 			for (pRecipX = pcose->m_recipientFirst; pRecipX != NULL;
@@ -1068,6 +1068,10 @@ bool _COSE_Encrypt_Build_AAD(COSE *pMessage,
             printf("\n");
         }
 #endif
+
+	if (pAuthData != NULL) {
+		CN_CBOR_FREE(pAuthData, context);
+	}
 
 	return true;
 

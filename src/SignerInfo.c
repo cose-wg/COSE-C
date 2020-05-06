@@ -34,6 +34,7 @@ bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner)
 	}
 
 	_COSE_Release(&pSigner->m_message);
+	CN_CBOR_FREE(pSigner->m_pkey, &pSigner->m_message.m_allocContext);
 
 	return true;
 }

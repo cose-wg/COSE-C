@@ -234,7 +234,10 @@ bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN h,
 	CHECK_CONDITION(pkey != NULL, COSE_ERR_INVALID_PARAMETER);
 
 	COSE_CounterSign* p = (COSE_CounterSign*)h;
-	p->m_signer.m_pkey = pkey;
+	if (p->m_signer.m_pkey != NULL) {
+		CN_CBOR_FREE(p->m_signer.m_pkey, &p->m_signer.m_message.m_allocContext);
+	}
+	p->m_signer.m_pkey = (cn_cbor *) pkey;
 
 	fRet = true;
 errorReturn:
