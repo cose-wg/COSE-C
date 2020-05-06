@@ -21,12 +21,11 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 {
 	char ch;
 	int ib2;
-	cn_cbor *node = NULL;
 	cn_cbor *parent = NULL;
 	cn_cbor *root = NULL;
 
 	for (; ib < cch; ib++) {
-		node = NULL;
+		cn_cbor *node = NULL;
 		ch = rgch[ib];
 		switch (ch) {
 			case '{':
