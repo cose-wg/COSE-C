@@ -1012,9 +1012,8 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	HMAC_CTX *ctx = NULL;
 	const EVP_MD *pmd = NULL;
 	byte *rgbOut = NULL;
-	unsigned int cbOut;
+	unsigned int cbOut = 0 ;
 	bool f = false;
-	unsigned int i;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
@@ -1052,7 +1051,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	if (cn->length > (int)cbOut) {
 		return false;
 	}
-	for (i = 0; i < (unsigned int)TSize / 8; i++) {
+	for (unsigned int i = 0; i < (unsigned int)TSize / 8; i++) {
 		f |= (cn->v.bytes[i] != rgbOut[i]);
 	}
 
