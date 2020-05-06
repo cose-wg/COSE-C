@@ -872,7 +872,7 @@ void RunCorners()
 #endif
 }
 
-void RunMemoryTest(const char* szFileName)
+static void RunMemoryTest(const char* szFileName)
 {
 #ifdef USE_CBOR_CONTEXT
 	unsigned int iFail;
@@ -1218,11 +1218,9 @@ bool ProcessFile(const cn_cbor* pControl,
 	return true;
 }
 
-void RunFileTest(const char* szFileName)
+static void RunFileTest(const char* szFileName)
 {
-	const cn_cbor* pControl = NULL;
-
-	pControl = ParseJson(szFileName);
+	const cn_cbor*  pControl = ParseJson(szFileName);
 
 	//
 	//  If we are given a file name, then process the file name

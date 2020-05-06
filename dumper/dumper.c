@@ -235,9 +235,7 @@ void WrapPrintF(FILE* fp, char* format, ...)
 
 void Indent(FILE* fp, int depth)
 {
-	int i;
-
-	for (i = 0; i < depth; i++) {
+	for (int i = 0; i < depth; i++) {
 		WrapPrintF(fp, "  ");
 	}
 }
@@ -250,10 +248,9 @@ void PrintUsage()
 
 void DumpBytes(FILE* fp, const cn_cbor* cbor)
 {
-	int i;
-	int fText = true;
+	bool fText = true;
 
-	for (i = 0; i < cbor->length; i++) {
+	for (int i = 0; i < cbor->length; i++) {
 		if ((cbor->v.bytes[i] < 32) || (cbor->v.bytes[i] > 126) ||
 			(cbor->v.bytes[i] == '\'')) {
 			fText = false;
@@ -262,13 +259,13 @@ void DumpBytes(FILE* fp, const cn_cbor* cbor)
 
 	if (fText && (cbor->length > 0)) {
 		WrapPrintF(fp, "'");
-		for (i = 0; i < cbor->length; i++) {
+		for (int i = 0; i < cbor->length; i++) {
 			WrapPrintF(fp, "%c", cbor->v.bytes[i]);
 		}
 		WrapPrintF(fp, "'");
 	} else {
 		WrapPrintF(fp, "h'");
-		for (i = 0; i < cbor->length; i++) {
+		for (int i = 0; i < cbor->length; i++) {
 			WrapPrintF(fp, "%02x", cbor->v.bytes[i]);
 		}
 		WrapPrintF(fp, "'");
@@ -511,7 +508,6 @@ void DumpTree(const cn_cbor* cbor,
 
 int main(int argc, char** argv)
 {
-	int i;
 	FILE* in = NULL;
 	FILE* out = NULL;
 	byte* pb = NULL;
@@ -521,7 +517,7 @@ int main(int argc, char** argv)
 	int forXML = false;
 	FOO* root = NULL;
 
-	for (i = 1; i < argc; i++) {
+	for (int i = 1; i < argc; i++) {
 		if ((argv[i][0] == '-') || (argv[i][0] == '/')) {
 			if (strcmp(&argv[i][1], "someoption") == 0) {
 			} else if (strcmp(&argv[i][1], "xml=yes") == 0) {
