@@ -39,6 +39,45 @@ option(COSE_C_INCLUDE_SIGN "Include COSE_SIGN" ON)
 option(COSE_C_INCLUDE_SIGN1 "Include COSE_SIGN1" ON)
 option(COSE_C_INCLUDE_COUNTERSIGN "Include COSE_COUNTERSIGN" OFF)
 
+set(COSE_C_USE_SANITIZER
+    "none"
+    CACHE
+      STRING
+      " \
+    Name of the sanitizer which the user whats to use \
+    This behaviour is the same is turning on one the sanitizer flags below \
+    This option is a convenience option \ 
+    ")
+set_property(
+  CACHE COSE_C_USE_SANITIZER
+  PROPERTY STRINGS
+           none
+           address
+           memory
+           leak
+           undefined)
+
+set(COSE_C_USE_ADDRESS_SANITIZER OFF)
+set(COSE_C_USE_MEMORY_SANITIZER OFF)
+set(COSE_C_USE_LEAK_SANITIZER OFF)
+set(COSE_C_USE_UNDEFINED_SANITIZER OFF)
+
+if(COSE_C_USE_SANITIZER STREQUAL "address")
+  set(COSE_C_USE_ADDRESS_SANITIZER ON)
+endif()
+
+if(COSE_C_USE_SANITIZER STREQUAL "memory")
+  set(COSE_C_USE_MEMORY_SANITIZER ON)
+endif()
+
+if(COSE_C_USE_SANITIZER STREQUAL "leak")
+  set(COSE_C_USE_LEAK_SANITIZER ON)
+endif()
+
+if(COSE_C_USE_SANITIZER STREQUAL "undefined")
+  set(COSE_C_USE_UNDEFINED_SANITIZER ON)
+endif()
+
 # Set the output of the libraries and executables.
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
@@ -127,7 +166,7 @@ if(COSE_C_BUILD_DOCS)
 endif()
 
 ###############################################################################
-# DEPENDENCIES
+# STATIC ANALYSIS
 ###############################################################################
 
 if(COSE_C_RUN_CLANG_TIDY)
@@ -139,6 +178,8 @@ if(COSE_C_RUN_CLANG_TIDY)
     message(WARNING "clang-tidy not found.")
   endif()
 endif(COSE_C_RUN_CLANG_TIDY)
+
+include(sanitizers)
 
 ###############################################################################
 # DEPENDENCIES
@@ -271,6 +312,11 @@ message(STATUS "CMAKE_VERSION:...................${CMAKE_VERSION}")
 message(STATUS "CMAKE_C_COMPILER:................${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER:..............${CMAKE_CXX_COMPILER}")
 message(STATUS "CLANG_TIDY_EXE:..................${CLANG_TIDY_EXE}")
+message(STATUS "COSE_C_USE_SANITIZER:............${COSE_C_USE_SANITIZER}")
+message(STATUS "COSE_C_USE_ADDRESS_SANITIZER:....${COSE_C_USE_ADDRESS_SANITIZER}")
+message(STATUS "COSE_C_USE_MEMORY_SANITIZER:.....${COSE_C_USE_MEMORY_SANITIZER}")
+message(STATUS "COSE_C_USE_LEAK_SANITIZER:.......${COSE_C_USE_LEAK_SANITIZER}")
+message(STATUS "COSE_C_USE_UNDEFINED_SANITIZER:..${COSE_C_USE_UNDEFINED_SANITIZER}")
 message(STATUS "project_cn_cbor_SOURCE_DIR:......${project_cn_cbor_SOURCE_DIR}")
 message(STATUS "project_cn_cbor_BINARY_DIR:......${project_cn_cbor_BINARY_DIR}")
 message(STATUS "project_mbedtls_SOURCE_DIR:......${project_mbedtls_SOURCE_DIR}")
