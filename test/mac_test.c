@@ -87,11 +87,13 @@ int _ValidateMAC(const cn_cbor *pControl,
 
 		if (!SetReceivingAttributes(
 				(HCOSE)hRecip, pRecipients, Attributes_Recipient_protected)) {
+			COSE_Recipient_Free(hRecip);
 			goto failTest;
 		}
 
 		if (!COSE_Recipient_SetKey(hRecip, pkey, NULL)) {
 			fFail = true;
+			COSE_Recipient_Free(hRecip);
 			continue;
 		}
 
@@ -150,6 +152,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 			cn_cbor *countersigners =
 				cn_cbor_mapget_string(countersignList, "signers");
 			if (countersigners == NULL) {
+				COSE_Recipient_Free(hRecip);
 				goto failTest;
 			}
 			int count = countersigners->length;
@@ -157,6 +160,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 
 			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_CounterSign,
 					COSE_UNPROTECT_ONLY, 0) == NULL) {
+				COSE_Recipient_Free(hRecip);
 				goto failTest;
 			}
 

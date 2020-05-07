@@ -47,7 +47,9 @@ HCOSE_KEY COSE_KEY_FromCbor(cn_cbor *pcborKey,
 	pkey = (COSE_KEY *)COSE_CALLOC(1, sizeof(COSE_KEY), context);
 
 	if (pkey == NULL) {
-		perror->err = COSE_ERR_OUT_OF_MEMORY;
+		if (perror != NULL) {
+			perror->err = COSE_ERR_OUT_OF_MEMORY;
+		}
 		return NULL;
 	}
 
