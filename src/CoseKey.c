@@ -98,7 +98,7 @@ bool COSE_KEY_Free(HCOSE_KEY h)
 	return true;
 }
 
-#ifdef COSE_C_USE_OPENSSL
+#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
 HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY * opensslKey, cn_cbor * pcborKey, CBOR_CONTEXT_COMMA cose_errback* perror)
 {
 	COSE_KEY *pkey = NULL;

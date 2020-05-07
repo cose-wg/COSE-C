@@ -368,9 +368,12 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
 {
 	HCOSE_KEY cose = NULL;
 	bool fRet = false;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = NULL;
+#endif
 
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
-	cose = COSE_KEY_FromCbor((cn_cbor*) pKey, NULL, perr);
+	cose = COSE_KEY_FromCbor((cn_cbor*) pKey, CBOR_CONTEXT_PARAM_COMMA perr);
 	
 	CHECK_CONDITION(cose != NULL, COSE_ERR_OUT_OF_MEMORY);
 

@@ -231,9 +231,12 @@ bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN h,
 {
 	bool fRet = false;
 	HCOSE_KEY coseKey = NULL;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context* context = NULL;
+#endif
 	
 	CHECK_CONDITION(pkey != NULL, COSE_ERR_INVALID_PARAMETER);
-	coseKey = COSE_KEY_FromCbor((cn_cbor*) pkey, NULL, perr);
+	coseKey = COSE_KEY_FromCbor((cn_cbor*) pkey, CBOR_CONTEXT_PARAM_COMMA perr);
 	CHECK_CONDITION(coseKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	fRet = COSE_CounterSign_SetKey2(h, coseKey, perr);
