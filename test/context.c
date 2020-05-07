@@ -6,11 +6,10 @@
 #include <assert.h>
 
 #include <cn-cbor/cn-cbor.h>
+#include <cose/cose.h>
 
 #ifdef USE_CBOR_CONTEXT
 #include "context.h"
-
-typedef unsigned char byte;
 
 typedef struct {
 	cn_cbor_context context;
@@ -148,12 +147,11 @@ void FreeContext(cn_cbor_context *pContext)
 int IsContextEmpty(cn_cbor_context *pContext)
 {
 	MyContext *myContext = (MyContext *)pContext;
-	MyItem *p;
 	int i = 0;
 
 	//  Walk memory and check every block
 
-	for (p = (MyItem *)myContext->pFirst; p != NULL; p = p->pNext) {
+	for (MyItem *p = (MyItem *)myContext->pFirst; p != NULL; p = p->pNext) {
 		if (p->pad[0] == (byte)0xab) {
 			//  Block has been freed
 		}

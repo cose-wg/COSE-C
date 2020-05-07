@@ -3,14 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <cose/cose.h>
 #include <cose/cose_configure.h>
 #include <cn-cbor/cn-cbor.h>
 #include "cose_int.h"
-#if INCLUDE_MAC && !INCLUDE_ENCRYPT0
-#include <cose_int.h>
-#endif
-
 #include "json.h"
 #include "test.h"
 #include "context.h"
@@ -573,8 +570,6 @@ int MacMessage()
 	fprintf(stdout, "%s", szX);
 	fprintf(stdout, "\r\n");
 #endif
-
-	/* */
 
 	int typ;
 	hEncObj = (HCOSE_MAC)COSE_Decode(
