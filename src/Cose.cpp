@@ -86,6 +86,11 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	cn_cbor_errback errState;  // = { 0 };
 	cn_cbor_errback cbor_error;
 
+	if (0) {
+	errorReturn:
+		return false;	
+	}
+
 #ifdef USE_CBOR_CONTEXT
 	if (context != NULL) {
 		pobj->m_allocContext = *context;
@@ -159,8 +164,6 @@ bool _COSE_Init_From_Object(COSE *pobj,
 
 	return true;
 
-errorReturn:
-	return false;
 }
 
 void _COSE_Release(COSE *pcose)
@@ -207,6 +210,13 @@ HCOSE COSE_Decode(const byte *rgbData,
 	cn_cbor_errback cbor_err;
 	HCOSE h;
 
+	if (0) {
+	errorReturn:
+		// M00TODO - break up the init and allocation above for memory tests.
+		CN_CBOR_FREE(cbor, context);
+		return NULL;	
+	}
+	
 	CHECK_CONDITION(
 		(rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
 
@@ -318,10 +328,6 @@ HCOSE COSE_Decode(const byte *rgbData,
 
 	return h;
 
-errorReturn:
-	// M00TODO - break up the init and allocation above for memory tests.
-	CN_CBOR_FREE(cbor, context);
-	return NULL;
 }
 
 size_t COSE_Encode(HCOSE msg, byte *rgb, size_t ib, size_t cb)

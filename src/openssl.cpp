@@ -25,7 +25,7 @@ static bool FUseCompressed = true;
 
 HMAC_CTX *HMAC_CTX_new()
 {
-	HMAC_CTX *foo = malloc(sizeof(HMAC_CTX));
+	HMAC_CTX *foo = (HMAC_CTX *) malloc(sizeof(HMAC_CTX));
 	if (foo != NULL) {
 		HMAC_CTX_init(foo);
 	}
