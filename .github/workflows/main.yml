@@ -35,10 +35,10 @@ jobs:
             "-DCOSE_C_INCLUDE_ENCRYPT=OFF -DCOSE_C_INCLUDE_ENCRYPT0=OFF -DCOSE_C_INCLUDE_MAC0=OFF -DCOSE_C_INCLUDE_MAC=OFF -DCOSE_C_INCLUDE_SIGN=OFF -DCOSE_C_INCLUDE_SIGN1=ON -DCOSE_C_INCLUDE_COUNTERSIGN=ON",
             "-DCOSE_C_OPTIMIZE=ON -DCOSE_C_INCLUDE_COUNTERSIGN=ON"
           ]
-      exclude:
-        # this really just does VS not gcc or clang
-        - os: windows-2019
-          COMPILER: gcc
+        exclude:
+          # this really just does VS not gcc or clang
+          - os: windows-2019
+            COMPILER: gcc
 
     steps:
       - uses: actions/checkout@v1
