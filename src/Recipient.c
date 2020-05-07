@@ -1447,8 +1447,12 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h,
 
 	COSE_RecipientInfo *p = (COSE_RecipientInfo *)h;
 
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = &p->m_encrypt.m_message.m_allocContext;
+#endif
+
 	hkey = COSE_KEY_FromCbor(
-		(cn_cbor *)pKey, &p->m_encrypt.m_message.m_allocContext, perr);
+		(cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
 	CHECK_CONDITION(hkey != NULL, COSE_ERR_OUT_OF_MEMORY);
 	if (!COSE_Recipient_SetKey2(h, hkey, perr)) {
 		goto errorReturn;
