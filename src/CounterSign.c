@@ -230,17 +230,41 @@ bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN h,
 	cose_errback* perr)
 {
 	bool fRet = false;
-	CHECK_CONDITION(IsValidCounterSignHandle(h), COSE_ERR_INVALID_HANDLE);
+	HCOSE_KEY coseKey = NULL;
+	
 	CHECK_CONDITION(pkey != NULL, COSE_ERR_INVALID_PARAMETER);
+	coseKey = COSE_KEY_FromCbor((cn_cbor*) pkey, NULL, perr);
+	CHECK_CONDITION(coseKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	COSE_CounterSign* p = (COSE_CounterSign*)h;
-	if (p->m_signer.m_pkey != NULL) {
-		CN_CBOR_FREE(p->m_signer.m_pkey, &p->m_signer.m_message.m_allocContext);
-	}
-	p->m_signer.m_pkey = (cn_cbor *) pkey;
+	fRet = COSE_CounterSign_SetKey2(h, coseKey, perr);
 
-	fRet = true;
 errorReturn:
+	if (coseKey != NULL) {
+		COSE_KEY_Free(coseKey);
+	}
+	return fRet;
+}
+
+bool COSE_CounterSign_SetKey2(HCOSE_COUNTERSIGN hSigner, HCOSE_KEY hKey, cose_errback* perr)
+{
+	bool fRet = false;
+	COSE_CounterSign* pSigner = (COSE_CounterSign*)hSigner;
+
+	CHECK_CONDITION(IsValidCounterSignHandle(hSigner), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_HANDLE);
+	
+	if (pSigner->m_signer.m_pkey != NULL) {
+		COSE_KEY_Free((HCOSE_KEY) pSigner->m_signer.m_pkey);
+	}
+	COSE_KEY* pKey = (COSE_KEY*)hKey;
+	
+	pSigner->m_signer.m_pkey = pKey;
+	if (hKey != NULL) {
+		pKey->m_refCount += 1;
+	}
+	fRet = true;
+
+	errorReturn:
 	return fRet;
 }
 

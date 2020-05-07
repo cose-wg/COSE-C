@@ -34,7 +34,9 @@ bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner)
 	}
 
 	_COSE_Release(&pSigner->m_message);
-	CN_CBOR_FREE(pSigner->m_pkey, &pSigner->m_message.m_allocContext);
+	if (pSigner->m_pkey != NULL) {
+		COSE_KEY_Free((HCOSE_KEY)pSigner->m_pkey);
+	}
 
 	return true;
 }
@@ -339,19 +341,46 @@ errorReturn:
 }
 
 #if INCLUDE_SIGN
-bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
+bool COSE_Signer_SetKey2(HCOSE_SIGNER h, HCOSE_KEY pKey, cose_errback *perr)
 {
 	COSE_SignerInfo *p;
 	bool fRet = false;
 
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidKeyHandle(pKey), COSE_ERR_INVALID_HANDLE);
 
 	p = (COSE_SignerInfo *)h;
-	p->m_pkey = pKey;
+	if (p->m_pkey != NULL) {
+		COSE_KEY_Free((HCOSE_KEY)p->m_pkey);
+	}
+	COSE_KEY *pcose = (COSE_KEY *)pKey;
+	p->m_pkey = pcose;
+	if (pcose != NULL) {
+		pcose->m_refCount += 1;
+	}
 
 	fRet = true;
 errorReturn:
+	return fRet;
+}
+
+bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
+{
+	HCOSE_KEY cose = NULL;
+	bool fRet = false;
+
+	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
+	cose = COSE_KEY_FromCbor((cn_cbor*) pKey, NULL, perr);
+	
+	CHECK_CONDITION(cose != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	fRet =COSE_Signer_SetKey2(h, cose, perr);
+
+	fRet = true;
+errorReturn:
+	if (cose != NULL) {
+		COSE_KEY_Free(cose);
+	}
 	return fRet;
 }
 
