@@ -221,7 +221,11 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	cose = COSE_KEY_FromCbor((cn_cbor *)pKey, NULL, perr);
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = NULL;
+#endif
+	
+	cose = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
 	if (cose == NULL) {
 		goto errorReturn;
 	}
@@ -298,7 +302,11 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
-	pcose = (COSE_KEY*) COSE_KEY_FromCbor((cn_cbor *)pKey, NULL, perr);
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = &pSign->m_message.m_allocContext;
+#endif
+
+	pcose = (COSE_KEY*) COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	f = _COSE_Signer1_validate(pSign, pcose, perr);

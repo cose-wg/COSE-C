@@ -243,7 +243,8 @@ static bool HKDF_X(COSE *pCose,
 				fStatic ? COSE_Header_ECDH_STATIC : COSE_Header_ECDH_EPHEMERAL,
 				COSE_BOTH, perr);
 			CHECK_CONDITION(cborKey != NULL, COSE_ERR_OUT_OF_MEMORY);
-			pkeyMessage = (COSE_KEY *) COSE_KEY_FromCbor(cborKey, NULL, perr);
+			
+			pkeyMessage = (COSE_KEY *) COSE_KEY_FromCbor(cborKey, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (pkeyMessage == NULL) {
 				goto errorReturn;
 			}
@@ -1511,7 +1512,11 @@ bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h,
 	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	coseKey = COSE_KEY_FromCbor((cn_cbor *)pKey, NULL, perr);
+	#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = NULL;
+#endif
+	
+	coseKey = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
 	CHECK_CONDITION(coseKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	fRet = COSE_Recipient_SetSenderKey2(h, coseKey, destination, perr);

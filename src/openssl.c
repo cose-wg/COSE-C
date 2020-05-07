@@ -1286,7 +1286,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		cbor_error);
 	p = NULL;
 
-	coseKey = (COSE_KEY*) COSE_KEY_FromCbor(pkey, NULL, perr);
+	coseKey = (COSE_KEY*) COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
 	CHECK_CONDITION(coseKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 	pkey = NULL;
 

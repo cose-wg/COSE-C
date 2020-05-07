@@ -1232,7 +1232,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			cbor_error);
 		p = NULL;
 
-		COSE_KEY *coseKey = (COSE_KEY*) COSE_KEY_FromCbor(pkey, NULL, perr);
+		COSE_KEY *coseKey = (COSE_KEY*) COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (coseKey == NULL) {
 			goto errorReturn;
 		}
