@@ -90,7 +90,7 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *cbor,
 {
 	COSE_Enveloped *pobj = pIn;
 	cn_cbor *pRecipients = NULL;
-	cose_errback error = {0};
+	cose_errback error = {COSE_ERR_NONE};
 	if (perr == NULL) {
 		perr = &error;
 	}
@@ -341,7 +341,7 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 		//  Allocate the key if we have not already done so
 
 		if (pbKeyNew == NULL) {
-			pbKeyNew = COSE_CALLOC(cbitKey / 8, 1, context);
+			pbKeyNew = static_cast<byte*>(COSE_CALLOC(cbitKey / 8, 1, context));
 			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 		}
@@ -350,8 +350,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 
 		if (pRecip != NULL) {
 			COSE_RecipientInfo *pRecipX = NULL;
-			cose_errback errorLocal = {0};
-			int errorFound = 0;
+			cose_errback errorLocal = {COSE_ERR_NONE};
+			cose_error errorFound = COSE_ERR_NONE;
 
 			for (pRecipX = pcose->m_recipientFirst; pRecipX != NULL;
 				 pRecipX = pRecipX->m_recipientNext) {

@@ -397,8 +397,8 @@ int ValidateEnveloped(const cn_cbor *pControl)
 
 HCOSE_RECIPIENT BuildRecipient(const cn_cbor *pRecipient)
 {
-	HCOSE_RECIPIENT hRecip =
-		COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hRecip == NULL) {
 		goto returnError;
 	}
@@ -504,8 +504,8 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 		return 0;
 	}
 
-	HCOSE_ENVELOPED hEncObj =
-		COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_ENVELOPED hEncObj = COSE_Enveloped_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
@@ -623,8 +623,8 @@ returnError:
 
 int EncryptMessage()
 {
-	HCOSE_ENVELOPED hEncObj =
-		COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_ENVELOPED hEncObj = COSE_Enveloped_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	byte rgbSecret[128 / 8] = {'a', 'b', 'c'};
 	int cbSecret = 128 / 8;
 	byte rgbKid[15] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'l',
@@ -1001,7 +1001,8 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 		return 0;
 	}
 
-	HCOSE_ENCRYPT hEncObj = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_ENCRYPT hEncObj =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
@@ -1130,17 +1131,19 @@ void Enveloped_Corners()
 	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cose_errback cose_error;
 
-	hEncrypt = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt = COSE_Enveloped_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #if INCLUDE_MAC
-	hEncryptBad =
-		(HCOSE_ENVELOPED)COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncryptBad = (HCOSE_ENVELOPED)COSE_Mac_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hEncryptBad = (HCOSE_ENVELOPED)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
-	hRecipient = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hRecipient = COSE_Recipient_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #if INCLUDE_MAC
-	hRecipientBad =
-		(HCOSE_RECIPIENT)COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hRecipientBad = (HCOSE_RECIPIENT)COSE_Mac_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hRecipientBad = (HCOSE_RECIPIENT)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
@@ -1233,7 +1236,8 @@ void Enveloped_Corners()
 
 	//  Bad Int algorithm
 
-	hEncrypt = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt = COSE_Enveloped_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hEncrypt == NULL) {
 		CFails++;
 	}
@@ -1256,7 +1260,8 @@ void Enveloped_Corners()
 	COSE_Recipient_Free(hRecipient);
 	COSE_Enveloped_Free(hEncrypt);
 
-	hEncrypt = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt = COSE_Enveloped_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hEncrypt == NULL) {
 		CFails++;
 	}
@@ -1330,7 +1335,8 @@ void Encrypt_Corners()
 	//  Wrong type of handle checks
 
 #if INCLUDE_MAC
-	hEncrypt = (HCOSE_ENCRYPT)COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt = (HCOSE_ENCRYPT)COSE_Mac_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hEncrypt = (HCOSE_ENCRYPT)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
@@ -1360,7 +1366,8 @@ void Encrypt_Corners()
 	//
 	//  Unsupported algorithm
 
-	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hEncrypt == NULL) {
 		CFails++;
 	}
@@ -1376,7 +1383,8 @@ void Encrypt_Corners()
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);
 
-	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hEncrypt == NULL) {
 		CFails++;
 	}
@@ -1406,7 +1414,8 @@ void Recipient_Corners()
 	byte rgb[10];
 	cn_cbor *cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA & cose_error);
+	hRecip = COSE_Recipient_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA & cose_error);
 #if INCLUDE_SIGN
 	hRecipBad = (HCOSE_RECIPIENT)COSE_Signer_Init(
 		CBOR_CONTEXT_PARAM_COMMA & cose_error);
@@ -1488,9 +1497,10 @@ void Recipient_Corners()
 
 	//  Unknown algorithms
 #if INCLUDE_ENCRYPT
-	HCOSE_ENVELOPED hEnv =
-		COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_ENVELOPED hEnv = COSE_Enveloped_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hRecip = COSE_Recipient_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	CHECK_RETURN(COSE_Enveloped_map_put_int(hEnv, COSE_Header_Algorithm,
 					 cn_cbor_int_create(COSE_Algorithm_AES_GCM_128,
@@ -1512,8 +1522,10 @@ void Recipient_Corners()
 	COSE_Enveloped_Free(hEnv);
 	COSE_Recipient_Free(hRecip);
 
-	hEnv = COSE_Enveloped_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
-	hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEnv = COSE_Enveloped_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hRecip = COSE_Recipient_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	CHECK_RETURN(COSE_Enveloped_map_put_int(hEnv, COSE_Header_Algorithm,
 					 cn_cbor_int_create(COSE_Algorithm_AES_GCM_128,

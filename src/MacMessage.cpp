@@ -750,7 +750,7 @@ bool _COSE_Mac_validate(COSE_MacMessage *pcose,
 	}
 	else {
 		if (pbKeyNew == NULL) {
-			pbKeyNew = COSE_CALLOC(cbitKey / 8, 1, context);
+			pbKeyNew = static_cast<byte*>(COSE_CALLOC(cbitKey / 8, 1, context));
 			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 		}

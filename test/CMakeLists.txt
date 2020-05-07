@@ -1,6 +1,6 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test)
 
-add_executable(cose_test test.c json.c encrypt.c sign.c context.c mac_test.c CounterSign_test.c)
+add_executable(cose_test test.cpp json.cpp Encrypt_test.cpp Sign_test.cpp context.cpp Mac_test.cpp CounterSign_test.cpp)
 
 target_link_libraries(cose_test PRIVATE cose-c::cose-c cn-cbor::cn-cbor)
 

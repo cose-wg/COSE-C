@@ -332,7 +332,8 @@ int BuildMacMessage(const cn_cbor *pControl)
 		return 0;
 	}
 
-	HCOSE_MAC hMacObj = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_MAC hMacObj =
+		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
@@ -367,7 +368,8 @@ int BuildMacMessage(const cn_cbor *pControl)
 			goto returnError;
 		}
 
-		hRecip = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+		hRecip = COSE_Recipient_Init(
+			COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (hRecip == NULL) {
 			goto returnError;
 		}
@@ -509,7 +511,8 @@ returnError:
 
 int MacMessage()
 {
-	HCOSE_MAC hEncObj = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_MAC hEncObj =
+		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	char *sz = "This is the content to be used";
 	byte rgbSecret[256 / 8] = {'a', 'b', 'c'};
 	byte rgbKid[6] = {'a', 'b', 'c', 'd', 'e', 'f'};
@@ -825,7 +828,8 @@ int BuildMac0Message(const cn_cbor *pControl)
 		return 0;
 	}
 
-	HCOSE_MAC0 hMacObj = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_MAC0 hMacObj =
+		COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
@@ -943,7 +947,8 @@ void MAC_Corners()
 
 	//  Incorrect algorithm
 
-	hMAC = (HCOSE_MAC)COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hMAC = (HCOSE_MAC)COSE_Mac_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	//  Invalid Handle checks
 
@@ -978,7 +983,8 @@ void MAC_Corners()
 	}
 
 #if INCLUDE_ENCRYPT0
-	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hEncrypt = (HCOSE_ENCRYPT)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
@@ -1016,7 +1022,7 @@ void MAC_Corners()
 	//
 	//  Unsupported algorithm
 
-	hMAC = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hMAC = COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) {
 		CFails++;
 	}
@@ -1041,7 +1047,7 @@ void MAC_Corners()
 	COSE_Mac_Free(hMAC);
 	COSE_Recipient_Free(hRecipient);
 
-	hMAC = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hMAC = COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) {
 		CFails++;
 	}
@@ -1081,7 +1087,8 @@ void MAC0_Corners()
 	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cose_errback cose_error;
 
-	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	//  Missing case - addref then release on item
 
@@ -1110,7 +1117,8 @@ void MAC0_Corners()
 		CFails++;
 	}
 
-	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hEncrypt =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	if (COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) {
 		CFails++;
@@ -1139,7 +1147,7 @@ void MAC0_Corners()
 	//
 	//  Unsupported algorithm
 
-	hMAC = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hMAC = COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) {
 		CFails++;
 	}
@@ -1155,7 +1163,7 @@ void MAC0_Corners()
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Mac0_Free(hMAC);
 
-	hMAC = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hMAC = COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) {
 		CFails++;
 	}

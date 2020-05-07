@@ -220,7 +220,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 				COSE_ERR_INVALID_PARAMETER);
 		}
 		else {
-			struct_type = cbor->v.uint;
+			struct_type = (COSE_object_type) cbor->v.uint;
 		}
 		*ptype = struct_type;
 

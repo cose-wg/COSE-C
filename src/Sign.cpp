@@ -74,7 +74,7 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *cbor,
 	COSE_SignMessage *pobj = pIn;
 	cn_cbor *pSigners = NULL;
 	// cn_cbor * tmp;
-	cose_errback error = {0};
+	cose_errback error = {COSE_ERR_NONE};
 	if (perr == NULL) {
 		perr = &error;
 	}
@@ -265,7 +265,7 @@ HCOSE_SIGNER COSE_Sign_add_signer(HCOSE_SIGN hSign,
 
 errorReturn:
 	if (cbor2 != NULL) {
-		CN_CBOR_FREE((void *)cbor2, context);
+		CN_CBOR_FREE(cbor2, context);
 	}
 	if (hSigner != NULL) {
 		COSE_Signer_Free(hSigner);

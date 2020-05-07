@@ -51,9 +51,9 @@ HCOSE_RECIPIENT COSE_Recipient_Init(COSE_INIT_FLAGS flags,
 		1, sizeof(COSE_RecipientInfo), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	if (!_COSE_Init(flags | COSE_INIT_FLAGS_NO_CBOR_TAG,
-			&pobj->m_encrypt.m_message, COSE_recipient_object,
-			CBOR_CONTEXT_PARAM_COMMA perr)) {
+	if (!_COSE_Init(static_cast<COSE_INIT_FLAGS>(COSE_INIT_FLAGS_NO_CBOR_TAG | flags),
+	                &pobj->m_encrypt.m_message, COSE_recipient_object,
+	                CBOR_CONTEXT_PARAM_COMMA perr)) {
 		_COSE_Recipient_Free(pobj);
 		return NULL;
 	}
@@ -92,7 +92,8 @@ HCOSE_RECIPIENT COSE_Recipient_from_shared_secret(byte *rgbKey,
 {
 	HCOSE_RECIPIENT hRecipient = NULL;
 
-	hRecipient = COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA perr);
+	hRecipient = COSE_Recipient_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA perr);
 	if (hRecipient == NULL) {
 		goto errorReturn;
 	}
@@ -485,10 +486,10 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 	if (pcose->m_recipientFirst != NULL) {
 		//  If there is a recipient - ask it for the key
 		CHECK_CONDITION(cbitKeyX != 0, COSE_ERR_INVALID_PARAMETER);
-		pbKeyX = COSE_CALLOC(cbitKeyX / 8, 1, context);
+		pbKeyX = (byte*) COSE_CALLOC(cbitKeyX / 8, 1, context);
 		CHECK_CONDITION(pbKeyX != NULL, COSE_ERR_OUT_OF_MEMORY);
 		cose_errback error = {COSE_ERR_NONE};
-		int errorFound = false;
+		cose_error errorFound = COSE_ERR_NONE;
 
 		for (pRecip2 = pcose->m_recipientFirst; pRecip2 != NULL;
 			 pRecip2 = pRecip->m_recipientNext) {
@@ -501,7 +502,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 				errorFound = error.err;
 			}
 		}
-		if (errorFound) {
+		
+		if (errorFound != COSE_ERR_NONE) {
 			perr->err = errorFound;
 			goto errorReturn;
 		}
@@ -1199,7 +1201,7 @@ byte *_COSE_RecipientInfo_generateKey(COSE_RecipientInfo *pRecipient,
 
 	_COSE_encode_protected(&pRecipient->m_encrypt.m_message, perr);
 
-	pb = COSE_CALLOC(cbitKeySize / 8, 1, context);
+	pb = static_cast<byte*> COSE_CALLOC(cbitKeySize / 8, 1, context);
 	CHECK_CONDITION(pb != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	switch (alg) {
@@ -1682,7 +1684,7 @@ bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h,
 
 	if (key == COSE_Header_Algorithm) {
 		if (value->type == CN_CBOR_INT) {
-			switch (value->v.uint) {
+			switch (value->v.sint) {
 				case COSE_Algorithm_Direct:
 #ifdef USE_Direct_HKDF_AES_128
 				case COSE_Algorithm_Direct_HKDF_AES_128:
@@ -1708,17 +1710,28 @@ bool COSE_Recipient_map_put_int(HCOSE_RECIPIENT h,
 #ifdef USE_ECDH_SS_HKDF_512
 				case COSE_Algorithm_ECDH_SS_HKDF_512:
 #endif
-					((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags |= 1;
+					((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags =
+						(cose_init_flags)(
+						((COSE_RecipientInfo *)h)
+							->m_encrypt.m_message
+							.m_flags | COSE_INIT_FLAGS_DETACHED_CONTENT);
 					break;
 
 				default:
-					((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags &=
-						~1;
+					((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags =
+						(cose_init_flags)(
+							((COSE_RecipientInfo *)h)
+								->m_encrypt.m_message
+								.m_flags &
+						~COSE_INIT_FLAGS_DETACHED_CONTENT);
 					break;
 			}
 		}
 		else {
-			((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags &= ~1;
+			((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags =
+				(cose_init_flags)(
+					((COSE_RecipientInfo *)h)->m_encrypt.m_message.m_flags &
+					~COSE_INIT_FLAGS_DETACHED_CONTENT);
 		}
 	}
 

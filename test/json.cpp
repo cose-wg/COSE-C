@@ -152,7 +152,7 @@ const cn_cbor *ParseJson(const char *fileName)
 		return NULL;
 	}
 
-	rgch = malloc(8 * 1024);
+	rgch = (char*) malloc(8 * 1024);
 	cch = (int)fread(rgch, 1, 8 * 1024, fp);
 	fclose(fp);
 
@@ -175,7 +175,7 @@ char *base64_encode(const unsigned char *data,
 {
 	*output_length = 4 * ((input_length + 2) / 3);
 
-	char *encoded_data = malloc(*output_length);
+	char *encoded_data = (char*) malloc(*output_length);
 	if (encoded_data == NULL) {
 		return NULL;
 	}
@@ -212,7 +212,7 @@ unsigned char *base64_decode(const char *data,
 
 	if (input_length % 4 != 0) {
 		int c = 4 - (input_length % 4);
-		p = malloc(input_length + c);
+		p = (char*) malloc(input_length + c);
 		memcpy(p, data, input_length);
 		memcpy(p + input_length, "====", c);
 		input_length += c;
@@ -227,7 +227,7 @@ unsigned char *base64_decode(const char *data,
 		(*output_length)--;
 	}
 
-	unsigned char *decoded_data = malloc(*output_length);
+	unsigned char *decoded_data = (unsigned char *)malloc(*output_length);
 	if (decoded_data == NULL) {
 		if (p != NULL) {
 			free(p);
@@ -265,7 +265,7 @@ unsigned char *base64_decode(const char *data,
 
 static void build_decoding_table()
 {
-	decoding_table = malloc(256);
+	decoding_table = (unsigned char *) malloc(256);
 
 	for (int i = 0; i < 64; i++) {
 		decoding_table[(int)encoding_table[i]] = (unsigned char)i;
@@ -287,7 +287,7 @@ unsigned char *hex_decode(const char *data,
 
 	*output_length = input_length / 2;
 
-	unsigned char *decoded_data = malloc(*output_length);
+	unsigned char *decoded_data = (unsigned char *) malloc(*output_length);
 	if (decoded_data == NULL) {
 		return NULL;
 	}

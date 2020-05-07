@@ -6,7 +6,7 @@
 #include "context.h"
 
 #ifdef USE_CBOR_CONTEXT
-cn_cbor_context* context;
+extern cn_cbor_context* context;
 #define CBOR_CONTEXT_PARAM , context
 #define CBOR_CONTEXT_PARAM_COMMA context,
 #else
@@ -47,7 +47,7 @@ void MAC_Corners();
 void MAC0_Corners();
 
 //  test.c
-enum {
+typedef enum {
 	Attributes_MAC_protected = 1,
 	Attributes_MAC0_protected,
 	Attributes_Recipient_protected,
