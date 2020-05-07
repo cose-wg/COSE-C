@@ -4,6 +4,9 @@
 #include <cn-cbor/cn-cbor.h>
 #include <cose/cose.h>
 #include <stdbool.h>
+#ifdef COSE_C_USE_OPENSSL
+#include <openssl/evp.h>
+#endif
 
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
@@ -18,6 +21,19 @@ typedef struct CounterSign1 COSE_CounterSign1;
 #ifndef _countof
 #define _countof(x) (sizeof(x) / sizeof(x[0]))
 #endif
+
+typedef struct _COSE_KEY {
+	int m_refCount;
+	cn_cbor *m_cborKey;
+	int flags;
+	struct _COSE_KEY *m_nextKey;
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context m_allocContext;
+#endif
+#ifdef COSE_C_USE_OPENSSL
+	EVP_PKEY *m_opensslKey;
+#endif
+} COSE_KEY;
 
 typedef struct _COSE {
 	COSE_INIT_FLAGS m_flags;  //  Not sure what goes here yet
@@ -59,7 +75,7 @@ typedef struct {
 
 struct _SignerInfo {
 	COSE m_message;
-	cn_cbor *m_pkey;
+	COSE_KEY *m_pkey;
 	COSE_SignerInfo *m_signerNext;
 };
 
@@ -86,8 +102,8 @@ typedef COSE_Enveloped COSE_Encrypt;
 struct _RecipientInfo {
 	COSE_Enveloped m_encrypt;
 	COSE_RecipientInfo *m_recipientNext;
-	const cn_cbor *m_pkey;
-	const cn_cbor *m_pkeyStatic;
+	COSE_KEY *m_pkey;
+	COSE_KEY *m_pkeyStatic;
 };
 
 typedef struct {
@@ -177,6 +193,8 @@ bool IsValidSign1Handle(HCOSE_SIGN1 h);
 bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
 bool IsValidMacHandle(HCOSE_MAC h);
 bool IsValidMac0Handle(HCOSE_MAC0 h);
+bool IsValidKeyHandle(HCOSE_KEY h);
+
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,
 	COSE *pcose,

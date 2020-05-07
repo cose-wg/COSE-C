@@ -130,7 +130,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 				fFail = true;
 				continue;
 			}
-			int count = countersigners->length;
+			size_t count = countersigners->length;
 			bool forward = true;
 
 			if (COSE_Signer_map_get_int(hSigner, COSE_Header_CounterSign,
@@ -138,7 +138,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 				goto returnError;
 			}
 
-			for (int counterNo = 0; counterNo < count; counterNo++) {
+			for (size_t counterNo = 0; counterNo < count; counterNo++) {
 				bool noSignAlg = false;
 
 				h = COSE_Signer_get_countersignature(hSigner, counterNo, 0);
@@ -666,7 +666,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 			fFail = true;
 			goto exitHere;
 		}
-		int count = countersigners->length;
+		size_t count = countersigners->length;
 		bool forward = true;
 
 		if (COSE_Sign1_map_get_int(hSig, COSE_Header_CounterSign,
@@ -674,7 +674,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 			goto returnError;
 		}
 
-		for (int counterNo = 0; counterNo < count; counterNo++) {
+		for (size_t counterNo = 0; counterNo < count; counterNo++) {
 			bool noSignAlg = false;
 
 			HCOSE_COUNTERSIGN h =

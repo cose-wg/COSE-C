@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <cn-cbor/cn-cbor.h>
 #include "cose/cose_configure.h"
+#ifdef COSE_C_USE_OPENSSL
+#include <openssl/evp.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +24,7 @@ typedef struct _cose_mac* HCOSE_MAC;
 typedef struct _cose_mac0* HCOSE_MAC0;
 typedef struct _cose_counterSignature* HCOSE_COUNTERSIGN;
 typedef struct _cose_counterSignature1* HCOSE_COUNTERSIGN1;
+typedef struct _cose_key* HCOSE_KEY;
 
 /**
  * All of the different kinds of errors
@@ -210,6 +214,19 @@ typedef enum {
 } COSE_Curves;
 
 /*
+ * Functions dealing with keys
+ */
+
+HCOSE_KEY COSE_KEY_FromCbor(cn_cbor* pcborKey,
+	CBOR_CONTEXT_COMMA cose_errback* perror);
+bool COSE_KEY_Free(HCOSE_KEY h);
+#ifdef COSE_C_USE_OPENSSL
+HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY* opensslKey,
+	cn_cbor* pcborKey,
+	CBOR_CONTEXT_COMMA cose_errback* perror);
+#endif
+	
+/*
  *  messages dealing with the Enveloped message type
  */
 
@@ -288,11 +305,20 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT h,
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h,
 	const cn_cbor* pKey,
 	cose_errback* perror);
+bool COSE_Recipient_SetKey2(HCOSE_RECIPIENT h,
+	HCOSE_KEY hKey,
+	cose_errback* perror);
+
 bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h,
 	const cn_cbor* pKey,
 	int destination,
 	cose_errback* perror);
-bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose,
+bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
+	HCOSE_KEY hKey,
+	int destintion,
+	cose_errback* perror);
+
+	bool COSE_Recipient_SetExternal(HCOSE_RECIPIENT hcose,
 	const byte* pbExternalData,
 	size_t cbExternalData,
 	cose_errback* perr);
@@ -480,6 +506,9 @@ bool COSE_Signer_Free(HCOSE_SIGNER cose);
 bool COSE_Signer_SetKey(HCOSE_SIGNER hSigner,
 	const cn_cbor* pkey,
 	cose_errback* perr);
+bool COSE_Signer_SetKey2(HCOSE_SIGNER hSigner,
+	HCOSE_KEY pkey,
+	cose_errback* perr);
 cn_cbor* COSE_Signer_map_get_int(HCOSE_SIGNER h,
 	int key,
 	int flags,
@@ -525,8 +554,12 @@ bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose,
 	cose_errback* perr);
 
 bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor* pkey, cose_errback* perr);
+bool COSE_Sign1_Sign2(HCOSE_SIGN1 h, HCOSE_KEY pkey, cose_errback* perr);
 bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	const cn_cbor* pkey,
+	cose_errback* perr);
+bool COSE_Sign1_validate2(HCOSE_SIGN1 hSign,
+	HCOSE_KEY pkey,
 	cose_errback* perr);
 cn_cbor* COSE_Sign1_map_get_int(HCOSE_SIGN1 h,
 	int key,
@@ -559,6 +592,9 @@ bool COSE_CounterSign_map_put_int(HCOSE_COUNTERSIGN cose,
 bool COSE_CounterSign_SetExternal(HCOSE_COUNTERSIGN cose, const byte* pbExternalData, size_t cbExternalData, cose_errback* perr);
 bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN,
 	const cn_cbor* pkey,
+	cose_errback* perr);
+bool COSE_CounterSign_SetKey2(HCOSE_COUNTERSIGN,
+	HCOSE_KEY pkey,
 	cose_errback* perr);
 
 	

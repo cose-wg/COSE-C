@@ -404,11 +404,11 @@ bool HKDF_Extract(COSE *pcose,
 	size_t *pcbDigest,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
-	mbedtls_md_info_t *pmd;
+	const mbedtls_md_info_t *pmd = NULL;
 	mbedtls_md_type_t mdType;
 
-	int cbSalt;
-	cn_cbor *cnSalt;
+	int cbSalt = 0;
+	cn_cbor *cnSalt = NULL;
 	unsigned int cbDigest;
 
 	if (0) {
@@ -440,7 +440,7 @@ bool HKDF_Extract(COSE *pcose,
 	}
 
 	cbSalt = 0;
-	byte *pbSalt = NULL;
+	const byte *pbSalt = NULL;
 
 	cnSalt = _COSE_map_get_int(pcose, COSE_Header_HKDF_salt, COSE_BOTH, perr);
 
@@ -469,7 +469,7 @@ bool HKDF_Expand(COSE *pcose,
 {
 	UNUSED(pcose);
 	mbedtls_md_type_t mdType;
-	mbedtls_md_info_t *pmd;
+	const mbedtls_md_info_t *pmd = NULL;
 
 	unsigned int cbDigest = 0;
 
@@ -662,7 +662,7 @@ errorReturn:
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-bool ECKey_From(const cn_cbor *pKey,
+bool ECKey_From(COSE_KEY *pKey,
 	mbedtls_ecp_keypair *keypair,
 	cose_errback *perr)
 {
@@ -672,7 +672,7 @@ bool ECKey_From(const cn_cbor *pKey,
 	const cn_cbor *p;
 	mbedtls_ecp_group_id groupId = 0;
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_Type);
+	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_Type);
 	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
 	if (p->type == CN_CBOR_UINT) {
 		CHECK_CONDITION(
@@ -682,7 +682,7 @@ bool ECKey_From(const cn_cbor *pKey,
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Curve);
+	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_Curve);
 	CHECK_CONDITION(
 		(p != NULL) && (p->type == CN_CBOR_UINT), COSE_ERR_INVALID_PARAMETER);
 
@@ -706,13 +706,13 @@ bool ECKey_From(const cn_cbor *pKey,
 		COSE_ERR_INVALID_PARAMETER);
 	cbGroup = (int)(keypair->grp.nbits + 7) / 8;
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_X);
+	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_X);
 	CHECK_CONDITION(
 		(p != NULL) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(p->length == cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey + 1, p->v.str, p->length);
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_Y);
+	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_Y);
 	CHECK_CONDITION((p != NULL), COSE_ERR_INVALID_PARAMETER);
 	if (p->type == CN_CBOR_BYTES) {
 		rgbKey[0] = 0x04;
@@ -744,7 +744,7 @@ bool ECKey_From(const cn_cbor *pKey,
 						&keypair->grp, &keypair->Q, rgbKey, cbKey) == 0,
 		COSE_ERR_INVALID_PARAMETER);
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
+	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_d);
 	if (p != NULL) {
 		CHECK_CONDITION(p->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION(
@@ -759,7 +759,7 @@ errorReturn:
 
 bool ECDSA_Sign(COSE *pSigner,
 	int index,
-	const cn_cbor *pKey,
+	COSE_KEY *pKey,
 	int cbitDigest,
 	const byte *rgbToSign,
 	size_t cbToSign,
@@ -852,7 +852,7 @@ errorReturn:
 
 bool ECDSA_Verify(COSE *pSigner,
 	int index,
-	const cn_cbor *pKey,
+	COSE_KEY *pKey,
 	int cbitDigest,
 	const byte *rgbToSign,
 	size_t cbToSign,
@@ -1105,8 +1105,8 @@ int rand_bytes2(void *pv, unsigned char *pb, size_t cb)
  */
 
 bool ECDH_ComputeSecret(COSE *pRecipient,
-	cn_cbor **ppKeyPrivate,
-	const cn_cbor *pKeyPublic,
+	COSE_KEY **ppKeyPrivate,
+	COSE_KEY *pKeyPublic,
 	byte **ppbSecret,
 	size_t *pcbSecret,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
@@ -1131,7 +1131,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	mbedtls_mpi_init(&d);
 	mbedtls_ecp_keypair_init(&keypair);
 
-	p = cn_cbor_mapget_int(pKeyPublic, COSE_Key_EC_Curve);
+	p = cn_cbor_mapget_int(pKeyPublic->m_cborKey, COSE_Key_EC_Curve);
 	CHECK_CONDITION(
 		(p != NULL) && (p->type == CN_CBOR_UINT), COSE_ERR_INVALID_PARAMETER);
 
@@ -1185,7 +1185,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			COSE_ERR_CRYPTO_FAIL);
 
 		cn_cbor_errback cbor_error;
-		int cbSize = (olen - 1) / 2;
+		int cbSize = (int) (olen - 1) / 2;
 
 		pkey = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(pkey != NULL, cbor_error);
@@ -1194,7 +1194,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			cose_group, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != NULL, cbor_error);
 		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Curve, p,
-								 CBOR_CONTEXT_PARAM_COMMA perr),
+								 CBOR_CONTEXT_PARAM_COMMA &cbor_error),
 			cbor_error);
 		p = NULL;
 
@@ -1232,11 +1232,16 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			cbor_error);
 		p = NULL;
 
-		*ppKeyPrivate = pkey;
+		COSE_KEY *coseKey = (COSE_KEY*) COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
+		if (coseKey == NULL) {
+			goto errorReturn;
+		}
+
+		*ppKeyPrivate = coseKey;
 		pkey = NULL;
 	}
 	else {
-		p = cn_cbor_mapget_int(*ppKeyPrivate, COSE_Key_EC_d);
+		p = cn_cbor_mapget_int((*ppKeyPrivate)->m_cborKey, COSE_Key_EC_d);
 		CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
 
 		CHECK_CONDITION(p->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);

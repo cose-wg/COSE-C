@@ -55,6 +55,7 @@ bool _COSE_Init(COSE_INIT_FLAGS flags,
 	pcose->m_unprotectMap =
 		cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & errState);
 	CHECK_CONDITION_CBOR(pcose->m_unprotectMap != NULL, errState);
+	pcose->m_ownUnprotectedMap = true;
 	CHECK_CONDITION_CBOR(
 		_COSE_array_replace(pcose, pcose->m_unprotectMap, INDEX_UNPROTECTED,
 			CBOR_CONTEXT_PARAM_COMMA & errState),
