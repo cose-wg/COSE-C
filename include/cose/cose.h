@@ -78,7 +78,7 @@ typedef enum {
 	COSE_mac_object = 97,
 	COSE_mac0_object = 17,
 	COSE_recipient_object = -1,
-	COSE_countersign_object = -2,
+	COSE_countersign_object = -2
 } COSE_object_type;
 
 //  Generic functions for the COSE library
@@ -156,7 +156,7 @@ typedef enum {
 
 	COSE_Algorithm_ECDSA_SHA_256 = -7,
 	COSE_Algorithm_ECDSA_SHA_384 = -35,
-	COSE_Algorithm_ECDSA_SHA_512 = -36,
+	COSE_Algorithm_ECDSA_SHA_512 = -36
 } COSE_Algorithms;
 
 typedef enum {
@@ -185,7 +185,7 @@ typedef enum {
 	COSE_Header_ECDH_STATIC = -2,
 	COSE_Header_ECDH_EPK = -1,
 	COSE_Header_ECDH_SPK = -2,
-	COSE_Header_ECDH_SPK_KID = -3,
+	COSE_Header_ECDH_SPK_KID = -3
 
 } COSE_Header;
 
@@ -200,7 +200,7 @@ typedef enum {
 	COSE_Key_EC2_X = -2,
 	COSE_Key_EC2_Y = -3,
 	COSE_Key_OPK_Curve = -1,
-	COSE_Key_OPK_X = -2,
+	COSE_Key_OPK_X = -2
 } COSE_Constants;
 
 typedef enum {
@@ -210,7 +210,7 @@ typedef enum {
 	COSE_Curve_X25519 = 4,
 	COSE_Curve_X448 = 5,
 	COSE_Curve_Ed25519 = 6,
-	COSE_Curve_Ed448 = 7,
+	COSE_Curve_Ed448 = 7
 } COSE_Curves;
 
 /*

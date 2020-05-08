@@ -557,7 +557,15 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	cn_Alg = _COSE_map_get_int(
 		&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) {
-		goto errorReturn;
+	errorReturn:
+		if (pbAuthData != NULL) {
+			COSE_FREE(pbAuthData, context);
+		}
+		if (pbKeyNew != NULL) {
+			memset(pbKeyNew, 0, cbKey);
+			COSE_FREE(pbKeyNew, context);
+		}
+		return fRet;
 	}
 
 	CHECK_CONDITION((cn_Alg->type != CN_CBOR_TEXT), COSE_ERR_UNKNOWN_ALGORITHM);
@@ -821,16 +829,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 	//  Figure out the clean up
 
 	fRet = true;
-
-errorReturn:
-	if (pbAuthData != NULL) {
-		COSE_FREE(pbAuthData, context);
-	}
-	if (pbKeyNew != NULL) {
-		memset(pbKeyNew, 0, cbKey);
-		COSE_FREE(pbKeyNew, context);
-	}
-	return fRet;
+	goto errorReturn;
 }
 #endif
 

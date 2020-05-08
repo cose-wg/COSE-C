@@ -810,7 +810,25 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 	cn_Alg = _COSE_map_get_int(&pRecipient->m_encrypt.m_message,
 		COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) {
-		goto errorReturn;
+	errorReturn:
+		memset(rgbKey, 0, sizeof(rgbKey));
+		if (pbKey != NULL) {
+			memset(pbKey, 0, cbKey);
+			COSE_FREE(pbKey, context);
+		}
+		if (pbSecret != NULL) {
+			COSE_FREE(pbSecret, context);
+		}
+		if (pbContext != NULL) {
+			COSE_FREE(pbContext, context);
+		}
+		if (pbAuthData != NULL) {
+			COSE_FREE(pbAuthData, context);
+		}
+		if (ptmp != NULL) {
+			cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
+		}
+		return fRet;
 	}
 
 	CHECK_CONDITION(cn_Alg->type != CN_CBOR_TEXT, COSE_ERR_UNKNOWN_ALGORITHM);
@@ -1155,26 +1173,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 	//  Figure out the clean up
 
 	fRet = true;
-
-errorReturn:
-	memset(rgbKey, 0, sizeof(rgbKey));
-	if (pbKey != NULL) {
-		memset(pbKey, 0, cbKey);
-		COSE_FREE(pbKey, context);
-	}
-	if (pbSecret != NULL) {
-		COSE_FREE(pbSecret, context);
-	}
-	if (pbContext != NULL) {
-		COSE_FREE(pbContext, context);
-	}
-	if (pbAuthData != NULL) {
-		COSE_FREE(pbAuthData, context);
-	}
-	if (ptmp != NULL) {
-		cn_cbor_free(ptmp CBOR_CONTEXT_PARAM);
-	}
-	return fRet;
+	goto errorReturn;
 }
 
 byte *_COSE_RecipientInfo_generateKey(COSE_RecipientInfo *pRecipient,
@@ -1342,6 +1341,26 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient,
 #endif
 	HCOSE_KEY hKey = NULL;
 
+	if (false) {
+	errorReturn:
+		if (hKey != NULL) {
+			COSE_KEY_Free(hKey);
+		}
+		if (cn_Temp != NULL) {
+			CN_CBOR_FREE(cn_Temp, context);
+		}
+		if (cnTemp != NULL) {
+			CN_CBOR_FREE(cnTemp, context);
+		}
+		if (pbTemp != NULL) {
+			COSE_FREE(pbTemp, context);
+		}
+		if (pbKey != NULL) {
+			COSE_FREE(pbKey, context);
+		}
+		return false;		
+	}
+	
 	CHECK_CONDITION(
 		IsValidRecipientHandle(hRecipient), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(rgbKey != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -1419,24 +1438,6 @@ bool COSE_Recipient_SetKey_secret(HCOSE_RECIPIENT hRecipient,
 	cn_Temp = NULL;
 
 	return true;
-
-errorReturn:
-	if (hKey != NULL) {
-		COSE_KEY_Free(hKey);
-	}
-	if (cn_Temp != NULL) {		
-		CN_CBOR_FREE(cn_Temp, context);
-	}
-	if (cnTemp != NULL) {
-		CN_CBOR_FREE(cnTemp, context);
-	}
-	if (pbTemp != NULL) {
-		COSE_FREE(pbTemp, context);
-	}
-	if (pbKey != NULL) {
-		COSE_FREE(pbKey, context);
-	}
-	return false;
 }
 
 bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h,
@@ -1444,6 +1445,15 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h,
 	cose_errback *perr)
 {
 	HCOSE_KEY hkey = NULL;
+
+	if (false) {
+	errorReturn:
+		if (hkey != NULL) {
+			COSE_KEY_Free(hkey);
+		}
+		return false;		
+	}
+	
 	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
@@ -1461,12 +1471,6 @@ bool COSE_Recipient_SetKey(HCOSE_RECIPIENT h,
 	}
 	COSE_KEY_Free(hkey);
 	return true;
-
-errorReturn:
-	if (hkey != NULL) {
-		COSE_KEY_Free(hkey);
-	}
-	return false;
 }
 
 bool COSE_Recipient_SetKey2(HCOSE_RECIPIENT h, HCOSE_KEY hKey, cose_errback * perr)
@@ -1515,6 +1519,14 @@ bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h,
 	bool fRet = false;
 	HCOSE_KEY coseKey = NULL;
 
+	if (false) {
+	errorReturn:
+		if (coseKey != NULL) {
+			COSE_KEY_Free(coseKey);
+		}
+		return fRet;		
+	}
+	
 	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
@@ -1526,12 +1538,7 @@ bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h,
 	CHECK_CONDITION(coseKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	fRet = COSE_Recipient_SetSenderKey2(h, coseKey, destination, perr);
-
-errorReturn:
-	if (coseKey != NULL) {
-		COSE_KEY_Free(coseKey);
-	}
-	return fRet;
+	goto errorReturn;
 }
 
 bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
@@ -1549,6 +1556,17 @@ bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
 	cn_cbor_context *context = NULL;
 #endif
 
+	if (false) {
+	errorReturn:
+		if (cn2 != NULL) {
+			CN_CBOR_FREE(cn2, context);
+		}
+		if (cn3 != NULL) {
+			CN_CBOR_FREE(cn3, context);
+		}
+		return f;		
+	}
+	
 	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_PARAMETER);
 
@@ -1625,14 +1643,7 @@ bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
 	pKey->m_refCount += 1;
 
 	f = true;
-errorReturn:
-	if (cn2 != NULL) {
-		CN_CBOR_FREE(cn2, context);
-	}
-	if (cn3 != NULL) {
-		CN_CBOR_FREE(cn3, context);
-	}
-	return f;
+	goto errorReturn;
 }
 
 /*!
@@ -1758,6 +1769,26 @@ static bool BuildContextBytes(COSE *pcose,
 	cn_cbor *cnParam;
 	byte *pbContext = NULL;
 
+	if (false) {
+	errorReturn:
+		fReturn = false;
+
+	returnHere:
+		if (pbContext != NULL) {
+			COSE_FREE(pbContext, context);
+		}
+		if (pArray != NULL) {
+			CN_CBOR_FREE(pArray, context);
+		}
+		if (cnArrayT != NULL) {
+			CN_CBOR_FREE(cnArrayT, context);
+		}
+		if (cnT != NULL) {
+			CN_CBOR_FREE(cnT, context);
+		}
+		return fReturn;
+	}
+	
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
 
@@ -1920,23 +1951,6 @@ static bool BuildContextBytes(COSE *pcose,
 	pbContext = NULL;
 	fReturn = true;
 
-returnHere:
-	if (pbContext != NULL) {
-		COSE_FREE(pbContext, context);
-	}
-	if (pArray != NULL) {
-		CN_CBOR_FREE(pArray, context);
-	}
-	if (cnArrayT != NULL) {
-		CN_CBOR_FREE(cnArrayT, context);
-	}
-	if (cnT != NULL) {
-		CN_CBOR_FREE(cnT, context);
-	}
-	return fReturn;
-
-errorReturn:
-	fReturn = false;
 	goto returnHere;
 }
 #endif

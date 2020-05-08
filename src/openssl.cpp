@@ -16,6 +16,7 @@
 #include <openssl/ecdsa.h>
 #include <openssl/ecdh.h>
 #include <openssl/rand.h>
+#include <openssl/bn.h>
 
 static bool FUseCompressed = true;
 
@@ -434,6 +435,21 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 #endif
 	cn_cbor_errback cbor_error;
 
+	if (false) {
+	errorReturn:
+		if (pbIV != NULL) {
+			COSE_FREE(pbIV, context);
+		}
+		if (cbor_iv_t != NULL) {
+			COSE_FREE(cbor_iv_t, context);
+		}
+		if (rgbOut != NULL) {
+			COSE_FREE(rgbOut, context);
+		}
+		EVP_CIPHER_CTX_free(ctx);
+		return false;		
+	}
+	
 	// Make it first so we can clean it up
 	ctx = EVP_CIPHER_CTX_new();
 	CHECK_CONDITION(NULL != ctx, COSE_ERR_OUT_OF_MEMORY);
@@ -523,19 +539,6 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		COSE_FREE(pbIV, context);
 	}
 	return true;
-
-errorReturn:
-	if (pbIV != NULL) {
-		COSE_FREE(pbIV, context);
-	}
-	if (cbor_iv_t != NULL) {
-		COSE_FREE(cbor_iv_t, context);
-	}
-	if (rgbOut != NULL) {
-		COSE_FREE(rgbOut, context);
-	}
-	EVP_CIPHER_CTX_free(ctx);
-	return false;
 }
 
 bool AES_CBC_MAC_Create(COSE_MacMessage *pcose,
@@ -635,6 +638,11 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage *pcose,
 	bool f = false;
 	unsigned int i;
 
+	if (false) {
+	errorReturn:
+		EVP_CIPHER_CTX_free(ctx);
+		return false;		
+	}
 	switch (cbKey * 8) {
 		case 128:
 			pcipher = EVP_aes_128_cbc();
@@ -680,10 +688,6 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage *pcose,
 
 	EVP_CIPHER_CTX_free(ctx);
 	return !f;
-
-errorReturn:
-	EVP_CIPHER_CTX_free(ctx);
-	return false;
 }
 
 #if 0
@@ -1018,6 +1022,14 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 
+	if (false) {
+	errorReturn:
+		if (rgbOut != NULL) {
+			COSE_FREE(rgbOut, context);
+		}
+		HMAC_CTX_free(ctx);
+		return false;		
+	}
 	ctx = HMAC_CTX_new();
 	CHECK_CONDITION(ctx != NULL, COSE_ERR_OUT_OF_MEMORY);
 
@@ -1058,13 +1070,6 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	COSE_FREE(rgbOut, context);
 	HMAC_CTX_free(ctx);
 	return !f;
-
-errorReturn:
-	if (rgbOut != NULL) {
-		COSE_FREE(rgbOut, context);
-	}
-	HMAC_CTX_free(ctx);
-	return false;
 }
 
 #define COSE_Key_EC_Curve -1
@@ -1075,6 +1080,15 @@ errorReturn:
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 {
 	EC_KEY *pNewKey = NULL;
+
+	if (false) {
+	errorReturn:
+		if (pNewKey != NULL) {
+			EC_KEY_free(pNewKey);
+		}
+		return NULL;		
+	}
+
 	if (pKey->m_opensslKey != NULL) {
 		EC_KEY *pKeyNew = EVP_PKEY_get1_EC_KEY(pKey->m_opensslKey);
 		CHECK_CONDITION(pKeyNew != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -1167,12 +1181,6 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 	CHECK_CONDITION(EVP_PKEY_set1_EC_KEY(pKey->m_opensslKey, pNewKey) == 1, COSE_ERR_CRYPTO_FAIL);
 
 	return pNewKey;
-
-errorReturn:
-	if (pNewKey != NULL) {
-		EC_KEY_free(pNewKey);
-	}
-	return NULL;
 }
 
 COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)

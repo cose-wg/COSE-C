@@ -47,6 +47,10 @@ bool IsValidSignHandle(HCOSE_SIGN h)
 HCOSE_SIGN COSE_Sign_Init(COSE_INIT_FLAGS flags,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
+	if (false) {
+	errorReturn:
+		return NULL;		
+	}
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_SignMessage *pobj =
 		(COSE_SignMessage *)COSE_CALLOC(1, sizeof(COSE_SignMessage), context);
@@ -62,9 +66,6 @@ HCOSE_SIGN COSE_Sign_Init(COSE_INIT_FLAGS flags,
 	_COSE_InsertInList(&SignRoot, &pobj->m_message);
 
 	return (HCOSE_SIGN)pobj;
-
-errorReturn:
-	return NULL;
 }
 
 HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *cbor,

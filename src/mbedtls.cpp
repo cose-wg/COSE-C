@@ -303,6 +303,21 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 #endif
 	cn_cbor_errback cbor_error;
 
+	if (false) {
+	errorReturn:
+		if (pbIV != NULL) {
+			COSE_FREE(pbIV, context);
+		}
+		if (cbor_iv_t != NULL) {
+			COSE_FREE(cbor_iv_t, context);
+		}
+		if (rgbOut != NULL) {
+			COSE_FREE(rgbOut, context);
+		}
+		mbedtls_gcm_free(&ctx);
+		return false;		
+	}
+	
 	// Make it first so we can clean it up
 	mbedtls_gcm_init(&ctx);
 
@@ -379,19 +394,6 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		COSE_FREE(pbIV, context);
 	}
 	return true;
-
-errorReturn:
-	if (pbIV != NULL) {
-		COSE_FREE(pbIV, context);
-	}
-	if (cbor_iv_t != NULL) {
-		COSE_FREE(cbor_iv_t, context);
-	}
-	if (rgbOut != NULL) {
-		COSE_FREE(rgbOut, context);
-	}
-	mbedtls_gcm_free(&ctx);
-	return false;
 }
 #endif
 
@@ -599,6 +601,16 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	bool f = false;
 	unsigned int i;
 
+	if (false) {
+	errorReturn:
+		if (rgbOut != NULL) {
+			COSE_FREE(rgbOut, context);
+		}
+		COSE_FREE(rgbOut, context);
+		mbedtls_md_free(&contx);
+		return false;		
+	}
+
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
@@ -646,14 +658,6 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	COSE_FREE(rgbOut, context);
 	mbedtls_md_free(&contx);
 	return !f;
-
-errorReturn:
-	if (rgbOut != NULL) {
-		COSE_FREE(rgbOut, context);
-	}
-	COSE_FREE(rgbOut, context);
-	mbedtls_md_free(&contx);
-	return false;
 }
 #endif
 
@@ -670,7 +674,7 @@ bool ECKey_From(COSE_KEY *pKey,
 	int cbKey = 0;
 	int cbGroup = 0;
 	const cn_cbor *p;
-	mbedtls_ecp_group_id groupId = 0;
+	mbedtls_ecp_group_id groupId;
 
 	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_Type);
 	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -1117,7 +1121,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	int cbsecret = 0;
 	byte *pbsecret = NULL;
 	bool fRet = false;
-	mbedtls_ecp_group_id groupId = 0;
+	mbedtls_ecp_group_id groupId;
 	mbedtls_ecp_keypair keypair;
 	mbedtls_ecdh_context ctx;
 	mbedtls_mpi d;
@@ -1130,6 +1134,26 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	mbedtls_ecdh_init(&ctx);
 	mbedtls_mpi_init(&d);
 	mbedtls_ecp_keypair_init(&keypair);
+
+	if (false) {
+	errorReturn:
+		if (pbsecret != NULL) {
+			COSE_FREE(pbsecret, context);
+		}
+		if (pkey != NULL) {
+			CN_CBOR_FREE(pkey, context);
+		}
+		if (p != NULL) {
+			CN_CBOR_FREE(p, context);
+		}
+
+		mbedtls_mpi_free(&d);
+		mbedtls_mpi_free(&z);
+		mbedtls_ecp_group_free(&group);
+		mbedtls_ecp_keypair_free(&keypair);
+		mbedtls_ecdh_free(&ctx);
+		return fRet;		
+	}
 
 	p = cn_cbor_mapget_int(pKeyPublic->m_cborKey, COSE_Key_EC_Curve);
 	CHECK_CONDITION(
@@ -1159,7 +1183,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	}
 	p = NULL;
 
-	mbedtls_ecp_group group = {0};
+	mbedtls_ecp_group group;
 	CHECK_CONDITION0(
 		mbedtls_ecp_group_load(&group, groupId), COSE_ERR_INVALID_PARAMETER);
 
@@ -1266,24 +1290,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	pbsecret = NULL;
 
 	fRet = true;
-
-errorReturn:
-	if (pbsecret != NULL) {
-		COSE_FREE(pbsecret, context);
-	}
-	if (pkey != NULL) {
-		CN_CBOR_FREE(pkey, context);
-	}
-	if (p != NULL) {
-		CN_CBOR_FREE(p, context);
-	}
-
-	mbedtls_mpi_free(&d);
-	mbedtls_mpi_free(&z);
-	mbedtls_ecp_group_free(&group);
-	mbedtls_ecp_keypair_free(&keypair);
-	mbedtls_ecdh_free(&ctx);
-	return fRet;
+	goto errorReturn;
 }
 #endif	// USE_ECDH
 #endif	// COSE_C_USE_MBEDTLS

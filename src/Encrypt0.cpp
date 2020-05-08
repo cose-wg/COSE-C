@@ -46,6 +46,11 @@ bool IsValidEncryptHandle(HCOSE_ENCRYPT h)
 HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
+	if (false) {
+	errorReturn:
+		return NULL;		
+	}
+	
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_Encrypt *pobj =
 		(COSE_Encrypt *)COSE_CALLOC(1, sizeof(COSE_Encrypt), context);
@@ -61,9 +66,6 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags,
 	_COSE_InsertInList(&EncryptRoot, &pobj->m_message);
 
 	return (HCOSE_ENCRYPT)pobj;
-
-errorReturn:
-	return NULL;
 }
 #endif
 
@@ -73,7 +75,7 @@ HCOSE_ENCRYPT COSE_Encrypt_Init_From_Object(cn_cbor *cbor,
 {
 	COSE_Encrypt *pobj;
 
-	cose_errback error = {0};
+	cose_errback error = {COSE_ERR_NONE};
 	if (perr == NULL) {
 		perr = &error;
 	}
@@ -107,7 +109,7 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *cbor,
 {
 	COSE_Encrypt *pobj = pIn;
 	cn_cbor *pRecipients = NULL;
-	cose_errback error = {0};
+	cose_errback error = {COSE_ERR_NONE};
 	if (perr == NULL) {
 		perr = &error;
 	}

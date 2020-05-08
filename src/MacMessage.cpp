@@ -400,6 +400,18 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 	byte *pbKeyNew = NULL;
 	size_t cbKey = 0;
 
+	if (false) {
+	errorReturn:
+		if (pbKeyNew != NULL) {
+			memset(pbKeyNew, 0, cbKey);
+			COSE_FREE(pbKeyNew, context);
+		}
+		if (pbAuthData != NULL) {
+			COSE_FREE(pbAuthData, context);
+		}
+		return fRet;		
+	}
+	
 	cn_Alg = _COSE_map_get_int(
 		&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) {
@@ -614,16 +626,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 	//  Figure out the clean up
 
 	fRet = true;
-
-errorReturn:
-	if (pbKeyNew != NULL) {
-		memset(pbKeyNew, 0, cbKey);
-		COSE_FREE(pbKeyNew, context);
-	}
-	if (pbAuthData != NULL) {
-		COSE_FREE(pbAuthData, context);
-	}
-	return fRet;
+	goto errorReturn;
 }
 #endif
 
