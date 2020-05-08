@@ -31,7 +31,7 @@
 								  : calloc(c, i)
 #else
 #define CBOR_CONTEXT_PARAM
-#define CN_CALLOC(ctx) calloc(1, sizeof(cn_cbor));
+#define CN_CALLOC(ctx) calloc(1, sizeof(cn_cbor))
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
 #define CN_CBOR_CALLOC(c, i, ctx) calloc(c, i);
 #endif

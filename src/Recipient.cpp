@@ -46,6 +46,11 @@ bool IsValidRecipientHandle(HCOSE_RECIPIENT h)
 HCOSE_RECIPIENT COSE_Recipient_Init(COSE_INIT_FLAGS flags,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
+	if (false) {
+	errorReturn:
+		return NULL;		
+	}
+	
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_RecipientInfo *pobj = (COSE_RecipientInfo *)COSE_CALLOC(
 		1, sizeof(COSE_RecipientInfo), context);
@@ -60,9 +65,6 @@ HCOSE_RECIPIENT COSE_Recipient_Init(COSE_INIT_FLAGS flags,
 
 	_COSE_InsertInList(&RecipientRoot, &pobj->m_encrypt.m_message);
 	return (HCOSE_RECIPIENT)pobj;
-
-errorReturn:
-	return NULL;
 }
 
 bool COSE_Recipient_Free(HCOSE_RECIPIENT hRecipient)
@@ -1200,7 +1202,7 @@ byte *_COSE_RecipientInfo_generateKey(COSE_RecipientInfo *pRecipient,
 
 	_COSE_encode_protected(&pRecipient->m_encrypt.m_message, perr);
 
-	pb = static_cast<byte*> COSE_CALLOC(cbitKeySize / 8, 1, context);
+	pb = (byte*) COSE_CALLOC(cbitKeySize / 8, 1, context);
 	CHECK_CONDITION(pb != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	switch (alg) {
