@@ -27,8 +27,8 @@ void CounterSign_Corners()
 	hCounterSign = COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 	hBadHandle = (HCOSE_COUNTERSIGN)COSE_CALLOC(1, sizeof(COSE), context);
 #if INCLUDE_SIGN1
-	HCOSE_SIGN1 hSign1 =
-		COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA & cose_error);
+	HCOSE_SIGN1 hSign1 = COSE_Sign1_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA & cose_error);
 #endif
 	//  Look for invalid parameter
 	//		Null handle checks

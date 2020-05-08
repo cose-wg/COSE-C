@@ -14,7 +14,7 @@
 typedef struct {
 	cn_cbor_context context;
 	byte *pFirst;
-	unsigned int iFailLeft;
+	int iFailLeft;
 	int allocCount;
 } MyContext;
 
@@ -112,9 +112,9 @@ void MyFree(void *ptr, void *context)
 	memset(&pb->pad, 0xab, pb->size + 8);
 }
 
-cn_cbor_context *CreateContext(unsigned int iFailPoint)
+cn_cbor_context *CreateContext(int iFailPoint)
 {
-	MyContext *p = malloc(sizeof(MyContext));
+	MyContext *p = (MyContext*) malloc(sizeof(MyContext));
 
 	p->context.calloc_func = MyCalloc;
 	p->context.free_func = MyFree;

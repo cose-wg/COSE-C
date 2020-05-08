@@ -25,10 +25,14 @@
 #include "mbedtls/entropy.h"
 #endif
 
+#ifdef USE_CBOR_CONTEXT
+cn_cbor_context * context;
+#endif
+
 int CFails = 0;
 
 typedef struct _NameMap {
-	char* sz;
+	const char* sz;
 	int i;
 } NameMap;
 
@@ -122,7 +126,7 @@ byte fromHex(char c)
 byte* FromHex(const char* rgch, int cch)
 {
 	// M00BUG - Why is this using malloc?  It does not get freed anyplace.
-	byte* pb = malloc(cch / 2);
+	byte* pb = (byte*) malloc(cch / 2);
 	const char* pb2 = rgch;
 
 	for (int i = 0; i < cch; i += 2) {
@@ -275,7 +279,7 @@ byte* GetCBOREncoding(const cn_cbor* pControl, int* pcbEncoded)
 	const cn_cbor* pOutputs = cn_cbor_mapget_string(pControl, "output");
 	byte* pb = NULL;
 	const byte* pb2;
-	int i;
+	size_t i;
 
 	if ((pOutputs == NULL) || (pOutputs->type != CN_CBOR_MAP)) {
 		fprintf(stderr, "Invalid output\n");
@@ -288,7 +292,7 @@ byte* GetCBOREncoding(const cn_cbor* pControl, int* pcbEncoded)
 		exit(1);
 	}
 
-	pb = malloc(pCBOR->length / 2);
+	pb = static_cast<byte*>(malloc(pCBOR->length / 2));
 	pb2 = pCBOR->v.bytes;
 
 	for (i = 0; i < pCBOR->length; i += 2) {
@@ -306,7 +310,7 @@ byte* GetCBOREncoding(const cn_cbor* pControl, int* pcbEncoded)
 #define OPERATION_HEX 4
 
 struct {
-	char* szKey;
+	const char* szKey;
 	int kty;
 	int operation;
 	int keyNew;
@@ -487,22 +491,22 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "protected"),
 			COSE_PROTECT_ONLY, base, true)) {
-		goto returnError;
+		return false;
 	}
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unprotected"),
 			COSE_UNPROTECT_ONLY, base, true)) {
-		goto returnError;
+		return false;
 	}
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unsent"),
 			COSE_DONT_SEND, base, false)) {
-		goto returnError;
+		return false;
 	}
 
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != NULL) {
 		cn_cbor* pcn = pExternal;
 		if (pcn == NULL) {
-			goto returnError;
+			return false;
 		}
 		switch (base) {
 #if INCLUDE_ENCRYPT0
@@ -510,7 +514,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -520,7 +524,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -530,7 +534,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -540,7 +544,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -550,7 +554,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -560,7 +564,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -569,7 +573,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_CounterSign_SetExternal((HCOSE_COUNTERSIGN)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -579,9 +583,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 		}
 	}
 
-	f = true;
-returnError:
-	return f;
+	return true;
 }
 
 bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
@@ -590,14 +592,14 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unsent"),
 			COSE_DONT_SEND, base, true)) {
-		goto returnError;
+		return false;
 	}
 
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != NULL) {
 		cn_cbor* pcn = pExternal;
 		if (pcn == NULL) {
-			goto returnError;
+			return false;
 		}
 		switch (base) {
 			
@@ -606,7 +608,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -616,7 +618,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -626,7 +628,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -636,7 +638,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -646,7 +648,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -656,7 +658,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
@@ -665,16 +667,14 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 				if (!COSE_CounterSign_SetExternal((HCOSE_COUNTERSIGN)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
 						NULL)) {
-					goto returnError;
+					return false;
 				}
 				break;
 #endif
 		}
 	}
 
-	f = true;
-returnError:
-	return f;
+	return true;
 }
 
 cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
@@ -875,7 +875,7 @@ void RunCorners()
 static void RunMemoryTest(const char* szFileName)
 {
 #ifdef USE_CBOR_CONTEXT
-	unsigned int iFail;
+	int iFail;
 	const cn_cbor* pControl = ParseJson(szFileName);
 
 	if (pControl == NULL) {
@@ -1306,10 +1306,12 @@ void RunTestsInDirectory(const char* szDir)
 
 		CFails = 0;
 		RunFileTest(rgchFullName);
-		if (CFails == 0)
+		if (CFails == 0) {
 			printf(" PASS\n");
-		else
+		}
+		else {
 			printf(" FAILED\n");
+		}
 		cFailTotal += CFails;
 	} while (FindNextFile(hFind, &FindFileData));
 
@@ -1423,7 +1425,7 @@ int main(int argc, char** argv)
 	}
 	else {
 #ifdef USE_CBOR_CONTEXT
-		context = CreateContext((unsigned int)-1);
+		context = CreateContext(-1);
 #endif
 #if INCLUDE_MAC
 		MacMessage();

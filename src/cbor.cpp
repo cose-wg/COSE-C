@@ -1,4 +1,5 @@
 #include "cn-cbor/cn-cbor.h"
+#include <cose/cose.h>
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
@@ -8,7 +9,7 @@
 	if (errp) {                                    \
 		errp->err = CN_CBOR_NO_ERROR;              \
 	}                                              \
-	(v) = CN_CALLOC_CONTEXT();                     \
+	(v) = static_cast<cn_cbor *> (CN_CALLOC_CONTEXT());  \
 	if (!(v)) {                                    \
 		if (errp) {                                \
 			errp->err = CN_CBOR_ERR_OUT_OF_MEMORY; \
@@ -22,7 +23,7 @@
 #define CN_CALLOC(ctx)                                           \
 	((ctx) && (ctx)->calloc_func)                                \
 		? (ctx)->calloc_func(1, sizeof(cn_cbor), (ctx)->context) \
-		: calloc(1, sizeof(cn_cbor));
+		: calloc(1, sizeof(cn_cbor))
 
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
 #define CN_CBOR_CALLOC(c, i, ctx)                                            \
@@ -30,9 +31,9 @@
 								  : calloc(c, i)
 #else
 #define CBOR_CONTEXT_PARAM
-#define CN_CALLOC(ctx) calloc(1, sizeof(cn_cbor));
+#define CN_CALLOC(ctx) calloc(1, sizeof(cn_cbor))
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
-#define CN_CBOR_CALLOC(c, i, ctx) calloc(c, i);
+#define CN_CBOR_CALLOC(c, i, ctx) calloc(c, i)
 #endif
 
 /***
@@ -135,7 +136,7 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 
 	switch (pIn->type) {
 		case CN_CBOR_TEXT:
-			sz = CN_CBOR_CALLOC(pIn->length + 1, 1, context);
+			sz = (char*)( CN_CBOR_CALLOC(pIn->length + 1, 1, context));
 			if (sz == NULL) {
 				return NULL;
 			}
@@ -150,7 +151,8 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 			break;
 
 		case CN_CBOR_BYTES:
-			pb = CN_CBOR_CALLOC((int)pIn->length, 1, context);
+			pb = static_cast<unsigned char *> (CN_CBOR_CALLOC(
+				(int)pIn->length, 1, context));
 			if (pb == NULL) {
 				return NULL;
 			}

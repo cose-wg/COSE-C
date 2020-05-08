@@ -150,6 +150,19 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	bool f = false;
 	cn_cbor *cn = NULL;
 
+	if (false) {
+	errorReturn:
+		if (cn != NULL) {
+			CN_CBOR_FREE(cn, context);
+		}
+		if (pArray != NULL) {
+			CN_CBOR_FREE(pArray, context);
+		}
+		if (pbToSign != NULL) {
+			COSE_FREE(pbToSign, context);
+		}
+		return f;		
+	}
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
 
@@ -215,18 +228,7 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	*pcbToSign = cbToSign;
 	pbToSign = NULL;
 	f = true;
-
-errorReturn:
-	if (cn != NULL) {
-		CN_CBOR_FREE(cn, context);
-	}
-	if (pArray != NULL) {
-		CN_CBOR_FREE(pArray, context);
-	}
-	if (pbToSign != NULL) {
-		COSE_FREE(pbToSign, context);
-	}
-	return f;
+	goto errorReturn;	
 }
 
 bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
@@ -344,8 +346,12 @@ errorReturn:
 bool COSE_Signer_SetKey2(HCOSE_SIGNER h, HCOSE_KEY pKey, cose_errback *perr)
 {
 	COSE_SignerInfo *p;
-	bool fRet = false;
 
+	if (false) {
+	errorReturn:
+		return false;		
+	}
+	
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(IsValidKeyHandle(pKey), COSE_ERR_INVALID_HANDLE);
 
@@ -359,9 +365,7 @@ bool COSE_Signer_SetKey2(HCOSE_SIGNER h, HCOSE_KEY pKey, cose_errback *perr)
 		pcose->m_refCount += 1;
 	}
 
-	fRet = true;
-errorReturn:
-	return fRet;
+	return true;
 }
 
 bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
@@ -436,7 +440,12 @@ bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 	const cn_cbor *cn = _COSE_map_get_int(
 		&pSigner->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn == NULL) {
-		goto errorReturn;
+	errorReturn:
+		if (pbToBeSigned != NULL) {
+			COSE_FREE(pbToBeSigned, context);
+		}
+
+		return fRet;
 	}
 
 	if (cn->type == CN_CBOR_TEXT) {
@@ -514,13 +523,7 @@ bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 	}
 
 	fRet = true;
-
-errorReturn:
-	if (pbToBeSigned != NULL) {
-		COSE_FREE(pbToBeSigned, context);
-	}
-
-	return fRet;
+	goto errorReturn;
 }
 
 #if INCLUDE_SIGN

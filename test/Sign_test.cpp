@@ -317,11 +317,21 @@ int BuildSignedMessage(const cn_cbor *pControl)
 		return 0;
 	}
 
-	HCOSE_SIGN hSignObj = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_SIGN hSignObj =
+		COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
-		goto returnError;
+	returnError:
+		if (hSignObj != NULL) {
+			COSE_Sign_Free(hSignObj);
+		}
+		if (hSigner != NULL) {
+			COSE_Signer_Free(hSigner);
+		}
+
+		CFails += 1;
+		return 1;
 	}
 	const cn_cbor *pSign = cn_cbor_mapget_string(pInputs, "sign");
 	if (pSign == NULL) {
@@ -469,22 +479,12 @@ int BuildSignedMessage(const cn_cbor *pControl)
 
 	free(rgb);
 	return f;
-
-returnError:
-	if (hSignObj != NULL) {
-		COSE_Sign_Free(hSignObj);
-	}
-	if (hSigner != NULL) {
-		COSE_Signer_Free(hSigner);
-	}
-
-	CFails += 1;
-	return 1;
 }
 
 int SignMessage()
 {
-	HCOSE_SIGN hEncObj = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_SIGN hEncObj =
+		COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	char *sz = "This is the content to be used";
 	size_t cb;
 	byte *rgb;
@@ -593,6 +593,29 @@ int _ValidateSign1(const cn_cbor *pControl,
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fNoAlgSupport = false;
+
+	if (false) {
+	exitHere:
+		if (hSig != NULL) {
+			COSE_Sign1_Free(hSig);
+		}
+
+		if (fFail) {
+			CFails += 1;
+		}
+		if (pkey != NULL) {
+			CN_CBOR_FREE(pkey, context);
+		}
+		return fNoAlgSupport ? 0 : 1;
+
+	returnError:
+		if (hSig != NULL) {
+			COSE_Sign1_Free(hSig);
+		}
+
+		CFails += 1;
+		return 0;		
+	}
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -735,27 +758,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 			fFail = false;
 		}
 	}
-
-exitHere:
-	if (hSig != NULL) {
-		COSE_Sign1_Free(hSig);
-	}
-
-	if (fFail) {
-		CFails += 1;
-	}
-	if (pkey != NULL) {
-		CN_CBOR_FREE(pkey, context);
-	}
-	return fNoAlgSupport ? 0 : 1;
-
-returnError:
-	if (hSig != NULL) {
-		COSE_Sign1_Free(hSig);
-	}
-
-	CFails += 1;
-	return 0;
+	goto exitHere;
 }
 
 int ValidateSign1(const cn_cbor *pControl)
@@ -778,11 +781,20 @@ int BuildSign1Message(const cn_cbor *pControl)
 		return 0;
 	}
 
-	HCOSE_SIGN1 hSignObj = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	HCOSE_SIGN1 hSignObj =
+		COSE_Sign1_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
-		goto returnError;
+	returnError:
+		if (hSignObj != NULL) {
+			COSE_Sign1_Free(hSignObj);
+		}
+		if (pkey != NULL) {
+			CN_CBOR_FREE(pkey, context);
+		}
+		CFails += 1;
+		return 1;
 	}
 	const cn_cbor *pSign = cn_cbor_mapget_string(pInputs, "sign0");
 	if (pSign == NULL) {
@@ -865,16 +877,6 @@ int BuildSign1Message(const cn_cbor *pControl)
 
 	free(rgb);
 	return f;
-
-returnError:
-	if (hSignObj != NULL) {
-		COSE_Sign1_Free(hSignObj);
-	}
-	if (pkey != NULL) {
-		CN_CBOR_FREE(pkey, context);
-	}
-	CFails += 1;
-	return 1;
 }
 #endif
 
@@ -891,17 +893,18 @@ void Sign_Corners()
 	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cose_errback cose_error;
 
-	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #if INCLUDE_SIGN1
-	hSignBad = (HCOSE_SIGN)COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSignBad = (HCOSE_SIGN)COSE_Sign1_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hSignBad = (HCOSE_SIGN)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
 
 	hSigner = COSE_Signer_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
-	hSignerBad =
-		(HCOSE_SIGNER)COSE_Recipient_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSignerBad = (HCOSE_SIGNER)COSE_Recipient_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hSignerBad = (HCOSE_SIGNER)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
@@ -1022,7 +1025,7 @@ void Sign_Corners()
 	//
 	//  Unsupported algorithm
 
-	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) {
 		CFails++;
 	}
@@ -1050,7 +1053,7 @@ void Sign_Corners()
 	COSE_Sign_Free(hSign);
 	COSE_Signer_Free(hSigner);
 
-	hSign = COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign = COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) {
 		CFails++;
 	}
@@ -1102,9 +1105,11 @@ void Sign1_Corners()
 	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
 	cose_errback cose_error;
 
-	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign =
+		COSE_Sign1_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #if INCLUDE_SIGN
-	hSignBad = (HCOSE_SIGN1)COSE_Sign_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSignBad = (HCOSE_SIGN1)COSE_Sign_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 #else
 	hSignBad = (HCOSE_SIGN1)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
@@ -1167,7 +1172,8 @@ void Sign1_Corners()
 	//
 	//  Unsupported algorithm
 
-	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign =
+		COSE_Sign1_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) {
 		CFails++;
 	}
@@ -1185,7 +1191,8 @@ void Sign1_Corners()
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Sign1_Free(hSign);
 
-	hSign = COSE_Sign1_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	hSign =
+		COSE_Sign1_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hSign == NULL) {
 		CFails++;
 	}

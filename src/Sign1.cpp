@@ -48,6 +48,11 @@ bool IsValidSign1Handle(HCOSE_SIGN1 h)
 HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
+	if (false) {
+	errorReturn:
+		return NULL;		
+	}
+	
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_Sign1Message *pobj =
 		(COSE_Sign1Message *)COSE_CALLOC(1, sizeof(COSE_Sign1Message), context);
@@ -68,9 +73,6 @@ HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags,
 	_COSE_InsertInList(&Sign1Root, &pobj->m_message);
 
 	return (HCOSE_SIGN1)pobj;
-
-errorReturn:
-	return NULL;
 }
 
 HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor *cbor,
@@ -78,7 +80,7 @@ HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor *cbor,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	COSE_Sign1Message *pobj = pIn;
-	cose_errback error = {0};
+	cose_errback error = {COSE_ERR_NONE};
 
 	if (perr == NULL) {
 		perr = &error;
@@ -219,6 +221,14 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 	HCOSE_KEY cose = NULL;
 	bool fRet = false;
 
+	if (false) {
+	errorReturn:
+		if (cose != NULL) {
+			COSE_KEY_Free(cose);
+		}
+		return fRet;		
+	}
+
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
@@ -231,12 +241,7 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 	}
 
 	fRet = COSE_Sign1_Sign2(h, cose, perr);
-
-errorReturn:
-	if (cose != NULL) {
-		COSE_KEY_Free(cose);
-	}
-	return fRet;
+	goto errorReturn;
 }
 
 
@@ -290,6 +295,14 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	const cn_cbor *cnProtected;
 	COSE_KEY *pcose = NULL;
 
+	if (false) {
+	errorReturn:
+		if (pcose != NULL) {
+			COSE_KEY_Free((HCOSE_KEY)pcose);
+		}
+		return false;		
+	}
+
 	CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
 
 	pSign = (COSE_Sign1Message *)hSign;
@@ -313,12 +326,6 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 
 	COSE_KEY_Free((HCOSE_KEY)pcose);
 	return f;
-
-errorReturn:
-	if (pcose != NULL) {
-		COSE_KEY_Free((HCOSE_KEY)pcose);
-	}
-	return false;
 }
 
 cn_cbor *COSE_Sign1_map_get_int(HCOSE_SIGN1 h,

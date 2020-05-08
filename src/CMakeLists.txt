@@ -1,6 +1,6 @@
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   message(STATUS "adding GCC/Clang options ")
-  add_definitions(-std=gnu99 -Wall -Wextra -pedantic)
+  add_definitions(-Wall -Wextra -pedantic)
   if(COSE_C_FATAL_WARNINGS)
     add_definitions(-Werror)
   endif()
@@ -28,9 +28,9 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/../include/cose/cose_configure.h.in
                ${CMAKE_BINARY_DIR}/include/cose/cose_configure.h)
 
 if(COSE_C_USE_MBEDTLS)
-  set(cose_crypto mbedtls.c)
+  set(cose_crypto mbedtls.cpp)
 else()
-  set(cose_crypto openssl.c)
+  set(cose_crypto openssl.cpp)
 endif()
 
 set(cose_sources
@@ -38,19 +38,19 @@ set(cose_sources
     ${CMAKE_BINARY_DIR}/include/cose/cose_configure.h
     cose_crypto.h
     cose_int.h
-    Cose.c
-    CoseKey.c
-    CounterSign.c
-    CounterSign0.c
-    MacMessage.c
-    MacMessage0.c
-    Sign.c
-    Sign1.c
-    cbor.c
-    Encrypt.c
-    Encrypt0.c
-    Recipient.c
-    SignerInfo.c
+    Cose.cpp
+    CoseKey.cpp
+    CounterSign.cpp
+    CounterSign0.cpp
+    MacMessage.cpp
+    MacMessage0.cpp
+    Sign.cpp
+    Sign1.cpp
+    cbor.cpp
+    Encrypt.cpp
+    Encrypt0.cpp
+    Recipient.cpp
+    SignerInfo.cpp
     ${cose_crypto})
 
 target_sources(${PROJECT_NAME} PRIVATE ${cose_sources})
