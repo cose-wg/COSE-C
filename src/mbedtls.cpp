@@ -637,7 +637,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	mbedtls_md_setup(&contx, info, 1);
 
 	cbOut = mbedtls_md_get_size(info);
-	rgbOut = COSE_CALLOC(cbOut, 1, context);
+	rgbOut = (byte*) COSE_CALLOC(cbOut, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(
