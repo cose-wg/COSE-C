@@ -1,6 +1,6 @@
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   message(STATUS "adding GCC/Clang options ")
-  add_definitions(-std=gnu99 -Wall -Wextra -pedantic)
+  add_definitions(-Wall -Wextra -pedantic)
   if(COSE_C_FATAL_WARNINGS)
     add_definitions(-Werror)
   endif()
