@@ -222,7 +222,7 @@ const byte *COSE_Encrypt_GetContent(HCOSE_ENCRYPT h,
 		if (perror != NULL) {
 			perror->err = COSE_ERR_INVALID_PARAMETER;
 		}
-		return false;
+		return NULL;
 	}
 
 	*pcbContent = cose->cbContent;

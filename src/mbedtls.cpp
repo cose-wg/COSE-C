@@ -611,7 +611,6 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 		if (rgbOut != NULL) {
 			COSE_FREE(rgbOut, context);
 		}
-		COSE_FREE(rgbOut, context);
 		mbedtls_md_free(&contx);
 		return false;		
 	}
