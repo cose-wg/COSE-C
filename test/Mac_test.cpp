@@ -510,7 +510,7 @@ int MacMessage()
 {
 	HCOSE_MAC hEncObj =
 		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
-	char *sz = "This is the content to be used";
+	auto sz = "This is the content to be used";
 	byte rgbSecret[256 / 8] = {'a', 'b', 'c'};
 	byte rgbKid[6] = {'a', 'b', 'c', 'd', 'e', 'f'};
 	int cbKid = 6;
