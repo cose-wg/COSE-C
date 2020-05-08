@@ -1131,7 +1131,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	mbedtls_mpi z;
 	cn_cbor *pkey = NULL;
 	int cose_group = 0;
-	mbedtls_ecp_group group;
+	mbedtls_ecp_group group = {MBEDTLS_ECP_DP_NONE};
 
 	mbedtls_mpi_init(&z);
 	mbedtls_ecdh_init(&ctx);
