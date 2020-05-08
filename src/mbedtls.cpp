@@ -602,6 +602,10 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	bool f = false;
 	unsigned int i;
 
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = &pcose->m_message.m_allocContext;
+#endif
+
 	if (false) {
 	errorReturn:
 		if (rgbOut != NULL) {
@@ -612,9 +616,6 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 		return false;		
 	}
 
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = &pcose->m_message.m_allocContext;
-#endif
 
 	switch (HSize) {
 		case 256:

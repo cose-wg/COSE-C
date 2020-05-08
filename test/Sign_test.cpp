@@ -322,7 +322,16 @@ int BuildSignedMessage(const cn_cbor *pControl)
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
-		goto returnError;
+	returnError:
+		if (hSignObj != NULL) {
+			COSE_Sign_Free(hSignObj);
+		}
+		if (hSigner != NULL) {
+			COSE_Signer_Free(hSigner);
+		}
+
+		CFails += 1;
+		return 1;
 	}
 	const cn_cbor *pSign = cn_cbor_mapget_string(pInputs, "sign");
 	if (pSign == NULL) {
@@ -470,17 +479,6 @@ int BuildSignedMessage(const cn_cbor *pControl)
 
 	free(rgb);
 	return f;
-
-returnError:
-	if (hSignObj != NULL) {
-		COSE_Sign_Free(hSignObj);
-	}
-	if (hSigner != NULL) {
-		COSE_Signer_Free(hSigner);
-	}
-
-	CFails += 1;
-	return 1;
 }
 
 int SignMessage()
@@ -595,6 +593,29 @@ int _ValidateSign1(const cn_cbor *pControl,
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fNoAlgSupport = false;
+
+	if (false) {
+	exitHere:
+		if (hSig != NULL) {
+			COSE_Sign1_Free(hSig);
+		}
+
+		if (fFail) {
+			CFails += 1;
+		}
+		if (pkey != NULL) {
+			CN_CBOR_FREE(pkey, context);
+		}
+		return fNoAlgSupport ? 0 : 1;
+
+	returnError:
+		if (hSig != NULL) {
+			COSE_Sign1_Free(hSig);
+		}
+
+		CFails += 1;
+		return 0;		
+	}
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -737,27 +758,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 			fFail = false;
 		}
 	}
-
-exitHere:
-	if (hSig != NULL) {
-		COSE_Sign1_Free(hSig);
-	}
-
-	if (fFail) {
-		CFails += 1;
-	}
-	if (pkey != NULL) {
-		CN_CBOR_FREE(pkey, context);
-	}
-	return fNoAlgSupport ? 0 : 1;
-
-returnError:
-	if (hSig != NULL) {
-		COSE_Sign1_Free(hSig);
-	}
-
-	CFails += 1;
-	return 0;
+	goto exitHere;
 }
 
 int ValidateSign1(const cn_cbor *pControl)
@@ -785,7 +786,15 @@ int BuildSign1Message(const cn_cbor *pControl)
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == NULL) {
-		goto returnError;
+	returnError:
+		if (hSignObj != NULL) {
+			COSE_Sign1_Free(hSignObj);
+		}
+		if (pkey != NULL) {
+			CN_CBOR_FREE(pkey, context);
+		}
+		CFails += 1;
+		return 1;
 	}
 	const cn_cbor *pSign = cn_cbor_mapget_string(pInputs, "sign0");
 	if (pSign == NULL) {
@@ -868,16 +877,6 @@ int BuildSign1Message(const cn_cbor *pControl)
 
 	free(rgb);
 	return f;
-
-returnError:
-	if (hSignObj != NULL) {
-		COSE_Sign1_Free(hSignObj);
-	}
-	if (pkey != NULL) {
-		CN_CBOR_FREE(pkey, context);
-	}
-	CFails += 1;
-	return 1;
 }
 #endif
 
