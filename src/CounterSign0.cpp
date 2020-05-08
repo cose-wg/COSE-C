@@ -41,43 +41,43 @@ bool _COSE_CountSign_create(COSE* pMessage,
 	cn_cbor* pcnBody,
 	CBOR_CONTEXT_COMMA cose_errback* perr)
 {
-	cn_cbor* pArray = NULL;
+	cn_cbor* pArray = nullptr;
 	cn_cbor_errback cbor_err;
-	COSE_CounterSign1* pSigner = NULL;
-	cn_cbor* pcnProtected = NULL;
-	cn_cbor* pcn = NULL;
-	cn_cbor* pcn2 = NULL;
+	COSE_CounterSign1* pSigner = nullptr;
+	cn_cbor* pcnProtected = nullptr;
+	cn_cbor* pcn = nullptr;
+	cn_cbor* pcn2 = nullptr;
 
-	if (pMessage->m_counterSigners == NULL)
+	if (pMessage->m_counterSigners == nullptr)
 		return true;
 
 	//  One or more than one?
-	if (pMessage->m_counterSigners->m_signer.m_signerNext != NULL) {
+	if (pMessage->m_counterSigners->m_signer.m_signerNext != nullptr) {
 		pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cbor_err);
-		CHECK_CONDITION_CBOR(pArray != NULL, cbor_err);
+		CHECK_CONDITION_CBOR(pArray != nullptr, cbor_err);
 	}
 
 	pcnProtected = _COSE_arrayget_int(pMessage, INDEX_PROTECTED);
-	CHECK_CONDITION(pcnProtected != NULL, COSE_ERR_INTERNAL);
+	CHECK_CONDITION(pcnProtected != nullptr, COSE_ERR_INTERNAL);
 
-	for (pSigner = pMessage->m_counterSigners; pSigner != NULL;
+	for (pSigner = pMessage->m_counterSigners; pSigner != nullptr;
 		 pSigner = pSigner->m_next) {
 		CHECK_CONDITION(
-			pSigner->m_signer.m_signerNext == NULL, COSE_ERR_INTERNAL);
+			pSigner->m_signer.m_signerNext == nullptr, COSE_ERR_INTERNAL);
 
 		pcn = cn_cbor_data_create(pcnProtected->v.bytes, pcnProtected->v.count,
 			CBOR_CONTEXT_PARAM_COMMA & cbor_err);
-		CHECK_CONDITION_CBOR(pcnProtected != NULL, cbor_err);
+		CHECK_CONDITION_CBOR(pcnProtected != nullptr, cbor_err);
 
 		pcn2 = cn_cbor_clone(pcnBody, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
-		CHECK_CONDITION_CBOR(pcnBody != NULL, cbor_err);
+		CHECK_CONDITION_CBOR(pcnBody != nullptr, cbor_err);
 
 		if (!_COSE_Signer_sign(&pSigner->m_signer, pcnBody, pcn2, perr))
 			goto errorReturn;
-		pcn = NULL;
-		pcn2 = NULL;
+		pcn = nullptr;
+		pcn2 = nullptr;
 
-		if (pArray != NULL) {
+		if (pArray != nullptr) {
 			bool f = cn_cbor_array_append(
 				pArray, pSigner->m_signer.m_message.m_cborRoot, &cbor_err);
 			CHECK_CONDITION_CBOR(f, cbor_err);
@@ -94,11 +94,11 @@ bool _COSE_CountSign_create(COSE* pMessage,
 	return true;
 
 errorReturn:
-	if (pArray != NULL)
+	if (pArray != nullptr)
 		CN_CBOR_FREE(pArray, context);
-	if ((pcn != NULL) && (pcn->parent != NULL))
+	if ((pcn != nullptr) && (pcn->parent != nullptr))
 		CN_CBOR_FREE(pcn, context);
-	if ((pcn2 != NULL) && (pcn2->parent != NULL))
+	if ((pcn2 != nullptr) && (pcn2->parent != nullptr))
 		CN_CBOR_FREE(pcn2, context);
 	return false;
 }

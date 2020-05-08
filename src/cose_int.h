@@ -127,8 +127,8 @@ struct CounterSign {
 /**
  * Allocate enough space for 1 `cn_cbor` structure.
  *
- * @param[in]  ctx  The allocation context, or NULL for calloc.
- * @return          A pointer to a `cn_cbor` or NULL on failure
+ * @param[in]  ctx  The allocation context, or nullptr for calloc.
+ * @return          A pointer to a `cn_cbor` or nullptr on failure
  */
 #define CN_CALLOC(ctx)                                           \
 	((ctx) && (ctx)->calloc_func)                                \
@@ -138,7 +138,7 @@ struct CounterSign {
 /**
  *  Allocate space required
  *
- * @param[in]	ctx  The allocation context, or NULL for normal calloc.
+ * @param[in]	ctx  The allocation context, or nullptr for normal calloc.
  * @param[in]	count	Number of items to allocate
  * @param[in]	size	Size of item to allocate
  * @return				A pointer to the object needed
@@ -359,7 +359,7 @@ bool _COSE_CounterSign_Sign(COSE *baseMessage,
 	{                                     \
 		if (!(condition)) {               \
 			DO_ASSERT;                    \
-			if (perr != NULL) {           \
+			if (perr != nullptr) {           \
 				perr->err = error;        \
 			}                             \
 			goto errorReturn;             \
@@ -369,7 +369,7 @@ bool _COSE_CounterSign_Sign(COSE *baseMessage,
 	{                                      \
 		if ((condition)) {                 \
 			DO_ASSERT;                     \
-			if (perr != NULL) {            \
+			if (perr != nullptr) {            \
 				perr->err = error;         \
 			}                              \
 			goto errorReturn;              \
@@ -378,7 +378,7 @@ bool _COSE_CounterSign_Sign(COSE *baseMessage,
 #define FAIL_CONDITION(error)  \
 	{                          \
 		DO_ASSERT;             \
-		if (perr != NULL) {    \
+		if (perr != nullptr) {    \
 			perr->err = error; \
 		}                      \
 		goto errorReturn;      \
@@ -387,7 +387,7 @@ bool _COSE_CounterSign_Sign(COSE *baseMessage,
 	{                                            \
 		if (!(condition)) {                      \
 			DO_ASSERT;                           \
-			if (perr != NULL) {                  \
+			if (perr != nullptr) {                  \
 				perr->err = _MapFromCBOR(error); \
 			}                                    \
 			goto errorReturn;                    \

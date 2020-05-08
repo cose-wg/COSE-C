@@ -95,7 +95,7 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 #define CHECK_FAILURE_PTR(functionCall, errorReturn, onFailure) \
 	{                                                           \
 		void* bReturn = functionCall;                           \
-		if (bReturn == NULL) {                                  \
+		if (bReturn == nullptr) {                                  \
 			if (cose_error.err != errorReturn)                  \
 				onFailure;                                      \
 		}                                                       \

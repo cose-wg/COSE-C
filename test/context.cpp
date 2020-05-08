@@ -28,10 +28,10 @@ typedef struct _MyItem {
 
 bool CheckMemory(MyContext *pContext)
 {
-	MyItem *p = NULL;
+	MyItem *p = nullptr;
 	//  Walk memory and check every block
 
-	for (p = (MyItem *)pContext->pFirst; p != NULL; p = p->pNext) {
+	for (p = (MyItem *)pContext->pFirst; p != nullptr; p = p->pNext) {
 		if (p->pad[0] == (byte)0xab) {
 			//  Block has been freed
 			for (unsigned i = 0; i < p->size + 8; i++) {
@@ -61,14 +61,14 @@ bool CheckMemory(MyContext *pContext)
 
 void *MyCalloc(size_t count, size_t size, void *context)
 {
-	MyItem *pb = NULL;
+	MyItem *pb = nullptr;
 	MyContext *myContext = (MyContext *)context;
 
 	CheckMemory(myContext);
 
 	if (myContext->iFailLeft != -1) {
 		if (myContext->iFailLeft == 0) {
-			return NULL;
+			return nullptr;
 		}
 		myContext->iFailLeft--;
 	}
@@ -90,21 +90,21 @@ void MyFree(void *ptr, void *context)
 {
 	MyItem *pb = (MyItem *)((byte *)ptr - sizeof(MyItem) + 4);
 	MyContext *myContext = (MyContext *)context;
-	MyItem *pItem = NULL;
+	MyItem *pItem = nullptr;
 
 	CheckMemory(myContext);
-	if (ptr == NULL) {
+	if (ptr == nullptr) {
 		return;
 	}
 
-	for (pItem = (MyItem *)myContext->pFirst; pItem != NULL;
+	for (pItem = (MyItem *)myContext->pFirst; pItem != nullptr;
 		 pItem = pItem->pNext) {
 		if (pItem == pb) {
 			break;
 		}
 	}
 
-	if (pItem == NULL) {
+	if (pItem == nullptr) {
 		//  Not an item we allocated
 		assert(false);
 	}
@@ -119,7 +119,7 @@ cn_cbor_context *CreateContext(int iFailPoint)
 	p->context.calloc_func = MyCalloc;
 	p->context.free_func = MyFree;
 	p->context.context = p;
-	p->pFirst = NULL;
+	p->pFirst = nullptr;
 	p->iFailLeft = iFailPoint;
 	p->allocCount = 0;
 
@@ -134,7 +134,7 @@ void FreeContext(cn_cbor_context *pContext)
 
 	CheckMemory(myContext);
 
-	for (pItem = (MyItem *)myContext->pFirst; pItem != NULL; pItem = pItem2) {
+	for (pItem = (MyItem *)myContext->pFirst; pItem != nullptr; pItem = pItem2) {
 		pItem2 = pItem->pNext;
 		free(pItem);
 	}
@@ -151,7 +151,7 @@ int IsContextEmpty(cn_cbor_context *pContext)
 
 	//  Walk memory and check every block
 
-	for (MyItem *p = (MyItem *)myContext->pFirst; p != NULL; p = p->pNext) {
+	for (MyItem *p = (MyItem *)myContext->pFirst; p != nullptr; p = p->pNext) {
 		if (p->pad[0] == (byte)0xab) {
 			//  Block has been freed
 		}
