@@ -86,7 +86,7 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	cn_cbor_errback errState;  // = { 0 };
 	cn_cbor_errback cbor_error;
 
-	if (0) {
+	if (false) {
 	errorReturn:
 		return false;	
 	}
@@ -210,9 +210,9 @@ HCOSE COSE_Decode(const byte *rgbData,
 	cn_cbor_errback cbor_err;
 	HCOSE h;
 
-	if (0) {
+	if (false) {
 	errorReturn:
-		// M00TODO - break up the init and allocation above for memory tests.
+		// M00TODO - break up the init and allocation below for memory tests.
 		CN_CBOR_FREE(cbor, context);
 		return NULL;	
 	}

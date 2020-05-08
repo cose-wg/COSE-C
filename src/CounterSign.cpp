@@ -461,7 +461,7 @@ bool COSE_Signer_CounterSign_validate(HCOSE_SIGNER hSigner,
 	HCOSE_COUNTERSIGN hCountersignature,
 	cose_errback* perr)
 {
-	if (0) {
+	if (false) {
 	errorReturn:
 		return false;	
 	}

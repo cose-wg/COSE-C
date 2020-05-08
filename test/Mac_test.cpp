@@ -522,6 +522,7 @@ int MacMessage()
 		if (hEncObj != NULL) {
 			COSE_Mac_Free(hEncObj);
 		}
+		CFails++;
 		return 0;
 	}
 
