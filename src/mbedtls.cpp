@@ -24,8 +24,6 @@
 
 static bool FUseCompressed = true;
 
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
-
 #ifdef INCLUDE_AES_CCM
 bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	int TSize,

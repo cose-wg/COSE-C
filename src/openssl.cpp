@@ -20,8 +20,6 @@
 
 static bool FUseCompressed = true;
 
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
-
 #if (OPENSSL_VERSION_NUMBER < 0x10100000)
 
 HMAC_CTX *HMAC_CTX_new()
@@ -791,7 +789,7 @@ bool HKDF_AES_Expand(COSE *pcose,
 			COSE_ERR_CRYPTO_FAIL);
 		for (ib2 = 0; ib2 < cbInfo; ib2 += 16) {
 			CHECK_CONDITION(EVP_EncryptUpdate(ctx, rgbOut, &cbOut, pbInfo + ib2,
-								(int)MIN(16, cbInfo - ib2)),
+								(int)COSE_MIN(16, cbInfo - ib2)),
 				COSE_ERR_CRYPTO_FAIL);
 		}
 		CHECK_CONDITION(EVP_EncryptUpdate(ctx, rgbOut, &cbOut, &bCount, 1),
@@ -803,7 +801,7 @@ bool HKDF_AES_Expand(COSE *pcose,
 		}
 		memcpy(rgbDigest, rgbOut, cbOut);
 		cbDigest = cbOut;
-		memcpy(pbOutput + ib, rgbDigest, MIN(16, cbOutput - ib));
+		memcpy(pbOutput + ib, rgbDigest, COSE_MIN(16, cbOutput - ib));
 	}
 
 	EVP_CIPHER_CTX_free(ctx);
@@ -931,7 +929,7 @@ bool HKDF_Expand(COSE *pcose,
 		CHECK_CONDITION(
 			HMAC_Final(ctx, rgbDigest, &cbDigest), COSE_ERR_CRYPTO_FAIL);
 
-		memcpy(pbOutput + ib, rgbDigest, MIN(cbDigest, cbOutput - ib));
+		memcpy(pbOutput + ib, rgbDigest, COSE_MIN(cbDigest, cbOutput - ib));
 	}
 
 	HMAC_CTX_free(ctx);
