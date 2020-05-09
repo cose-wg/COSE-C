@@ -4,10 +4,11 @@
  */
 
 #include <stdlib.h>
-#ifndef __MBED__
-#include <memory.h>
-#else
+#ifdef __MBED__
 #include <stddef.h>
+#include <string.h>
+#else
+#include <memory.h>
 #endif
 #include <stdio.h>
 #include <assert.h>

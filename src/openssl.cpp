@@ -4,7 +4,11 @@
 #include "cose_crypto.h"
 
 #include <assert.h>
+#ifdef __MBED__
+#include <string.h>
+#else
 #include <memory.h>
+#endif
 #include <stdbool.h>
 
 #ifdef COSE_C_USE_OPENSSL
