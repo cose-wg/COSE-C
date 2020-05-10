@@ -611,7 +611,7 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 	}
 
 	size_t cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
-	auto rgb = make_managed_array<byte>(cb);
+	std::shared_ptr<byte> rgb = make_managed_array<byte>(cb);
 
 	cb = COSE_Encode((HCOSE)hEncObj, rgb.get(), 0, cb);
 
