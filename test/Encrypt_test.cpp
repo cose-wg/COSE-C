@@ -1293,8 +1293,6 @@ void Enveloped_Corners()
 
 	COSE_Enveloped_Free(hEncrypt);
 	COSE_Recipient_Free(hRecipient);
-
-	return;
 }
 #endif
 
@@ -1399,8 +1397,6 @@ void Encrypt_Corners()
 	CHECK_FAILURE(COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);
-
-	return;
 }
 #endif
 
