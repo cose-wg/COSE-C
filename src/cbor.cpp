@@ -60,7 +60,7 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 	cn_cbor *cb_temp2;
 
 	if (!cb_array || !cb_value || cb_array->type != CN_CBOR_ARRAY) {
-		if (errp != NULL) {
+		if (errp != nullptr) {
 			errp->err = CN_CBOR_ERR_INVALID_PARAMETER;
 		}
 		return false;
@@ -76,15 +76,15 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 				cb_array->last_child = cb_value;
 			}
 			cb_array->first_child = cb_value;
-			cb_temp->parent = NULL;
-			cb_temp->next = NULL;
+			cb_temp->parent = nullptr;
+			cb_temp->next = nullptr;
 			cn_cbor_free(cb_temp CBOR_CONTEXT_PARAM);
 			return true;
 		}
 		return cn_cbor_array_append(cb_array, cb_value, errp);
 	}
 
-	if (cb_array->first_child == NULL) {
+	if (cb_array->first_child == nullptr) {
 		INIT_CB(cb_temp2);
 		cb_array->first_child = cb_array->last_child = cb_temp2;
 		cb_temp2->parent = cb_array;
@@ -94,7 +94,7 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 
 	cb_temp = cb_array->first_child;
 	for (i = 1; i < index; i++) {
-		if (cb_temp->next == NULL) {
+		if (cb_temp->next == nullptr) {
 			INIT_CB(cb_temp2);
 			cb_temp2->type = CN_CBOR_INVALID;
 			cb_temp->next = cb_temp2;
@@ -106,7 +106,7 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 		cb_temp = cb_temp->next;
 	}
 
-	if (cb_temp->next == NULL) {
+	if (cb_temp->next == nullptr) {
 		cb_temp->next = cb_value;
 		cb_value->parent = cb_array;
 		cb_array->last_child = cb_value;
@@ -122,8 +122,8 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 		cb_array->last_child = cb_value;
 	}
 
-	cb_temp2->next = NULL;
-	cb_temp2->parent = NULL;
+	cb_temp2->next = nullptr;
+	cb_temp2->parent = nullptr;
 	cn_cbor_free(cb_temp2 CBOR_CONTEXT_PARAM);
 
 	return true;
@@ -132,15 +132,15 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *pcn_cbor_error)
 {
-	cn_cbor *pOut = NULL;
+	cn_cbor *pOut = nullptr;
 	char *sz;
 	unsigned char *pb;
 
 	switch (pIn->type) {
 		case CN_CBOR_TEXT:
 			sz = (char*)( CN_CBOR_CALLOC(pIn->length + 1, 1, context));
-			if (sz == NULL) {
-				return NULL;
+			if (sz == nullptr) {
+				return nullptr;
 			}
 			memcpy(sz, pIn->v.str, pIn->length);
 			sz[pIn->length] = 0;
@@ -155,8 +155,8 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 		case CN_CBOR_BYTES:
 			pb = static_cast<unsigned char *> (CN_CBOR_CALLOC(
 				(int)pIn->length, 1, context));
-			if (pb == NULL) {
-				return NULL;
+			if (pb == nullptr) {
+				return nullptr;
 			}
 			memcpy(pb, pIn->v.bytes, pIn->length);
 			pOut = cn_cbor_data_create2(
@@ -176,11 +176,11 @@ cn_cbor *cn_cbor_tag_create(int tag,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *perr)
 {
 	cn_cbor *pcnTag = CN_CALLOC(context);
-	if (pcnTag == NULL) {
-		if (perr != NULL) {
+	if (pcnTag == nullptr) {
+		if (perr != nullptr) {
 			perr->err = CN_CBOR_ERR_OUT_OF_MEMORY;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	pcnTag->type = CN_CBOR_TAG;
@@ -195,11 +195,11 @@ cn_cbor *cn_cbor_bool_create(int boolValue,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *errp)
 {
 	cn_cbor *pcn = CN_CALLOC(context);
-	if (pcn == NULL) {
-		if (errp != NULL) {
+	if (pcn == nullptr) {
+		if (errp != nullptr) {
 			errp->err = CN_CBOR_ERR_OUT_OF_MEMORY;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	pcn->type = CN_CBOR_FALSE + (boolValue != 0);
@@ -209,11 +209,11 @@ cn_cbor *cn_cbor_bool_create(int boolValue,
 cn_cbor *cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback *errp)
 {
 	cn_cbor *pcn = CN_CALLOC(context);
-	if (pcn == NULL) {
-		if (errp != NULL) {
+	if (pcn == nullptr) {
+		if (errp != nullptr) {
 			errp->err = CN_CBOR_ERR_OUT_OF_MEMORY;
 		}
-		return NULL;
+		return nullptr;
 	}
 	pcn->type = CN_CBOR_NULL;
 	return pcn;
@@ -222,6 +222,6 @@ cn_cbor *cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback *errp)
 
 size_t cn_cbor_encode_size(cn_cbor *object)
 {
-	ssize_t size = cn_cbor_encoder_write(NULL, 0, 0, object);
+	ssize_t size = cn_cbor_encoder_write(nullptr, 0, 0, object);
 	return size >= 0 ? size : 0;
 }

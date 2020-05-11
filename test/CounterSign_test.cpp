@@ -16,15 +16,15 @@
 
 void CounterSign_Corners()
 {
-	HCOSE_COUNTERSIGN hCounterSign = NULL;
-	HCOSE_COUNTERSIGN hBadHandle = NULL;
-	HCOSE_COUNTERSIGN hNULL = NULL;
+	HCOSE_COUNTERSIGN hCounterSign = nullptr;
+	HCOSE_COUNTERSIGN hBadHandle = nullptr;
+	HCOSE_COUNTERSIGN hNULL = nullptr;
 	cose_errback cose_error;
 	byte rgb[10];
 
-	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA nullptr);
 
-	hCounterSign = COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA NULL);
+	hCounterSign = COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
 	hBadHandle = (HCOSE_COUNTERSIGN)COSE_CALLOC(1, sizeof(COSE), context);
 #if INCLUDE_SIGN1
 	HCOSE_SIGN1 hSign1 = COSE_Sign1_Init(
@@ -52,7 +52,7 @@ void CounterSign_Corners()
 					  hNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_CounterSign_map_put_int(
-					  hNULL, 1, NULL, COSE_PROTECT_ONLY, &cose_error),
+					  hNULL, 1, nullptr, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_CounterSign_map_put_int(hCounterSign, 1, cn,
 					  COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error),
@@ -68,7 +68,7 @@ void CounterSign_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 	CHECK_FAILURE(COSE_Sign1_get_countersignature(hSign1, 3, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
-	((COSE_CounterSign *)hCounterSign)->m_next = NULL;
+	((COSE_CounterSign *)hCounterSign)->m_next = nullptr;
 	COSE_Sign1_add_countersignature(hSign1, hCounterSign, &cose_error);
 	CHECK_FAILURE(COSE_Sign1_get_countersignature(hSign1, 3, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
