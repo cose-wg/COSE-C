@@ -485,7 +485,7 @@ int SignMessage()
 {
 	HCOSE_SIGN hEncObj =
 		COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA NULL);
-	char *sz = "This is the content to be used";
+	const char *sz = "This is the content to be used";
 	size_t cb;
 	byte *rgb;
 
@@ -1089,8 +1089,6 @@ void Sign_Corners()
 	else {
 		CFails++;
 	}
-
-	return;
 }
 #endif
 

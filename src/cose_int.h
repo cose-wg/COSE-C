@@ -17,6 +17,7 @@ struct CounterSign1;
 typedef struct CounterSign1 COSE_CounterSign1;
 
 #define UNUSED(x) ((void)(x))
+#define COSE_MIN(A, B) ((A) < (B) ? (A) : (B))
 
 #ifndef _countof
 #define _countof(x) (sizeof(x) / sizeof(x[0]))

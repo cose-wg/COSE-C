@@ -1,5 +1,3 @@
-//  encrypt.c
-
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
@@ -16,6 +14,9 @@
 #include "test.h"
 #include "context.h"
 #include "cose_int.h"
+#include "utils.hpp"
+
+using namespace cose;
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4127)
@@ -53,9 +54,9 @@ bool DecryptMessage(const byte *pbEncoded,
 			COSE_Recipient_Free(hRecip2);
 		}
 
-		return fRet;		
+		return fRet;
 	}
-	
+
 	hEnc = (HCOSE_ENVELOPED)COSE_Decode(pbEncoded, cbEncoded, &type,
 		COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA & cose_err);
 	if (hEnc == NULL) {
@@ -610,13 +611,13 @@ int BuildEnvelopedMessage(const cn_cbor *pControl)
 	}
 
 	size_t cb = COSE_Encode((HCOSE)hEncObj, NULL, 0, 0) + 1;
-	byte *rgb = (byte *)malloc(cb);
-	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
+	std::shared_ptr<byte> rgb = make_managed_array<byte>(cb);
+
+	cb = COSE_Encode((HCOSE)hEncObj, rgb.get(), 0, cb);
 
 	COSE_Enveloped_Free(hEncObj);
 
-	int f = _ValidateEnveloped(pControl, rgb, cb);
-	free(rgb);
+	int f = _ValidateEnveloped(pControl, rgb.get(), cb);
 	return f;
 }
 
@@ -756,7 +757,7 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 	const cn_cbor *pFail = NULL;
 	const cn_cbor *pEncrypt = NULL;
 	const cn_cbor *pRecipients = NULL;
-	cn_cbor *pkey = NULL;	
+	cn_cbor *pkey = NULL;
 	HCOSE_ENCRYPT hEnc = NULL;
 	int type;
 	bool fFail = false;
@@ -797,7 +798,7 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		}
 
 		CFails += 1;
-		return 0;		
+		return 0;
 	}
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
@@ -1111,7 +1112,7 @@ int BuildEncryptMessage(const cn_cbor *pControl)
 	if (pkey != NULL) {
 		CN_CBOR_FREE(pkey, context);
 	}
-	
+
 	free(rgb);
 	return f;
 }
@@ -1292,8 +1293,6 @@ void Enveloped_Corners()
 
 	COSE_Enveloped_Free(hEncrypt);
 	COSE_Recipient_Free(hRecipient);
-
-	return;
 }
 #endif
 
@@ -1398,8 +1397,6 @@ void Encrypt_Corners()
 	CHECK_FAILURE(COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);
-
-	return;
 }
 #endif
 

@@ -159,8 +159,6 @@ void _COSE_Recipient_Free(COSE_RecipientInfo *pRecipient)
 	}
 
 	COSE_FREE(pRecipient, &pRecipient->m_encrypt.m_message.m_allocContext);
-
-	return;
 }
 #endif
 
