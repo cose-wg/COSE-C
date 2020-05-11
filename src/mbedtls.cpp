@@ -24,8 +24,6 @@
 
 static bool FUseCompressed = true;
 
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
-
 #ifdef INCLUDE_AES_CCM
 bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	int TSize,
@@ -41,7 +39,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	mbedtls_ccm_context ctx;
 	int cbOut = 0;
 	byte *rgbOut = nullptr;
-	int NSize = 15 - (LSize / 8);
+	size_t NSize = 15 - (LSize / 8);
 	byte rgbIV[15] = {0};
 	const cn_cbor *pIV = nullptr;
 	mbedtls_cipher_id_t cipher;
@@ -103,7 +101,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 	mbedtls_ccm_context ctx;
 	int cbOut;
 	byte *rgbOut = nullptr;
-	int NSize = 15 - (LSize / 8);
+	size_t NSize = 15 - (LSize / 8);
 	const cn_cbor *cbor_iv = nullptr;
 	cn_cbor *cbor_iv_t = nullptr;
 #ifdef USE_CBOR_CONTEXT

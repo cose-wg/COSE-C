@@ -1,7 +1,9 @@
 #include "cn-cbor/cn-cbor.h"
 #include <cose/cose.h>
 #include <stdlib.h>
-#ifndef __MBED__
+#ifdef __MBED__
+#include <string.h>
+#else
 #include <memory.h>
 #endif
 

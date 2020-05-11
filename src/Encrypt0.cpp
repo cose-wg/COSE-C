@@ -4,7 +4,9 @@
  */
 
 #include <stdlib.h>
-#ifndef __MBED__
+#ifdef __MBED__
+#include <string.h>
+#else
 #include <memory.h>
 #endif
 #include <stdio.h>

@@ -138,13 +138,12 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	cn_cbor *pCounter =
 		cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign);
 	if (pCounter != nullptr) {
-		int i;
 		CHECK_CONDITION(
 			pCounter->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 		CHECK_CONDITION(pCounter->length > 0, COSE_ERR_INVALID_PARAMETER);
 		if (pCounter->first_child->type == CN_CBOR_ARRAY) {
 			cn_cbor *pSig = pCounter->first_child;
-			for (i = 0; i < pCounter->length; i++, pSig = pSig->next) {
+			for (size_t i = 0; i < pCounter->length; i++, pSig = pSig->next) {
 				COSE_CounterSign *cs = _COSE_CounterSign_Init_From_Object(
 					pSig, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 				cs->m_next = pobj->m_counterSigners;
@@ -552,7 +551,6 @@ void _COSE_InsertInList(COSE **rootNode, COSE *newMsg)
 
 	newMsg->m_handleList = *rootNode;
 	*rootNode = newMsg;
-	return;
 }
 
 bool _COSE_IsInList(const COSE *const rootNode, const COSE *const thisMsg)
@@ -588,7 +586,6 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 			return;
 		}
 	}
-	return;
 }
 
 #ifndef NDEBUG

@@ -4,7 +4,11 @@
 #include "cose_crypto.h"
 
 #include <assert.h>
+#ifdef __MBED__
+#include <string.h>
+#else
 #include <memory.h>
+#endif
 #include <stdbool.h>
 
 #ifdef COSE_C_USE_OPENSSL
@@ -19,8 +23,6 @@
 #include <openssl/bn.h>
 
 static bool FUseCompressed = true;
-
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000)
 
@@ -73,7 +75,7 @@ bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte *rgbOut = nullptr;
-	int NSize = 15 - (LSize / 8);
+	size_t NSize = 15 - (LSize / 8);
 	int outl = 0;
 	byte rgbIV[15] = {0};
 	const cn_cbor *pIV = nullptr;
@@ -175,7 +177,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte *rgbOut = nullptr;
-	int NSize = 15 - (LSize / 8);
+	size_t NSize = 15 - (LSize / 8);
 	int outl = 0;
 	const cn_cbor *cbor_iv = nullptr;
 	cn_cbor *cbor_iv_t = nullptr;
@@ -791,7 +793,7 @@ bool HKDF_AES_Expand(COSE *pcose,
 			COSE_ERR_CRYPTO_FAIL);
 		for (ib2 = 0; ib2 < cbInfo; ib2 += 16) {
 			CHECK_CONDITION(EVP_EncryptUpdate(ctx, rgbOut, &cbOut, pbInfo + ib2,
-								(int)MIN(16, cbInfo - ib2)),
+								(int)COSE_MIN(16, cbInfo - ib2)),
 				COSE_ERR_CRYPTO_FAIL);
 		}
 		CHECK_CONDITION(EVP_EncryptUpdate(ctx, rgbOut, &cbOut, &bCount, 1),
@@ -803,7 +805,7 @@ bool HKDF_AES_Expand(COSE *pcose,
 		}
 		memcpy(rgbDigest, rgbOut, cbOut);
 		cbDigest = cbOut;
-		memcpy(pbOutput + ib, rgbDigest, MIN(16, cbOutput - ib));
+		memcpy(pbOutput + ib, rgbDigest, COSE_MIN(16, cbOutput - ib));
 	}
 
 	EVP_CIPHER_CTX_free(ctx);
@@ -931,7 +933,7 @@ bool HKDF_Expand(COSE *pcose,
 		CHECK_CONDITION(
 			HMAC_Final(ctx, rgbDigest, &cbDigest), COSE_ERR_CRYPTO_FAIL);
 
-		memcpy(pbOutput + ib, rgbDigest, MIN(cbDigest, cbOutput - ib));
+		memcpy(pbOutput + ib, rgbDigest, COSE_MIN(cbDigest, cbOutput - ib));
 	}
 
 	HMAC_CTX_free(ctx);
@@ -1060,7 +1062,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	cn_cbor *cn = _COSE_arrayget_int(&pcose->m_message, INDEX_MAC_TAG);
 	CHECK_CONDITION(cn != nullptr, COSE_ERR_CBOR);
 
-	if (cn->length > (int)cbOut) {
+	if (cn->length > cbOut) {
 		return false;
 	}
 	for (unsigned int i = 0; i < (unsigned int)TSize / 8; i++) {
@@ -1135,7 +1137,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_X);
 	CHECK_CONDITION(
 		(p != nullptr) && (p->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
-	CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(p->length == (size_t)*cbGroup, COSE_ERR_INVALID_PARAMETER);
 	memcpy(rgbKey + 1, p->v.str, p->length);
 
 	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_Y);
@@ -1143,7 +1145,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 	if (p->type == CN_CBOR_BYTES) {
 		rgbKey[0] = POINT_CONVERSION_UNCOMPRESSED;
 		cbKey = (*cbGroup * 2) + 1;
-		CHECK_CONDITION(p->length == *cbGroup, COSE_ERR_INVALID_PARAMETER);
+		CHECK_CONDITION(p->length == (size_t)*cbGroup, COSE_ERR_INVALID_PARAMETER);
 		memcpy(rgbKey + p->length + 1, p->v.str, p->length);
 	}
 	else if (p->type == CN_CBOR_TRUE) {

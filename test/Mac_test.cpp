@@ -510,7 +510,7 @@ int MacMessage()
 {
 	HCOSE_MAC hEncObj =
 		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
-	char *sz = "This is the content to be used";
+	const char *sz = "This is the content to be used";
 	byte rgbSecret[256 / 8] = {'a', 'b', 'c'};
 	byte rgbKid[6] = {'a', 'b', 'c', 'd', 'e', 'f'};
 	int cbKid = 6;
@@ -652,9 +652,9 @@ int _ValidateMac0(const cn_cbor *pControl,
 			COSE_Mac0_Free(hMAC);
 		}
 		CFails += 1;
-		return (fFail || fUnsuportedAlg) ? 0 : 1;		
+		return (fFail || fUnsuportedAlg) ? 0 : 1;
 	}
-	
+
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != nullptr) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;

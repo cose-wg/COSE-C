@@ -363,7 +363,7 @@ errorReturn:
 static bool CreateSign1AAD(COSE_Sign1Message *pMessage,
 	byte **ppbToSign,
 	size_t *pcbToSign,
-	char *szContext,
+	const char *szContext,
 	cose_errback *perr)
 {
 	cn_cbor *pArray = nullptr;

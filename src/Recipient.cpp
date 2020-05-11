@@ -1,5 +1,7 @@
 #include <stdlib.h>
-#ifndef __MBED__
+#ifdef __MBED__
+#include <string.h>
+#else
 #include <memory.h>
 #endif
 
@@ -157,8 +159,6 @@ void _COSE_Recipient_Free(COSE_RecipientInfo *pRecipient)
 	}
 
 	COSE_FREE(pRecipient, &pRecipient->m_encrypt.m_message.m_allocContext);
-
-	return;
 }
 #endif
 
