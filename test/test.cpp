@@ -277,17 +277,17 @@ int IsAlgorithmSupported(const cn_cbor* alg)
 byte* GetCBOREncoding(const cn_cbor* pControl, int* pcbEncoded)
 {
 	const cn_cbor* pOutputs = cn_cbor_mapget_string(pControl, "output");
-	byte* pb = nullptr;
+	byte* pb = NULL;
 	const byte* pb2;
 	size_t i;
 
-	if ((pOutputs == nullptr) || (pOutputs->type != CN_CBOR_MAP)) {
+	if ((pOutputs == NULL) || (pOutputs->type != CN_CBOR_MAP)) {
 		fprintf(stderr, "Invalid output\n");
 		exit(1);
 	}
 
 	const cn_cbor* pCBOR = cn_cbor_mapget_string(pOutputs, "cbor");
-	if ((pCBOR == nullptr) || (pCBOR->type != CN_CBOR_TEXT)) {
+	if ((pCBOR == NULL) || (pCBOR->type != CN_CBOR_TEXT)) {
 		fprintf(stderr, "Invalid cbor object");
 		exit(1);
 	}
@@ -331,17 +331,17 @@ bool SetAttributes(HCOSE hHandle,
 	bool fPublicKey)
 {
 	int keyNew = 0;
-	cn_cbor* pValueNew = nullptr;
+	cn_cbor* pValueNew = NULL;
 	bool fRet = true;
 
-	if (pAttributes == nullptr) {
+	if (pAttributes == NULL) {
 		return true;
 	}
 	if (pAttributes->type != CN_CBOR_MAP) {
 		return false;
 	}
 
-	for (const cn_cbor* pKey = pAttributes->first_child; pKey != nullptr;
+	for (const cn_cbor* pKey = pAttributes->first_child; pKey != NULL;
 		 pKey = pKey->next->next) {
 		const cn_cbor* pValue = pKey->next;
 
@@ -352,12 +352,12 @@ bool SetAttributes(HCOSE hHandle,
 		if (strcmp(pKey->v.str, "alg") == 0) {
 			keyNew = COSE_Header_Algorithm;
 			pValueNew = cn_cbor_int_create(
-				MapAlgorithmName(pValue), CBOR_CONTEXT_PARAM_COMMA nullptr);
+				MapAlgorithmName(pValue), CBOR_CONTEXT_PARAM_COMMA NULL);
 		}
 		else if (strcmp(pKey->v.str, "ctyp") == 0) {
 			keyNew = COSE_Header_Content_Type;
-			pValueNew = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA nullptr);
-			if (pValueNew == nullptr) {
+			pValueNew = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) {
 				return false;
 			}
 		}
@@ -365,44 +365,44 @@ bool SetAttributes(HCOSE hHandle,
 			keyNew = COSE_Header_IV;
 			pValueNew =
 				cn_cbor_data_create(FromHex(pValue->v.str, (int)pValue->length),
-					(int)pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA nullptr);
+					(int)pValue->length / 2, CBOR_CONTEXT_PARAM_COMMA NULL);
 		}
 		else if (strcmp(pKey->v.str, "apu_id") == 0) {
 			keyNew = COSE_Header_KDF_U_name;
 			pValueNew = cn_cbor_data_create(pValue->v.bytes,
-				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA nullptr);
-			if (pValueNew == nullptr) {
+				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) {
 				return false;
 			}
 		}
 		else if (strcmp(pKey->v.str, "apv_id") == 0) {
 			keyNew = COSE_Header_KDF_V_name;
 			pValueNew = cn_cbor_data_create(pValue->v.bytes,
-				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA nullptr);
-			if (pValueNew == nullptr) {
+				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) {
 				return false;
 			}
 		}
 		else if (strcmp(pKey->v.str, "pub_other") == 0) {
 			keyNew = COSE_Header_KDF_PUB_other;
 			pValueNew = cn_cbor_data_create(pValue->v.bytes,
-				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA nullptr);
-			if (pValueNew == nullptr) {
+				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) {
 				return false;
 			}
 		}
 		else if (strcmp(pKey->v.str, "priv_other") == 0) {
 			keyNew = COSE_Header_KDF_PRIV;
 			pValueNew = cn_cbor_data_create(pValue->v.bytes,
-				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA nullptr);
-			if (pValueNew == nullptr) {
+				(int)pValue->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			if (pValueNew == NULL) {
 				return false;
 			}
 		}
 		else if (strcmp(pKey->v.str, "spk") == 0) {
 			keyNew = COSE_Header_ECDH_STATIC;
 			pValueNew = BuildKey(pValue, fPublicKey);
-			if (pValueNew == nullptr) {
+			if (pValueNew == NULL) {
 				return false;
 			}
 		}
@@ -414,63 +414,63 @@ bool SetAttributes(HCOSE hHandle,
 #if INCLUDE_MAC
 			case Attributes_MAC_protected:
 				fRet &= COSE_Mac_map_put_int(
-					(HCOSE_MAC)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_MAC0
 			case Attributes_MAC0_protected:
 				fRet &= COSE_Mac0_map_put_int(
-					(HCOSE_MAC0)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 			case Attributes_Recipient_protected:
 				fRet &= COSE_Recipient_map_put_int(
-					(HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_ENCRYPT
 			case Attributes_Enveloped_protected:
 				fRet &= COSE_Enveloped_map_put_int(
-					(HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_ENCRYPT0
 			case Attributes_Encrypt_protected:
 				fRet &= COSE_Encrypt_map_put_int(
-					(HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_SIGN
 			case Attributes_Sign_protected:
 				fRet &= COSE_Sign_map_put_int(
-					(HCOSE_SIGN)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_SIGN
 			case Attributes_Signer_protected:
 				fRet &= COSE_Signer_map_put_int(
-					(HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_SIGN1
 			case Attributes_Sign1_protected:
 				fRet &= COSE_Sign1_map_put_int(
-					(HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE
 			case Attributes_Countersign_protected:
 				fRet &= COSE_CounterSign_map_put_int(
-					(HCOSE_COUNTERSIGN)hHandle, keyNew, pValueNew, which, nullptr);
+					(HCOSE_COUNTERSIGN)hHandle, keyNew, pValueNew, which, NULL);
 				break;
 #endif
 
@@ -503,9 +503,9 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 	}
 
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
-	if (pExternal != nullptr) {
+	if (pExternal != NULL) {
 		cn_cbor* pcn = pExternal;
-		if (pcn == nullptr) {
+		if (pcn == NULL) {
 			return false;
 		}
 		switch (base) {
@@ -513,7 +513,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Encrypt_protected:
 				if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -523,7 +523,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Enveloped_protected:
 				if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -533,7 +533,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_MAC_protected:
 				if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -543,7 +543,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_MAC0_protected:
 				if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -553,7 +553,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Signer_protected:
 				if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -563,7 +563,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Sign1_protected:
 				if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -572,7 +572,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Countersign_protected:
 				if (!COSE_CounterSign_SetExternal((HCOSE_COUNTERSIGN)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -596,9 +596,9 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 	}
 
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
-	if (pExternal != nullptr) {
+	if (pExternal != NULL) {
 		cn_cbor* pcn = pExternal;
-		if (pcn == nullptr) {
+		if (pcn == NULL) {
 			return false;
 		}
 		switch (base) {
@@ -607,7 +607,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Encrypt_protected:
 				if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -617,7 +617,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Enveloped_protected:
 				if (!COSE_Enveloped_SetExternal((HCOSE_ENVELOPED)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -627,7 +627,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_MAC_protected:
 				if (!COSE_Mac_SetExternal((HCOSE_MAC)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -637,7 +637,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_MAC0_protected:
 				if (!COSE_Mac0_SetExternal((HCOSE_MAC0)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -647,7 +647,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Signer_protected:
 				if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -657,7 +657,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Sign1_protected:
 				if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -666,7 +666,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 			case Attributes_Countersign_protected:
 				if (!COSE_CounterSign_SetExternal((HCOSE_COUNTERSIGN)hMsg,
 						FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2,
-						nullptr)) {
+						NULL)) {
 					return false;
 				}
 				break;
@@ -679,29 +679,29 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base)
 
 cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 {
-	cn_cbor* pKeyOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA nullptr);
+	cn_cbor* pKeyOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
 	cn_cbor* pKty = cn_cbor_mapget_string(pKeyIn, "kty");
-	cn_cbor* p = nullptr;
-	cn_cbor* pKey = nullptr;
-	cn_cbor* pValue = nullptr;
+	cn_cbor* p = NULL;
+	cn_cbor* pKey = NULL;
+	cn_cbor* pValue = NULL;
 	size_t i;
 	int kty;
-	unsigned char* pb = nullptr;
+	unsigned char* pb = NULL;
 	size_t cb;
 
-	if (pKeyOut == nullptr) {
-		return nullptr;
+	if (pKeyOut == NULL) {
+		return NULL;
 	}
 
-	if ((pKty == nullptr) || (pKty->type != CN_CBOR_TEXT)) {
-		return nullptr;
+	if ((pKty == NULL) || (pKty->type != CN_CBOR_TEXT)) {
+		return NULL;
 	}
 	if (pKty->length == 2) {
 		if (strncmp(pKty->v.str, "EC", 2) == 0) {
 			kty = 2;
 		}
 		else {
-			return nullptr;
+			return NULL;
 		}
 	}
 	else if (pKty->length == 3) {
@@ -712,22 +712,22 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 			kty = COSE_Key_Type_OKP;
 		}
 		else {
-			return nullptr;
+			return NULL;
 		}
 	}
 	else {
-		return nullptr;
+		return NULL;
 	}
 
-	p = cn_cbor_int_create(kty, CBOR_CONTEXT_PARAM_COMMA nullptr);
-	if (p == nullptr) {
-		return nullptr;
+	p = cn_cbor_int_create(kty, CBOR_CONTEXT_PARAM_COMMA NULL);
+	if (p == NULL) {
+		return NULL;
 	}
-	if (!cn_cbor_mapput_int(pKeyOut, 1, p, CBOR_CONTEXT_PARAM_COMMA nullptr)) {
-		return nullptr;
+	if (!cn_cbor_mapput_int(pKeyOut, 1, p, CBOR_CONTEXT_PARAM_COMMA NULL)) {
+		return NULL;
 	}
 
-	for (pKey = pKeyIn->first_child; pKey != nullptr; pKey = pKey->next->next) {
+	for (pKey = pKeyIn->first_child; pKey != NULL; pKey = pKey->next->next) {
 		pValue = pKey->next;
 
 		if (pKey->type == CN_CBOR_TEXT) {
@@ -741,14 +741,14 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 					switch (RgStringKeys[i].operation) {
 						case OPERATION_NONE:
 							p = cn_cbor_clone(
-								pValue, CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
-								return nullptr;
+								pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
+							if (p == NULL) {
+								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
 									RgStringKeys[i].keyNew, p,
-									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
-								return nullptr;
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
+								return NULL;
 							}
 							break;
 
@@ -760,28 +760,28 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 							pb = base64_decode(
 								pValue->v.str, pValue->length, &cb);
 							p = cn_cbor_data_create(
-								pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
-								return nullptr;
+								pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA NULL);
+							if (p == NULL) {
+								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
 									RgStringKeys[i].keyNew, p,
-									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
-								return nullptr;
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
+								return NULL;
 							}
 							break;
 
 						case OPERATION_STRING:
 							p = cn_cbor_int_create(MapName(pValue, RgCurveNames,
 													   _countof(RgCurveNames)),
-								CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
-								return nullptr;
+								CBOR_CONTEXT_PARAM_COMMA NULL);
+							if (p == NULL) {
+								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
 									RgStringKeys[i].keyNew, p,
-									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
-								return nullptr;
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
+								return NULL;
 							}
 							break;
 
@@ -792,14 +792,14 @@ cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 							}
 							pb = hex_decode(pValue->v.str, pValue->length, &cb);
 							p = cn_cbor_data_create(
-								pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
-								return nullptr;
+								pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA NULL);
+							if (p == NULL) {
+								return NULL;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
 									RgStringKeys[i].keyNew, p,
-									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
-								return nullptr;
+									CBOR_CONTEXT_PARAM_COMMA NULL)) {
+								return NULL;
 							}
 							break;
 					}
@@ -820,23 +820,23 @@ bool Test_cn_cbor_array_replace()
 	//  Cases that are not currently covered
 	//  1.  Pass in invalid arguements
 
-	cn_cbor_array_replace(nullptr, nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	cn_cbor_array_replace(NULL, NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	//  2.  Insert 0 item with no items currently in the list
-	pRoot = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA nullptr);
-	pItem = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA nullptr);
-	cn_cbor_array_replace(pRoot, pItem, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	pRoot = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
+	pItem = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor_array_replace(pRoot, pItem, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	//  3. Insert 0 item w/ exactly one item in the list
-	pItem = cn_cbor_int_create(6, CBOR_CONTEXT_PARAM_COMMA nullptr);
-	cn_cbor_array_replace(pRoot, pItem, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	pItem = cn_cbor_int_create(6, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor_array_replace(pRoot, pItem, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	//  4.  The last item in the array
-	pItem = cn_cbor_int_create(7, CBOR_CONTEXT_PARAM_COMMA nullptr);
-	cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	pItem = cn_cbor_int_create(7, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA NULL);
 
-	pItem = cn_cbor_int_create(8, CBOR_CONTEXT_PARAM_COMMA nullptr);
-	cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	pItem = cn_cbor_int_create(8, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor_array_replace(pRoot, pItem, 1, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	return true;
 }
@@ -878,7 +878,7 @@ static void RunMemoryTest(const char* szFileName)
 	int iFail;
 	const cn_cbor* pControl = ParseJson(szFileName);
 
-	if (pControl == nullptr) {
+	if (pControl == NULL) {
 		CFails += 1;
 		return;
 	}
@@ -888,7 +888,7 @@ static void RunMemoryTest(const char* szFileName)
 
 	const cn_cbor* pInput = cn_cbor_mapget_string(pControl, "input");
 
-	if ((pInput == nullptr) || (pInput->type != CN_CBOR_MAP)) {
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
 		fprintf(stderr, "No or bad input section");
 		exit(1);
 	}
@@ -899,7 +899,7 @@ static void RunMemoryTest(const char* szFileName)
 
 	for (iFail = 0; (!fValidateDone || !fBuildDone) && (iFail < 100000);
 		 iFail++) {
-		if (cn_cbor_mapget_string(pInput, "mac") != nullptr) {
+		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 #if INCLUDE_MAC
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -943,7 +943,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "mac0") != nullptr) {
+		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
 #if INCLUDE_MAC0
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -987,7 +987,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "encrypted") != nullptr) {
+		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
 #if INCLUDE_ENCRYPT0
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1031,7 +1031,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "enveloped") != nullptr) {
+		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
 #if INCLUDE_ENCRYPT
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1075,7 +1075,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "sign") != nullptr) {
+		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 #if INCLUDE_SIGN
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1119,7 +1119,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "sign0") != nullptr) {
+		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
 #if INCLUDE_SIGN1
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1165,7 +1165,7 @@ static void RunMemoryTest(const char* szFileName)
 		}
 		CFails = 0;
 	}
-	context = nullptr;
+	context = NULL;
 #else
 	return;
 #endif
@@ -1213,7 +1213,7 @@ bool ProcessFile(const cn_cbor* pControl,
 #endif
 #ifdef USE_CBOR_CONTEXT
 	FreeContext(context);
-	context = nullptr;
+	context = NULL;
 #endif
 	return true;
 }
@@ -1226,7 +1226,7 @@ static void RunFileTest(const char* szFileName)
 	//  If we are given a file name, then process the file name
 	//
 
-	if (pControl == nullptr) {
+	if (pControl == NULL) {
 		CFails += 1;
 		return;
 	}
@@ -1235,37 +1235,37 @@ static void RunFileTest(const char* szFileName)
 
 	const cn_cbor* pInput = cn_cbor_mapget_string(pControl, "input");
 
-	if ((pInput == nullptr) || (pInput->type != CN_CBOR_MAP)) {
+	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
 		fprintf(stderr, "No or bad input section");
 		exit(1);
 	}
 
-	if (cn_cbor_mapget_string(pInput, "mac") != nullptr) {
+	if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
 #if INCLUDE_MAC
 		ProcessFile(pControl, ValidateMAC, BuildMacMessage);
 #endif
 	}
-	else if (cn_cbor_mapget_string(pInput, "mac0") != nullptr) {
+	else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
 #if INCLUDE_MAC0
 		ProcessFile(pControl, ValidateMac0, BuildMac0Message);
 #endif
 	}
-	else if (cn_cbor_mapget_string(pInput, "enveloped") != nullptr) {
+	else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
 #if INCLUDE_ENCRYPT
 		ProcessFile(pControl, ValidateEnveloped, BuildEnvelopedMessage);
 #endif
 	}
-	else if (cn_cbor_mapget_string(pInput, "sign") != nullptr) {
+	else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
 #if INCLUDE_SIGN
 		ProcessFile(pControl, ValidateSigned, BuildSignedMessage);
 #endif
 	}
-	else if (cn_cbor_mapget_string(pInput, "sign0") != nullptr) {
+	else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
 #if INCLUDE_SIGN1
 		ProcessFile(pControl, ValidateSign1, BuildSign1Message);
 #endif
 	}
-	else if (cn_cbor_mapget_string(pInput, "encrypted") != nullptr) {
+	else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
 #if INCLUDE_ENCRYPT0
 		ProcessFile(pControl, ValidateEncrypt, BuildEncryptMessage);
 #endif
@@ -1329,7 +1329,7 @@ void RunTestsInDirectory(const char* szDir)
 	int ich;
 	int cFailTotal = 0;
 
-	if (dirp == nullptr) {
+	if (dirp == NULL) {
 		fprintf(stderr, "Cannot open directory '%s'\n", szDir);
 		exit(1);
 	}
@@ -1341,7 +1341,7 @@ void RunTestsInDirectory(const char* szDir)
 	strcat(rgchFullName, "/");
 	ich = strlen(rgchFullName);
 
-	while ((dp = readdir(dirp)) != nullptr) {
+	while ((dp = readdir(dirp)) != NULL) {
 		int cch = strlen(dp->d_name);
 		if (cch < 4)
 			continue;
@@ -1369,7 +1369,7 @@ void RunTestsInDirectory(const char* szDir)
 int main(int argc, char** argv)
 {
 	int i;
-	const char* szWhere = nullptr;
+	const char* szWhere = NULL;
 	bool fDir = false;
 	bool fCorners = false;
 	bool fMemory = false;
@@ -1402,14 +1402,14 @@ int main(int argc, char** argv)
 	//
 
 	if (fMemory) {
-		if (szWhere == nullptr) {
+		if (szWhere == NULL) {
 			fprintf(stderr, "Must specify a file name\n");
 			exit(1);
 		}
 		RunMemoryTest(szWhere);
 	}
-	else if (szWhere != nullptr) {
-		if (szWhere == nullptr) {
+	else if (szWhere != NULL) {
+		if (szWhere == NULL) {
 			fprintf(stderr, "Must specify a file name\n");
 			exit(1);
 		}
