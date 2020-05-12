@@ -57,17 +57,17 @@ COSE_CounterSign1* _COSE_CounterSign1_Init_From_Object(cn_cbor* cbor,
 	newBody = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cborError);
 	CHECK_CONDITION_CBOR(newBody != NULL, cborError);
 
-	cn2 = cn_cbor_data_create(NULL, 0, &cborError);	 // protected = bstr
+	cn2 = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cborError);	 // protected = bstr
 	CHECK_CONDITION_CBOR(cn2 != NULL, cborError);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
 
-	cn2 = cn_cbor_map_create(&cborError);  // unprotected = map
+	cn2 = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cborError);  // unprotected = map
 	CHECK_CONDITION_CBOR(cn2 != NULL, cborError);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
 
-	cn2 = cn_cbor_clone(cbor, &cborError);	// signature = bstr
+	cn2 = cn_cbor_clone(cbor, CBOR_CONTEXT_PARAM_COMMA &cborError);	// signature = bstr
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
 	cn2 = NULL;
@@ -380,6 +380,14 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 	cn_cbor_errback cborerr;
 	byte* sigValue = NULL;
 
+	if (false) {
+	errorReturn:
+		if (sigValue != NULL) {
+			COSE_FREE(sigValue, context);
+		}
+		return fRet;		
+	}
+
 	cn_cbor* pSignature = _COSE_arrayget_int(baseMessage, INDEX_SIGNATURE);
 
 	COSE_CounterSign1* pCountersign = baseMessage->m_counterSign1;
@@ -388,7 +396,7 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 		goto errorReturn;
 	}
 	if (!_COSE_Signer_sign(&pCountersign->m_signer, pSignature,
-			pcborProtectedSign, "CounterSignature0", perr)) {
+			pcborProtectedSign, "CounterSignature0", CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 
@@ -406,11 +414,7 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 		COSE_ERR_OUT_OF_MEMORY);
 
 	fRet = true;
-errorReturn:
-	if (sigValue != NULL) {
-		COSE_FREE(sigValue, context);
-	}
-	return fRet;
+	goto errorReturn;
 }
 
 /*! brief Retrieve header parameter from an enveloped message structure

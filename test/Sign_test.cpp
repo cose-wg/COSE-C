@@ -1018,7 +1018,7 @@ void Sign_Corners()
 	//  nullptr handle checks
 
 	CHECK_FAILURE(
-		COSE_Sign_SetContent(hSignnullptr, rgb, sizeof(rgb), &cose_error),
+		COSE_Sign_SetContent(hSignNULL, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_SetContent(hSignBad, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1026,7 +1026,7 @@ void Sign_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(
-		COSE_Sign_map_get_int(hSignnullptr, 1, COSE_BOTH, &cose_error),
+		COSE_Sign_map_get_int(hSignNULL, 1, COSE_BOTH, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_map_get_int(hSignBad, 1, COSE_BOTH, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1034,7 +1034,7 @@ void Sign_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(COSE_Sign_map_put_int(
-					  hSignnullptr, 1, cn, COSE_PROTECT_ONLY, &cose_error),
+					  hSignNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(
 		COSE_Sign_map_put_int(hSignBad, 1, cn, COSE_PROTECT_ONLY, &cose_error),
@@ -1046,46 +1046,46 @@ void Sign_Corners()
 					  COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign_AddSigner(hSignnullptr, hSigner, &cose_error),
+	CHECK_FAILURE(COSE_Sign_AddSigner(hSignNULL, hSigner, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_AddSigner(hSignBad, hSigner, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign_AddSigner(hSign, hSignernullptr, &cose_error),
+	CHECK_FAILURE(COSE_Sign_AddSigner(hSign, hSignerNULL, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_AddSigner(hSign, hSignerBad, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_RETURN(COSE_Sign_AddSigner(hSign, hSigner, &cose_error),
 		COSE_ERR_NONE, CFails++);
 
-	CHECK_FAILURE(COSE_Sign_add_signer(hSignnullptr, cn, 0, &cose_error),
+	CHECK_FAILURE(COSE_Sign_add_signer(hSignNULL, cn, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_add_signer(hSignBad, cn, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_add_signer(hSign, nullptr, 0, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign_GetSigner(hSignnullptr, 1, &cose_error),
+	CHECK_FAILURE(COSE_Sign_GetSigner(hSignNULL, 1, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_GetSigner(hSignBad, 1, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_GetSigner(hSign, 2, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign_Sign(hSignnullptr, &cose_error),
+	CHECK_FAILURE(COSE_Sign_Sign(hSignNULL, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_Sign(hSignBad, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 
-	CHECK_FAILURE(COSE_Sign_validate(hSignnullptr, hSigner, &cose_error),
+	CHECK_FAILURE(COSE_Sign_validate(hSignNULL, hSigner, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_validate(hSignBad, hSigner, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign_validate(hSign, hSignernullptr, &cose_error),
+	CHECK_FAILURE(COSE_Sign_validate(hSign, hSignerNULL, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_validate(hSign, hSignerBad, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 
-	CHECK_FAILURE(COSE_Signer_SetKey(hSignernullptr, cn, &cose_error),
+	CHECK_FAILURE(COSE_Signer_SetKey(hSignerNULL, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Signer_SetKey(hSignerBad, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1093,7 +1093,7 @@ void Sign_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(
-		COSE_Signer_map_get_int(hSignernullptr, 1, COSE_BOTH, &cose_error),
+		COSE_Signer_map_get_int(hSignerNULL, 1, COSE_BOTH, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(
 		COSE_Signer_map_get_int(hSignerBad, 1, COSE_BOTH, &cose_error),
@@ -1102,7 +1102,7 @@ void Sign_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(COSE_Signer_map_put_int(
-					  hSignernullptr, 1, cn, COSE_PROTECT_ONLY, &cose_error),
+					  hSignerNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Signer_map_put_int(
 					  hSignerBad, 1, cn, COSE_PROTECT_ONLY, &cose_error),
@@ -1115,7 +1115,7 @@ void Sign_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(
-		COSE_Signer_SetExternal(hSignernullptr, rgb, sizeof(rgb), &cose_error),
+		COSE_Signer_SetExternal(hSignerNULL, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(
 		COSE_Signer_SetExternal(hSignerBad, rgb, sizeof(rgb), &cose_error),
@@ -1218,7 +1218,7 @@ void Sign1_Corners()
 	//		bad handle checks
 	//		nullptr pointers
 
-	CHECK_FAILURE(COSE_Sign1_SetContent(hSignnullptr, rgb, 10, &cose_error),
+	CHECK_FAILURE(COSE_Sign1_SetContent(hSignNULL, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign1_SetContent(hSignBad, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1226,7 +1226,7 @@ void Sign1_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(
-		COSE_Sign1_map_get_int(hSignnullptr, 1, COSE_BOTH, &cose_error),
+		COSE_Sign1_map_get_int(hSignNULL, 1, COSE_BOTH, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign1_map_get_int(hSignBad, 1, COSE_BOTH, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1234,7 +1234,7 @@ void Sign1_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(COSE_Sign1_map_put_int(
-					  hSignnullptr, 1, cn, COSE_PROTECT_ONLY, &cose_error),
+					  hSignNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(
 		COSE_Sign1_map_put_int(hSignBad, 1, cn, COSE_PROTECT_ONLY, &cose_error),
@@ -1246,14 +1246,14 @@ void Sign1_Corners()
 					  COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign1_Sign(hSignnullptr, cn, &cose_error),
+	CHECK_FAILURE(COSE_Sign1_Sign(hSignNULL, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign1_Sign(hSignBad, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign1_Sign(hSign, nullptr, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign1_validate(hSignnullptr, cn, &cose_error),
+	CHECK_FAILURE(COSE_Sign1_validate(hSignNULL, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign1_validate(hSignBad, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1261,7 +1261,7 @@ void Sign1_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(
-		COSE_Sign1_SetExternal(hSignnullptr, rgb, sizeof(rgb), &cose_error),
+		COSE_Sign1_SetExternal(hSignNULL, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(
 		COSE_Sign1_SetExternal(hSignBad, rgb, sizeof(rgb), &cose_error),

@@ -295,9 +295,6 @@ bool COSE_Sign1_Sign2(HCOSE_SIGN1 h, HCOSE_KEY hKey, cose_errback *perr)
 bool COSE_Sign1_validate2(HCOSE_SIGN1 hSign, HCOSE_KEY hKey, cose_errback *perr)
 {
 	bool f;
-	COSE_Sign1Message *pSign;
-	const cn_cbor *cnContent;
-	const cn_cbor *cnProtected;
 	COSE_KEY *pcose = nullptr;
 
 	if (false) {
@@ -313,21 +310,21 @@ bool COSE_Sign1_validate2(HCOSE_SIGN1 hSign, HCOSE_KEY hKey, cose_errback *perr)
 
 	COSE_Sign1Message *pSign = (COSE_Sign1Message *)hSign;
 
-	cnContent = _COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
+	const cn_cbor* cnContent =
+		_COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
 	CHECK_CONDITION(cnContent != nullptr && cnContent->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
-	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
+	const cn_cbor* cnProtected = _COSE_arrayget_int(
+		&pSign->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pSign->m_message.m_allocContext;
 #endif
-
-	pcose = (COSE_KEY*) COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
-	CHECK_CONDITION(pKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
-
+	pcose = (COSE_KEY *)hKey;
+	
 	f = _COSE_Signer1_validate(pSign, pcose, perr);
 
 	return f;

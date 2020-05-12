@@ -169,5 +169,3 @@ class Safe_CN_CBOR {
 		return pIn;
 	}
 };
-
-#define COSE_MIN(A, B) ((A) <= (B) ? (A) : (B))
