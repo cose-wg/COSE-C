@@ -50,9 +50,9 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags,
 {
 	if (false) {
 	errorReturn:
-		return NULL;		
+		return NULL;
 	}
-	
+
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_Encrypt *pobj =
 		(COSE_Encrypt *)COSE_CALLOC(1, sizeof(COSE_Encrypt), context);

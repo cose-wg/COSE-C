@@ -26,9 +26,7 @@ abseil-*,                                               \
 -modernize-use-trailing-return-type,                    \
 -fuchsia-default-arguments-calls,                       \
 # TODO remove following lines,                          \
--readability-braces-around-statements,                  \
 -cppcoreguidelines-avoid-magic-numbers,                 \
--hicpp-braces-around-statements,                         \
 -readability-magic-numbers,             \
 -cppcoreguidelines-avoid-magic-numbers,         \
 -cppcoreguidelines-init-variables,          \

@@ -4,6 +4,7 @@
 
 #include "cose/cose.h"
 #include "context.h"
+#include "cose_int.h"
 
 #ifdef USE_CBOR_CONTEXT
 extern cn_cbor_context* context;
@@ -16,11 +17,11 @@ extern cn_cbor_context* context;
 
 //  encrypt.c
 
-int ValidateEnveloped(const cn_cbor* pControl);
+bool ValidateEnveloped(const cn_cbor* pControl);
 int EncryptMessage();
-int BuildEnvelopedMessage(const cn_cbor* pControl);
-int ValidateEncrypt(const cn_cbor* pControl);
-int BuildEncryptMessage(const cn_cbor* pControl);
+bool BuildEnvelopedMessage(const cn_cbor* pControl);
+bool ValidateEncrypt(const cn_cbor* pControl);
+bool BuildEncryptMessage(const cn_cbor* pControl);
 void Enveloped_Corners();
 void Encrypt_Corners();
 void Recipient_Corners();
@@ -28,21 +29,21 @@ void CounterSign_Corners();
 
 //  sign.c
 
-int ValidateSigned(const cn_cbor* pControl);
+bool ValidateSigned(const cn_cbor* pControl);
 int SignMessage();
-int BuildSignedMessage(const cn_cbor* pControl);
-int ValidateSign1(const cn_cbor* pControl);
-int BuildSign1Message(const cn_cbor* pControl);
+bool BuildSignedMessage(const cn_cbor* pControl);
+bool ValidateSign1(const cn_cbor* pControl);
+bool BuildSign1Message(const cn_cbor* pControl);
 void Sign_Corners();
 void Sign1_Corners();
 
 // mac_testc
 
-int ValidateMAC(const cn_cbor* pControl);
+bool ValidateMAC(const cn_cbor* pControl);
 int MacMessage();
-int BuildMacMessage(const cn_cbor* pControl);
-int ValidateMac0(const cn_cbor* pControl);
-int BuildMac0Message(const cn_cbor* pControl);
+bool BuildMacMessage(const cn_cbor* pControl);
+bool ValidateMac0(const cn_cbor* pControl);
+bool BuildMac0Message(const cn_cbor* pControl);
 void MAC_Corners();
 void MAC0_Corners();
 
@@ -56,7 +57,8 @@ typedef enum {
 	Attributes_Sign_protected,
 	Attributes_Signer_protected,
 	Attributes_Sign1_protected,
-	Attributes_Countersign_protected
+	Attributes_Countersign_protected,
+	Attributes_Countersign1_protected
 } whichSet;
 
 extern int CFails;
@@ -65,10 +67,11 @@ int MapAlgorithmName(const cn_cbor* p);
 byte* GetCBOREncoding(const cn_cbor* pControl, int* pcbEncoded);
 // bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which,
 // bool fPublicKey);
-cn_cbor* BuildKey(const cn_cbor* pKeyIn, bool fPublicKey);
+HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey);
+cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey);
 byte* FromHex(const char* rgch, int cch);
-bool SetSendingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base);
-bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor* pIn, int base);
+bool SetSendingAttributes(void* pMsg, const cn_cbor* pIn, int base);
+bool SetReceivingAttributes(void* pMsg, const cn_cbor* pIn, int base);
 int IsAlgorithmSupported(const cn_cbor* alg);
 
 //
@@ -102,3 +105,69 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		else if (errorReturn != COSE_ERR_NONE)                  \
 			onFailure;                                          \
 	}
+
+#define Safe_Handle(handleName, freeFunction)          \
+	class Safe_##handleName {                          \
+		handleName h;                                  \
+                                                       \
+	   public:                                         \
+		Safe_##handleName() { h = NULL; }              \
+		Safe_##handleName(handleName hIn) { h = hIn; } \
+		~Safe_##handleName() { freeFunction(h); }      \
+		handleName Set(handleName hIn)                 \
+		{                                              \
+			if (h != NULL) {                           \
+				freeFunction(h);                       \
+			}                                          \
+			h = hIn;                                   \
+			return hIn;                                \
+		}                                              \
+		bool IsNull() { return h == NULL; }            \
+		HCOSE ToCOSE() { return (HCOSE)h; }            \
+		operator handleName() { return h; }            \
+		handleName operator=(handleName pIn)           \
+		{                                              \
+			Set(pIn);                                  \
+			return pIn;                                \
+		}                                              \
+		void Clear() { h = NULL; }                     \
+	};
+
+Safe_Handle(HCOSE_ENCRYPT, COSE_Encrypt_Free);
+Safe_Handle(HCOSE_ENVELOPED, COSE_Enveloped_Free);
+Safe_Handle(HCOSE_RECIPIENT, COSE_Recipient_Free);
+Safe_Handle(HCOSE_COUNTERSIGN, COSE_CounterSign_Free);
+Safe_Handle(HCOSE_COUNTERSIGN1, COSE_CounterSign1_Free);
+Safe_Handle(HCOSE_KEY, COSE_KEY_Free);
+Safe_Handle(HCOSE_MAC, COSE_Mac_Free);
+Safe_Handle(HCOSE_MAC0, COSE_Mac0_Free);
+Safe_Handle(HCOSE_SIGN, COSE_Sign_Free);
+Safe_Handle(HCOSE_SIGN1, COSE_Sign1_Free);
+Safe_Handle(HCOSE_SIGNER, COSE_Signer_Free);
+
+class Safe_CN_CBOR {
+	cn_cbor* p;
+
+   public:
+	Safe_CN_CBOR() { p = NULL; }
+	Safe_CN_CBOR(cn_cbor* pIn) { p = pIn; }
+	~Safe_CN_CBOR() { CN_CBOR_FREE(p, context); };
+	cn_cbor* Set(cn_cbor* pIn)
+	{
+		if (p != NULL) {
+			CN_CBOR_FREE(p, context);
+		}
+		p = pIn;
+		return pIn;
+	}
+	inline bool IsNull() { return p == NULL; }
+	inline operator cn_cbor*() { return p; }
+	inline void Clear() { p = NULL; }
+	inline cn_cbor* operator=(cn_cbor* pIn)
+	{
+		Set(pIn);
+		return pIn;
+	}
+};
+
+#define COSE_MIN(A, B) ((A) <= (B) ? (A) : (B))

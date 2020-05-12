@@ -114,7 +114,7 @@ void MyFree(void *ptr, void *context)
 
 cn_cbor_context *CreateContext(int iFailPoint)
 {
-	MyContext *p = (MyContext*) malloc(sizeof(MyContext));
+	MyContext *p = (MyContext *)malloc(sizeof(MyContext));
 
 	p->context.calloc_func = MyCalloc;
 	p->context.free_func = MyFree;

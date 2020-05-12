@@ -50,9 +50,9 @@ HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags,
 {
 	if (false) {
 	errorReturn:
-		return NULL;		
+		return NULL;
 	}
-	
+
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_Sign1Message *pobj =
 		(COSE_Sign1Message *)COSE_CALLOC(1, sizeof(COSE_Sign1Message), context);
@@ -226,7 +226,7 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 		if (cose != NULL) {
 			COSE_KEY_Free(cose);
 		}
-		return fRet;		
+		return fRet;
 	}
 
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -234,7 +234,7 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = NULL;
 #endif
-	
+
 	cose = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
 	if (cose == NULL) {
 		goto errorReturn;
@@ -243,7 +243,6 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 	fRet = COSE_Sign1_Sign2(h, cose, perr);
 	goto errorReturn;
 }
-
 
 bool COSE_Sign1_Sign2(HCOSE_SIGN1 h, HCOSE_KEY hKey, cose_errback *perr)
 {
@@ -259,7 +258,7 @@ bool COSE_Sign1_Sign2(HCOSE_SIGN1 h, HCOSE_KEY hKey, cose_errback *perr)
 		return false;
 	}
 	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_HANDLE);
-	
+
 #ifdef USE_CBOR_CONTEXT
 	context = &pMessage->m_message.m_allocContext;
 #endif
@@ -269,7 +268,7 @@ bool COSE_Sign1_Sign2(HCOSE_SIGN1 h, HCOSE_KEY hKey, cose_errback *perr)
 		goto errorReturn;
 	}
 
-	if (!_COSE_Signer1_sign(pMessage, (COSE_KEY*) hKey, perr)) {
+	if (!_COSE_Signer1_sign(pMessage, (COSE_KEY *)hKey, perr)) {
 		goto errorReturn;
 	}
 
@@ -281,37 +280,39 @@ bool COSE_Sign1_Sign2(HCOSE_SIGN1 h, HCOSE_KEY hKey, cose_errback *perr)
 		}
 	}
 #endif
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pMessage->m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
+				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
 
 	return true;
 }
 
-bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
-	const cn_cbor *pKey,
-	cose_errback *perr)
+bool COSE_Sign1_validate2(HCOSE_SIGN1 hSign, HCOSE_KEY hKey, cose_errback *perr)
 {
 	bool f;
-	COSE_Sign1Message *pSign;
-	const cn_cbor *cnContent;
-	const cn_cbor *cnProtected;
-	COSE_KEY *pcose = NULL;
 
 	if (false) {
 	errorReturn:
-		if (pcose != NULL) {
-			COSE_KEY_Free((HCOSE_KEY)pcose);
-		}
-		return false;		
+		return false;
 	}
 
 	CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_HANDLE);
 
-	pSign = (COSE_Sign1Message *)hSign;
+	COSE_Sign1Message *pSign = (COSE_Sign1Message *)hSign;
 
-	cnContent = _COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
+	const cn_cbor *cnContent =
+		_COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
 	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
-	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
+	const cn_cbor *cnProtected =
+		_COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
 	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
@@ -319,12 +320,34 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	cn_cbor_context *context = &pSign->m_message.m_allocContext;
 #endif
 
-	pcose = (COSE_KEY*) COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
-	CHECK_CONDITION(pKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+	COSE_KEY *pcose = (COSE_KEY *)hKey;
 
 	f = _COSE_Signer1_validate(pSign, pcose, perr);
 
-	COSE_KEY_Free((HCOSE_KEY)pcose);
+	return f;
+}
+
+bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
+	const cn_cbor *pKey,
+	cose_errback *perr)
+{
+	if (false) {
+	errorReturn:
+		return false;
+	}
+
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = &pSign->m_message.m_allocContext;
+#endif
+
+	HCOSE_KEY hcose =
+		COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
+	CHECK_CONDITION(pKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+
+	bool f = COSE_Sign1_validate2(hSign, hcose, perr);
+
+	COSE_KEY_Free(hcose);
+
 	return f;
 }
 

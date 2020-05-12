@@ -49,7 +49,7 @@ HCOSE_SIGN COSE_Sign_Init(COSE_INIT_FLAGS flags,
 {
 	if (false) {
 	errorReturn:
-		return NULL;		
+		return NULL;
 	}
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_SignMessage *pobj =
@@ -313,6 +313,15 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 #if INCLUDE_COUNTERSIGNATURE
 	if (pMessage->m_message.m_counterSigners != NULL) {
 		if (!_COSE_CounterSign_Sign(
+				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pMessage->m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
 				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
 		}

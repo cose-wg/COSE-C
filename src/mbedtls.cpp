@@ -123,7 +123,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 	cbor_iv =
 		_COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, perr);
 	if (cbor_iv == NULL) {
-		pbIV = (byte *) COSE_CALLOC(NSize, 1, context);
+		pbIV = (byte *)COSE_CALLOC(NSize, 1, context);
 		CHECK_CONDITION(pbIV != NULL, COSE_ERR_OUT_OF_MEMORY);
 		rand_bytes(pbIV, NSize);
 		memcpy(rgbIV, pbIV, NSize);
@@ -162,8 +162,8 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 						&rgbOut[pcose->cbContent], TSize),
 		COSE_ERR_CRYPTO_FAIL);
 
-	cnTmp = cn_cbor_data_create2(
-		rgbOut, (int)pcose->cbContent + TSize, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cnTmp = cn_cbor_data_create2(rgbOut, (int)pcose->cbContent + TSize, 0,
+		CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	rgbOut = NULL;
 
@@ -315,9 +315,9 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 			COSE_FREE(rgbOut, context);
 		}
 		mbedtls_gcm_free(&ctx);
-		return false;		
+		return false;
 	}
-	
+
 	// Make it first so we can clean it up
 	mbedtls_gcm_init(&ctx);
 
@@ -326,7 +326,7 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 	cbor_iv =
 		_COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, perr);
 	if (cbor_iv == NULL) {
-		pbIV = (byte*) COSE_CALLOC(96, 1, context);
+		pbIV = (byte *)COSE_CALLOC(96, 1, context);
 		CHECK_CONDITION(pbIV != NULL, COSE_ERR_OUT_OF_MEMORY);
 		rand_bytes(pbIV, 96 / 8);
 		memcpy(rgbIV, pbIV, 96 / 8);
@@ -380,8 +380,8 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		mbedtls_gcm_finish(&ctx, &rgbOut[pcose->cbContent], 128 / 8),
 		COSE_ERR_CRYPTO_FAIL);
 
-	cn_cbor *cnTmp = cn_cbor_data_create2(
-		rgbOut, (int)pcose->cbContent + 128 / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor *cnTmp = cn_cbor_data_create2(rgbOut,
+		(int)pcose->cbContent + 128 / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	rgbOut = NULL;
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cnTmp, INDEX_BODY,
@@ -389,7 +389,7 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 		COSE_ERR_CBOR);
 
 	mbedtls_gcm_free(&ctx);
-	
+
 	if (pbIV != NULL) {
 		COSE_FREE(pbIV, context);
 	}
@@ -563,7 +563,7 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	info = mbedtls_md_info_from_string(md_name);
 	mbedtls_md_setup(&contx, info, 1);
 
-	rgbOut = (byte *) COSE_CALLOC(mbedtls_md_get_size(info), 1, context);
+	rgbOut = (byte *)COSE_CALLOC(mbedtls_md_get_size(info), 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(
@@ -612,9 +612,8 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 			COSE_FREE(rgbOut, context);
 		}
 		mbedtls_md_free(&contx);
-		return false;		
+		return false;
 	}
-
 
 	switch (HSize) {
 		case 256:
@@ -636,7 +635,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	mbedtls_md_setup(&contx, info, 1);
 
 	cbOut = mbedtls_md_get_size(info);
-	rgbOut = (byte*) COSE_CALLOC(cbOut, 1, context);
+	rgbOut = (byte *)COSE_CALLOC(cbOut, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(
@@ -823,7 +822,7 @@ bool ECDSA_Sign(COSE *pSigner,
 
 	cbR = (keypair.grp.nbits + 7) / 8;
 
-	pbSig = (byte *) COSE_CALLOC(cbR, 2, context);
+	pbSig = (byte *)COSE_CALLOC(cbR, 2, context);
 	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(
@@ -1154,7 +1153,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		mbedtls_ecp_group_free(&group);
 		mbedtls_ecp_keypair_free(&keypair);
 		mbedtls_ecdh_free(&ctx);
-		return fRet;		
+		return fRet;
 	}
 
 	p = cn_cbor_mapget_int(pKeyPublic->m_cborKey, COSE_Key_EC_Curve);
@@ -1210,7 +1209,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			COSE_ERR_CRYPTO_FAIL);
 
 		cn_cbor_errback cbor_error;
-		int cbSize = (int) (olen - 1) / 2;
+		int cbSize = (int)(olen - 1) / 2;
 
 		pkey = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(pkey != NULL, cbor_error);
@@ -1219,11 +1218,11 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			cose_group, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != NULL, cbor_error);
 		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Curve, p,
-								 CBOR_CONTEXT_PARAM_COMMA &cbor_error),
+								 CBOR_CONTEXT_PARAM_COMMA & cbor_error),
 			cbor_error);
 		p = NULL;
 
-		pbsecret = (byte *) COSE_CALLOC(cbSize, 1, context);
+		pbsecret = (byte *)COSE_CALLOC(cbSize, 1, context);
 		CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
 		memcpy(pbsecret, buff + 1, cbSize);
 
@@ -1236,7 +1235,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			cbor_error);
 		p = NULL;
 
-		pbsecret = (byte *) COSE_CALLOC(cbSize, 1, context);
+		pbsecret = (byte *)COSE_CALLOC(cbSize, 1, context);
 		CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
 		memcpy(pbsecret, buff + 1 + cbSize, cbSize);
 
@@ -1257,7 +1256,8 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			cbor_error);
 		p = NULL;
 
-		COSE_KEY *coseKey = (COSE_KEY*) COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
+		COSE_KEY *coseKey =
+			(COSE_KEY *)COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
 		if (coseKey == NULL) {
 			goto errorReturn;
 		}
@@ -1280,7 +1280,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		COSE_ERR_CRYPTO_FAIL);
 
 	cbsecret = cbGroup;
-	pbsecret = (byte *) COSE_CALLOC(cbsecret, 1, context);
+	pbsecret = (byte *)COSE_CALLOC(cbsecret, 1, context);
 	CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION0(

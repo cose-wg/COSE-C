@@ -30,7 +30,7 @@ static bool FUseCompressed = true;
 
 HMAC_CTX *HMAC_CTX_new()
 {
-	HMAC_CTX *foo = (HMAC_CTX *) malloc(sizeof(HMAC_CTX));
+	HMAC_CTX *foo = (HMAC_CTX *)malloc(sizeof(HMAC_CTX));
 	if (foo != NULL) {
 		HMAC_CTX_init(foo);
 	}
@@ -217,7 +217,7 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 	cbor_iv =
 		_COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, perr);
 	if (cbor_iv == NULL) {
-		pbIV = (byte *) COSE_CALLOC(NSize, 1, context);
+		pbIV = (byte *)COSE_CALLOC(NSize, 1, context);
 		CHECK_CONDITION(pbIV != NULL, COSE_ERR_OUT_OF_MEMORY);
 		rand_bytes(pbIV, NSize);
 		memcpy(rgbIV, pbIV, NSize);
@@ -277,8 +277,8 @@ bool AES_CCM_Encrypt(COSE_Enveloped *pcose,
 						&rgbOut[pcose->cbContent]),
 		COSE_ERR_CRYPTO_FAIL);
 
-	cnTmp = cn_cbor_data_create2(
-		rgbOut, (int)pcose->cbContent + TSize, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cnTmp = cn_cbor_data_create2(rgbOut, (int)pcose->cbContent + TSize, 0,
+		CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	rgbOut = NULL;
 
@@ -451,9 +451,9 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 			COSE_FREE(rgbOut, context);
 		}
 		EVP_CIPHER_CTX_free(ctx);
-		return false;		
+		return false;
 	}
-	
+
 	// Make it first so we can clean it up
 	ctx = EVP_CIPHER_CTX_new();
 	CHECK_CONDITION(NULL != ctx, COSE_ERR_OUT_OF_MEMORY);
@@ -463,7 +463,7 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 	cbor_iv =
 		_COSE_map_get_int(&pcose->m_message, COSE_Header_IV, COSE_BOTH, perr);
 	if (cbor_iv == NULL) {
-		pbIV = (byte *) COSE_CALLOC(96, 1, context);
+		pbIV = (byte *)COSE_CALLOC(96, 1, context);
 		CHECK_CONDITION(pbIV != NULL, COSE_ERR_OUT_OF_MEMORY);
 		rand_bytes(pbIV, 96 / 8);
 		memcpy(rgbIV, pbIV, 96 / 8);
@@ -529,8 +529,8 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 						&rgbOut[pcose->cbContent]),
 		COSE_ERR_CRYPTO_FAIL);
 
-	cn_cbor *cnTmp = cn_cbor_data_create2(
-		rgbOut, (int)pcose->cbContent + 128 / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn_cbor *cnTmp = cn_cbor_data_create2(rgbOut,
+		(int)pcose->cbContent + 128 / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cnTmp != NULL, COSE_ERR_CBOR);
 	rgbOut = NULL;
 	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cnTmp, INDEX_BODY,
@@ -568,7 +568,7 @@ bool AES_CBC_MAC_Create(COSE_MacMessage *pcose,
 	ctx = EVP_CIPHER_CTX_new();
 	CHECK_CONDITION(NULL != ctx, COSE_ERR_OUT_OF_MEMORY);
 
-	rgbOut = (byte *) COSE_CALLOC(16, 1, context);
+	rgbOut = (byte *)COSE_CALLOC(16, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	switch (cbKey * 8) {
@@ -603,7 +603,8 @@ bool AES_CBC_MAC_Create(COSE_MacMessage *pcose,
 			COSE_ERR_CRYPTO_FAIL);
 	}
 
-	cn = cn_cbor_data_create2(rgbOut, TSize / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cn = cn_cbor_data_create2(
+		rgbOut, TSize / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cn != NULL, COSE_ERR_OUT_OF_MEMORY);
 	rgbOut = NULL;
 
@@ -645,7 +646,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage *pcose,
 	if (false) {
 	errorReturn:
 		EVP_CIPHER_CTX_free(ctx);
-		return false;		
+		return false;
 	}
 	switch (cbKey * 8) {
 		case 128:
@@ -988,7 +989,7 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 			break;
 	}
 
-	rgbOut = (byte *) COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
+	rgbOut = (byte *)COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(
@@ -997,11 +998,12 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 		HMAC_Update(ctx, pbAuthData, cbAuthData), COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(HMAC_Final(ctx, rgbOut, &cbOut), COSE_ERR_CRYPTO_FAIL);
 
-cbor =							cn_cbor_data_create2(rgbOut, TSize / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+	cbor = cn_cbor_data_create2(
+		rgbOut, TSize / 8, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	CHECK_CONDITION(cbor != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cbor,
-						INDEX_MAC_TAG, CBOR_CONTEXT_PARAM_COMMA NULL),
+	CHECK_CONDITION(_COSE_array_replace(&pcose->m_message, cbor, INDEX_MAC_TAG,
+						CBOR_CONTEXT_PARAM_COMMA NULL),
 		COSE_ERR_CBOR);
 
 	HMAC_CTX_free(ctx);
@@ -1020,7 +1022,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	HMAC_CTX *ctx = NULL;
 	const EVP_MD *pmd = NULL;
 	byte *rgbOut = NULL;
-	unsigned int cbOut = 0 ;
+	unsigned int cbOut = 0;
 	bool f = false;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
@@ -1032,7 +1034,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 			COSE_FREE(rgbOut, context);
 		}
 		HMAC_CTX_free(ctx);
-		return false;		
+		return false;
 	}
 	ctx = HMAC_CTX_new();
 	CHECK_CONDITION(ctx != NULL, COSE_ERR_OUT_OF_MEMORY);
@@ -1052,7 +1054,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 			break;
 	}
 
-	rgbOut = (byte *) COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
+	rgbOut = (byte *)COSE_CALLOC(EVP_MAX_MD_SIZE, 1, context);
 	CHECK_CONDITION(rgbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(
@@ -1090,7 +1092,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 		if (pNewKey != NULL) {
 			EC_KEY_free(pNewKey);
 		}
-		return NULL;		
+		return NULL;
 	}
 
 	if (pKey->m_opensslKey != NULL) {
@@ -1098,7 +1100,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 		CHECK_CONDITION(pKeyNew != NULL, COSE_ERR_INVALID_PARAMETER);
 		return pKeyNew;
 	}
-	
+
 	byte rgbKey[512 + 1];
 	int cbKey;
 	const cn_cbor *p;
@@ -1107,7 +1109,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 
 	pNewKey = EC_KEY_new();
 	CHECK_CONDITION(pNewKey != NULL, COSE_ERR_OUT_OF_MEMORY);
-	
+
 	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_Curve);
 	CHECK_CONDITION(p != NULL, COSE_ERR_INVALID_PARAMETER);
 
@@ -1181,8 +1183,9 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 
 	pKey->m_opensslKey = EVP_PKEY_new();
 	CHECK_CONDITION(pKey->m_opensslKey != NULL, COSE_ERR_OUT_OF_MEMORY);
-	
-	CHECK_CONDITION(EVP_PKEY_set1_EC_KEY(pKey->m_opensslKey, pNewKey) == 1, COSE_ERR_CRYPTO_FAIL);
+
+	CHECK_CONDITION(EVP_PKEY_set1_EC_KEY(pKey->m_opensslKey, pNewKey) == 1,
+		COSE_ERR_CRYPTO_FAIL);
 
 	return pNewKey;
 }
@@ -1235,7 +1238,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		cbSize = EC_POINT_point2oct(
 			pgroup, pPoint, POINT_CONVERSION_COMPRESSED, NULL, 0, NULL);
 		CHECK_CONDITION(cbSize > 0, COSE_ERR_CRYPTO_FAIL);
-		pbPoint = (byte *) COSE_CALLOC(cbSize, 1, context);
+		pbPoint = (byte *)COSE_CALLOC(cbSize, 1, context);
 		CHECK_CONDITION(pbPoint != NULL, COSE_ERR_OUT_OF_MEMORY);
 		CHECK_CONDITION(
 			EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_COMPRESSED,
@@ -1246,7 +1249,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		cbSize = EC_POINT_point2oct(
 			pgroup, pPoint, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
 		CHECK_CONDITION(cbSize > 0, COSE_ERR_CRYPTO_FAIL);
-		pbPoint = (byte *) COSE_CALLOC(cbSize, 1, context);
+		pbPoint = (byte *)COSE_CALLOC(cbSize, 1, context);
 		CHECK_CONDITION(pbPoint != NULL, COSE_ERR_OUT_OF_MEMORY);
 		CHECK_CONDITION(
 			EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_UNCOMPRESSED,
@@ -1254,7 +1257,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 			COSE_ERR_CRYPTO_FAIL);
 	}
 
-	pbOut = (byte *) COSE_CALLOC((int)(cbSize / 2), 1, context);
+	pbOut = (byte *)COSE_CALLOC((int)(cbSize / 2), 1, context);
 	CHECK_CONDITION(pbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 	memcpy(pbOut, pbPoint + 1, (int)(cbSize / 2));
 	p = cn_cbor_data_create2(
@@ -1276,13 +1279,13 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		p = NULL;
 	}
 	else {
-		pbOut = (byte *) COSE_CALLOC((int)(cbSize / 2), 1, context);
+		pbOut = (byte *)COSE_CALLOC((int)(cbSize / 2), 1, context);
 		CHECK_CONDITION(pbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 		memcpy(pbOut, pbPoint + cbSize / 2 + 1, (int)(cbSize / 2));
-		p = cn_cbor_data_create2(pbOut, (int)(cbSize / 2), 0,
-			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		p = cn_cbor_data_create2(
+			pbOut, (int)(cbSize / 2), 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != NULL, cbor_error);
-		pbOut = NULL; 
+		pbOut = NULL;
 		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Y, p,
 								 CBOR_CONTEXT_PARAM_COMMA & cbor_error),
 			cbor_error);
@@ -1297,7 +1300,8 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		cbor_error);
 	p = NULL;
 
-	coseKey = (COSE_KEY*) COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
+	coseKey =
+		(COSE_KEY *)COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
 	CHECK_CONDITION(coseKey != NULL, COSE_ERR_OUT_OF_MEMORY);
 	pkey = NULL;
 
@@ -1391,7 +1395,7 @@ bool ECDSA_Sign(COSE *pSigner,
 	psig = ECDSA_do_sign(rgbDigest, cbDigest, eckey);
 	CHECK_CONDITION(psig != NULL, COSE_ERR_CRYPTO_FAIL);
 
-	pbSig = (byte *) COSE_CALLOC(cbR, 2, context);
+	pbSig = (byte *)COSE_CALLOC(cbR, 2, context);
 	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	const BIGNUM *r;
@@ -1573,7 +1577,7 @@ bool EdDSA_Sign(COSE *pSigner,
 		COSE_ERR_CRYPTO_FAIL);
 	keyCtx = NULL;
 
-	pbSig = (byte *) COSE_CALLOC(cbSig, 1, context);
+	pbSig = (byte *)COSE_CALLOC(cbSig, 1, context);
 	CHECK_CONDITION(pbSig != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	size_t cb2 = cbSig;
@@ -1714,7 +1718,7 @@ bool AES_KW_Encrypt(COSE_RecipientInfo *pcose,
 #endif
 	cn_cbor *cnTmp = NULL;
 
-	pbOut = (byte *) COSE_CALLOC(cbContent + 8, 1, context);
+	pbOut = (byte *)COSE_CALLOC(cbContent + 8, 1, context);
 	CHECK_CONDITION(pbOut != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	CHECK_CONDITION(
@@ -1806,7 +1810,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		}
 	}
 
-	pbsecret = (byte *) COSE_CALLOC(cbGroup, 1, context);
+	pbsecret = (byte *)COSE_CALLOC(cbGroup, 1, context);
 	CHECK_CONDITION(pbsecret != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	cbsecret = ECDH_compute_key(pbsecret, cbGroup,

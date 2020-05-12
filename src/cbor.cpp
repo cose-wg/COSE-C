@@ -7,16 +7,16 @@
 #include <memory.h>
 #endif
 
-#define INIT_CB(v)                                 \
-	if (errp) {                                    \
-		errp->err = CN_CBOR_NO_ERROR;              \
-	}                                              \
-	(v) = static_cast<cn_cbor *> (CN_CALLOC_CONTEXT());  \
-	if (!(v)) {                                    \
-		if (errp) {                                \
-			errp->err = CN_CBOR_ERR_OUT_OF_MEMORY; \
-		}                                          \
-		return false;                              \
+#define INIT_CB(v)                                     \
+	if (errp) {                                        \
+		errp->err = CN_CBOR_NO_ERROR;                  \
+	}                                                  \
+	(v) = static_cast<cn_cbor *>(CN_CALLOC_CONTEXT()); \
+	if (!(v)) {                                        \
+		if (errp) {                                    \
+			errp->err = CN_CBOR_ERR_OUT_OF_MEMORY;     \
+		}                                              \
+		return false;                                  \
 	}
 
 #ifdef USE_CBOR_CONTEXT
@@ -138,13 +138,14 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 
 	switch (pIn->type) {
 		case CN_CBOR_TEXT:
-			sz = (char*)( CN_CBOR_CALLOC(pIn->length + 1, 1, context));
+			sz = (char *)(CN_CBOR_CALLOC(pIn->length + 1, 1, context));
 			if (sz == NULL) {
 				return NULL;
 			}
 			memcpy(sz, pIn->v.str, pIn->length);
 			sz[pIn->length] = 0;
-			pOut = cn_cbor_string_create2(sz, 0 CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			pOut = cn_cbor_string_create2(
+				sz, 0 CBOR_CONTEXT_PARAM, pcn_cbor_error);
 			break;
 
 		case CN_CBOR_UINT:
@@ -153,8 +154,8 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 			break;
 
 		case CN_CBOR_BYTES:
-			pb = static_cast<unsigned char *> (CN_CBOR_CALLOC(
-				(int)pIn->length, 1, context));
+			pb = static_cast<unsigned char *>(
+				CN_CBOR_CALLOC((int)pIn->length, 1, context));
 			if (pb == NULL) {
 				return NULL;
 			}

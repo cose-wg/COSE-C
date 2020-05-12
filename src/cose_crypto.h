@@ -175,8 +175,8 @@ bool ECDSA_Verify(COSE* pSigner,
 	cose_errback* perr);
 
 bool ECDH_ComputeSecret(COSE* pReciient,
-	COSE_KEY **ppKeyMe,
-	COSE_KEY *pKeyYou,
+	COSE_KEY** ppKeyMe,
+	COSE_KEY* pKeyYou,
 	byte** ppbSecret,
 	size_t* pcbSecret,
 	CBOR_CONTEXT_COMMA cose_errback* perr);

@@ -342,7 +342,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 		//  Allocate the key if we have not already done so
 
 		if (pbKeyNew == NULL) {
-			pbKeyNew = static_cast<byte*>(COSE_CALLOC(cbitKey / 8, 1, context));
+			pbKeyNew =
+				static_cast<byte *>(COSE_CALLOC(cbitKey / 8, 1, context));
 			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 		}
@@ -821,6 +822,15 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 #if INCLUDE_COUNTERSIGNATURE
 	if (pcose->m_message.m_counterSigners != NULL) {
 		if (!_COSE_CounterSign_Sign(
+				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pcose->m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
 		}

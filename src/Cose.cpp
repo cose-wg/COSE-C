@@ -88,7 +88,7 @@ bool _COSE_Init_From_Object(COSE *pobj,
 
 	if (false) {
 	errorReturn:
-		return false;	
+		return false;
 	}
 
 #ifdef USE_CBOR_CONTEXT
@@ -159,11 +159,22 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	}
 #endif
 
+#if INCLUDE_COUNTERSIGNATURE1
+	cn_cbor *pCounter1 =
+		cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign1);
+	if (pCounter1 != NULL) {
+		CHECK_CONDITION(
+			pCounter1->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
+		COSE_CounterSign1 *cs = _COSE_CounterSign1_Init_From_Object(
+			pCounter1, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+		pobj->m_counterSign1 = cs;
+	}
+#endif
+
 	pobj->m_ownMsg = true;
 	pobj->m_refCount = 1;
 
 	return true;
-
 }
 
 void _COSE_Release(COSE *pcose)
@@ -198,7 +209,14 @@ void _COSE_Release(COSE *pcose)
 		}
 	}
 #endif
+
+	#if INCLUDE_COUNTERSIGNATURE1
+	if (pcose->m_counterSign1 != NULL) {
+		COSE_CounterSign1_Free((HCOSE_COUNTERSIGN1)pcose->m_counterSign1);
+	}
+#endif
 }
+	
 
 HCOSE COSE_Decode(const byte *rgbData,
 	size_t cbData,
@@ -214,14 +232,13 @@ HCOSE COSE_Decode(const byte *rgbData,
 	errorReturn:
 		// M00TODO - break up the init and allocation below for memory tests.
 		CN_CBOR_FREE(cbor, context);
-		return NULL;	
+		return NULL;
 	}
-	
+
 	CHECK_CONDITION(
 		(rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
 
-	cbor = 
-		cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
+	cbor = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
 	CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
 
 	if (cbor->type == CN_CBOR_TAG) {
@@ -230,7 +247,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 				COSE_ERR_INVALID_PARAMETER);
 		}
 		else {
-			struct_type = (COSE_object_type) cbor->v.uint;
+			struct_type = (COSE_object_type)cbor->v.uint;
 		}
 		*ptype = struct_type;
 
@@ -327,7 +344,6 @@ HCOSE COSE_Decode(const byte *rgbData,
 	}
 
 	return h;
-
 }
 
 size_t COSE_Encode(HCOSE msg, byte *rgb, size_t ib, size_t cb)
@@ -595,6 +611,9 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 #if INCLUDE_COUNTERSIGNATURE
 extern COSE *CountersignRoot;
 #endif
+#if INCLUDE_COUNTERSIGNATURE1
+extern COSE *Countersign1Root;
+#endif
 #if INCLUDE_SIGN
 extern COSE *SignerRoot;
 extern COSE *SignRoot;
@@ -617,12 +636,16 @@ extern COSE *MacRoot;
 #if INCLUDE_MAC0
 extern COSE *Mac0Root;
 #endif
+extern COSE_KEY *KeysRoot;
 
 bool AreListsEmpty()
 {
 	bool fRet = true;
 #if INCLUDE_COUNTERSIGNATURE
 	fRet &= CountersignRoot == NULL;
+#endif
+#if INCLUDE_COUNTERSIGNATURE1
+	fRet &= Countersign1Root == NULL;
 #endif
 #if INCLUDE_SIGN
 	fRet &= SignerRoot == NULL && SignRoot == NULL;
@@ -645,6 +668,7 @@ bool AreListsEmpty()
 #if INCLUDE_MAC0
 	fRet &= Mac0Root == NULL;
 #endif
+	fRet &= KeysRoot == nullptr;
 	return fRet;
 }
 

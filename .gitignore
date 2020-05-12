@@ -47,6 +47,7 @@ CMakeFiles
 CMakeCache.txt
 Makefile
 build
+build-*
 
 # Visual Studio files
 *.sdf

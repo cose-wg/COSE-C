@@ -161,7 +161,7 @@ static bool BuildToBeSigned(byte **ppbToSign,
 		if (pbToSign != NULL) {
 			COSE_FREE(pbToSign, context);
 		}
-		return f;		
+		return f;
 	}
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
@@ -228,7 +228,7 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	*pcbToSign = cbToSign;
 	pbToSign = NULL;
 	f = true;
-	goto errorReturn;	
+	goto errorReturn;
 }
 
 bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
@@ -330,6 +330,15 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 	}
 #endif
 
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pSigner->m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
+				&pSigner->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
 	fRet = true;
 
 errorReturn:
@@ -349,9 +358,9 @@ bool COSE_Signer_SetKey2(HCOSE_SIGNER h, HCOSE_KEY pKey, cose_errback *perr)
 
 	if (false) {
 	errorReturn:
-		return false;		
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(IsValidKeyHandle(pKey), COSE_ERR_INVALID_HANDLE);
 
@@ -377,11 +386,11 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
 #endif
 
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
-	cose = COSE_KEY_FromCbor((cn_cbor*) pKey, CBOR_CONTEXT_PARAM_COMMA perr);
-	
+	cose = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
+
 	CHECK_CONDITION(cose != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-	fRet =COSE_Signer_SetKey2(h, cose, perr);
+	fRet = COSE_Signer_SetKey2(h, cose, perr);
 
 errorReturn:
 	if (cose != NULL) {

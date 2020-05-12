@@ -409,9 +409,9 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 		if (pbAuthData != NULL) {
 			COSE_FREE(pbAuthData, context);
 		}
-		return fRet;		
+		return fRet;
 	}
-	
+
 	cn_Alg = _COSE_map_get_int(
 		&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == NULL) {
@@ -623,6 +623,15 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 	}
 #endif
 
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pcose->m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
+				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
 	//  Figure out the clean up
 
 	fRet = true;
@@ -753,7 +762,8 @@ bool _COSE_Mac_validate(COSE_MacMessage *pcose,
 	}
 	else {
 		if (pbKeyNew == NULL) {
-			pbKeyNew = static_cast<byte*>(COSE_CALLOC(cbitKey / 8, 1, context));
+			pbKeyNew =
+				static_cast<byte *>(COSE_CALLOC(cbitKey / 8, 1, context));
 			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 		}
