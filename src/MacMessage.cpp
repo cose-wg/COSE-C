@@ -17,7 +17,7 @@
 
 #if INCLUDE_MAC
 
-COSE *MacRoot = NULL;
+COSE *MacRoot = nullptr;
 
 /*! \private
  * @brief Test if a HCOSE_MAC handle is valid
@@ -42,12 +42,12 @@ bool IsValidMacHandle(HCOSE_MAC h)
 HCOSE_MAC COSE_Mac_Init(COSE_INIT_FLAGS flags,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
-	COSE_MacMessage *pobj = NULL;
+	COSE_MacMessage *pobj = nullptr;
 
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 
 	pobj = (COSE_MacMessage *)COSE_CALLOC(1, sizeof(COSE_MacMessage), context);
-	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(pobj != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	if (!_COSE_Init(flags, &pobj->m_message, COSE_mac_object,
 			CBOR_CONTEXT_PARAM_COMMA perr)) {
@@ -59,11 +59,11 @@ HCOSE_MAC COSE_Mac_Init(COSE_INIT_FLAGS flags,
 	return (HCOSE_MAC)pobj;
 
 errorReturn:
-	if (pobj != NULL) {
+	if (pobj != nullptr) {
 		_COSE_Mac_Release(pobj);
 		COSE_FREE(pobj, context);
 	}
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *cbor,
@@ -71,27 +71,27 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *cbor,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	COSE_MacMessage *pobj = pIn;
-	cn_cbor *pRecipients = NULL;
+	cn_cbor *pRecipients = nullptr;
 	// cn_cbor * tmp;
 	cose_errback error = {COSE_ERR_NONE};
-	if (perr == NULL) {
+	if (perr == nullptr) {
 		perr = &error;
 	}
 
-	if (pobj == NULL) {
+	if (pobj == nullptr) {
 		pobj =
 			(COSE_MacMessage *)COSE_CALLOC(1, sizeof(COSE_MacMessage), context);
 	}
-	if (pobj == NULL) {
+	if (pobj == nullptr) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
-		if (pobj != NULL) {
+		if (pobj != nullptr) {
 			_COSE_Mac_Release(pobj);
-			if (pIn == NULL) {
+			if (pIn == nullptr) {
 				COSE_FREE(pobj, context);
 			}
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	if (!_COSE_Init_From_Object(
@@ -100,15 +100,15 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *cbor,
 	}
 
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_MAC_RECIPIENTS);
-	if (pRecipients != NULL) {
+	if (pRecipients != nullptr) {
 		CHECK_CONDITION(
 			pRecipients->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
 		pRecipients = pRecipients->first_child;
-		while (pRecipients != NULL) {
+		while (pRecipients != nullptr) {
 			COSE_RecipientInfo *pInfo = _COSE_Recipient_Init_From_Object(
 				pRecipients, CBOR_CONTEXT_PARAM_COMMA perr);
-			if (pInfo == NULL) {
+			if (pInfo == nullptr) {
 				goto errorReturn;
 			}
 
@@ -157,7 +157,7 @@ bool _COSE_Mac_Release(COSE_MacMessage *p)
 	COSE_RecipientInfo *pRecipient;
 	COSE_RecipientInfo *pRecipient2;
 
-	for (pRecipient = p->m_recipientFirst; pRecipient != NULL;
+	for (pRecipient = p->m_recipientFirst; pRecipient != nullptr;
 		 pRecipient = pRecipient2) {
 		pRecipient2 = pRecipient->m_recipientNext;
 		COSE_Recipient_Free((HCOSE_RECIPIENT)pRecipient);
@@ -177,24 +177,24 @@ bool COSE_Mac_SetContent(HCOSE_MAC cose,
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &p->m_message.m_allocContext;
 #endif
-	cn_cbor *ptmp = NULL;
+	cn_cbor *ptmp = nullptr;
 	cn_cbor_errback cbor_error;
 
 	CHECK_CONDITION(IsValidMacHandle(cose), COSE_ERR_INVALID_PARAMETER);
 
 	ptmp = cn_cbor_data_create(
 		rgbContent, (int)cbContent, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != nullptr, cbor_error);
 
 	CHECK_CONDITION_CBOR(_COSE_array_replace(&p->m_message, ptmp, INDEX_BODY,
 							 CBOR_CONTEXT_PARAM_COMMA & cbor_error),
 		cbor_error);
-	ptmp = NULL;
+	ptmp = nullptr;
 
 	return true;
 
 errorReturn:
-	if (ptmp != NULL) {
+	if (ptmp != nullptr) {
 		CN_CBOR_FREE(ptmp, context);
 	}
 	return false;
@@ -222,7 +222,7 @@ bool COSE_Mac_SetExternal(HCOSE_MAC hcose,
 	cose_errback *perr)
 {
 	if (!IsValidMacHandle(hcose)) {
-		if (perr != NULL) {
+		if (perr != nullptr) {
 			perr->err = COSE_ERR_INVALID_PARAMETER;
 		}
 		return false;
@@ -238,10 +238,10 @@ cn_cbor *COSE_Mac_map_get_int(HCOSE_MAC h,
 	cose_errback *perror)
 {
 	if (!IsValidMacHandle(h)) {
-		if (perror != NULL) {
+		if (perror != nullptr) {
 			perror->err = COSE_ERR_INVALID_PARAMETER;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	return _COSE_map_get_int(
@@ -254,8 +254,8 @@ bool COSE_Mac_map_put_int(HCOSE_MAC h,
 	int flags,
 	cose_errback *perror)
 {
-	if (!IsValidMacHandle(h) || (value == NULL)) {
-		if (perror != NULL) {
+	if (!IsValidMacHandle(h) || (value == nullptr)) {
+		if (perror != nullptr) {
 			perror->err = COSE_ERR_INVALID_PARAMETER;
 		}
 		return false;
@@ -273,89 +273,89 @@ bool _COSE_Mac_Build_AAD(COSE *pCose,
 	size_t *pcbAuthData,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
-	cn_cbor *pAuthData = NULL;
+	cn_cbor *pAuthData = nullptr;
 	bool fRet = false;
 	cn_cbor_errback cbor_error;
-	cn_cbor *ptmp = NULL;
+	cn_cbor *ptmp = nullptr;
 	cn_cbor *pcn;
 	size_t cbAuthData;
-	byte *pbAuthData = NULL;
+	byte *pbAuthData = nullptr;
 
 	//  Build authenticated data
 	//  Protected headers
 	//  external data
 	//  body
 
-	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
-	CHECK_CONDITION(pAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
+	pAuthData = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA nullptr);
+	CHECK_CONDITION(pAuthData != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	//  Add the context string
 
 	ptmp =
 		cn_cbor_string_create(szContext, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != nullptr, cbor_error);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
+	ptmp = nullptr;
 
 	// Add the protected attributes
 
 	pcn = _COSE_arrayget_int(pCose, INDEX_PROTECTED);
-	CHECK_CONDITION((pcn != NULL) && (pcn->type == CN_CBOR_BYTES),
+	CHECK_CONDITION((pcn != nullptr) && (pcn->type == CN_CBOR_BYTES),
 		COSE_ERR_INVALID_PARAMETER);
 
 	if ((pcn->length == 1) && (pcn->v.bytes[0] == 0xa0)) {
-		ptmp = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+		ptmp = cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	}
 	else {
 		ptmp = cn_cbor_data_create(
-			pcn->v.bytes, (int)pcn->length, CBOR_CONTEXT_PARAM_COMMA NULL);
+			pcn->v.bytes, (int)pcn->length, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	}
-	CHECK_CONDITION(ptmp != NULL, COSE_ERR_CBOR);
+	CHECK_CONDITION(ptmp != nullptr, COSE_ERR_CBOR);
 
-	CHECK_CONDITION(cn_cbor_array_append(pAuthData, ptmp, NULL), COSE_ERR_CBOR);
-	ptmp = NULL;
+	CHECK_CONDITION(cn_cbor_array_append(pAuthData, ptmp, nullptr), COSE_ERR_CBOR);
+	ptmp = nullptr;
 
 	//  Add the external bytes
 
 	ptmp = cn_cbor_data_create(pCose->m_pbExternal, (int)pCose->m_cbExternal,
 		CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != nullptr, cbor_error);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
+	ptmp = nullptr;
 
 	//  Add the content
 	pcn = _COSE_arrayget_int(pCose, INDEX_BODY);
 	ptmp = cn_cbor_data_create(
 		pcn->v.bytes, (int)pcn->length, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-	CHECK_CONDITION_CBOR(ptmp != NULL, cbor_error);
+	CHECK_CONDITION_CBOR(ptmp != nullptr, cbor_error);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(pAuthData, ptmp, &cbor_error), cbor_error);
-	ptmp = NULL;
+	ptmp = nullptr;
 
 	//  Turn it into bytes
 	cbAuthData = cn_cbor_encode_size(pAuthData);
 	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
-	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(pbAuthData != nullptr, COSE_ERR_OUT_OF_MEMORY);
 	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData,
 						pAuthData) == (ssize_t)cbAuthData,
 		COSE_ERR_CBOR);
 
 	*ppbAuthData = pbAuthData;
 	*pcbAuthData = cbAuthData;
-	pbAuthData = NULL;
+	pbAuthData = nullptr;
 	fRet = true;
 
 errorReturn:
-	if (pbAuthData != NULL) {
+	if (pbAuthData != nullptr) {
 		COSE_FREE(pbAuthData, context);
 	}
-	if (pAuthData != NULL) {
+	if (pAuthData != nullptr) {
 		CN_CBOR_FREE(pAuthData, context);
 	}
-	if (ptmp != NULL) {
+	if (ptmp != nullptr) {
 		CN_CBOR_FREE(ptmp, context);
 	}
 	return fRet;
@@ -369,9 +369,9 @@ bool COSE_Mac_encrypt(HCOSE_MAC h, cose_errback *perr)
 
 	CHECK_CONDITION(IsValidMacHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
-		pcose->m_recipientFirst != NULL, COSE_ERR_INVALID_PARAMETER);
+		pcose->m_recipientFirst != nullptr, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_Mac_compute(pcose, NULL, 0, "MAC", perr);
+	return _COSE_Mac_compute(pcose, nullptr, 0, "MAC", perr);
 
 errorReturn:
 	return false;
@@ -388,25 +388,25 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 	int alg;
 	int t;
 	COSE_RecipientInfo *pri;
-	const cn_cbor *cn_Alg = NULL;
-	byte *pbAuthData = NULL;
+	const cn_cbor *cn_Alg = nullptr;
+	byte *pbAuthData = nullptr;
 	size_t cbitKey;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 	bool fRet = false;
 	size_t cbAuthData = 0;
-	const byte *pbKey = NULL;
-	byte *pbKeyNew = NULL;
+	const byte *pbKey = nullptr;
+	byte *pbKeyNew = nullptr;
 	size_t cbKey = 0;
 
 	if (false) {
 	errorReturn:
-		if (pbKeyNew != NULL) {
+		if (pbKeyNew != nullptr) {
 			memset(pbKeyNew, 0, cbKey);
 			COSE_FREE(pbKeyNew, context);
 		}
-		if (pbAuthData != NULL) {
+		if (pbAuthData != nullptr) {
 			COSE_FREE(pbAuthData, context);
 		}
 		return fRet;
@@ -414,7 +414,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 
 	cn_Alg = _COSE_map_get_int(
 		&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn_Alg == NULL) {
+	if (cn_Alg == nullptr) {
 		goto errorReturn;
 	}
 	CHECK_CONDITION(cn_Alg->type != CN_CBOR_TEXT, COSE_ERR_UNKNOWN_ALGORITHM);
@@ -481,23 +481,23 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 
 	//  If we are doing direct encryption - then recipient generates the key
 
-	if (pbKeyIn != NULL) {
+	if (pbKeyIn != nullptr) {
 		CHECK_CONDITION(cbKeyIn == cbitKey / 8, COSE_ERR_INVALID_PARAMETER);
 		pbKey = pbKeyIn;
 		cbKey = cbKeyIn;
 	}
 	else {
 		t = 0;
-		for (pri = pcose->m_recipientFirst; pri != NULL;
+		for (pri = pcose->m_recipientFirst; pri != nullptr;
 			 pri = pri->m_recipientNext) {
 			if (pri->m_encrypt.m_message.m_flags & 1) {
-				CHECK_CONDITION(pbKey == NULL, COSE_ERR_INVALID_PARAMETER);
+				CHECK_CONDITION(pbKey == nullptr, COSE_ERR_INVALID_PARAMETER);
 
 				t |= 1;
 				pbKeyNew =
 					_COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
 				cbKey = cbitKey / 8;
-				CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
+				CHECK_CONDITION(pbKeyNew != nullptr, COSE_ERR_OUT_OF_MEMORY);
 				pbKey = pbKeyNew;
 			}
 			else {
@@ -508,7 +508,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 
 		if (t == 2) {
 			pbKeyNew = (byte *)COSE_CALLOC(cbitKey / 8, 1, context);
-			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
+			CHECK_CONDITION(pbKeyNew != nullptr, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 			cbKey = cbitKey / 8;
 			rand_bytes(pbKeyNew, cbKey);
@@ -519,7 +519,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 
 	const cn_cbor *cbProtected =
 		_COSE_encode_protected(&pcose->m_message, perr);
-	if (cbProtected == NULL) {
+	if (cbProtected == nullptr) {
 		goto errorReturn;
 	}
 
@@ -607,7 +607,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
-	for (pri = pcose->m_recipientFirst; pri != NULL;
+	for (pri = pcose->m_recipientFirst; pri != nullptr;
 		 pri = pri->m_recipientNext) {
 		if (!_COSE_Recipient_encrypt(pri, pbKey, cbKey, perr)) {
 			goto errorReturn;
@@ -615,7 +615,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 	}
 
 #if INCLUDE_COUNTERSIGNATURE
-	if (pcose->m_message.m_counterSigners != NULL) {
+	if (pcose->m_message.m_counterSigners != nullptr) {
 		if (!_COSE_CounterSign_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
@@ -644,7 +644,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback *perr)
 {
 	cose_errback error;
 
-	if (perr == NULL) {
+	if (perr == nullptr) {
 		perr = &error;
 	}
 
@@ -654,7 +654,7 @@ bool COSE_Mac_validate(HCOSE_MAC h, HCOSE_RECIPIENT hRecip, cose_errback *perr)
 	CHECK_CONDITION(IsValidMacHandle(h) && IsValidRecipientHandle(hRecip),
 		COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_Mac_validate(pcose, pRecip, NULL, 0, "MAC", perr);
+	return _COSE_Mac_validate(pcose, pRecip, nullptr, 0, "MAC", perr);
 
 errorReturn:
 	return false;
@@ -669,25 +669,25 @@ bool _COSE_Mac_validate(COSE_MacMessage *pcose,
 	const char *szContext,
 	cose_errback *perr)
 {
-	byte *pbAuthData = NULL;
+	byte *pbAuthData = nullptr;
 	size_t cbitKey = 0;
 	bool fRet = false;
 
 	int alg;
-	const cn_cbor *cn = NULL;
-	byte *pbKeyNew = NULL;
-	const byte *pbKey = NULL;
+	const cn_cbor *cn = nullptr;
+	byte *pbKeyNew = nullptr;
+	const byte *pbKey = nullptr;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 	size_t cbAuthData;
 
 	CHECK_CONDITION(
-		!((pRecip != NULL) && (pbKeyIn != NULL)), COSE_ERR_INTERNAL);
+		!((pRecip != nullptr) && (pbKeyIn != nullptr)), COSE_ERR_INTERNAL);
 
 	cn = _COSE_map_get_int(
 		&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
-	if (cn == NULL) {
+	if (cn == nullptr) {
 		goto errorReturn;
 	}
 
@@ -756,24 +756,23 @@ bool _COSE_Mac_validate(COSE_MacMessage *pcose,
 
 	//  Allocate the key if we have not already done so
 
-	if (pbKeyIn != NULL) {
+	if (pbKeyIn != nullptr) {
 		CHECK_CONDITION(cbitKey / 8 == cbKeyIn, COSE_ERR_INVALID_PARAMETER);
 		pbKey = pbKeyIn;
 	}
 	else {
-		if (pbKeyNew == NULL) {
-			pbKeyNew =
-				static_cast<byte *>(COSE_CALLOC(cbitKey / 8, 1, context));
-			CHECK_CONDITION(pbKeyNew != NULL, COSE_ERR_OUT_OF_MEMORY);
+		if (pbKeyNew == nullptr) {
+			pbKeyNew = static_cast<byte*>(COSE_CALLOC(cbitKey / 8, 1, context));
+			CHECK_CONDITION(pbKeyNew != nullptr, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 		}
 
 		//  If there is a recipient - ask it for the key
 
-		if (pRecip != NULL) {
+		if (pRecip != nullptr) {
 			COSE_RecipientInfo *pRecipX;
 
-			for (pRecipX = pcose->m_recipientFirst; pRecipX != NULL;
+			for (pRecipX = pcose->m_recipientFirst; pRecipX != nullptr;
 				 pRecipX = pRecipX->m_recipientNext) {
 				if (pRecip == pRecipX) {
 					if (!_COSE_Recipient_decrypt(
@@ -782,24 +781,24 @@ bool _COSE_Mac_validate(COSE_MacMessage *pcose,
 					}
 					break;
 				}
-				else if (pRecipX->m_encrypt.m_recipientFirst != NULL) {
+				else if (pRecipX->m_encrypt.m_recipientFirst != nullptr) {
 					if (_COSE_Recipient_decrypt(
 							pRecipX, pRecip, alg, cbitKey, pbKeyNew, perr)) {
 						break;
 					}
 				}
 			}
-			CHECK_CONDITION(pRecipX != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
+			CHECK_CONDITION(pRecipX != nullptr, COSE_ERR_NO_RECIPIENT_FOUND);
 		}
 		else {
-			for (pRecip = pcose->m_recipientFirst; pRecip != NULL;
+			for (pRecip = pcose->m_recipientFirst; pRecip != nullptr;
 				 pRecip = pRecip->m_recipientNext) {
 				if (_COSE_Recipient_decrypt(
-						pRecip, NULL, alg, cbitKey, pbKeyNew, perr)) {
+						pRecip, nullptr, alg, cbitKey, pbKeyNew, perr)) {
 					break;
 				}
 			}
-			CHECK_CONDITION(pRecip != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
+			CHECK_CONDITION(pRecip != nullptr, COSE_ERR_NO_RECIPIENT_FOUND);
 		}
 	}
 
@@ -891,12 +890,12 @@ bool _COSE_Mac_validate(COSE_MacMessage *pcose,
 	fRet = true;
 
 errorReturn:
-	if (pbKeyNew != NULL) {
+	if (pbKeyNew != nullptr) {
 		memset(pbKeyNew, 0xff, cbitKey / 8);
 		COSE_FREE(pbKeyNew, context);
 	}
 
-	if (pbAuthData != NULL) {
+	if (pbAuthData != nullptr) {
 		COSE_FREE(pbAuthData, context);
 	}
 
@@ -911,10 +910,10 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac,
 {
 	COSE_RecipientInfo *pRecip;
 	COSE_MacMessage *pMac;
-	cn_cbor *pRecipients = NULL;
-	cn_cbor *pRecipientsT = NULL;
+	cn_cbor *pRecipients = nullptr;
+	cn_cbor *pRecipientsT = nullptr;
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = NULL;
+	cn_cbor_context *context = nullptr;
 #endif
 	cn_cbor_errback cbor_error;
 
@@ -932,17 +931,17 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac,
 #endif	// USE_CBOR_CONTEXT
 
 	pRecipients = _COSE_arrayget_int(&pMac->m_message, INDEX_MAC_RECIPIENTS);
-	if (pRecipients == NULL) {
+	if (pRecipients == nullptr) {
 		pRecipientsT =
 			cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
-		CHECK_CONDITION_CBOR(pRecipientsT != NULL, cbor_error);
+		CHECK_CONDITION_CBOR(pRecipientsT != nullptr, cbor_error);
 
 		CHECK_CONDITION_CBOR(
 			_COSE_array_replace(&pMac->m_message, pRecipientsT,
 				INDEX_MAC_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA & cbor_error),
 			cbor_error);
 		pRecipients = pRecipientsT;
-		pRecipientsT = NULL;
+		pRecipientsT = nullptr;
 	}
 
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients,
@@ -953,7 +952,7 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac,
 	return true;
 
 errorReturn:
-	if (pRecipientsT == NULL) {
+	if (pRecipientsT == nullptr) {
 		CN_CBOR_FREE(pRecipientsT, context);
 	}
 	return false;
@@ -970,16 +969,16 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose,
 
 	p = ((COSE_MacMessage *)cose)->m_recipientFirst;
 	for (i = 0; i < iRecipient; i++) {
-		CHECK_CONDITION(p != NULL, COSE_ERR_NO_RECIPIENT_FOUND);
+		CHECK_CONDITION(p != nullptr, COSE_ERR_NO_RECIPIENT_FOUND);
 		p = p->m_recipientNext;
 	}
-	if (p != NULL) {
+	if (p != nullptr) {
 		p->m_encrypt.m_message.m_refCount++;
 	}
 	return (HCOSE_RECIPIENT)p;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 #endif

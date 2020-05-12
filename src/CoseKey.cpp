@@ -5,7 +5,7 @@
 #include "cose_int.h"
 #include "cose_crypto.h"
 
-COSE_KEY *KeysRoot = NULL;
+COSE_KEY *KeysRoot = nullptr;
 
 /*! \private
  * @brief Test if a HCOSE_ENVELOPED handle is valid
@@ -23,16 +23,15 @@ COSE_KEY *KeysRoot = NULL;
 
 bool IsValidKeyHandle(HCOSE_KEY h)
 {
-	COSE_KEY *p = (COSE_KEY *)h;
-	if (KeysRoot == NULL) {
+	COSE_KEY *p = (COSE_KEY*)h;
+	if (KeysRoot == nullptr) {
 		return false;
 	}
-	if (p == NULL) {
+	if (p == nullptr) {
 		return false;
 	}
 
-	for (const COSE_KEY *walk = KeysRoot; walk != NULL;
-		 walk = walk->m_nextKey) {
+	for (const COSE_KEY *walk = KeysRoot; walk != nullptr; walk = walk->m_nextKey) {
 		if (walk == p) {
 			return true;
 		}
@@ -43,19 +42,19 @@ bool IsValidKeyHandle(HCOSE_KEY h)
 HCOSE_KEY COSE_KEY_FromCbor(cn_cbor *pcborKey,
 	CBOR_CONTEXT_COMMA cose_errback *perror)
 {
-	COSE_KEY *pkey = NULL;
+	COSE_KEY *pkey = nullptr;
 
 	pkey = (COSE_KEY *)COSE_CALLOC(1, sizeof(COSE_KEY), context);
 
-	if (pkey == NULL) {
-		if (perror != NULL) {
+	if (pkey == nullptr) {
+		if (perror != nullptr) {
 			perror->err = COSE_ERR_OUT_OF_MEMORY;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 #ifdef USE_CBOR_CONTEXT
-	if (context != NULL) {
+	if (context != nullptr) {
 		pkey->m_allocContext = *context;
 	}
 #endif
@@ -83,15 +82,14 @@ bool COSE_KEY_Free(HCOSE_KEY h)
 
 	if (KeysRoot == p) {
 		KeysRoot = p->m_nextKey;
-		p->m_nextKey = NULL;
-		;
+		p->m_nextKey = nullptr;;
 	}
 	else {
-		for (COSE_KEY *walk = KeysRoot; walk->m_nextKey != NULL;
+		for (COSE_KEY *walk = KeysRoot; walk->m_nextKey != nullptr;
 			 walk = walk->m_nextKey) {
 			if (walk->m_nextKey == p) {
 				walk->m_nextKey = p->m_nextKey;
-				p->m_nextKey = NULL;
+				p->m_nextKey = nullptr;
 				break;
 			}
 		}
@@ -107,17 +105,17 @@ HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY *opensslKey,
 	cn_cbor *pcborKey,
 	CBOR_CONTEXT_COMMA cose_errback *perror)
 {
-	COSE_KEY *pkey = NULL;
+	COSE_KEY *pkey = nullptr;
 
 	pkey = (COSE_KEY *)COSE_CALLOC(1, sizeof(COSE_KEY), context);
 
-	if (pkey == NULL) {
+	if (pkey == nullptr) {
 		perror->err = COSE_ERR_OUT_OF_MEMORY;
-		return NULL;
+		return nullptr;
 	}
 
 #ifdef USE_CBOR_CONTEXT
-	if (context != NULL) {
+	if (context != nullptr) {
 		pkey->m_allocContext = *context;
 	}
 #endif

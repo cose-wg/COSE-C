@@ -1,5 +1,3 @@
-//  encrypt.c
-
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
@@ -13,9 +11,12 @@
 	(!INCLUDE_MAC || !INCLUDE_SIGN)
 #include <cose_int.h>
 #endif
-#include "cose_int.h"
 #include "test.h"
 #include "context.h"
+#include "cose_int.h"
+#include "utils.hpp"
+
+using namespace cose;
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4127)
@@ -1274,10 +1275,10 @@ bool BuildEncryptMessage(const cn_cbor *pControl)
 #if INCLUDE_ENCRYPT
 void Enveloped_Corners()
 {
-	HCOSE_ENVELOPED hEncryptnullptr = nullptr;
+	HCOSE_ENVELOPED hEncryptNULL = nullptr;
 	HCOSE_ENVELOPED hEncrypt = nullptr;
 	HCOSE_ENVELOPED hEncryptBad = nullptr;
-	HCOSE_RECIPIENT hRecipientnullptr = nullptr;
+	HCOSE_RECIPIENT hRecipientNULL = nullptr;
 	HCOSE_RECIPIENT hRecipient = nullptr;
 	HCOSE_RECIPIENT hRecipientBad = nullptr;
 	byte rgb[10];
@@ -1378,8 +1379,7 @@ void Enveloped_Corners()
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncryptBad, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(
-		COSE_Enveloped_SetExternal(hEncrypt, nullptr, 10, &cose_error),
+	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncrypt, nullptr, 10, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	if (!COSE_Enveloped_Free(hEncrypt)) {
@@ -1451,8 +1451,6 @@ void Enveloped_Corners()
 
 	COSE_Enveloped_Free(hEncrypt);
 	COSE_Recipient_Free(hRecipient);
-
-	return;
 }
 #endif
 
@@ -1524,8 +1522,8 @@ void Encrypt_Corners()
 	//
 	//  Unsupported algorithm
 
-	hEncrypt = COSE_Encrypt_Init(
-		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncrypt =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hEncrypt == nullptr) {
 		CFails++;
 	}
@@ -1541,8 +1539,8 @@ void Encrypt_Corners()
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);
 
-	hEncrypt = COSE_Encrypt_Init(
-		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncrypt =
+		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hEncrypt == nullptr) {
 		CFails++;
 	}
@@ -1557,8 +1555,6 @@ void Encrypt_Corners()
 	CHECK_FAILURE(COSE_Encrypt_encrypt(hEncrypt, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);
-
-	return;
 }
 #endif
 
@@ -1566,7 +1562,7 @@ void Encrypt_Corners()
 void Recipient_Corners()
 {
 	HCOSE_RECIPIENT hRecip;
-	HCOSE_RECIPIENT hRecipnullptr = nullptr;
+	HCOSE_RECIPIENT hRecipNULL = nullptr;
 	HCOSE_RECIPIENT hRecipBad;
 	cose_errback cose_error;
 	byte rgb[10];
@@ -1588,7 +1584,7 @@ void Recipient_Corners()
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(COSE_Recipient_SetKey_secret(
-					  hRecipnullptr, rgb, sizeof(rgb), nullptr, 0, &cose_error),
+					  hRecipNULL, rgb, sizeof(rgb), nullptr, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Recipient_SetKey_secret(
 					  hRecipBad, rgb, sizeof(rgb), nullptr, 0, &cose_error),

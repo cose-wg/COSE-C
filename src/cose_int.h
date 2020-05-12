@@ -17,6 +17,7 @@ struct CounterSign1;
 typedef struct CounterSign1 COSE_CounterSign1;
 
 #define UNUSED(x) ((void)(x))
+#define COSE_MIN(A, B) ((A) < (B) ? (A) : (B))
 
 #ifndef _countof
 #define _countof(x) (sizeof(x) / sizeof(x[0]))
@@ -119,8 +120,8 @@ struct CounterSign1 {
 /**
  * Allocate enough space for 1 `cn_cbor` structure.
  *
- * @param[in]  ctx  The allocation context, or NULL for calloc.
- * @return          A pointer to a `cn_cbor` or NULL on failure
+ * @param[in]  ctx  The allocation context, or nullptr for calloc.
+ * @return          A pointer to a `cn_cbor` or nullptr on failure
  */
 #define CN_CALLOC(ctx)                                           \
 	((ctx) && (ctx)->calloc_func)                                \
@@ -130,7 +131,7 @@ struct CounterSign1 {
 /**
  *  Allocate space required
  *
- * @param[in]	ctx  The allocation context, or NULL for normal calloc.
+ * @param[in]	ctx  The allocation context, or nullptr for normal calloc.
  * @param[in]	count	Number of items to allocate
  * @param[in]	size	Size of item to allocate
  * @return				A pointer to the object needed
@@ -364,7 +365,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 	{                                     \
 		if (!(condition)) {               \
 			DO_ASSERT;                    \
-			if (perr != NULL) {           \
+			if (perr != nullptr) {           \
 				perr->err = error;        \
 			}                             \
 			goto errorReturn;             \
@@ -374,7 +375,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 	{                                      \
 		if ((condition)) {                 \
 			DO_ASSERT;                     \
-			if (perr != NULL) {            \
+			if (perr != nullptr) {            \
 				perr->err = error;         \
 			}                              \
 			goto errorReturn;              \
@@ -383,7 +384,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 #define FAIL_CONDITION(error)  \
 	{                          \
 		DO_ASSERT;             \
-		if (perr != NULL) {    \
+		if (perr != nullptr) {    \
 			perr->err = error; \
 		}                      \
 		goto errorReturn;      \
@@ -392,7 +393,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 	{                                            \
 		if (!(condition)) {                      \
 			DO_ASSERT;                           \
-			if (perr != NULL) {                  \
+			if (perr != nullptr) {                  \
 				perr->err = _MapFromCBOR(error); \
 			}                                    \
 			goto errorReturn;                    \

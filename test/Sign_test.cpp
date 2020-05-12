@@ -985,16 +985,15 @@ void Sign_Corners()
 {
 	HCOSE_SIGN hSign = nullptr;
 	HCOSE_SIGN hSignBad;
-	HCOSE_SIGN hSignnullptr = nullptr;
+	HCOSE_SIGN hSignNULL = nullptr;
 	HCOSE_SIGNER hSigner = nullptr;
 	HCOSE_SIGNER hSignerBad;
-	HCOSE_SIGNER hSignernullptr = nullptr;
+	HCOSE_SIGNER hSignerNULL = nullptr;
 	byte rgb[10];
 	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	cose_errback cose_error;
 
-	hSign =
-		COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hSign = COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 #if INCLUDE_SIGN1
 	hSignBad = (HCOSE_SIGN)COSE_Sign1_Init(
 		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
@@ -1023,8 +1022,7 @@ void Sign_Corners()
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign_SetContent(hSignBad, rgb, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(
-		COSE_Sign_SetContent(hSign, nullptr, sizeof(rgb), &cose_error),
+	CHECK_FAILURE(COSE_Sign_SetContent(hSign, nullptr, sizeof(rgb), &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(
@@ -1041,8 +1039,8 @@ void Sign_Corners()
 	CHECK_FAILURE(
 		COSE_Sign_map_put_int(hSignBad, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign_map_put_int(
-					  hSign, 1, nullptr, COSE_PROTECT_ONLY, &cose_error),
+	CHECK_FAILURE(
+		COSE_Sign_map_put_int(hSign, 1, nullptr, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 	CHECK_FAILURE(COSE_Sign_map_put_int(hSign, 1, cn,
 					  COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error),
@@ -1128,8 +1126,7 @@ void Sign_Corners()
 	//
 	//  Unsupported algorithm
 
-	hSign =
-		COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hSign = COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hSign == nullptr) {
 		CFails++;
 	}
@@ -1157,8 +1154,7 @@ void Sign_Corners()
 	COSE_Sign_Free(hSign);
 	COSE_Signer_Free(hSigner);
 
-	hSign =
-		COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hSign = COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hSign == nullptr) {
 		CFails++;
 	}
@@ -1194,8 +1190,6 @@ void Sign_Corners()
 	else {
 		CFails++;
 	}
-
-	return;
 }
 #endif
 
@@ -1203,7 +1197,7 @@ void Sign_Corners()
 void Sign1_Corners()
 {
 	HCOSE_SIGN1 hSign = nullptr;
-	HCOSE_SIGN1 hSignnullptr = nullptr;
+	HCOSE_SIGN1 hSignNULL = nullptr;
 	HCOSE_SIGN1 hSignBad;
 
 	byte rgb[10];
@@ -1245,8 +1239,8 @@ void Sign1_Corners()
 	CHECK_FAILURE(
 		COSE_Sign1_map_put_int(hSignBad, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign1_map_put_int(
-					  hSign, 1, nullptr, COSE_PROTECT_ONLY, &cose_error),
+	CHECK_FAILURE(
+		COSE_Sign1_map_put_int(hSign, 1, nullptr, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 	CHECK_FAILURE(COSE_Sign1_map_put_int(hSign, 1, cn,
 					  COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error),

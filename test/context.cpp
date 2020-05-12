@@ -140,8 +140,6 @@ void FreeContext(cn_cbor_context *pContext)
 	}
 
 	free(myContext);
-
-	return;
 }
 
 int IsContextEmpty(cn_cbor_context *pContext)
