@@ -396,7 +396,7 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 		goto errorReturn;
 	}
 	if (!_COSE_Signer_sign(&pCountersign->m_signer, pSignature,
-			pcborProtectedSign, "CounterSignature0", CBOR_CONTEXT_PARAM_COMMA perr)) {
+			pcborProtectedSign, "CounterSignature0", perr)) {
 		goto errorReturn;
 	}
 
@@ -405,7 +405,7 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 	sigValue = (byte*)COSE_CALLOC(cn->length, 1, context);
 	CHECK_CONDITION(sigValue != NULL, COSE_ERR_OUT_OF_MEMORY);
 	memcpy(sigValue, cn->v.bytes, cn->length);
-	cn = cn_cbor_data_create2(sigValue, cn->length, 0, &cborerr);
+	cn = cn_cbor_data_create2(sigValue, cn->length, 0, CBOR_CONTEXT_PARAM_COMMA &cborerr);
 	CHECK_CONDITION_CBOR(cn != NULL, cborerr);
 	sigValue = NULL;
 

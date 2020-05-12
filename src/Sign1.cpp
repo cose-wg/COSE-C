@@ -320,9 +320,6 @@ bool COSE_Sign1_validate2(HCOSE_SIGN1 hSign, HCOSE_KEY hKey, cose_errback *perr)
 	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = &pSign->m_message.m_allocContext;
-#endif
 	pcose = (COSE_KEY *)hKey;
 	
 	f = _COSE_Signer1_validate(pSign, pcose, perr);
@@ -339,7 +336,11 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 		return false;
 	}
 
+	CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
+	
 #ifdef USE_CBOR_CONTEXT
+	COSE_Sign1Message *pSign = (COSE_Sign1Message *)hSign;
+
 	cn_cbor_context *context = &pSign->m_message.m_allocContext;
 #endif
 

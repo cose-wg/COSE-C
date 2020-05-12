@@ -837,7 +837,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 	}
 
 	cose_errback coseError;
-	return COSE_KEY_FromCbor(pKeyOut, &coseError);
+	return COSE_KEY_FromCbor(pKeyOut, CBOR_CONTEXT_PARAM_COMMA &coseError);
 }
 
 bool Test_cn_cbor_array_replace()

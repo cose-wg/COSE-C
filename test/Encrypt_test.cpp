@@ -695,7 +695,7 @@ bool BuildEnvelopedMessage(const cn_cbor *pControl)
 				}
 
 				Safe_HCOSE_COUNTERSIGN hCountersign =
-					COSE_CounterSign_Init(nullptr);
+					COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
 
 				if (!SetSendingAttributes(hCountersign, countersign,
 						Attributes_Countersign_protected)) {
