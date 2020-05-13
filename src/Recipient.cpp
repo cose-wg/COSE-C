@@ -201,6 +201,7 @@ static bool HKDF_X(COSE *pCose,
 	size_t cbDigest;
 	byte *pbSecret = nullptr;
 	size_t cbSecret = 0;
+	COSE_KEY *pkeyMessage = NULL;
 
 	if (!BuildContextBytes(pCose, algResult, cbitKey, &pbContext, &cbContext,
 			CBOR_CONTEXT_PARAM_COMMA perr)) {
@@ -209,7 +210,6 @@ static bool HKDF_X(COSE *pCose,
 
 	if (fECDH) {
 #ifdef USE_ECDH
-		COSE_KEY *pkeyMessage;
 
 		if (pKeyPrivate != nullptr) {
 			cn = cn_cbor_mapget_int(pKeyPrivate->m_cborKey, COSE_Key_Type);
@@ -236,28 +236,54 @@ static bool HKDF_X(COSE *pCose,
 				goto errorReturn;
 			}
 			if (!fStatic && pkeyMessage->m_cborKey->parent == nullptr) {
+				cn_cbor_errback cborError;
+				cn_cbor *pdup = pkeyMessage->m_cborKey;
+				if (pKeyPrivate == nullptr) {
+					pkeyMessage->m_cborKey = nullptr;	
+				}
+				else {
+					pdup = cn_cbor_clone(pkeyMessage->m_cborKey, context, &cborError);
+					CHECK_CONDITION_CBOR(pdup != nullptr, cborError);
+				}
+				if (pKeyPrivate == nullptr) {
+					COSE_KEY_Free((HCOSE_KEY)pkeyMessage);
+				}
 				if (!_COSE_map_put(pCose, COSE_Header_ECDH_EPHEMERAL,
-						pkeyMessage->m_cborKey, COSE_UNPROTECT_ONLY, perr)) {
+						pdup, COSE_UNPROTECT_ONLY, perr)) {
+					CN_CBOR_FREE(pdup, context);
 					goto errorReturn;
 				}
 			}
 		}
 		else {
-			cn_cbor *cborKey = _COSE_map_get_int(pCose,
-				fStatic ? COSE_Header_ECDH_STATIC : COSE_Header_ECDH_EPHEMERAL,
-				COSE_BOTH, perr);
-			CHECK_CONDITION(cborKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
-			
-			pkeyMessage = (COSE_KEY *) COSE_KEY_FromCbor(cborKey, CBOR_CONTEXT_PARAM_COMMA perr);
-			if (pkeyMessage == nullptr) {
-				goto errorReturn;
-			}
-
 			CHECK_CONDITION(pKeyPrivate != nullptr, COSE_ERR_INVALID_PARAMETER);
+			pkeyMessage = pKeyPublic;
+
+			if (pKeyPublic == nullptr) {
+				cn_cbor *cborKey = _COSE_map_get_int(pCose,
+					fStatic ? COSE_Header_ECDH_STATIC
+							: COSE_Header_ECDH_EPHEMERAL,
+					COSE_BOTH, perr);
+				CHECK_CONDITION(cborKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
+
+				pkeyMessage = (COSE_KEY *)COSE_KEY_FromCbor(
+					cborKey, CBOR_CONTEXT_PARAM_COMMA perr);
+				if (pkeyMessage == nullptr) {
+					goto errorReturn;
+				}
+			}
 
 			if (!ECDH_ComputeSecret(pCose, &pKeyPrivate, pkeyMessage, &pbSecret,
 					&cbSecret, CBOR_CONTEXT_PARAM_COMMA perr)) {
+				if (pKeyPublic == nullptr) {
+					pkeyMessage->m_cborKey = nullptr;
+					COSE_KEY_Free((HCOSE_KEY)pkeyMessage);
+				}
 				goto errorReturn;
+			}
+			if (pKeyPublic == nullptr) {
+				pkeyMessage->m_cborKey = nullptr;
+				COSE_KEY_Free((HCOSE_KEY)pkeyMessage);
 			}
 		}
 #else
@@ -725,7 +751,7 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_SS_A128KW
 		case COSE_Algorithm_ECDH_SS_A128KW:
 			if (!HKDF_X(&pcose->m_message, true, true, true, false,
-					COSE_Algorithm_AES_KW_128, pRecip->m_pkey, nullptr, rgbKey,
+					COSE_Algorithm_AES_KW_128, pRecip->m_pkey, pRecip->m_pkeyStatic, rgbKey,
 					128, 256, CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -1636,6 +1662,9 @@ bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
 			cn2 = nullptr;
 			break;
 
+		case COSE_DONT_SEND:
+			break;
+		
 		default:
 			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}

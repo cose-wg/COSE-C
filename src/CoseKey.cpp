@@ -94,6 +94,9 @@ bool COSE_KEY_Free(HCOSE_KEY h)
 			}
 		}
 	}
+	if (p->m_cborKey != nullptr && p->m_cborKey->parent == nullptr) {
+		CN_CBOR_FREE(p->m_cborKey, &p->m_allocContext);
+	}
 
 	COSE_FREE(p, &p->m_allocContext);
 

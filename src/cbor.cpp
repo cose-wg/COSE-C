@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "cn-cbor/cn-cbor.h"
 #include <cose/cose.h>
 #include <stdlib.h>
@@ -21,6 +23,7 @@
 
 #ifdef USE_CBOR_CONTEXT
 #define CBOR_CONTEXT_PARAM , context
+#define CBOR_CONTEXT_PARAM_COMMA context,
 
 #define CN_CALLOC(ctx)                                           \
 	((ctx) && (ctx)->calloc_func)                                \
@@ -135,7 +138,10 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 	cn_cbor *pOut = nullptr;
 	char *sz;
 	unsigned char *pb;
-
+	cn_cbor *pTemp;
+	cn_cbor *pLast;
+	int count;
+	
 	switch (pIn->type) {
 		case CN_CBOR_TEXT:
 			sz = (char*)( CN_CBOR_CALLOC(pIn->length + 1, 1, context));
@@ -153,18 +159,64 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 				pIn->v.sint CBOR_CONTEXT_PARAM, pcn_cbor_error);
 			break;
 
+		case CN_CBOR_INT:
+			pOut = cn_cbor_int_create(
+				pIn->v.uint CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			break;
+
+		case CN_CBOR_TRUE:
+			pOut = cn_cbor_bool_create(true CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			break;
+
+		case CN_CBOR_FALSE:
+			pOut =
+				cn_cbor_bool_create(false CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			break;
+
 		case CN_CBOR_BYTES:
 			pb = static_cast<unsigned char *>(
 				CN_CBOR_CALLOC((int)pIn->length, 1, context));
-			if (pb == NULL) {
-				return NULL;
+			if (pb == nullptr) {
+				return nullptr;
 			}
 			memcpy(pb, pIn->v.bytes, pIn->length);
 			pOut = cn_cbor_data_create2(
 				pb, (int)pIn->length, 0 CBOR_CONTEXT_PARAM, pcn_cbor_error);
 			break;
 
+		case CN_CBOR_MAP:
+			pOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA pcn_cbor_error);
+			if (pOut == nullptr) {
+				return nullptr;
+			}
+			pTemp = pIn->first_child;
+			pLast = nullptr;
+			count = 0;
+			while (pTemp != nullptr) {
+				cn_cbor *p = cn_cbor_clone(
+					pTemp, CBOR_CONTEXT_PARAM_COMMA pcn_cbor_error);
+				if (p == nullptr) {
+					cn_cbor_free(pOut CBOR_CONTEXT_PARAM);
+					return nullptr;
+				}
+				if (pLast == nullptr) {
+					pOut->first_child = p;
+					pLast = p;
+				}
+				else {
+					pLast->next = p;
+					pLast = p;
+				}
+				p->parent = pOut;
+				count += 1;
+				pTemp = pTemp->next;
+			}
+			pOut->last_child = pLast;
+			pOut->length = count;
+			break;
+
 		default:
+			assert(false);
 			break;
 	}
 

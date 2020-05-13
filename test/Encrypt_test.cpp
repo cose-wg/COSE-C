@@ -105,8 +105,7 @@ int DecryptMessage(const byte *pbEncoded,
 			}
 		}
 
-		hRecip = hRecip2;
-		hRecip2.Clear();
+		hRecip.Transfer(&hRecip2);
 	}
 	else {
 		Safe_HCOSE_KEY hkey =

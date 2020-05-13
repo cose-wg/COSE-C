@@ -23,7 +23,6 @@ bool _COSE_Init(COSE_INIT_FLAGS flags,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	cn_cbor_errback errState;
-	;
 
 #ifdef USE_CBOR_CONTEXT
 	if (context != nullptr) {

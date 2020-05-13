@@ -130,6 +130,20 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 			Set(pIn);                                  \
 			return pIn;                                \
 		}                                              \
+		handleName Transfer(Safe_##handleName* hIn) \
+		{ \
+		if (h != NULL) { \
+freeFunction(h); \
+} \
+h = hIn->h; \
+hIn->h = NULL; \
+return h; \
+} \
+		handleName operator=(Safe_##handleName hIn) \
+		{ \
+		Set(hIn.h); \
+		return h; \
+		} \
 		void Clear() { h = NULL; }                     \
 	};
 
