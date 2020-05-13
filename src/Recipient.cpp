@@ -242,7 +242,7 @@ static bool HKDF_X(COSE *pCose,
 					pkeyMessage->m_cborKey = nullptr;	
 				}
 				else {
-					pdup = cn_cbor_clone(pkeyMessage->m_cborKey, context, &cborError);
+					pdup = cn_cbor_clone(pkeyMessage->m_cborKey, CBOR_CONTEXT_PARAM_COMMA &cborError);
 					CHECK_CONDITION_CBOR(pdup != nullptr, cborError);
 				}
 				if (pKeyPrivate == nullptr) {

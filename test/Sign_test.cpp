@@ -619,8 +619,8 @@ bool BuildSignedMessage(const cn_cbor *pControl)
 
 int SignMessage()
 {
-	HCOSE_SIGN hEncObj =
-		COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	Safe_HCOSE_SIGN hEncObj =
+		(HCOSE_SIGN) COSE_Sign_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	const char *sz = "This is the content to be used";
 	size_t cb;
 
@@ -668,9 +668,9 @@ int SignMessage()
 
 	COSE_Sign_Sign(hEncObj, nullptr);
 
-	cb = COSE_Encode((HCOSE)hEncObj, nullptr, 0, 0) + 1;
+	cb = COSE_Encode(hEncObj.ToCOSE(), nullptr, 0, 0) + 1;
 	std::unique_ptr<byte> rgb(new byte[cb]);
-	cb = COSE_Encode((HCOSE)hEncObj, rgb.get(), 0, cb);
+	cb = COSE_Encode(hEncObj.ToCOSE(), rgb.get(), 0, cb);
 
 	COSE_Sign_Free(hEncObj);
 

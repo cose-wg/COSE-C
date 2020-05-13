@@ -381,12 +381,16 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
 {
 	HCOSE_KEY cose = nullptr;
 	bool fRet = false;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = nullptr;
-#endif
 
 	CHECK_CONDITION(pKey != nullptr, COSE_ERR_INVALID_PARAMETER);
-	cose = COSE_KEY_FromCbor((cn_cbor*) pKey, CBOR_CONTEXT_PARAM_COMMA perr);
+	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
+	
+#ifdef USE_CBOR_CONTEXT
+	COSE_SignerInfo *p = (COSE_SignerInfo *)h;
+	cn_cbor_context *context = &p->m_message.m_allocContext;
+#endif
+
+	cose = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
 	
 	CHECK_CONDITION(cose != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
