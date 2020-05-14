@@ -675,6 +675,8 @@ bool BuildEnvelopedMessage(const cn_cbor *pControl)
 		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, nullptr)) {
 			goto returnError;
 		}
+
+		
 	}
 
 #if INCLUDE_COUNTERSIGNATURE
@@ -764,7 +766,7 @@ bool BuildEnvelopedMessage(const cn_cbor *pControl)
 	std::unique_ptr<byte> rgb(new byte[cb]);
 	cb = COSE_Encode(hEncObj.ToCOSE(), rgb.get(), 0, cb);
 
-	COSE_Enveloped_Free(hEncObj);
+	hEncObj = nullptr;
 
 	int f = _ValidateEnveloped(pControl, rgb.get(), cb);
 	if (f == 0) {
@@ -965,7 +967,13 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 		if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
 			returnValue = COSE_MIN(1, returnValue);
 		}
-		else if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
+		else if (fFailBody) {
+			returnValue = COSE_MIN(1, returnValue);
+		}
+		else if ((pFail != nullptr) && (pFail->type == CN_CBOR_FALSE)) {
+			returnValue = COSE_MIN(1, returnValue);
+		}
+		else {
 			returnValue = 0;
 		}
 	}
@@ -995,7 +1003,7 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 				bool noSupportSign = false;
 				bool failThis = false;
 
-				HCOSE_COUNTERSIGN h = COSE_Encrypt0_get_countersignature(
+				Safe_HCOSE_COUNTERSIGN h = COSE_Encrypt0_get_countersignature(
 					hEnc, counterNo, nullptr);
 				if (h == nullptr) {
 					fFail = true;
@@ -1014,7 +1022,6 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 
 				if (!COSE_CounterSign_SetKey2(h, hkeyCountersign, nullptr)) {
 					fFail = true;
-					COSE_CounterSign_Free(h);
 					continue;
 				}
 

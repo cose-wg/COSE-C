@@ -124,13 +124,16 @@ int _ValidateMAC(const cn_cbor *pControl,
 		else {
 			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS ||
 				error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
-				returnCode = 1;
+				returnCode = COSE_MIN(1, returnCode);
+			}
+			else if (fFailBody) {
+				returnCode = COSE_MIN(1, returnCode);
 			}
 			else if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
-				returnCode = 1;
+				returnCode = 0;
 			}
 			else {
-				returnCode = 0;
+				returnCode = COSE_MIN(1, returnCode);
 			}
 		}
 
@@ -283,7 +286,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 			for (int counterNo = 0; counterNo < count; counterNo++) {
 				bool noSignSupport = false;
 
-				HCOSE_COUNTERSIGN h =
+				Safe_HCOSE_COUNTERSIGN h =
 					COSE_Mac_get_countersignature(hMAC, counterNo, nullptr);
 				if (h == nullptr) {
 					returnCode = 0;
@@ -832,9 +835,16 @@ int _ValidateMac0(const cn_cbor *pControl,
 		if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
 			returnCode = COSE_MIN(returnCode, 1);
 		}
+		else if (fFailBody) {
+			returnCode = COSE_MIN(returnCode, 1);
+		}
 		else if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
 			return 0;
 		}
+		else {
+			returnCode = COSE_MIN(returnCode, 1);
+		}
+			
 	}
 
 #if INCLUDE_COUNTERSIGNATURE

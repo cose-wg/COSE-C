@@ -100,14 +100,16 @@ int _ValidateSigned(const cn_cbor *pControl,
 		}
 		else {
 			if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
-				return 1;
+				returnCode = COSE_MIN(1, returnCode);
 			}
-
-			if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
+			else if (fFailBody) {
+				returnCode = COSE_MIN(1, returnCode);
+			}
+			else if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
 				returnCode = 0;
 			}
 			else {
-				return 1;
+				returnCode = COSE_MIN(1, returnCode);
 			}
 		}
 
@@ -460,7 +462,7 @@ bool BuildSignedMessage(const cn_cbor *pControl)
 						goto returnError;
 					}
 
-					HCOSE_COUNTERSIGN hCountersign =
+					Safe_HCOSE_COUNTERSIGN hCountersign =
 						COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
 					if (hCountersign == nullptr) {
 						goto returnError;
@@ -755,6 +757,9 @@ int _ValidateSign1(const cn_cbor *pControl,
 	}
 	else {
 		if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+			return 1;
+		}
+		if (fFailBody) {
 			return 1;
 		}
 

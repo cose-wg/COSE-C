@@ -337,6 +337,7 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	}
 
 	CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
 	
 #ifdef USE_CBOR_CONTEXT
 	COSE_Sign1Message *pSign = (COSE_Sign1Message *)hSign;
