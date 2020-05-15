@@ -791,9 +791,9 @@ int _ValidateMac0(const cn_cbor *pControl,
 		COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hMAC == nullptr) {
 		if (fFailBody) {
-			return 0;
+			return 1;
 		}
-		return 1;
+		return 0;
 	}
 
 	if ((pInput == nullptr) || (pInput->type != CN_CBOR_MAP)) {

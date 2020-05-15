@@ -1450,7 +1450,9 @@ int main(int argc, char** argv)
 		}
 	}
 	else if (fCorners) {
+		context = CreateContext(-1);
 		RunCorners();
+		FreeContext(context);
 	}
 	else {
 #ifdef USE_CBOR_CONTEXT

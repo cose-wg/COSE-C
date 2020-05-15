@@ -623,7 +623,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_Direct_HKDF_HMAC_SHA_256
 		case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
 			if (!HKDF_X(&pcose->m_message, true, false, false, false, algIn,
-					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut, 256,
+					pRecip->m_pkey, pRecip->m_pkeyStatic, pbKeyOut, cbitKeyOut,
+					256,
 					CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -633,7 +634,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_Direct_HKDF_HMAC_SHA_512
 		case COSE_Algorithm_Direct_HKDF_HMAC_SHA_512:
 			if (!HKDF_X(&pcose->m_message, true, false, false, false, algIn,
-					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut, 512,
+					pRecip->m_pkey, pRecip->m_pkeyStatic, pbKeyOut, cbitKeyOut,
+					512,
 					CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -643,7 +645,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_Direct_HKDF_AES_128
 		case COSE_Algorithm_Direct_HKDF_AES_128:
 			if (!HKDF_X(&pcose->m_message, false, false, false, false, algIn,
-					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut, 128,
+					pRecip->m_pkey, pRecip->m_pkeyStatic, pbKeyOut, cbitKeyOut,
+					128,
 					CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -653,7 +656,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_Direct_HKDF_AES_256
 		case COSE_Algorithm_Direct_HKDF_AES_256:
 			if (!HKDF_X(&pcose->m_message, false, false, false, false, algIn,
-					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut, 256,
+					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut,
+					256,
 					CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -673,7 +677,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_ES_HKDF_512
 		case COSE_Algorithm_ECDH_ES_HKDF_512:
 			if (!HKDF_X(&pcose->m_message, true, true, false, false, algIn,
-					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut, 512,
+					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut,
+					512,
 					CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -683,7 +688,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_SS_HKDF_256
 		case COSE_Algorithm_ECDH_SS_HKDF_256:
 			if (!HKDF_X(&pcose->m_message, true, true, true, false, algIn,
-					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut, 256,
+					pRecip->m_pkey, pRecip->m_pkeyStatic, pbKeyOut, cbitKeyOut,
+					256,
 					CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -693,7 +699,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_SS_HKDF_512
 		case COSE_Algorithm_ECDH_SS_HKDF_512:
 			if (!HKDF_X(&pcose->m_message, true, true, true, false, algIn,
-					pRecip->m_pkey, nullptr, pbKeyOut, cbitKeyOut, 512,
+					pRecip->m_pkey, pRecip->m_pkeyStatic, pbKeyOut, cbitKeyOut,
+					512,
 					CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -703,7 +710,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_ES_A128KW
 		case COSE_Algorithm_ECDH_ES_A128KW:
 			if (!HKDF_X(&pcose->m_message, true, true, false, false,
-					COSE_Algorithm_AES_KW_128, pRecip->m_pkey, nullptr, rgbKey,
+					COSE_Algorithm_AES_KW_128, pRecip->m_pkey,
+					nullptr, rgbKey,
 					128, 256, CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -719,7 +727,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_ES_A192KW
 		case COSE_Algorithm_ECDH_ES_A192KW:
 			if (!HKDF_X(&pcose->m_message, true, true, false, false,
-					COSE_Algorithm_AES_KW_192, pRecip->m_pkey, nullptr, rgbKey,
+					COSE_Algorithm_AES_KW_192, pRecip->m_pkey,
+					nullptr, rgbKey,
 					192, 256, CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -735,7 +744,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_ES_A256KW
 		case COSE_Algorithm_ECDH_ES_A256KW:
 			if (!HKDF_X(&pcose->m_message, true, true, false, false,
-					COSE_Algorithm_AES_KW_256, pRecip->m_pkey, nullptr, rgbKey,
+					COSE_Algorithm_AES_KW_256, pRecip->m_pkey,
+					nullptr, rgbKey,
 					256, 256, CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -767,7 +777,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_SS_A192KW
 		case COSE_Algorithm_ECDH_SS_A192KW:
 			if (!HKDF_X(&pcose->m_message, true, true, true, false,
-					COSE_Algorithm_AES_KW_192, pRecip->m_pkey, nullptr, rgbKey,
+					COSE_Algorithm_AES_KW_192, pRecip->m_pkey,
+					pRecip->m_pkeyStatic, rgbKey,
 					192, 256, CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -783,7 +794,8 @@ bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
 #ifdef USE_ECDH_SS_A256KW
 		case COSE_Algorithm_ECDH_SS_A256KW:
 			if (!HKDF_X(&pcose->m_message, true, true, true, false,
-					COSE_Algorithm_AES_KW_256, pRecip->m_pkey, nullptr, rgbKey,
+					COSE_Algorithm_AES_KW_256, pRecip->m_pkey,
+					pRecip->m_pkeyStatic, rgbKey,
 					256, 256, CBOR_CONTEXT_PARAM_COMMA perr)) {
 				goto errorReturn;
 			}
@@ -1198,6 +1210,25 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 		}
 	}
 
+#if INCLUDE_COUNTERSIGNATURE
+	if (pRecipient->m_encrypt.m_message.m_counterSigners != nullptr) {
+		if (!_COSE_CounterSign_Sign(
+				&pRecipient->m_encrypt.m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pRecipient->m_encrypt.m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
+				&pRecipient->m_encrypt.m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
+
 	//  Figure out the clean up
 
 	fRet = true;
@@ -1561,7 +1592,8 @@ bool COSE_Recipient_SetSenderKey(HCOSE_RECIPIENT h,
 	CHECK_CONDITION(pKey != nullptr, COSE_ERR_INVALID_PARAMETER);
 
 	#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = nullptr;
+	COSE_RecipientInfo *pRecipient = (COSE_RecipientInfo *)h;
+	cn_cbor_context *context = &pRecipient->m_encrypt.m_message.m_allocContext;
 #endif
 
 	coseKey = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);

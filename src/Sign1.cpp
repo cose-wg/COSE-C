@@ -230,9 +230,11 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 	}
 
 	CHECK_CONDITION(pKey != nullptr, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(IsValidSign1Handle(h), COSE_ERR_INVALID_HANDLE);
 
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context = nullptr;
+	COSE_Sign1Message *pmessage = (COSE_Sign1Message *)h;
+	cn_cbor_context *context = &pmessage->m_message.m_allocContext;
 #endif
 
 	cose = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
