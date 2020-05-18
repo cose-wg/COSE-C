@@ -268,7 +268,6 @@ HCOSE COSE_Decode(const byte *rgbData,
 			h = (HCOSE)_COSE_Enveloped_Init_From_Object(
 				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
-				COSE_Encrypt_Free((HCOSE_ENCRYPT)h);
 				goto errorReturn;
 			}
 			cbor = nullptr;
