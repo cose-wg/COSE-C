@@ -331,7 +331,6 @@ bool SetAttributes(HCOSE hHandle,
 	bool fPublicKey)
 {
 	int keyNew = 0;
-	cn_cbor* pValueNew = nullptr;
 	bool fRet = true;
 
 	if (pAttributes == nullptr) {
@@ -343,6 +342,7 @@ bool SetAttributes(HCOSE hHandle,
 
 	for (const cn_cbor* pKey = pAttributes->first_child; pKey != nullptr;
 		 pKey = pKey->next->next) {
+		Safe_CN_CBOR pValueNew = nullptr;
 		const cn_cbor* pValue = pKey->next;
 
 		if (pKey->type != CN_CBOR_TEXT) {
@@ -483,8 +483,13 @@ bool SetAttributes(HCOSE hHandle,
 #endif
 
 			default:
+				fRet = false;
 				assert(false);
 				break;
+		}
+		
+		if (fRet) {
+			pValueNew.Clear();
 		}
 		//  If you uncomment this then the memory test will fail.
 		// assert(fRet);
@@ -697,11 +702,9 @@ bool SetReceivingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 
 cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 {
-	cn_cbor* pKeyOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA nullptr);
+	Safe_CN_CBOR pKeyOut = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA nullptr);
 	cn_cbor* pKty = cn_cbor_mapget_string(pKeyIn, "kty");
-	cn_cbor* p = nullptr;
 	cn_cbor* pKey = nullptr;
-	cn_cbor* pValue = nullptr;
 	size_t i;
 	int kty;
 	unsigned char* pb = nullptr;
@@ -737,16 +740,17 @@ cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 		return nullptr;
 	}
 
-	p = cn_cbor_int_create(kty, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	Safe_CN_CBOR p = cn_cbor_int_create(kty, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (p == nullptr) {
 		return nullptr;
 	}
 	if (!cn_cbor_mapput_int(pKeyOut, 1, p, CBOR_CONTEXT_PARAM_COMMA nullptr)) {
 		return nullptr;
 	}
+	p.Clear();
 
 	for (pKey = pKeyIn->first_child; pKey != nullptr; pKey = pKey->next->next) {
-		pValue = pKey->next;
+		cn_cbor* pValue = pKey->next;
 
 		if (pKey->type == CN_CBOR_TEXT) {
 			for (i = 0; i < sizeof(RgStringKeys) / sizeof(RgStringKeys[0]);
@@ -756,15 +760,17 @@ cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 						 strlen(RgStringKeys[i].szKey)) == 0) &&
 					((RgStringKeys[i].kty == 0) ||
 						(RgStringKeys[i].kty == kty))) {
+					Safe_CN_CBOR pValueNew;
+					
 					switch (RgStringKeys[i].operation) {
 						case OPERATION_NONE:
-							p = cn_cbor_clone(
+							pValueNew = cn_cbor_clone(
 								pValue, CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
+							if (pValueNew == nullptr) {
 								return nullptr;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-									RgStringKeys[i].keyNew, p,
+									RgStringKeys[i].keyNew, pValueNew,
 									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
 								return nullptr;
 							}
@@ -777,27 +783,27 @@ cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 
 							pb = base64_decode(
 								pValue->v.str, pValue->length, &cb);
-							p = cn_cbor_data_create(
+							pValueNew = cn_cbor_data_create(
 								pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
+							if (pValueNew == nullptr) {
 								return nullptr;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-									RgStringKeys[i].keyNew, p,
+									RgStringKeys[i].keyNew, pValueNew,
 									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
 								return nullptr;
 							}
 							break;
 
 						case OPERATION_STRING:
-							p = cn_cbor_int_create(MapName(pValue, RgCurveNames,
+							pValueNew = cn_cbor_int_create(MapName(pValue, RgCurveNames,
 													   _countof(RgCurveNames)),
 								CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
+							if (pValueNew == nullptr) {
 								return nullptr;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-									RgStringKeys[i].keyNew, p,
+									RgStringKeys[i].keyNew, pValueNew,
 									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
 								return nullptr;
 							}
@@ -809,24 +815,27 @@ cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 								continue;
 							}
 							pb = hex_decode(pValue->v.str, pValue->length, &cb);
-							p = cn_cbor_data_create(
+							pValueNew = cn_cbor_data_create(
 								pb, (int)cb, CBOR_CONTEXT_PARAM_COMMA nullptr);
-							if (p == nullptr) {
+							if (pValueNew == nullptr) {
 								return nullptr;
 							}
 							if (!cn_cbor_mapput_int(pKeyOut,
-									RgStringKeys[i].keyNew, p,
+									RgStringKeys[i].keyNew, pValueNew,
 									CBOR_CONTEXT_PARAM_COMMA nullptr)) {
 								return nullptr;
 							}
 							break;
 					}
+					pValueNew.Clear();
 					i = 99;
 				}
 			}
 		}
 	}
-	return pKeyOut;
+	cn_cbor* pOut = pKeyOut;
+	pKeyOut.Clear();
+	return pOut;
 }
 
 HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
@@ -837,7 +846,11 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 	}
 
 	cose_errback coseError;
-	return COSE_KEY_FromCbor(pKeyOut, CBOR_CONTEXT_PARAM_COMMA &coseError);
+	HCOSE_KEY key = COSE_KEY_FromCbor(pKeyOut, CBOR_CONTEXT_PARAM_COMMA &coseError);
+	if (key == nullptr) {
+		CN_CBOR_FREE(pKeyOut, context);
+	}
+	return key;
 }
 
 bool Test_cn_cbor_array_replace()

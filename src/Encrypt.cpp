@@ -103,6 +103,9 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *cbor,
 	if (pobj == nullptr) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
+		if (pobj != nullptr) {
+			pobj->m_message.m_ownMsg = false;
+		}
 		if (pIn == nullptr && pobj != nullptr) {
 			_COSE_Enveloped_Release(pobj);
 			COSE_FREE(pobj, context);

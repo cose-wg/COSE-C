@@ -119,6 +119,12 @@ if(COSE_C_INCLUDE_COUNTERSIGN)
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND cose_test --dir Examples/countersign)
 endif()
+if(COSE_C_INCLUDE_COUNTERSIGN1)
+  add_test(
+    NAME Countersign1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND cose_test --dir Examples/countersign1)
+endif()
 
 add_test(
   NAME corner-cases
@@ -182,4 +188,10 @@ if(COSE_C_INCLUDE_COUNTERSIGN)
     NAME Memory-Countersign
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND cose_test --memory Examples/countersign/mac0-01.json)
+endif()
+if(COSE_C_INCLUDE_COUNTERSIGN1)
+  add_test(
+    NAME Memory-Countersign1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND cose_test --memory Examples/countersign1/mac0-01.json)
 endif()

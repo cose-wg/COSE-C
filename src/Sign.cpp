@@ -119,6 +119,7 @@ HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *cbor,
 
 errorReturn:
 	if (pobj != nullptr) {
+		pobj->m_message.m_ownMsg = false;
 		_COSE_Sign_Release(pobj);
 		if (pIn == nullptr) {
 			COSE_FREE(pobj, context);
@@ -383,8 +384,6 @@ bool COSE_Sign_AddSigner(HCOSE_SIGN hSign,
 	pSign = (COSE_SignMessage *)hSign;
 	pSigner = (COSE_SignerInfo *)hSigner;
 
-	pSigner->m_signerNext = pSign->m_signerFirst;
-	pSign->m_signerFirst = pSigner;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pSign->m_message.m_allocContext;
@@ -406,6 +405,9 @@ bool COSE_Sign_AddSigner(HCOSE_SIGN hSign,
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(pSigners, pSigner->m_message.m_cbor, &cbor_error),
 		cbor_error);
+
+	pSigner->m_signerNext = pSign->m_signerFirst;
+	pSign->m_signerFirst = pSigner;
 	pSigner->m_message.m_refCount++;
 
 	return true;

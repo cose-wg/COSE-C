@@ -105,6 +105,7 @@ HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor *cbor,
 
 errorReturn:
 	if (pobj != nullptr) {
+		pobj->m_message.m_ownMsg = false;
 		_COSE_Sign1_Release(pobj);
 		if (pIn == nullptr) {
 			COSE_FREE(pobj, context);

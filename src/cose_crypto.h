@@ -38,7 +38,7 @@ bool AES_KW_Decrypt(COSE_Enveloped* pcose,
 	const byte* pbCipherText,
 	size_t cbCipherText,
 	byte* pbKeyOut,
-	int* pcbKeyOut,
+	size_t* pcbKeyOut,
 	cose_errback* perr);
 
 /**

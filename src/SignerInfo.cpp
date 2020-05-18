@@ -404,6 +404,7 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
 
 	fRet = COSE_Signer_SetKey2(h, cose, perr);
 
+	return fRet;
 }
 
 /*!

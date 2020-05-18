@@ -139,7 +139,9 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *cbor,
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_RECIPIENTS);
 	CHECK_CONDITION(pRecipients == nullptr, COSE_ERR_INVALID_PARAMETER);
 
-	_COSE_InsertInList(&EncryptRoot, &pobj->m_message);
+	if (pIn != nullptr) {
+		_COSE_InsertInList(&EncryptRoot, &pobj->m_message);
+	}
 
 	return (HCOSE_ENCRYPT)pobj;
 }

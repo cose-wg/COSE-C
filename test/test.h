@@ -145,6 +145,12 @@ return h; \
 		return h; \
 		} \
 		void Clear() { h = NULL; }                     \
+		handleName Release() { \
+		handleName h2 = h; \
+		freeFunction(h); \
+		h = NULL; \
+		return h2; \
+		} \
 	};
 
 Safe_Handle(HCOSE_ENCRYPT, COSE_Encrypt_Free);

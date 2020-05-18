@@ -95,6 +95,9 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		pobj->m_allocContext = *context;
 	}
 #endif
+	if (pobj->m_cborRoot != nullptr && pobj->m_ownMsg) {
+		CN_CBOR_FREE(pobj->m_cborRoot, context);
+	}
 	pobj->m_cborRoot = pcbor;
 	pobj->m_cbor = pcbor;
 
@@ -123,6 +126,9 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		}
 	}
 
+	if (pobj->m_unprotectMap != NULL) {
+		CN_CBOR_FREE(pobj->m_unprotectMap, context);
+	}
 	pobj->m_unprotectMap = _COSE_arrayget_int(pobj, INDEX_UNPROTECTED);
 	CHECK_CONDITION((pobj->m_unprotectMap != nullptr) &&
 						(pobj->m_unprotectMap->type == CN_CBOR_MAP),
@@ -228,7 +234,6 @@ HCOSE COSE_Decode(const byte *rgbData,
 
 	if (false) {
 	errorReturn:
-		// M00TODO - break up the init and allocation below for memory tests.
 		CN_CBOR_FREE(cbor, context);
 		return nullptr;	
 	}
@@ -249,30 +254,25 @@ HCOSE COSE_Decode(const byte *rgbData,
 			struct_type = (COSE_object_type)cbor->v.uint;
 		}
 		*ptype = struct_type;
-
-		cn_cbor *ptag = cbor;
-		cbor = ptag->first_child;
-		ptag->first_child = nullptr;
-		ptag->last_child = nullptr;
-		cbor->parent = nullptr;
-		CN_CBOR_FREE(ptag, context);
 	}
 	else {
 		*ptype = struct_type;
 	}
 
-	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+	// CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
-	cn_cbor *cbor2 = cbor;
-	cbor = nullptr;
 	switch (*ptype) {
 		case COSE_enveloped_object:
 #if INCLUDE_ENCRYPT
+		{
 			h = (HCOSE)_COSE_Enveloped_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
+				COSE_Encrypt_Free((HCOSE_ENCRYPT)h);
 				goto errorReturn;
 			}
+			cbor = nullptr;
+		}
 #else
 			FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
 #endif
@@ -281,7 +281,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign_object:
 #if INCLUDE_SIGN
 			h = (HCOSE)_COSE_Sign_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -293,7 +293,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign1_object:
 #if INCLUDE_SIGN1
 			h = (HCOSE)_COSE_Sign1_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -305,7 +305,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_mac_object:
 #if INCLUDE_MAC
 			h = (HCOSE)_COSE_Mac_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -317,7 +317,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_mac0_object:
 #if INCLUDE_MAC0
 			h = (HCOSE)_COSE_Mac0_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -329,7 +329,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_encrypt_object:
 #if INCLUDE_ENCRYPT0
 			h = (HCOSE)_COSE_Encrypt_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -490,7 +490,7 @@ errorReturn:
 cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 {
 	cn_cbor *pProtected;
-	int cbProtected;
+	size_t cbProtected;
 	byte *pbProtected = nullptr;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pMessage->m_allocContext;

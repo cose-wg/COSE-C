@@ -3,6 +3,7 @@
 #include "cn-cbor/cn-cbor.h"
 #include <cose/cose.h>
 #include <stdlib.h>
+
 #ifdef __MBED__
 #include <string.h>
 #else
@@ -25,21 +26,28 @@
 #define CBOR_CONTEXT_PARAM , context
 #define CBOR_CONTEXT_PARAM_COMMA context,
 
+#if 1
 #define CN_CALLOC(ctx)                                           \
 	((ctx) && (ctx)->calloc_func)                                \
 		? (ctx)->calloc_func(1, sizeof(cn_cbor), (ctx)->context) \
 		: calloc(1, sizeof(cn_cbor))
+#endif
 
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
 #define CN_CBOR_CALLOC(c, i, ctx)                                            \
 	((ctx) && (ctx)->calloc_func) ? (ctx)->calloc_func(c, i, (ctx)->context) \
 								  : calloc(c, i)
+#define COSE_FREE(ptr, ctx)                                                    \
+	((((ctx) && (ctx)->free_func)) ? ((ctx)->free_func((ptr), (ctx)->context)) \
+								   : free((ptr)))
+
 #else
 #define CBOR_CONTEXT_PARAM
 #define CBOR_CONTEXT_PARAM_COMMA
 #define CN_CALLOC(ctx) calloc(1, sizeof(cn_cbor))
 #define CN_CALLOC_CONTEXT() CN_CALLOC(context)
 #define CN_CBOR_CALLOC(c, i, ctx) calloc(c, i)
+#define COSE_FREE(ptr, ctx) free(ptr)
 #endif
 
 /***
@@ -136,7 +144,7 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *pcn_cbor_error)
 {
-	cn_cbor *pOut = nullptr;
+	cn_cbor * pOut = nullptr;
 	char *sz;
 	unsigned char *pb;
 	cn_cbor *pTemp;
@@ -153,6 +161,9 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 			sz[pIn->length] = 0;
 			pOut = cn_cbor_string_create2(
 				sz, 0 CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			if (pOut == nullptr) {
+				COSE_FREE(sz, context);
+			}
 			break;
 
 		case CN_CBOR_UINT:
@@ -183,6 +194,9 @@ cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 			memcpy(pb, pIn->v.bytes, pIn->length);
 			pOut = cn_cbor_data_create2(
 				pb, (int)pIn->length, 0 CBOR_CONTEXT_PARAM, pcn_cbor_error);
+			if (pOut == nullptr) {
+				COSE_FREE((cn_cbor *)pb, context);
+			}
 			break;
 
 		case CN_CBOR_MAP:

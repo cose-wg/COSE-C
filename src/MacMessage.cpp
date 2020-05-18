@@ -86,6 +86,7 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *cbor,
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
 		if (pobj != nullptr) {
+			pobj->m_message.m_ownMsg = false;
 			_COSE_Mac_Release(pobj);
 			if (pIn == nullptr) {
 				COSE_FREE(pobj, context);
@@ -925,6 +926,7 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac,
 
 	pRecip->m_recipientNext = pMac->m_recipientFirst;
 	pMac->m_recipientFirst = pRecip;
+	pRecip->m_encrypt.m_message.m_refCount++;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pMac->m_message.m_allocContext;
@@ -947,12 +949,11 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac,
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients,
 							 pRecip->m_encrypt.m_message.m_cbor, &cbor_error),
 		cbor_error);
-	pRecip->m_encrypt.m_message.m_refCount++;
 
 	return true;
 
 errorReturn:
-	if (pRecipientsT == nullptr) {
+	if (pRecipientsT != nullptr) {
 		CN_CBOR_FREE(pRecipientsT, context);
 	}
 	return false;

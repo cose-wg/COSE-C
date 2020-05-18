@@ -443,7 +443,7 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 			COSE_FREE(pbIV, context);
 		}
 		if (cbor_iv_t != nullptr) {
-			COSE_FREE(cbor_iv_t, context);
+			CN_CBOR_FREE(cbor_iv_t, context);
 		}
 		if (rgbOut != nullptr) {
 			COSE_FREE(rgbOut, context);
@@ -1309,6 +1309,9 @@ returnHere:
 	if (p != nullptr) {
 		CN_CBOR_FREE(p, context);
 	}
+	if (pkey != nullptr) {
+		CN_CBOR_FREE(pkey, context);
+	}
 	return coseKey;
 
 errorReturn:
@@ -1675,7 +1678,7 @@ bool AES_KW_Decrypt(COSE_Enveloped *pcose,
 	const byte *pbCipherText,
 	size_t cbCipherText,
 	byte *pbKeyOut,
-	int *pcbKeyOut,
+	size_t *pcbKeyOut,
 	cose_errback *perr)
 {
 	byte rgbOut[512 / 8];
