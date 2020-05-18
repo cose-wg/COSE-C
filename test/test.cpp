@@ -1463,9 +1463,13 @@ int main(int argc, char** argv)
 		}
 	}
 	else if (fCorners) {
+#ifdef USE_CBOR_CONTEXT
 		context = CreateContext(-1);
+#endif
 		RunCorners();
+#ifdef USE_CBOR_CONTEXT
 		FreeContext(context);
+#endif
 	}
 	else {
 #ifdef USE_CBOR_CONTEXT
