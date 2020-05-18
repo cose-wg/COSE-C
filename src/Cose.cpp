@@ -511,7 +511,7 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 		CHECK_CONDITION(pbProtected != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 		CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected,
-							pMessage->m_protectedMap) == cbProtected,
+							pMessage->m_protectedMap) == static_cast<ssize_t>(cbProtected),
 			COSE_ERR_CBOR);
 	}
 	else {

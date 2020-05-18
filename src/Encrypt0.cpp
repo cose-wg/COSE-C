@@ -123,6 +123,7 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *cbor,
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
 		if (pobj != nullptr) {
+			pobj->m_message.m_ownMsg = false;
 			_COSE_Encrypt_Release(pobj);
 			if (pIn == nullptr) {
 				COSE_FREE(pobj, context);
@@ -139,7 +140,7 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *cbor,
 	pRecipients = _COSE_arrayget_int(&pobj->m_message, INDEX_RECIPIENTS);
 	CHECK_CONDITION(pRecipients == nullptr, COSE_ERR_INVALID_PARAMETER);
 
-	if (pIn != nullptr) {
+	if (pIn == nullptr) {
 		_COSE_InsertInList(&EncryptRoot, &pobj->m_message);
 	}
 
