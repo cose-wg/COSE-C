@@ -10,7 +10,7 @@
 
 #if INCLUDE_COUNTERSIGNATURE1
 
-COSE* Countersign1Root = NULL;
+COSE* Countersign1Root = nullptr;
 
 bool IsValidCounterSign1Handle(HCOSE_COUNTERSIGN1 h)
 {
@@ -37,19 +37,28 @@ COSE_CounterSign1* _COSE_CounterSign1_Init_From_Object(cn_cbor* cbor,
 	CBOR_CONTEXT_COMMA cose_errback* perr)
 {
 	COSE_CounterSign1* pobj = pIn;
-	cn_cbor* newBody = NULL;
-	cn_cbor* cn2 = NULL;
+	cn_cbor* newBody = nullptr;
+	cn_cbor* cn2 = nullptr;
 	cn_cbor_errback cborError;
 
 	cose_errback error = {COSE_ERR_NONE};
-	if (perr == NULL) {
+	if (perr == nullptr) {
 		perr = &error;
 	}
 
-	if (pobj == NULL) {
-		pobj = (COSE_CounterSign1*)COSE_CALLOC(
-			1, sizeof(COSE_CounterSign1), context);
-		CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
+	if (false) {
+	errorReturn:
+		if (pobj != nullptr && pIn == nullptr) {
+			pobj->m_signer.m_message.m_ownMsg = false;
+			_COSE_CounterSign1_Free(pobj);
+		}
+		if (newBody != nullptr) {
+			CN_CBOR_FREE(newBody, context);
+		}
+		if (cn2 != nullptr) {
+			CN_CBOR_FREE(cn2, context);
+		}
+		return nullptr;		
 	}
 
 	CHECK_CONDITION(cbor->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
@@ -57,7 +66,7 @@ COSE_CounterSign1* _COSE_CounterSign1_Init_From_Object(cn_cbor* cbor,
 	newBody = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cborError);
 	CHECK_CONDITION_CBOR(newBody != NULL, cborError);
 
-	cn2 = cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA &cborError);	 // protected = bstr
+	cn2 = cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA &cborError);	 // protected = bstr
 	CHECK_CONDITION_CBOR(cn2 != NULL, cborError);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
@@ -70,35 +79,25 @@ COSE_CounterSign1* _COSE_CounterSign1_Init_From_Object(cn_cbor* cbor,
 	cn2 = cn_cbor_clone(cbor, CBOR_CONTEXT_PARAM_COMMA &cborError);	// signature = bstr
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
-	cn2 = NULL;
+	cn2 = nullptr;
 
+	if (pobj == nullptr) {
+		pobj = (COSE_CounterSign1*)COSE_CALLOC(
+			1, sizeof(COSE_CounterSign1), context);
+		CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
+	}
+	
 	if (!_COSE_SignerInfo_Init_From_Object(
 			newBody, &pobj->m_signer, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		_COSE_SignerInfo_Release(&pobj->m_signer);
-		if (pIn == NULL) {
-			COSE_FREE(pobj, context);
-		}
-		return NULL;
+		goto errorReturn;
 	}
-	newBody = NULL;
+	newBody = nullptr;
 
-	if (pIn == NULL) {
+	if (pIn == nullptr) {
 		_COSE_InsertInList(&Countersign1Root, &pobj->m_signer.m_message);
 	}
 
 	return pobj;
-
-errorReturn:
-	if (pobj != NULL) {
-		_COSE_CounterSign1_Free(pobj);
-	}
-	if (newBody != NULL) {
-		CN_CBOR_FREE(newBody, context);
-	}
-	if (cn2 != NULL) {
-		CN_CBOR_FREE(cn2, context);
-	}
-	return NULL;
 }
 
 bool _COSE_CounterSign1_Init(COSE_CounterSign1* pobject,
@@ -114,16 +113,16 @@ HCOSE_COUNTERSIGN1 COSE_CounterSign1_Init(
 {
 	COSE_CounterSign1* pobject =
 		(COSE_CounterSign1*)COSE_CALLOC(1, sizeof(COSE_CounterSign1), context);
-	if (pobject == NULL) {
-		if (perror != NULL) {
+	if (pobject == nullptr) {
+		if (perror != nullptr) {
 			perror->err = COSE_ERR_OUT_OF_MEMORY;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	if (!_COSE_CounterSign1_Init(pobject, CBOR_CONTEXT_PARAM_COMMA perror)) {
 		_COSE_CounterSign1_Free(pobject);
-		return NULL;
+		return nullptr;
 	}
 
 	_COSE_InsertInList(&Countersign1Root, &pobject->m_signer.m_message);
@@ -294,12 +293,12 @@ bool COSE_CounterSign1_SetKey(HCOSE_COUNTERSIGN1 hSigner,
 		IsValidCounterSign1Handle(hSigner), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_HANDLE);
 
-	if (pSigner->m_signer.m_pkey != NULL) {
+	if (pSigner->m_signer.m_pkey != nullptr) {
 		COSE_KEY_Free((HCOSE_KEY)pSigner->m_signer.m_pkey);
 	}
 
 	pSigner->m_signer.m_pkey = pKey;
-	if (hKey != NULL) {
+	if (hKey != nullptr) {
 		pKey->m_refCount += 1;
 	}
 	fRet = true;
@@ -315,13 +314,13 @@ COSE_CounterSign1* _COSE_Message_get_countersignature1(COSE* pMessage,
 	CHECK_CONDITION(
 		pMessage->m_counterSign1 != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	if (pCounterSign != NULL) {
+	if (pCounterSign != nullptr) {
 		pCounterSign->m_signer.m_message.m_refCount += 1;
 	}
 	return pCounterSign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 bool COSE_CounterSign1_map_put_int(HCOSE_COUNTERSIGN1 h,
@@ -362,7 +361,7 @@ bool COSE_CounterSign1_SetExternal(HCOSE_COUNTERSIGN1 hcose,
 	cose_errback* perr)
 {
 	if (!IsValidCounterSign1Handle(hcose)) {
-		if (perr != NULL) {
+		if (perr != nullptr) {
 			perr->err = COSE_ERR_INVALID_HANDLE;
 		}
 		return false;
@@ -376,14 +375,18 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 	CBOR_CONTEXT_COMMA cose_errback* perr)
 {
 	bool fRet = false;
-	cn_cbor* pcborProtectedSign = NULL;
+	cn_cbor* pcborProtectedSign = nullptr;
 	cn_cbor_errback cborerr;
-	byte* sigValue = NULL;
+	byte* sigValue = nullptr;
+	cn_cbor* cn3 = nullptr;
 
 	if (false) {
 	errorReturn:
-		if (sigValue != NULL) {
+		if (sigValue != nullptr) {
 			COSE_FREE(sigValue, context);
+		}
+		if (cn3 != nullptr) {
+			CN_CBOR_FREE(cn3, context);
 		}
 		return fRet;		
 	}
@@ -392,7 +395,7 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 
 	COSE_CounterSign1* pCountersign = baseMessage->m_counterSign1;
 	pcborProtectedSign = _COSE_encode_protected(baseMessage, perr);
-	if (pcborProtectedSign == NULL) {
+	if (pcborProtectedSign == nullptr) {
 		goto errorReturn;
 	}
 	if (!_COSE_Signer_sign(&pCountersign->m_signer, pSignature,
@@ -405,13 +408,14 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 	sigValue = (byte*)COSE_CALLOC(cn->length, 1, context);
 	CHECK_CONDITION(sigValue != NULL, COSE_ERR_OUT_OF_MEMORY);
 	memcpy(sigValue, cn->v.bytes, cn->length);
-	cn = cn_cbor_data_create2(sigValue, cn->length, 0, CBOR_CONTEXT_PARAM_COMMA &cborerr);
-	CHECK_CONDITION_CBOR(cn != NULL, cborerr);
-	sigValue = NULL;
+	cn3 = cn_cbor_data_create2(sigValue, cn->length, 0, CBOR_CONTEXT_PARAM_COMMA &cborerr);
+	CHECK_CONDITION_CBOR(cn3 != NULL, cborerr);
+	sigValue = nullptr;
 
-	CHECK_CONDITION(_COSE_map_put(baseMessage, COSE_Header_CounterSign1, cn,
+	CHECK_CONDITION(_COSE_map_put(baseMessage, COSE_Header_CounterSign1, cn3,
 						COSE_UNPROTECT_ONLY, perr),
 		COSE_ERR_OUT_OF_MEMORY);
+	cn3 = nullptr;
 
 	fRet = true;
 	goto errorReturn;
@@ -435,10 +439,10 @@ cn_cbor* COSE_CounterSign1_map_get_int(HCOSE_COUNTERSIGN1 h,
 	cose_errback* perror)
 {
 	if (!IsValidCounterSign1Handle(h)) {
-		if (perror != NULL) {
+		if (perror != nullptr) {
 			perror->err = COSE_ERR_INVALID_HANDLE;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	return _COSE_map_get_int(
@@ -466,13 +470,13 @@ HCOSE_COUNTERSIGN1 COSE_Signer_add_countersignature1(HCOSE_SIGNER hSigner,
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Signer_get_countersignature1(HCOSE_SIGNER hSigner,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidSignerHandle(hSigner), COSE_ERR_INVALID_HANDLE);
 
@@ -535,13 +539,13 @@ HCOSE_COUNTERSIGN1 COSE_Sign_add_countersignature1(HCOSE_SIGN hSignMsg,
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Sign_get_countersignature1(HCOSE_SIGN hSignMsg,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidSignHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 
@@ -606,13 +610,13 @@ HCOSE_COUNTERSIGN1 COSE_Sign1_add_countersignature1(HCOSE_SIGN1 hSignMsg,
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Sign1_get_countersignature1(HCOSE_SIGN1 hSignMsg,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidSign1Handle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 
@@ -678,14 +682,14 @@ HCOSE_COUNTERSIGN1 COSE_Enveloped_add_countersignature1(
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Enveloped_get_countersignature1(
 	HCOSE_ENVELOPED hSignMsg,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidEnvelopedHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 
@@ -751,14 +755,14 @@ HCOSE_COUNTERSIGN1 COSE_Recipient_add_countersignature1(
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Recipient_get_countersignature1(
 	HCOSE_RECIPIENT hSignMsg,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidRecipientHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 
@@ -823,13 +827,13 @@ HCOSE_COUNTERSIGN1 COSE_Encrypt0_add_countersignature1(HCOSE_ENCRYPT hSignMsg,
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Encrypt0_get_countersignature1(HCOSE_ENCRYPT hSignMsg,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidEncryptHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 
@@ -894,13 +898,13 @@ HCOSE_COUNTERSIGN1 COSE_Mac0_add_countersignature1(HCOSE_MAC0 hSignMsg,
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Mac0_get_countersignature1(HCOSE_MAC0 hSignMsg,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidMac0Handle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 
@@ -965,13 +969,13 @@ HCOSE_COUNTERSIGN1 COSE_Mac_add_countersignature1(HCOSE_MAC hSignMsg,
 	return hCountersign;
 
 errorReturn:
-	return NULL;
+	return nullptr;
 }
 
 HCOSE_COUNTERSIGN1 COSE_Mac_get_countersignature1(HCOSE_MAC hSignMsg,
 	cose_errback* perr)
 {
-	COSE_CounterSign1* p = NULL;
+	COSE_CounterSign1* p = nullptr;
 
 	CHECK_CONDITION(IsValidMacHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 

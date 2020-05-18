@@ -123,7 +123,7 @@ if(COSE_C_INCLUDE_COUNTERSIGN1)
   add_test(
     NAME Countersign1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND cose_test --dir Examples/countersign1)
+    COMMAND cose_test --dir Examples/countersign0)
 endif()
 
 add_test(
@@ -193,5 +193,5 @@ if(COSE_C_INCLUDE_COUNTERSIGN1)
   add_test(
     NAME Memory-Countersign1
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND cose_test --memory Examples/countersign1/mac0-01.json)
+    COMMAND cose_test --memory Examples/countersign0/mac0-01.json)
 endif()
