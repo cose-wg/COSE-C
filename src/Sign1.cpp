@@ -225,6 +225,8 @@ bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor *pKey, cose_errback *perr)
 	if (false) {
 	errorReturn:
 		if (cose != nullptr) {
+			//  Don't free the passed in key.
+			((COSE_KEY *)cose)->m_cborKey = nullptr;
 			COSE_KEY_Free(cose);
 		}
 		return fRet;
@@ -354,6 +356,7 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 
 	bool f = COSE_Sign1_validate2(hSign, hcose, perr);
 
+	((COSE_KEY *)hcose)->m_cborKey = nullptr;
 	COSE_KEY_Free(hcose);
 
 	return f;

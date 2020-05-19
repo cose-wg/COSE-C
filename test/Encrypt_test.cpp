@@ -1601,22 +1601,28 @@ void Recipient_Corners()
 
 	CHECK_FAILURE(COSE_Recipient_SetKey(hRecipNULL, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_FAILURE(COSE_Recipient_SetKey(hRecipBad, cn, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_FAILURE(COSE_Recipient_SetKey(hRecip, nullptr, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(
 		COSE_Recipient_SetSenderKey(hRecipNULL, cn, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecipBad, cn, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecip, nullptr, 0, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecip, cn, 3, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_RETURN(COSE_Recipient_SetSenderKey(hRecip, cn, 0, &cose_error),
 		COSE_ERR_NONE, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 
 	CHECK_FAILURE(
 		COSE_Recipient_SetExternal(hRecipNULL, rgb, 10, &cose_error),
@@ -1636,9 +1642,11 @@ void Recipient_Corners()
 	CHECK_FAILURE(COSE_Recipient_map_put_int(
 					  hRecipNULL, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_FAILURE(COSE_Recipient_map_put_int(
 					  hRecipBad, 1, cn, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
+	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_FAILURE(COSE_Recipient_map_put_int(
 					  hRecip, 1, nullptr, COSE_PROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);

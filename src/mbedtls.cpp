@@ -270,7 +270,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 	//  CHECK TAG HERE
 	bool f = false;
 	const byte *pb = pbCrypto + cbOut;
-	for (int i = 0; i < (unsigned int)TSize; i++) {
+	for (int i = 0; i < TSize; i++) {
 		f |= (pb[i] != tag[i]);
 	}
 	CHECK_CONDITION(!f, COSE_ERR_CRYPTO_FAIL);

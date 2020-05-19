@@ -2094,8 +2094,6 @@ bool COSE_Recipient_AddRecipient(HCOSE_RECIPIENT hEnc,
 	context = &pEncrypt->m_message.m_allocContext;
 #endif	// USE_CBOR_CONTEXT
 
-	pRecip->m_recipientNext = pEncrypt->m_recipientFirst;
-	pEncrypt->m_recipientFirst = pRecip;
 
 	pRecipients = _COSE_arrayget_int(&pEncrypt->m_message, INDEX_RECIPIENTS);
 	if (pRecipients == nullptr) {
@@ -2117,6 +2115,8 @@ bool COSE_Recipient_AddRecipient(HCOSE_RECIPIENT hEnc,
 							 pRecip->m_encrypt.m_message.m_cbor, &cbor_error),
 		cbor_error);
 
+	pRecip->m_recipientNext = pEncrypt->m_recipientFirst;
+	pEncrypt->m_recipientFirst = pRecip;
 	pRecip->m_encrypt.m_message.m_refCount++;
 
 	return true;
