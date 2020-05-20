@@ -1197,6 +1197,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 	size_t cbSize;
 	byte *pbOut = nullptr;
 	COSE_KEY *coseKey = nullptr;
+	size_t cbX;
 
 	pgroup = EC_KEY_get0_group(pKey);
 	CHECK_CONDITION(pgroup != nullptr, COSE_ERR_INVALID_PARAMETER);
@@ -1239,6 +1240,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 			EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_COMPRESSED,
 				pbPoint, cbSize, nullptr) == cbSize,
 			COSE_ERR_CRYPTO_FAIL);
+		cbX = cbSize - 1;
 	}
 	else {
 		cbSize = EC_POINT_point2oct(
@@ -1250,13 +1252,14 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 			EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_UNCOMPRESSED,
 				pbPoint, cbSize, nullptr) == cbSize,
 			COSE_ERR_CRYPTO_FAIL);
+		cbX = cbSize / 2;
 	}
 
-	pbOut = (byte *) COSE_CALLOC((int)(cbSize / 2), 1, context);
+	pbOut = (byte *) COSE_CALLOC((int)(cbX), 1, context);
 	CHECK_CONDITION(pbOut != nullptr, COSE_ERR_OUT_OF_MEMORY);
-	memcpy(pbOut, pbPoint + 1, (int)(cbSize / 2));
+	memcpy(pbOut, pbPoint + 1, (int)(cbX));
 	p = cn_cbor_data_create2(
-		pbOut, (int)(cbSize / 2), 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		pbOut, (int)(cbX), 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(p != nullptr, cbor_error);
 	pbOut = nullptr;
 	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_X, p,
@@ -1274,10 +1277,10 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		p = nullptr;
 	}
 	else {
-		pbOut = (byte *) COSE_CALLOC((int)(cbSize / 2), 1, context);
+		pbOut = (byte *) COSE_CALLOC((int)(cbX), 1, context);
 		CHECK_CONDITION(pbOut != nullptr, COSE_ERR_OUT_OF_MEMORY);
-		memcpy(pbOut, pbPoint + cbSize / 2 + 1, (int)(cbSize / 2));
-		p = cn_cbor_data_create2(pbOut, (int)(cbSize / 2), 0,
+		memcpy(pbOut, pbPoint + cbSize / 2 + 1, (int)(cbX));
+		p = cn_cbor_data_create2(pbOut, (int)(cbX), 0,
 			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != nullptr, cbor_error);
 		pbOut = nullptr; 
