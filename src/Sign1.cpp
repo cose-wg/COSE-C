@@ -50,7 +50,7 @@ HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags,
 {
 	if (false) {
 	errorReturn:
-		return nullptr;		
+		return nullptr;
 	}
 
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
@@ -307,7 +307,7 @@ bool COSE_Sign1_validate2(HCOSE_SIGN1 hSign, HCOSE_KEY hKey, cose_errback *perr)
 		if (pcose != nullptr) {
 			COSE_KEY_Free((HCOSE_KEY)pcose);
 		}
-		return false;		
+		return false;
 	}
 
 	CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
@@ -315,18 +315,19 @@ bool COSE_Sign1_validate2(HCOSE_SIGN1 hSign, HCOSE_KEY hKey, cose_errback *perr)
 
 	COSE_Sign1Message *pSign = (COSE_Sign1Message *)hSign;
 
-	const cn_cbor* cnContent =
+	const cn_cbor *cnContent =
 		_COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
 	CHECK_CONDITION(cnContent != nullptr && cnContent->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
-	const cn_cbor* cnProtected = _COSE_arrayget_int(
-		&pSign->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	const cn_cbor *cnProtected =
+		_COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	pcose = (COSE_KEY *)hKey;
-	
+
 	f = _COSE_Signer1_validate(pSign, pcose, perr);
 
 	return f;
@@ -343,7 +344,7 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 
 	CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
-	
+
 #ifdef USE_CBOR_CONTEXT
 	COSE_Sign1Message *pSign = (COSE_Sign1Message *)hSign;
 
@@ -424,8 +425,8 @@ static bool CreateSign1AAD(COSE_Sign1Message *pMessage,
 	CHECK_CONDITION(cn2 != nullptr, COSE_ERR_INVALID_PARAMETER);
 
 	if ((cn2->length == 1) && (cn2->v.bytes[0] == 0xa0)) {
-		cn =
-			cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		cn = cn_cbor_data_create(
+			nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	else {
 		cn = cn_cbor_data_create(cn2->v.bytes, (int)cn2->length,

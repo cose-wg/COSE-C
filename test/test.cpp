@@ -408,9 +408,8 @@ bool SetAttributes(HCOSE hHandle,
 		}
 		else if (strcmp(pKey->v.str, "compressed") == 0) {
 			keyNew = COSE_Header_UseCompressedECDH;
-			pValueNew = cn_cbor_bool_create(
-				pValue->v.sint == 1 ? true
-									: false, CBOR_CONTEXT_PARAM_COMMA nullptr);
+			pValueNew = cn_cbor_bool_create(pValue->v.sint == 1 ? true : false,
+				CBOR_CONTEXT_PARAM_COMMA nullptr);
 			if (pValueNew == nullptr) {
 				return false;
 			}
@@ -496,7 +495,7 @@ bool SetAttributes(HCOSE hHandle,
 				assert(false);
 				break;
 		}
-		
+
 		if (fRet) {
 			pValueNew.Clear();
 		}
@@ -770,7 +769,7 @@ cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 					((RgStringKeys[i].kty == 0) ||
 						(RgStringKeys[i].kty == kty))) {
 					Safe_CN_CBOR pValueNew;
-					
+
 					switch (RgStringKeys[i].operation) {
 						case OPERATION_NONE:
 							pValueNew = cn_cbor_clone(
@@ -805,9 +804,10 @@ cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 							break;
 
 						case OPERATION_STRING:
-							pValueNew = cn_cbor_int_create(MapName(pValue, RgCurveNames,
+							pValueNew =
+								cn_cbor_int_create(MapName(pValue, RgCurveNames,
 													   _countof(RgCurveNames)),
-								CBOR_CONTEXT_PARAM_COMMA nullptr);
+									CBOR_CONTEXT_PARAM_COMMA nullptr);
 							if (pValueNew == nullptr) {
 								return nullptr;
 							}
@@ -855,7 +855,8 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 	}
 
 	cose_errback coseError;
-	HCOSE_KEY key = COSE_KEY_FromCbor(pKeyOut, CBOR_CONTEXT_PARAM_COMMA &coseError);
+	HCOSE_KEY key =
+		COSE_KEY_FromCbor(pKeyOut, CBOR_CONTEXT_PARAM_COMMA & coseError);
 	if (key == nullptr) {
 		CN_CBOR_FREE(pKeyOut, context);
 	}

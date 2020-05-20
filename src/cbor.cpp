@@ -144,16 +144,16 @@ bool cn_cbor_array_replace(cn_cbor *cb_array,
 cn_cbor *cn_cbor_clone(const cn_cbor *pIn,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *pcn_cbor_error)
 {
-	cn_cbor * pOut = nullptr;
+	cn_cbor *pOut = nullptr;
 	char *sz;
 	unsigned char *pb;
 	cn_cbor *pTemp;
 	cn_cbor *pLast;
 	int count;
-	
+
 	switch (pIn->type) {
 		case CN_CBOR_TEXT:
-			sz = (char*)( CN_CBOR_CALLOC(pIn->length + 1, 1, context));
+			sz = (char *)(CN_CBOR_CALLOC(pIn->length + 1, 1, context));
 			if (sz == nullptr) {
 				return nullptr;
 			}

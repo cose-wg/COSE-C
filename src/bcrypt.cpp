@@ -45,8 +45,8 @@ bool AES_CCM_Encrypt(COSE_Encrypt *pcose,
 	pHdr->cbKeyData = KSize / 8;
 	memcpy(&pHdr[1], pcose->pbKey, pcose->cbKey);
 
-	err = BCryptImportKey(hAlg, nullptr, BCRYPT_KEY_DATA_BLOB, &hKey, nullptr, 0,
-		pHdr, (sizeof(*pHdr) + KSize / 8), 0);
+	err = BCryptImportKey(hAlg, nullptr, BCRYPT_KEY_DATA_BLOB, &hKey, nullptr,
+		0, pHdr, (sizeof(*pHdr) + KSize / 8), 0);
 	if (err != 0)
 		goto error;
 
