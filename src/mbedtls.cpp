@@ -270,7 +270,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 	//  CHECK TAG HERE
 	bool f = false;
 	const byte *pb = pbCrypto + cbOut;
-	for (int i = 0; i < (unsigned int)TSize; i++) {
+	for (int i = 0; i < TSize; i++) {
 		f |= (pb[i] != tag[i]);
 	}
 	CHECK_CONDITION(!f, COSE_ERR_CRYPTO_FAIL);
@@ -313,9 +313,9 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 			COSE_FREE(rgbOut, context);
 		}
 		mbedtls_gcm_free(&ctx);
-		return false;		
+		return false;
 	}
-	
+
 	// Make it first so we can clean it up
 	mbedtls_gcm_init(&ctx);
 
@@ -610,9 +610,8 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 			COSE_FREE(rgbOut, context);
 		}
 		mbedtls_md_free(&contx);
-		return false;		
+		return false;
 	}
-
 
 	switch (HSize) {
 		case 256:
@@ -1152,7 +1151,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		mbedtls_ecp_group_free(&group);
 		mbedtls_ecp_keypair_free(&keypair);
 		mbedtls_ecdh_free(&ctx);
-		return fRet;		
+		return fRet;
 	}
 
 	p = cn_cbor_mapget_int(pKeyPublic->m_cborKey, COSE_Key_EC_Curve);
@@ -1208,7 +1207,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			COSE_ERR_CRYPTO_FAIL);
 
 		cn_cbor_errback cbor_error;
-		int cbSize = (int) (olen - 1) / 2;
+		int cbSize = (int)(olen - 1) / 2;
 
 		pkey = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(pkey != nullptr, cbor_error);
@@ -1217,7 +1216,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			cose_group, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != nullptr, cbor_error);
 		CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_Curve, p,
-								 CBOR_CONTEXT_PARAM_COMMA &cbor_error),
+								 CBOR_CONTEXT_PARAM_COMMA & cbor_error),
 			cbor_error);
 		p = nullptr;
 

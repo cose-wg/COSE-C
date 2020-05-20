@@ -1,6 +1,6 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test)
 
-add_executable(cose_test test.cpp json.cpp Encrypt_test.cpp Sign_test.cpp context.cpp Mac_test.cpp CounterSign_test.cpp)
+add_executable(cose_test test.cpp json.cpp Encrypt_test.cpp Sign_test.cpp context.cpp Mac_test.cpp CounterSign_test.cpp CounterSign1_test.cpp)
 
 target_link_libraries(cose_test PRIVATE cose-c::cose-c cn-cbor::cn-cbor)
 
@@ -119,6 +119,12 @@ if(COSE_C_INCLUDE_COUNTERSIGN)
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND cose_test --dir Examples/countersign)
 endif()
+if(COSE_C_INCLUDE_COUNTERSIGN1)
+  add_test(
+    NAME Countersign1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND cose_test --dir Examples/countersign1)
+endif()
 
 add_test(
   NAME corner-cases
@@ -182,4 +188,10 @@ if(COSE_C_INCLUDE_COUNTERSIGN)
     NAME Memory-Countersign
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND cose_test --memory Examples/countersign/mac0-01.json)
+endif()
+if(COSE_C_INCLUDE_COUNTERSIGN1)
+  add_test(
+    NAME Memory-Countersign1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND cose_test --memory Examples/countersign1/mac0-01.json)
 endif()

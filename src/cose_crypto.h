@@ -38,7 +38,7 @@ bool AES_KW_Decrypt(COSE_Enveloped* pcose,
 	const byte* pbCipherText,
 	size_t cbCipherText,
 	byte* pbKeyOut,
-	int* pcbKeyOut,
+	size_t* pcbKeyOut,
 	cose_errback* perr);
 
 /**
@@ -175,8 +175,8 @@ bool ECDSA_Verify(COSE* pSigner,
 	cose_errback* perr);
 
 bool ECDH_ComputeSecret(COSE* pReciient,
-	COSE_KEY **ppKeyMe,
-	COSE_KEY *pKeyYou,
+	COSE_KEY** ppKeyMe,
+	COSE_KEY* pKeyYou,
 	byte** ppbSecret,
 	size_t* pcbSecret,
 	CBOR_CONTEXT_COMMA cose_errback* perr);

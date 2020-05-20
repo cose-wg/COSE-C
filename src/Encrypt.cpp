@@ -103,6 +103,9 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *cbor,
 	if (pobj == nullptr) {
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
+		if (pobj != nullptr) {
+			pobj->m_message.m_ownMsg = false;
+		}
 		if (pIn == nullptr && pobj != nullptr) {
 			_COSE_Enveloped_Release(pobj);
 			COSE_FREE(pobj, context);
@@ -821,6 +824,15 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 #if INCLUDE_COUNTERSIGNATURE
 	if (pcose->m_message.m_counterSigners != nullptr) {
 		if (!_COSE_CounterSign_Sign(
+				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pcose->m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
 		}

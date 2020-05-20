@@ -88,6 +88,7 @@ HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *cbor,
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
 		if (pobj != nullptr) {
+			pobj->m_message.m_ownMsg = false;
 			_COSE_Mac0_Release(pobj);
 			if (pIn == nullptr) {
 				COSE_FREE(pobj, context);

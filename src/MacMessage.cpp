@@ -86,6 +86,7 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *cbor,
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
 		if (pobj != nullptr) {
+			pobj->m_message.m_ownMsg = false;
 			_COSE_Mac_Release(pobj);
 			if (pIn == nullptr) {
 				COSE_FREE(pobj, context);
@@ -409,9 +410,9 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 		if (pbAuthData != nullptr) {
 			COSE_FREE(pbAuthData, context);
 		}
-		return fRet;		
+		return fRet;
 	}
-	
+
 	cn_Alg = _COSE_map_get_int(
 		&pcose->m_message, COSE_Header_Algorithm, COSE_BOTH, perr);
 	if (cn_Alg == nullptr) {
@@ -617,6 +618,15 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 #if INCLUDE_COUNTERSIGNATURE
 	if (pcose->m_message.m_counterSigners != nullptr) {
 		if (!_COSE_CounterSign_Sign(
+				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
+			goto errorReturn;
+		}
+	}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+	if (pcose->m_message.m_counterSign1 != NULL) {
+		if (!_COSE_CounterSign1_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
 		}
@@ -916,6 +926,7 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac,
 
 	pRecip->m_recipientNext = pMac->m_recipientFirst;
 	pMac->m_recipientFirst = pRecip;
+	pRecip->m_encrypt.m_message.m_refCount++;
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pMac->m_message.m_allocContext;
@@ -938,12 +949,11 @@ bool COSE_Mac_AddRecipient(HCOSE_MAC hMac,
 	CHECK_CONDITION_CBOR(cn_cbor_array_append(pRecipients,
 							 pRecip->m_encrypt.m_message.m_cbor, &cbor_error),
 		cbor_error);
-	pRecip->m_encrypt.m_message.m_refCount++;
 
 	return true;
 
 errorReturn:
-	if (pRecipientsT == nullptr) {
+	if (pRecipientsT != nullptr) {
 		CN_CBOR_FREE(pRecipientsT, context);
 	}
 	return false;

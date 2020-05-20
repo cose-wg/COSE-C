@@ -248,7 +248,9 @@ errorReturn:
 	return fRet;
 }
 
-bool COSE_CounterSign_SetKey2(HCOSE_COUNTERSIGN hSigner, HCOSE_KEY hKey, cose_errback* perr)
+bool COSE_CounterSign_SetKey2(HCOSE_COUNTERSIGN hSigner,
+	HCOSE_KEY hKey,
+	cose_errback* perr)
 {
 	bool fRet = false;
 	COSE_CounterSign* pSigner = (COSE_CounterSign*)hSigner;
@@ -260,14 +262,14 @@ bool COSE_CounterSign_SetKey2(HCOSE_COUNTERSIGN hSigner, HCOSE_KEY hKey, cose_er
 	if (pSigner->m_signer.m_pkey != nullptr) {
 		COSE_KEY_Free((HCOSE_KEY) pSigner->m_signer.m_pkey);
 	}
-	
+
 	pSigner->m_signer.m_pkey = pKey;
 	if (hKey != nullptr) {
 		pKey->m_refCount += 1;
 	}
 	fRet = true;
 
-	errorReturn:
+errorReturn:
 	return fRet;
 }
 
@@ -463,9 +465,9 @@ bool COSE_Signer_CounterSign_validate(HCOSE_SIGNER hSigner,
 {
 	if (false) {
 	errorReturn:
-		return false;	
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidSignerHandle(hSigner), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
 		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
@@ -487,7 +489,6 @@ bool COSE_Signer_CounterSign_validate(HCOSE_SIGNER hSigner,
 		cnProtected, "CounterSignature", perr);
 
 	return f;
-
 }
 
 /***************************************************************************************************
@@ -534,9 +535,9 @@ bool COSE_Sign_CounterSign_validate(HCOSE_SIGN hSignMsg,
 {
 	if (false) {
 	errorReturn:
-		return false;	
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidSignHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
 		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
@@ -558,7 +559,6 @@ bool COSE_Sign_CounterSign_validate(HCOSE_SIGN hSignMsg,
 		cnProtected, "CounterSignature", perr);
 
 	return f;
-
 }
 #endif
 
@@ -607,9 +607,9 @@ bool COSE_Sign1_CounterSign_validate(HCOSE_SIGN1 hSignMsg,
 {
 	if (false) {
 	errorReturn:
-		return false;		
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidSign1Handle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
 		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
@@ -679,7 +679,7 @@ bool COSE_Enveloped_CounterSign_validate(HCOSE_ENVELOPED hSignMsg,
 {
 	if (false) {
 	errorReturn:
-		return false;		
+		return false;
 	}
 	CHECK_CONDITION(IsValidEnvelopedHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
@@ -751,9 +751,9 @@ bool COSE_Recipient_CounterSign_validate(HCOSE_RECIPIENT hSignMsg,
 {
 	if (false) {
 	errorReturn:
-		return false;		
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidRecipientHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
 		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
@@ -823,9 +823,9 @@ bool COSE_Encrypt0_CounterSign_validate(HCOSE_ENCRYPT hSignMsg,
 {
 	if (false) {
 	errorReturn:
-		return false;		
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidEncryptHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
 		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
@@ -895,9 +895,9 @@ bool COSE_Mac0_CounterSign_validate(HCOSE_MAC0 hSignMsg,
 {
 	if (false) {
 	errorReturn:
-		return false;		
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidMac0Handle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
 		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);
@@ -967,9 +967,9 @@ bool COSE_Mac_CounterSign_validate(HCOSE_MAC hSignMsg,
 {
 	if (false) {
 	errorReturn:
-		return false;		
+		return false;
 	}
-	
+
 	CHECK_CONDITION(IsValidMacHandle(hSignMsg), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(
 		IsValidCounterSignHandle(hCountersignature), COSE_ERR_INVALID_HANDLE);

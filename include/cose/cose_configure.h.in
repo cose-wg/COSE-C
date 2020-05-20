@@ -80,7 +80,7 @@
 #define USE_AES_CBC_MAC_256_64
 #define USE_AES_CBC_MAC_256_128
 
-#endif  // !defined(COSE_C_USE_MBEDTLS)
+#endif	// !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which ECDH algorithms are to be used
@@ -109,7 +109,7 @@
 #define USE_ECDH 1
 #define USE_HKDF_AES 1
 #endif
-#endif  // !defined(COSE_C_USE_MBEDTLS)
+#endif	// !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which Key Wrap functions are to be used
@@ -119,7 +119,7 @@
 #define USE_AES_KW_128
 #define USE_AES_KW_192
 #define USE_AES_KW_256
-#endif  // !defined(COSE_C_USE_MBEDTLS)
+#endif	// !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which of the DIRECT + KDF algorithms are to be used
@@ -137,7 +137,7 @@
 #if defined(USE_Direct_HKDF_AES_128) || defined(USE_Direct_KDF_AES_256)
 #define USE_HKDF_AES 1
 #endif
-#endif  // !defined(COSE_C_USE_MBEDTLS)
+#endif	// !defined(COSE_C_USE_MBEDTLS)
 
 //
 //  Define which of the signature algorithms are to be used
@@ -156,7 +156,7 @@
 #define TOSTRING(x) STRINGIFY(x)
 #pragma message("OPENSSL VERSION IS " OPENSSL_VERSION_TEXT)
 #endif
-#endif  // defined (COSE_C_USE_OPENSSL)
+#endif	// defined (COSE_C_USE_OPENSSL)
 
 //
 //   Define which COSE objects are included
@@ -184,5 +184,5 @@
 #define INCLUDE_COUNTERSIGNATURE 1
 #endif
 #ifndef INCLUDE_COUNTERSIGNATURE1
-#define INCLUDE_COUNTERSIGNATURE1 0
+#define INCLUDE_COUNTERSIGNATURE1 1
 #endif

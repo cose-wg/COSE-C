@@ -83,14 +83,6 @@ struct _SignerInfo {
 struct _RecipientInfo;
 typedef struct _RecipientInfo COSE_RecipientInfo;
 
-#if 0
-typedef struct {
-	COSE m_message;		// The message object
-	const byte * pbContent;
-	size_t cbContent;
-} COSE_Encrypt;
-#endif
-
 typedef struct {
 	COSE m_message;	 // The message object
 	const byte *pbContent;
@@ -112,16 +104,16 @@ typedef struct {
 	COSE_RecipientInfo *m_recipientFirst;
 } COSE_MacMessage;
 
-#if 0
-typedef struct {
-	COSE m_message;			// The message object
-} COSE_Mac0Message;
-#endif
 typedef COSE_MacMessage COSE_Mac0Message;
 
 struct CounterSign {
 	COSE_SignerInfo m_signer;
 	COSE_CounterSign *m_next;
+};
+
+struct CounterSign1 {
+	COSE_SignerInfo m_signer;
+	COSE_CounterSign1 *m_next;
 };
 
 #ifdef USE_CBOR_CONTEXT
@@ -192,10 +184,10 @@ bool IsValidSignHandle(HCOSE_SIGN h);
 bool IsValidSignerHandle(HCOSE_SIGNER h);
 bool IsValidSign1Handle(HCOSE_SIGN1 h);
 bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
+bool IsValidCounterSign1Handle(HCOSE_COUNTERSIGN1 h);
 bool IsValidMacHandle(HCOSE_MAC h);
 bool IsValidMac0Handle(HCOSE_MAC0 h);
 bool IsValidKeyHandle(HCOSE_KEY h);
-
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,
 	COSE *pcose,
@@ -351,6 +343,19 @@ COSE_CounterSign *_COSE_CounterSign_Init_From_Object(cn_cbor *cbor,
 bool _COSE_CounterSign_Sign(COSE *baseMessage,
 	CBOR_CONTEXT_COMMA cose_errback *perr);
 
+HCOSE_COUNTERSIGN1 _COSE_CounterSign1_get(COSE *pMessage, cose_errback *perr);
+bool _COSE_CounterSign1_add(COSE *pMessage,
+	HCOSE_COUNTERSIGN1 hSigner,
+	cose_errback *perr);
+bool _COSE_CountSign1_create(COSE *pMessage,
+	cn_cbor *pcnBody,
+	CBOR_CONTEXT_COMMA cose_errback *perr);
+COSE_CounterSign1 *_COSE_CounterSign1_Init_From_Object(cn_cbor *cbor,
+	COSE_CounterSign1 *,
+	CBOR_CONTEXT_COMMA cose_errback *perr);
+bool _COSE_CounterSign1_Sign(COSE *baseMessage,
+	CBOR_CONTEXT_COMMA cose_errback *perr);
+
 //
 //  Debugging Items
 
@@ -427,7 +432,9 @@ cn_cbor *_COSE_arrayget_int(COSE *pMessage, int index);
 ///  NEW CBOR FUNCTIONS
 
 #ifndef CN_CBOR_VERSION
-static inline cn_cbor * cn_cbor_string_create2(const char * sz, int flags, CBOR_CONTEXT_COMMA cn_cbor_errback * perr)
+static inline cn_cbor *cn_cbor_string_create2(const char *sz,
+	int flags,
+	CBOR_CONTEXT_COMMA cn_cbor_errback *perr)
 {
 	return cn_cbor_string_create(sz,
 #ifdef USE_CBOR_CONTEXT
@@ -436,7 +443,8 @@ static inline cn_cbor * cn_cbor_string_create2(const char * sz, int flags, CBOR_
 		perr);
 }
 
-static inline cn_cbor *cn_cbor_data_create2(const byte *pb, int cb,
+static inline cn_cbor *cn_cbor_data_create2(const byte *pb,
+	int cb,
 	int flags,
 	CBOR_CONTEXT_COMMA cn_cbor_errback *perr)
 {
@@ -459,3 +467,4 @@ size_t cn_cbor_encode_size(cn_cbor *object);
 enum { COSE_Int_Alg_AES_CBC_MAC_256_64 = -22 };
 
 #define COSE_CounterSign_object 1000
+#define COSE_CounterSign1_object 1001

@@ -23,7 +23,6 @@ bool _COSE_Init(COSE_INIT_FLAGS flags,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	cn_cbor_errback errState;
-	;
 
 #ifdef USE_CBOR_CONTEXT
 	if (context != nullptr) {
@@ -88,7 +87,7 @@ bool _COSE_Init_From_Object(COSE *pobj,
 
 	if (false) {
 	errorReturn:
-		return false;	
+		return false;
 	}
 
 #ifdef USE_CBOR_CONTEXT
@@ -96,6 +95,9 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		pobj->m_allocContext = *context;
 	}
 #endif
+	if (pobj->m_cborRoot != nullptr && pobj->m_ownMsg) {
+		CN_CBOR_FREE(pobj->m_cborRoot, context);
+	}
 	pobj->m_cborRoot = pcbor;
 	pobj->m_cbor = pcbor;
 
@@ -124,6 +126,9 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		}
 	}
 
+	if (pobj->m_unprotectMap != NULL) {
+		CN_CBOR_FREE(pobj->m_unprotectMap, context);
+	}
 	pobj->m_unprotectMap = _COSE_arrayget_int(pobj, INDEX_UNPROTECTED);
 	CHECK_CONDITION((pobj->m_unprotectMap != nullptr) &&
 						(pobj->m_unprotectMap->type == CN_CBOR_MAP),
@@ -158,11 +163,22 @@ bool _COSE_Init_From_Object(COSE *pobj,
 	}
 #endif
 
+#if INCLUDE_COUNTERSIGNATURE1
+	cn_cbor *pCounter1 =
+		cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign1);
+	if (pCounter1 != NULL) {
+		CHECK_CONDITION(
+			pCounter1->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
+		COSE_CounterSign1 *cs = _COSE_CounterSign1_Init_From_Object(
+			pCounter1, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+		pobj->m_counterSign1 = cs;
+	}
+#endif
+
 	pobj->m_ownMsg = true;
 	pobj->m_refCount = 1;
 
 	return true;
-
 }
 
 void _COSE_Release(COSE *pcose)
@@ -197,7 +213,14 @@ void _COSE_Release(COSE *pcose)
 		}
 	}
 #endif
+
+	#if INCLUDE_COUNTERSIGNATURE1
+	if (pcose->m_counterSign1 != NULL) {
+		COSE_CounterSign1_Free((HCOSE_COUNTERSIGN1)pcose->m_counterSign1);
+	}
+#endif
 }
+	
 
 HCOSE COSE_Decode(const byte *rgbData,
 	size_t cbData,
@@ -211,11 +234,10 @@ HCOSE COSE_Decode(const byte *rgbData,
 
 	if (false) {
 	errorReturn:
-		// M00TODO - break up the init and allocation below for memory tests.
 		CN_CBOR_FREE(cbor, context);
 		return nullptr;	
 	}
-	
+
 	CHECK_CONDITION(
 		(rgbData != nullptr) && (ptype != nullptr), COSE_ERR_INVALID_PARAMETER);
 
@@ -229,33 +251,27 @@ HCOSE COSE_Decode(const byte *rgbData,
 				COSE_ERR_INVALID_PARAMETER);
 		}
 		else {
-			struct_type = (COSE_object_type) cbor->v.uint;
+			struct_type = (COSE_object_type)cbor->v.uint;
 		}
 		*ptype = struct_type;
-
-		cn_cbor *ptag = cbor;
-		cbor = ptag->first_child;
-		ptag->first_child = nullptr;
-		ptag->last_child = nullptr;
-		cbor->parent = nullptr;
-		CN_CBOR_FREE(ptag, context);
 	}
 	else {
 		*ptype = struct_type;
 	}
 
-	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+	// CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
 
-	cn_cbor *cbor2 = cbor;
-	cbor = nullptr;
 	switch (*ptype) {
 		case COSE_enveloped_object:
 #if INCLUDE_ENCRYPT
+		{
 			h = (HCOSE)_COSE_Enveloped_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
+			cbor = nullptr;
+		}
 #else
 			FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
 #endif
@@ -264,7 +280,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign_object:
 #if INCLUDE_SIGN
 			h = (HCOSE)_COSE_Sign_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -276,7 +292,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_sign1_object:
 #if INCLUDE_SIGN1
 			h = (HCOSE)_COSE_Sign1_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -288,7 +304,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_mac_object:
 #if INCLUDE_MAC
 			h = (HCOSE)_COSE_Mac_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -300,7 +316,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_mac0_object:
 #if INCLUDE_MAC0
 			h = (HCOSE)_COSE_Mac0_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -312,7 +328,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 		case COSE_encrypt_object:
 #if INCLUDE_ENCRYPT0
 			h = (HCOSE)_COSE_Encrypt_Init_From_Object(
-				cbor2, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
+				cbor, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 			if (h == nullptr) {
 				goto errorReturn;
 			}
@@ -326,7 +342,6 @@ HCOSE COSE_Decode(const byte *rgbData,
 	}
 
 	return h;
-
 }
 
 size_t COSE_Encode(HCOSE msg, byte *rgb, size_t ib, size_t cb)
@@ -474,7 +489,7 @@ errorReturn:
 cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 {
 	cn_cbor *pProtected;
-	int cbProtected;
+	size_t cbProtected;
 	byte *pbProtected = nullptr;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pMessage->m_allocContext;
@@ -495,7 +510,7 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 		CHECK_CONDITION(pbProtected != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 		CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected,
-							pMessage->m_protectedMap) == cbProtected,
+							pMessage->m_protectedMap) == static_cast<ssize_t>(cbProtected),
 			COSE_ERR_CBOR);
 	}
 	else {
@@ -592,6 +607,9 @@ void _COSE_RemoveFromList(COSE **rootNode, COSE *thisMsg)
 #if INCLUDE_COUNTERSIGNATURE
 extern COSE *CountersignRoot;
 #endif
+#if INCLUDE_COUNTERSIGNATURE1
+extern COSE *Countersign1Root;
+#endif
 #if INCLUDE_SIGN
 extern COSE *SignerRoot;
 extern COSE *SignRoot;
@@ -614,12 +632,16 @@ extern COSE *MacRoot;
 #if INCLUDE_MAC0
 extern COSE *Mac0Root;
 #endif
+extern COSE_KEY *KeysRoot;
 
 bool AreListsEmpty()
 {
 	bool fRet = true;
 #if INCLUDE_COUNTERSIGNATURE
 	fRet &= CountersignRoot == nullptr;
+#endif
+#if INCLUDE_COUNTERSIGNATURE1
+	fRet &= Countersign1Root == NULL;
 #endif
 #if INCLUDE_SIGN
 	fRet &= SignerRoot == nullptr && SignRoot == nullptr;
@@ -642,6 +664,7 @@ bool AreListsEmpty()
 #if INCLUDE_MAC0
 	fRet &= Mac0Root == nullptr;
 #endif
+	fRet &= KeysRoot == nullptr;
 	return fRet;
 }
 

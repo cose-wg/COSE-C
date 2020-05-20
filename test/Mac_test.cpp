@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#include <memory>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,7 @@
 #endif
 
 #if INCLUDE_MAC
+// returns 0=fail;  1= expected fail; 2=success
 int _ValidateMAC(const cn_cbor *pControl,
 	const byte *pbEncoded,
 	size_t cbEncoded)
@@ -25,13 +27,13 @@ int _ValidateMAC(const cn_cbor *pControl,
 	const cn_cbor *pFail;
 	const cn_cbor *pMac;
 	const cn_cbor *pRecipients;
-	HCOSE_MAC hMAC;
+	Safe_HCOSE_MAC hMAC;
 	int type;
 	int iRecipient;
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fAlgNoSupport = false;
-	int returnCode = 1;
+	int returnCode = 2;
 	cose_errback error;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
@@ -43,7 +45,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 		CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hMAC == nullptr) {
 		if (fFailBody) {
-			return 0;
+			return 2;
 		}
 
 	failTest:
@@ -52,275 +54,360 @@ int _ValidateMAC(const cn_cbor *pControl,
 	}
 
 	if ((pInput == nullptr) || (pInput->type != CN_CBOR_MAP)) {
-		goto failTest;
+		return 0;
 	}
 	pMac = cn_cbor_mapget_string(pInput, "mac");
 	if ((pMac == nullptr) || (pMac->type != CN_CBOR_MAP)) {
-		goto failTest;
+		return 0;
 	}
 
-	if (!SetReceivingAttributes((HCOSE)hMAC, pMac, Attributes_MAC_protected)) {
-		goto failTest;
+	if (!SetReceivingAttributes(hMAC, pMac, Attributes_MAC_protected)) {
+		return 0;
 	}
 
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == nullptr) || (pRecipients->type != CN_CBOR_ARRAY)) {
-		goto failTest;
+		return 0;
 	}
 
 	iRecipient = (int)pRecipients->length - 1;
 	pRecipients = pRecipients->first_child;
-	for (; pRecipients != nullptr; iRecipient--, pRecipients = pRecipients->next) {
+	for (; pRecipients != nullptr;
+		 iRecipient--, pRecipients = pRecipients->next) {
 		fAlgNoSupport = false;
-		cn_cbor *pkey =
+		Safe_HCOSE_KEY hkey =
 			BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
-		if (pkey == nullptr) {
-			fFail = true;
+		if (hkey == nullptr) {
+			returnCode = 0;
 			continue;
 		}
 
-		HCOSE_RECIPIENT hRecip = COSE_Mac_GetRecipient(hMAC, iRecipient, nullptr);
+		Safe_HCOSE_RECIPIENT hRecip =
+			COSE_Mac_GetRecipient(hMAC, iRecipient, nullptr);
 		if (hRecip == nullptr) {
-			fFail = true;
+			returnCode = 0;
 			continue;
 		}
 
 		if (!SetReceivingAttributes(
-				(HCOSE)hRecip, pRecipients, Attributes_Recipient_protected)) {
-			COSE_Recipient_Free(hRecip);
+				hRecip, pRecipients, Attributes_Recipient_protected)) {
 			goto failTest;
 		}
 
-		if (!COSE_Recipient_SetKey(hRecip, pkey, nullptr)) {
-			fFail = true;
-			COSE_Recipient_Free(hRecip);
+		if (!COSE_Recipient_SetKey2(hRecip, hkey, nullptr)) {
+			returnCode = 0;
 			continue;
 		}
 
 		cn_cbor *cnStatic = cn_cbor_mapget_string(pRecipients, "sender_key");
 		if (cnStatic != nullptr) {
-			if (COSE_Recipient_map_get_int(
-					hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, nullptr) == 0) {
-				COSE_Recipient_map_put_int(hRecip, COSE_Header_ECDH_SPK,
-					BuildKey(cnStatic, true), COSE_DONT_SEND, nullptr);
+			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK,
+					COSE_BOTH, nullptr) == nullptr) {
+				Safe_HCOSE_KEY senderKey = BuildKey(cnStatic, true);
+				if (senderKey == nullptr) {
+					return 0;
+				}
+				if (!COSE_Recipient_SetSenderKey2(
+						hRecip, senderKey, COSE_DONT_SEND, nullptr)) {
+					return 0;
+				}
 			}
 		}
 
 		pFail = cn_cbor_mapget_string(pRecipients, "fail");
 
-		cn_cbor *alg =
-			COSE_Mac_map_get_int(hMAC, COSE_Header_Algorithm, COSE_BOTH, nullptr);
-		if (!IsAlgorithmSupported(alg)) {
-			fAlgNoSupport = true;
-		}
-
-		alg = COSE_Recipient_map_get_int(
-			hRecip, COSE_Header_Algorithm, COSE_BOTH, nullptr);
-		if (!IsAlgorithmSupported(alg)) {
-			fAlgNoSupport = true;
-		}
-
 		if (COSE_Mac_validate(hMAC, hRecip, &error)) {
-			if (fAlgNoSupport) {
-				fFail = true;
-			}
-			else if ((pFail != nullptr) && (pFail->type != CN_CBOR_TRUE)) {
-				fFail = true;
+			if ((pFail != nullptr) && (pFail->type != CN_CBOR_TRUE)) {
+				returnCode = 0;
 			}
 		}
 		else {
 			if (error.err == COSE_ERR_NO_COMPRESSED_POINTS ||
 				error.err == COSE_ERR_UNKNOWN_ALGORITHM) {
-				fAlgNoSupport = true;
-				returnCode = 0;
+				returnCode = COSE_MIN(1, returnCode);
 			}
-			else if (fAlgNoSupport) {
-				returnCode = 0;
+			else if (fFailBody) {
+				returnCode = COSE_MIN(1, returnCode);
 			}
 			else if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
-				fFail = true;
+				returnCode = 0;
+			}
+			else {
+				returnCode = COSE_MIN(1, returnCode);
 			}
 		}
 
 #if INCLUDE_COUNTERSIGNATURE
-		//  Countersign on Encrypt0 Body
+		{
+			//  Countersign on Encrypt0 Body
+
+			//  Validate counter signatures on signers
+			cn_cbor *countersignList =
+				cn_cbor_mapget_string(pRecipients, "countersign");
+			if (countersignList != nullptr) {
+				cn_cbor *countersigners =
+					cn_cbor_mapget_string(countersignList, "signers");
+				if (countersigners == nullptr) {
+					return 0;
+				}
+				int count = static_cast<int>(countersigners->length);
+				bool forward = true;
+
+				if (COSE_Recipient_map_get_int(hRecip, COSE_Header_CounterSign,
+						COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+					return 0;
+				}
+
+				for (int counterNo = 0; counterNo < count; counterNo++) {
+					bool noSignSupport = false;
+					Safe_HCOSE_COUNTERSIGN h =
+						COSE_Recipient_get_countersignature(
+							hRecip, counterNo, nullptr);
+					if (h == nullptr) {
+						returnCode = 0;
+						continue;
+					}
+
+					cn_cbor *counterSigner = cn_cbor_index(countersigners,
+						forward ? counterNo : count - counterNo - 1);
+
+					Safe_HCOSE_KEY hkeyCountersign = BuildKey(
+						cn_cbor_mapget_string(counterSigner, "key"), false);
+					if (hkeyCountersign == nullptr) {
+						returnCode = 0;
+						continue;
+					}
+
+					if (!COSE_CounterSign_SetKey2(
+							h, hkeyCountersign, nullptr)) {
+						returnCode = 0;
+						continue;
+					}
+
+					cose_errback coseError;
+					if (COSE_Recipient_CounterSign_validate(
+							hRecip, h, &coseError)) {
+						//  I don't think we have any forced errors yet.
+					}
+					else {
+						if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+							returnCode = COSE_MIN(returnCode, 1);
+							continue;
+						}
+						if (forward && counterNo == 0 && count > 1) {
+							forward = false;
+							counterNo -= 1;
+							continue;
+						}
+						returnCode = 0;
+					}
+				}
+			}
+		}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+		{
+			//  Countersign1 on Recipient Body
+
+			//  Validate counter signatures on signers
+			const cn_cbor *countersignList =
+				cn_cbor_mapget_string(pRecipients, "countersign0");
+			if (countersignList != nullptr) {
+				cn_cbor *countersigners =
+					cn_cbor_mapget_string(countersignList, "signers");
+				if (countersigners == nullptr) {
+					return 0;
+				}
+
+				if (COSE_Recipient_map_get_int(hRecip, COSE_Header_CounterSign1,
+						COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+					return 0;
+				}
+
+				bool noSupportSign = false;
+
+				Safe_HCOSE_COUNTERSIGN1 h(
+					COSE_Recipient_get_countersignature1(hRecip, nullptr));
+				if (h.IsNull()) {
+					return 0;
+				}
+
+				cn_cbor *counterSigner = cn_cbor_index(countersigners, 0);
+
+				Safe_HCOSE_KEY hkeyCountersign = BuildKey(
+					cn_cbor_mapget_string(counterSigner, "key"), false);
+				if (hkeyCountersign == nullptr) {
+					return 0;
+				}
+
+				if (!COSE_CounterSign1_SetKey(h, hkeyCountersign, nullptr)) {
+					return 0;
+				}
+
+				cose_errback coseError;
+				if (COSE_Recipient_CounterSign1_validate(
+						hRecip, h, &coseError)) {
+					//  I don't think we have any forced errors yet.
+				}
+				else {
+					if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+						returnCode = COSE_MIN(1, returnCode);
+					}
+					else {
+						returnCode = 0;
+					}
+				}
+			}
+		}
+#endif
+	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	{
+		//  Countersign on Signed Body
 
 		//  Validate counter signatures on signers
-		cn_cbor *countersignList =
-			cn_cbor_mapget_string(pRecipients, "countersign");
+		cn_cbor *countersignList = cn_cbor_mapget_string(pMac, "countersign");
 		if (countersignList != nullptr) {
 			cn_cbor *countersigners =
 				cn_cbor_mapget_string(countersignList, "signers");
 			if (countersigners == nullptr) {
-				COSE_Recipient_Free(hRecip);
-				goto failTest;
+				return 0;
 			}
-			int count = countersigners->length;
+			int count = static_cast<int>(countersigners->length);
 			bool forward = true;
 
-			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_CounterSign,
-					COSE_UNPROTECT_ONLY, 0) == nullptr) {
-				COSE_Recipient_Free(hRecip);
-				goto failTest;
+			if (COSE_Mac_map_get_int(hMAC, COSE_Header_CounterSign,
+					COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+				return 0;
 			}
 
 			for (int counterNo = 0; counterNo < count; counterNo++) {
 				bool noSignSupport = false;
-				HCOSE_COUNTERSIGN h =
-					COSE_Recipient_get_countersignature(hRecip, counterNo, 0);
-				if (h == nullptr) {
-					continue;
-				}
 
-				alg = COSE_CounterSign_map_get_int(
-					h, COSE_Header_Algorithm, COSE_BOTH, nullptr);
-				if (!IsAlgorithmSupported(alg)) {
-					fAlgNoSupport = true;
-					noSignSupport = true;
+				Safe_HCOSE_COUNTERSIGN h =
+					COSE_Mac_get_countersignature(hMAC, counterNo, nullptr);
+				if (h == nullptr) {
 					returnCode = 0;
+					continue;
 				}
 
 				cn_cbor *counterSigner = cn_cbor_index(countersigners,
 					forward ? counterNo : count - counterNo - 1);
 
-				cn_cbor *pkeyCountersign = BuildKey(
+				Safe_HCOSE_KEY hkeyCountersign = BuildKey(
 					cn_cbor_mapget_string(counterSigner, "key"), false);
-				if (pkeyCountersign == nullptr) {
-					fFail = true;
-					COSE_CounterSign_Free(h);
+				if (hkeyCountersign == nullptr) {
+					returnCode = 0;
 					continue;
 				}
 
-				if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
-					fFail = true;
-					CN_CBOR_FREE(pkeyCountersign, context);
-					COSE_CounterSign_Free(h);
+				if (!COSE_CounterSign_SetKey2(h, hkeyCountersign, nullptr)) {
+					returnCode = 0;
 					continue;
 				}
 
-				if (COSE_Recipient_CounterSign_validate(hRecip, h, 0)) {
+				cose_errback coseError;
+				if (COSE_Mac_CounterSign_validate(hMAC, h, &coseError)) {
 					//  I don't think we have any forced errors yet.
 				}
 				else {
+					if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+						returnCode = COSE_MIN(1, returnCode);
+						continue;
+					}
 					if (forward && counterNo == 0 && count > 1) {
 						forward = false;
 						counterNo -= 1;
+						continue;
 					}
-					else {
-						fFail |= !noSignSupport;
-					}
-				}
 
-				COSE_CounterSign_Free(h);
+					returnCode = 0;
+				}
 			}
 		}
+	}
 #endif
 
-		COSE_Recipient_Free(hRecip);
-	}
+#if INCLUDE_COUNTERSIGNATURE1
+	{
+		//  Countersign1 on Enveloped Body
 
-#if INCLUDE_COUNTERSIGNATURE
-	//  Countersign on Signed Body
-
-	//  Validate counter signatures on signers
-	cn_cbor *countersignList = cn_cbor_mapget_string(pMac, "countersign");
-	if (countersignList != nullptr) {
-		cn_cbor *countersigners =
-			cn_cbor_mapget_string(countersignList, "signers");
-		if (countersigners == nullptr) {
-			goto failTest;
-		}
-		int count = countersigners->length;
-		bool forward = true;
-
-		if (COSE_Mac_map_get_int(hMAC, COSE_Header_CounterSign,
-				COSE_UNPROTECT_ONLY, 0) == nullptr) {
-			goto failTest;
-		}
-
-		for (int counterNo = 0; counterNo < count; counterNo++) {
-			bool noSignSupport = false;
-
-			HCOSE_COUNTERSIGN h =
-				COSE_Mac_get_countersignature(hMAC, counterNo, 0);
-			if (h == nullptr) {
-				fFail = true;
-				continue;
+		//  Validate counter signatures on signers
+		const cn_cbor *countersignList =
+			cn_cbor_mapget_string(pMac, "countersign0");
+		if (countersignList != nullptr) {
+			cn_cbor *countersigners =
+				cn_cbor_mapget_string(countersignList, "signers");
+			if (countersigners == nullptr) {
+				return 0;
 			}
 
-			cn_cbor *counterSigner = cn_cbor_index(
-				countersigners, forward ? counterNo : count - counterNo - 1);
-
-			cn_cbor *pkeyCountersign =
-				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
-			if (pkeyCountersign == nullptr) {
-				fFail = true;
-				COSE_CounterSign_Free(h);
-				continue;
+			if (COSE_Mac_map_get_int(hMAC, COSE_Header_CounterSign1,
+					COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+				return 0;
 			}
 
-			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
-				fFail = true;
-				COSE_CounterSign_Free(h);
-				CN_CBOR_FREE(pkeyCountersign, context);
-				continue;
+			bool noSupportSign = false;
+			Safe_HCOSE_COUNTERSIGN1 h =
+				COSE_Mac_get_countersignature1(hMAC, nullptr);
+			if (h.IsNull()) {
+				return 0;
 			}
 
-			cn_cbor *alg = COSE_CounterSign_map_get_int(
-				h, COSE_Header_Algorithm, COSE_BOTH, nullptr);
-			if (!IsAlgorithmSupported(alg)) {
-				fAlgNoSupport = true;
-				noSignSupport = true;
-				returnCode = 0;
+			cn_cbor *counterSigner = cn_cbor_index(countersigners, 0);
+
+			Safe_HCOSE_KEY hkeyCountersign(
+				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false));
+			if (hkeyCountersign == nullptr) {
+				return 0;
 			}
 
-			if (COSE_Mac_CounterSign_validate(hMAC, h, 0)) {
+			if (!COSE_CounterSign1_SetKey(h, hkeyCountersign, nullptr)) {
+				return 0;
+				return false;
+			}
+
+			if (!SetReceivingAttributes(
+					h, counterSigner, Attributes_Countersign1_protected)) {
+				return 0;
+			}
+
+			cose_errback coseError;
+			if (COSE_Mac_CounterSign1_validate(hMAC, h, &coseError)) {
 				//  I don't think we have any forced errors yet.
 			}
 			else {
-				if (forward && counterNo == 0 && count > 1) {
-					forward = false;
-					counterNo -= 1;
+				if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+					returnCode = COSE_MIN(1, returnCode);
 				}
 				else {
-					fFail |= !noSignSupport;
+					returnCode = 0;
 				}
 			}
-
-			COSE_CounterSign_Free(h);
 		}
 	}
 #endif
 
-	COSE_Mac_Free(hMAC);
-
-	if (fFailBody) {
-		if (!fFail) {
-			fFail = true;
-		}
-		else {
-			fFail = false;
-		}
-	}
-
-	if (fFail && !fAlgNoSupport) {
-		CFails += 1;
-	}
 	return returnCode;
 }
 
-int ValidateMAC(const cn_cbor *pControl)
+bool ValidateMAC(const cn_cbor *pControl)
 {
 	int cbEncoded = 0;
 	byte *pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
-	return _ValidateMAC(pControl, pbEncoded, cbEncoded);
+	int i = _ValidateMAC(pControl, pbEncoded, cbEncoded);
+	if (i == 0) {
+		CFails += 1;
+	}
+	return i == 2;
 }
 
-int BuildMacMessage(const cn_cbor *pControl)
+bool BuildMacMessage(const cn_cbor *pControl)
 {
 	int iRecipient = 0;
-	HCOSE_RECIPIENT hRecip = nullptr;
 
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
@@ -328,23 +415,17 @@ int BuildMacMessage(const cn_cbor *pControl)
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != nullptr) && (pFail->type == CN_CBOR_TRUE)) {
-		return 0;
+		return false;
 	}
 
-	HCOSE_MAC hMacObj =
+	Safe_HCOSE_MAC hMacObj =
 		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == nullptr) {
 	returnError:
-		if (hMacObj != nullptr) {
-			COSE_Mac_Free(hMacObj);
-		}
-		if (hRecip != nullptr) {
-			COSE_Recipient_Free(hRecip);
-		}
 		CFails += 1;
-		return 1;
+		return false;
 	}
 	const cn_cbor *pMac = cn_cbor_mapget_string(pInputs, "mac");
 	if (pMac == nullptr) {
@@ -357,7 +438,7 @@ int BuildMacMessage(const cn_cbor *pControl)
 		goto returnError;
 	}
 
-	if (!SetSendingAttributes((HCOSE)hMacObj, pMac, Attributes_MAC_protected)) {
+	if (!SetSendingAttributes(hMacObj, pMac, Attributes_MAC_protected)) {
 		goto returnError;
 	}
 
@@ -369,31 +450,31 @@ int BuildMacMessage(const cn_cbor *pControl)
 	pRecipients = pRecipients->first_child;
 	for (iRecipient = 0; pRecipients != nullptr;
 		 iRecipient++, pRecipients = pRecipients->next) {
-		cn_cbor *pkey =
+		Safe_HCOSE_KEY hkey =
 			BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
-		if (pkey == nullptr) {
+		if (hkey == nullptr) {
 			goto returnError;
 		}
 
-		hRecip = COSE_Recipient_Init(
+		Safe_HCOSE_RECIPIENT hRecip = COSE_Recipient_Init(
 			COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 		if (hRecip == nullptr) {
 			goto returnError;
 		}
 
 		if (!SetSendingAttributes(
-				(HCOSE)hRecip, pRecipients, Attributes_Recipient_protected)) {
+				hRecip, pRecipients, Attributes_Recipient_protected)) {
 			goto returnError;
 		}
 
-		if (!COSE_Recipient_SetKey(hRecip, pkey, nullptr)) {
+		if (!COSE_Recipient_SetKey2(hRecip, hkey, nullptr)) {
 			goto returnError;
 		}
 
 		cn_cbor *pSenderKey = cn_cbor_mapget_string(pRecipients, "sender_key");
 		if (pSenderKey != nullptr) {
-			cn_cbor *pSendKey = BuildKey(pSenderKey, false);
-			if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, nullptr)) {
+			Safe_HCOSE_KEY hSendKey = BuildKey(pSenderKey, false);
+			if (!COSE_Recipient_SetSenderKey2(hRecip, hSendKey, 2, nullptr)) {
 				goto returnError;
 			}
 		}
@@ -403,125 +484,211 @@ int BuildMacMessage(const cn_cbor *pControl)
 		}
 
 #if INCLUDE_COUNTERSIGNATURE
-		// On the Recipient
-		cn_cbor *countersigns1 =
-			cn_cbor_mapget_string(pRecipients, "countersign");
+		{
+			// On the Recipient
+			cn_cbor *countersigns1 =
+				cn_cbor_mapget_string(pRecipients, "countersign");
+			if (countersigns1 != nullptr) {
+				countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
+				cn_cbor *countersign = countersigns1->first_child;
+
+				for (; countersign != nullptr;
+					 countersign = countersign->next) {
+					Safe_HCOSE_KEY hkeyCountersign = BuildKey(
+						cn_cbor_mapget_string(countersign, "key"), false);
+					if (hkeyCountersign == nullptr) {
+						goto returnError;
+					}
+
+					Safe_HCOSE_COUNTERSIGN hCountersign =
+						COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
+					if (hCountersign == nullptr) {
+						goto returnError;
+					}
+
+					if (!SetSendingAttributes(hCountersign, countersign,
+							Attributes_Countersign_protected)) {
+						goto returnError;
+					}
+
+					if (!COSE_CounterSign_SetKey2(
+							hCountersign, hkeyCountersign, nullptr)) {
+						goto returnError;
+					}
+
+					if (!COSE_Recipient_add_countersignature(
+							hRecip, hCountersign, nullptr)) {
+						goto returnError;
+					}
+				}
+			}
+		}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+		{
+			//  Countersign1 on Recipient Body
+
+			//  Validate counter signatures on signers
+			cn_cbor *countersignList =
+				cn_cbor_mapget_string(pRecipients, "countersign0");
+			if (countersignList != nullptr) {
+				cn_cbor *countersigners =
+					cn_cbor_mapget_string(countersignList, "signers");
+				if (countersigners == nullptr) {
+					goto returnError;
+				}
+
+				if (COSE_Recipient_map_get_int(hRecip, COSE_Header_CounterSign1,
+						COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+					goto returnError;
+				}
+
+				bool noSupportSign = false;
+
+				Safe_HCOSE_COUNTERSIGN1 h(
+					COSE_Recipient_get_countersignature1(hRecip, nullptr));
+				if (h.IsNull()) {
+					goto returnError;
+				}
+
+				cn_cbor *counterSigner = cn_cbor_index(countersigners, 0);
+
+				Safe_HCOSE_KEY hkeyCountersign = BuildKey(
+					cn_cbor_mapget_string(counterSigner, "key"), false);
+				if (hkeyCountersign == nullptr) {
+					goto returnError;
+				}
+
+				if (!COSE_CounterSign1_SetKey(h, hkeyCountersign, nullptr)) {
+					goto returnError;
+				}
+
+				cose_errback coseError;
+				if (COSE_Recipient_CounterSign1_validate(
+						hRecip, h, &coseError)) {
+					//  I don't think we have any forced errors yet.
+				}
+				else {
+					if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+						return false;
+					}
+					goto returnError;
+				}
+			}
+		}
+#endif
+	}
+
+#if INCLUDE_COUNTERSIGNATURE
+	{
+		// On the Mac body
+		cn_cbor *countersigns1 = cn_cbor_mapget_string(pMac, "countersign");
 		if (countersigns1 != nullptr) {
 			countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
 			cn_cbor *countersign = countersigns1->first_child;
 
 			for (; countersign != nullptr; countersign = countersign->next) {
-				cn_cbor *pkeyCountersign =
+				Safe_HCOSE_KEY hkeyCountersign =
 					BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
-				if (pkeyCountersign == nullptr) {
+				if (hkeyCountersign == nullptr) {
 					goto returnError;
 				}
 
-				HCOSE_COUNTERSIGN hCountersign =
+				Safe_HCOSE_COUNTERSIGN hCountersign =
 					COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
 				if (hCountersign == nullptr) {
 					goto returnError;
 				}
 
-				if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
+				if (!SetSendingAttributes(hCountersign, countersign,
 						Attributes_Countersign_protected)) {
 					goto returnError;
 				}
 
-				if (!COSE_CounterSign_SetKey(
-						hCountersign, pkeyCountersign, nullptr)) {
+				if (!COSE_CounterSign_SetKey2(
+						hCountersign, hkeyCountersign, nullptr)) {
 					goto returnError;
 				}
 
-				if (!COSE_Recipient_add_countersignature(
-						hRecip, hCountersign, nullptr)) {
+				if (!COSE_Mac_add_countersignature(
+						hMacObj, hCountersign, nullptr)) {
 					goto returnError;
 				}
-
-				COSE_CounterSign_Free(hCountersign);
 			}
 		}
-
+	}
 #endif
 
-		COSE_Recipient_Free(hRecip);
-		hRecip = nullptr;
-	}
+#if INCLUDE_COUNTERSIGNATURE1
+	{
+		// On the Mac body
+		cn_cbor *countersigns2 = cn_cbor_mapget_string(pMac, "countersign0");
+		if (countersigns2 != nullptr) {
+			countersigns2 = cn_cbor_mapget_string(countersigns2, "signers");
+			cn_cbor *countersign = countersigns2->first_child;
 
-#if INCLUDE_COUNTERSIGNATURE
-	// On the Evneloped body
-	cn_cbor *countersigns1 = cn_cbor_mapget_string(pMac, "countersign");
-	if (countersigns1 != nullptr) {
-		countersigns1 = cn_cbor_mapget_string(countersigns1, "signers");
-		cn_cbor *countersign = countersigns1->first_child;
+			for (; countersign != nullptr; countersign = countersign->next) {
+				Safe_HCOSE_KEY hkeyCountersign =
+					BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+				if (hkeyCountersign == nullptr) {
+					goto returnError;
+				}
 
-		for (; countersign != nullptr; countersign = countersign->next) {
-			cn_cbor *pkeyCountersign =
-				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
-			if (pkeyCountersign == nullptr) {
-				goto returnError;
+				Safe_HCOSE_COUNTERSIGN1 hCountersign1 =
+					COSE_CounterSign1_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
+				if (hCountersign1.IsNull()) {
+					goto returnError;
+				}
+
+				if (!SetSendingAttributes(hCountersign1, countersign,
+						Attributes_Countersign1_protected)) {
+					goto returnError;
+				}
+
+				if (!COSE_CounterSign1_SetKey(
+						hCountersign1, hkeyCountersign, nullptr)) {
+					goto returnError;
+				}
+
+				if (!COSE_Mac_add_countersignature1(
+						hMacObj, hCountersign1, nullptr)) {
+					goto returnError;
+				}
 			}
-
-			HCOSE_COUNTERSIGN hCountersign =
-				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
-			if (hCountersign == nullptr) {
-				goto returnError;
-			}
-
-			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
-					Attributes_Countersign_protected)) {
-				COSE_CounterSign_Free(hCountersign);
-				goto returnError;
-			}
-
-			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, nullptr)) {
-				COSE_CounterSign_Free(hCountersign);
-				goto returnError;
-			}
-
-			if (!COSE_Mac_add_countersignature(hMacObj, hCountersign, nullptr)) {
-				COSE_CounterSign_Free(hCountersign);
-				goto returnError;
-			}
-
-			COSE_CounterSign_Free(hCountersign);
 		}
 	}
-
 #endif
 
 	if (!COSE_Mac_encrypt(hMacObj, nullptr)) {
 		goto returnError;
 	}
 
-	size_t cb = COSE_Encode((HCOSE)hMacObj, nullptr, 0, 0) + 1;
-	byte *rgb = (byte *)malloc(cb);
-	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
+	size_t cb = COSE_Encode(hMacObj.ToCOSE(), nullptr, 0, 0) + 1;
+	std::unique_ptr<byte> rgb(new byte[cb]);
+	cb = COSE_Encode(hMacObj.ToCOSE(), rgb.get(), 0, cb);
 
-	COSE_Mac_Free(hMacObj);
+	hMacObj = nullptr;
 
-	int f = _ValidateMAC(pControl, rgb, cb);
-
-	free(rgb);
-	return f;
+	int f = _ValidateMAC(pControl, rgb.get(), cb);
+	if (f == 0) {
+		CFails++;
+	}
+	return f == 2;
 }
 
 int MacMessage()
 {
-	HCOSE_MAC hEncObj =
+	Safe_HCOSE_MAC hEncObj =
 		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	const char *sz = "This is the content to be used";
 	byte rgbSecret[256 / 8] = {'a', 'b', 'c'};
 	byte rgbKid[6] = {'a', 'b', 'c', 'd', 'e', 'f'};
 	int cbKid = 6;
 	size_t cb = 0;
-	byte *rgb = nullptr;
 
 	if (hEncObj == nullptr) {
-		errorReturn:
-		if (hEncObj != nullptr) {
-			COSE_Mac_Free(hEncObj);
-		}
+	errorReturn:
 		CFails++;
 		return 0;
 	}
@@ -532,15 +699,18 @@ int MacMessage()
 			COSE_PROTECT_ONLY, nullptr)) {
 		goto errorReturn;
 	}
-	if (!COSE_Mac_SetContent(hEncObj, (byte *)sz, strlen(sz), nullptr)) {
+
+	if (!COSE_Mac_SetContent(
+			hEncObj, reinterpret_cast<const byte *>(sz), strlen(sz), nullptr)) {
 		goto errorReturn;
 	}
 
-	HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret,
+	Safe_HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret,
 		sizeof(rgbSecret), rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hRecip == nullptr) {
 		goto errorReturn;
 	}
+
 	if (!COSE_Mac_AddRecipient(hEncObj, hRecip, nullptr)) {
 		goto errorReturn;
 	}
@@ -549,47 +719,30 @@ int MacMessage()
 		goto errorReturn;
 	}
 
-	cb = COSE_Encode((HCOSE)hEncObj, nullptr, 0, 0);
+	cb = COSE_Encode(hEncObj.ToCOSE(), nullptr, 0, 0);
 	if (cb == 0) {
 		goto errorReturn;
 	}
 
-	rgb = (byte *)malloc(cb);
+	std::unique_ptr<byte> rgb(new byte[cb]);
 	if (rgb == nullptr) {
 		goto errorReturn;
 	}
-	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
+	cb = COSE_Encode(hEncObj.ToCOSE(), rgb.get(), 0, cb);
 	if (cb == 0) {
 		goto errorReturn;
 	}
 
-	COSE_Mac_Free(hEncObj);
-
-	FILE *fp = fopen("test.mac.cbor", "wb");
-	fwrite(rgb, cb, 1, fp);
-	fclose(fp);
-
-#if 0
-	char * szX;
-	int cbPrint = 0;
-	cn_cbor * cbor = COSE_get_cbor((HCOSE)hEncObj);
-	cbPrint = cn_cbor_printer_write(nullptr, 0, cbor, "  ", "\r\n");
-	szX = malloc(cbPrint);
-	cn_cbor_printer_write(szX, cbPrint, cbor, "  ", "\r\n");
-	fprintf(stdout, "%s", szX);
-	fprintf(stdout, "\r\n");
-#endif
-
 	int typ;
-	hEncObj = (HCOSE_MAC)COSE_Decode(
-		rgb, (int)cb, &typ, COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncObj = (HCOSE_MAC)COSE_Decode(rgb.get(), static_cast<int>(cb), &typ,
+		COSE_mac_object, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hEncObj == nullptr) {
 		goto errorReturn;
 	}
 
 	int iRecipient = 0;
 	do {
-		HCOSE_RECIPIENT hRecip2;
+		Safe_HCOSE_RECIPIENT hRecip2;
 
 		hRecip2 = COSE_Mac_GetRecipient(hEncObj, iRecipient, nullptr);
 		if (hRecip2 == nullptr) {
@@ -606,9 +759,6 @@ int MacMessage()
 		}
 
 		iRecipient += 1;
-
-		COSE_Recipient_Free(hRecip2);
-
 	} while (true);
 
 	COSE_Mac_Free(hEncObj);
@@ -626,221 +776,230 @@ int _ValidateMac0(const cn_cbor *pControl,
 	const cn_cbor *pFail = nullptr;
 	const cn_cbor *pMac = nullptr;
 	const cn_cbor *pRecipients = nullptr;
-	cn_cbor *pkey = nullptr;	
-	HCOSE_MAC0 hMAC = nullptr;
 	int type;
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fUnsuportedAlg = false;
-
-	if (false) {
-	exitHere:
-		if (pkey != nullptr) {
-			CN_CBOR_FREE(pkey, context);
-		}
-		if (hMAC != nullptr) {
-			COSE_Mac0_Free(hMAC);
-		}
-
-		if (fFail) {
-			CFails += 1;
-		}
-		return fUnsuportedAlg ? 0 : 1;
-
-	errorReturn:
-		if (hMAC != nullptr) {
-			COSE_Mac0_Free(hMAC);
-		}
-		CFails += 1;
-		return (fFail || fUnsuportedAlg) ? 0 : 1;
-	}
+	int returnCode = 2;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != nullptr) && (pFail->type == CN_CBOR_TRUE)) {
 		fFailBody = true;
 	}
 
-	hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type,
+	Safe_HCOSE_MAC0 hMAC = (HCOSE_MAC0)COSE_Decode(pbEncoded, cbEncoded, &type,
 		COSE_mac0_object, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hMAC == nullptr) {
 		if (fFailBody) {
-			return 0;
+			return 1;
 		}
-		else {
-			goto errorReturn;
-		}
+		return 0;
 	}
 
 	if ((pInput == nullptr) || (pInput->type != CN_CBOR_MAP)) {
-		goto errorReturn;
+		return 0;
 	}
 	pMac = cn_cbor_mapget_string(pInput, "mac0");
 	if ((pMac == nullptr) || (pMac->type != CN_CBOR_MAP)) {
-		goto errorReturn;
+		return 0;
 	}
 
-	if (!SetReceivingAttributes((HCOSE)hMAC, pMac, Attributes_MAC0_protected)) {
-		goto errorReturn;
+	if (!SetReceivingAttributes(hMAC, pMac, Attributes_MAC0_protected)) {
+		return 0;
 	}
 
 	pRecipients = cn_cbor_mapget_string(pMac, "recipients");
 	if ((pRecipients == nullptr) || (pRecipients->type != CN_CBOR_ARRAY)) {
-		goto errorReturn;
+		return 0;
 	}
 
 	pRecipients = pRecipients->first_child;
 
-	pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), true);
+	Safe_CN_CBOR pkey =
+		BuildCborKey(cn_cbor_mapget_string(pRecipients, "key"), true);
 	if (pkey == nullptr) {
-		fFail = true;
-		goto exitHere;
+		return 0;
 	}
 
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
 
-	cn_cbor *alg =
-		COSE_Mac0_map_get_int(hMAC, COSE_Header_Algorithm, COSE_BOTH, nullptr);
-	if (!IsAlgorithmSupported(alg)) {
-		fUnsuportedAlg = true;
-	}
-
 	pFail = cn_cbor_mapget_string(pRecipients, "fail");
-	if (COSE_Mac0_validate(hMAC, k->v.bytes, k->length, nullptr)) {
-		if (fUnsuportedAlg) {
-			fFail = true;
-			fUnsuportedAlg = false;
-		}
-		else if ((pFail != nullptr) && (pFail->type != CN_CBOR_TRUE)) {
-			fFail = true;
+
+	cose_errback coseError;
+	if (COSE_Mac0_validate(hMAC, k->v.bytes, k->length, &coseError)) {
+		if ((pFail != nullptr) && (pFail->type != CN_CBOR_TRUE)) {
+			return 0;
 		}
 	}
 	else {
-		if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
-			fFail = true;
+		if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+			returnCode = COSE_MIN(returnCode, 1);
 		}
-		if (fUnsuportedAlg) {
-			fFail = false;
+		else if (fFailBody) {
+			returnCode = COSE_MIN(returnCode, 1);
 		}
+		else if ((pFail == nullptr) || (pFail->type == CN_CBOR_FALSE)) {
+			return 0;
+		}
+		else {
+			returnCode = COSE_MIN(returnCode, 1);
+		}
+			
 	}
 
 #if INCLUDE_COUNTERSIGNATURE
-	//  Countersign on Mac0 Body
+	{
+		//  Countersign on Mac0 Body
 
-	//  Validate counter signatures on signers
-	cn_cbor *countersignList = cn_cbor_mapget_string(pMac, "countersign");
-	if (countersignList != nullptr) {
-		cn_cbor *countersigners =
-			cn_cbor_mapget_string(countersignList, "signers");
-		if (countersigners == nullptr) {
-			fFail = true;
-			goto exitHere;
-		}
-		int count = countersigners->length;
-		bool forward = true;
+		//  Validate counter signatures on signers
+		cn_cbor *countersignList = cn_cbor_mapget_string(pMac, "countersign");
+		if (countersignList != nullptr) {
+			cn_cbor *countersigners =
+				cn_cbor_mapget_string(countersignList, "signers");
+			if (countersigners == nullptr) {
+				return 0;
+			}
+			const int count = static_cast<int>(countersigners->length);
+			bool forward = true;
 
-		if (COSE_Mac0_map_get_int(hMAC, COSE_Header_CounterSign,
-				COSE_UNPROTECT_ONLY, 0) == nullptr) {
-			fFail = true;
-			goto exitHere;
-		}
-
-		for (int counterNo = 0; counterNo < count; counterNo++) {
-			bool noSignAlg = false;
-
-			HCOSE_COUNTERSIGN h =
-				COSE_Mac0_get_countersignature(hMAC, counterNo, 0);
-			if (h == nullptr) {
-				fFail = true;
-				continue;
+			if (COSE_Mac0_map_get_int(hMAC, COSE_Header_CounterSign,
+					COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+				return 0;
 			}
 
-			cn_cbor *counterSigner = cn_cbor_index(
-				countersigners, forward ? counterNo : count - counterNo - 1);
+			for (int counterNo = 0; counterNo < count; counterNo++) {
+				Safe_HCOSE_COUNTERSIGN h =
+					COSE_Mac0_get_countersignature(hMAC, counterNo, nullptr);
+				if (h == nullptr) {
+					returnCode = 0;
+					continue;
+				}
 
-			cn_cbor *pkeyCountersign =
-				BuildKey(cn_cbor_mapget_string(counterSigner, "key"), false);
-			if (pkeyCountersign == nullptr) {
-				fFail = true;
-				COSE_CounterSign_Free(h);
-				continue;
-			}
+				cn_cbor *counterSigner = cn_cbor_index(countersigners,
+					forward ? counterNo : count - counterNo - 1);
 
-			if (!COSE_CounterSign_SetKey(h, pkeyCountersign, 0)) {
-				fFail = true;
-				COSE_CounterSign_Free(h);
-				CN_CBOR_FREE(pkeyCountersign, context);
-				continue;
-			}
+				Safe_HCOSE_KEY hkeyCountersign = BuildKey(
+					cn_cbor_mapget_string(counterSigner, "key"), false);
+				if (hkeyCountersign == nullptr) {
+					returnCode = 0;
+					continue;
+				}
 
-			alg = COSE_CounterSign_map_get_int(
-				h, COSE_Header_Algorithm, COSE_BOTH, nullptr);
-			if (!IsAlgorithmSupported(alg)) {
-				fUnsuportedAlg = true;
-				noSignAlg = true;
-			}
+				if (!COSE_CounterSign_SetKey2(h, hkeyCountersign, nullptr)) {
+					returnCode = 0;
+					continue;
+				}
 
-			if (COSE_Mac0_CounterSign_validate(hMAC, h, 0)) {
-				//  I don't think we have any forced errors yet.
-			}
-			else {
-				if (forward && counterNo == 0 && count > 1) {
-					forward = false;
-					counterNo -= 1;
+				if (COSE_Mac0_CounterSign_validate(hMAC, h, &coseError)) {
+					//  I don't think we have any forced errors yet.
 				}
 				else {
-					fFail |= !noSignAlg;
+					if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+						returnCode = COSE_MIN(returnCode, 1);
+						continue;
+					}
+
+					if (forward && counterNo == 0 && count > 1) {
+						forward = false;
+						counterNo -= 1;
+						continue;
+					}
+					returnCode = 0;
 				}
 			}
-
-			COSE_CounterSign_Free(h);
 		}
 	}
 #endif
 
-	if (fFailBody) {
-		if (!fFail) {
-			fFail = true;
-		}
-		else {
-			fFail = false;
+#ifdef INCLUDE_COUNTERSIGNATURE1
+	{
+		//  Countersign on Mac0 Body
+
+		//  Validate counter signatures on signers
+		cn_cbor *countersignList = cn_cbor_mapget_string(pMac, "countersign0");
+		if (countersignList != nullptr) {
+			cn_cbor *countersigners =
+				cn_cbor_mapget_string(countersignList, "signers");
+			if (countersigners == nullptr) {
+				return 0;
+			}
+			countersigners = countersigners->first_child;
+
+			if (COSE_Mac0_map_get_int(hMAC, COSE_Header_CounterSign1,
+					COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+				return 0;
+			}
+
+			Safe_HCOSE_COUNTERSIGN1 h =
+				COSE_Mac0_get_countersignature1(hMAC, nullptr);
+			if (h == nullptr) {
+				return 0;
+			}
+
+			Safe_HCOSE_KEY hkeyCountersign =
+				BuildKey(cn_cbor_mapget_string(countersigners, "key"), false);
+			if (hkeyCountersign == nullptr) {
+				return 0;
+			}
+
+			if (!COSE_CounterSign1_SetKey(h, hkeyCountersign, nullptr)) {
+				return 0;
+			}
+
+	if (!SetReceivingAttributes(
+					h, countersigners, Attributes_Countersign1_protected)) {
+				return 0;
+			}
+			
+			if (COSE_Mac0_CounterSign1_validate(hMAC, h, &coseError)) {
+				//  I don't think we have any forced errors yet.
+			}
+			else {
+				if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+					returnCode = COSE_MIN(1, returnCode);
+				}
+				else {
+					return 0;
+				}
+			}
 		}
 	}
-	goto exitHere;
+#endif
+
+	return returnCode;
 }
 
-int ValidateMac0(const cn_cbor *pControl)
+bool ValidateMac0(const cn_cbor *pControl)
 {
 	int cbEncoded;
 	byte *pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
-	return _ValidateMac0(pControl, pbEncoded, cbEncoded);
+	int i = _ValidateMac0(pControl, pbEncoded, cbEncoded);
+	if (i == 0) {
+		CFails += 1;
+	}
+	return i == 2;
 }
 
-int BuildMac0Message(const cn_cbor *pControl)
+bool BuildMac0Message(const cn_cbor *pControl)
 {
-	cn_cbor *pkey = nullptr;
-
 	//
 	//  We don't run this for all control sequences - skip those marked fail.
 	//
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != nullptr) && (pFail->type == CN_CBOR_TRUE)) {
-		return 0;
+		return false;
 	}
 
-	HCOSE_MAC0 hMacObj =
+	Safe_HCOSE_MAC0 hMacObj =
 		COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 
 	const cn_cbor *pInputs = cn_cbor_mapget_string(pControl, "input");
 	if (pInputs == nullptr) {
 	returnError:
-		if (pkey != nullptr) {
-			CN_CBOR_FREE(pkey, context);
-		}
-		COSE_Mac0_Free(hMacObj);
 		CFails += 1;
-		return 1;
+		return false;
 	}
 	const cn_cbor *pMac = cn_cbor_mapget_string(pInputs, "mac0");
 	if (pMac == nullptr) {
@@ -853,8 +1012,7 @@ int BuildMac0Message(const cn_cbor *pControl)
 		goto returnError;
 	}
 
-	if (!SetSendingAttributes(
-			(HCOSE)hMacObj, pMac, Attributes_MAC0_protected)) {
+	if (!SetSendingAttributes(hMacObj, pMac, Attributes_MAC0_protected)) {
 		goto returnError;
 	}
 
@@ -865,7 +1023,8 @@ int BuildMac0Message(const cn_cbor *pControl)
 
 	pRecipients = pRecipients->first_child;
 
-	pkey = BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
+	Safe_CN_CBOR pkey =
+		BuildCborKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 	if (pkey == nullptr) {
 		goto returnError;
 	}
@@ -873,42 +1032,79 @@ int BuildMac0Message(const cn_cbor *pControl)
 	cn_cbor *k = cn_cbor_mapget_int(pkey, -1);
 
 #if INCLUDE_COUNTERSIGNATURE
-	// On the sign body
-	cn_cbor *countersigns = cn_cbor_mapget_string(pMac, "countersign");
-	if (countersigns != nullptr) {
-		countersigns = cn_cbor_mapget_string(countersigns, "signers");
-		cn_cbor *countersign = countersigns->first_child;
+	{
+		// On the sign body
+		cn_cbor *countersigns = cn_cbor_mapget_string(pMac, "countersign");
+		if (countersigns != nullptr) {
+			countersigns = cn_cbor_mapget_string(countersigns, "signers");
+			cn_cbor *countersign = countersigns->first_child;
 
-		for (; countersign != nullptr; countersign = countersign->next) {
-			cn_cbor *pkeyCountersign =
+			for (; countersign != nullptr; countersign = countersign->next) {
+				Safe_HCOSE_KEY hkeyCountersign =
+					BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
+				if (hkeyCountersign == nullptr) {
+					goto returnError;
+				}
+
+				Safe_HCOSE_COUNTERSIGN hCountersign =
+					COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
+				if (hCountersign == nullptr) {
+					goto returnError;
+				}
+
+				if (!SetSendingAttributes(hCountersign, countersign,
+						Attributes_Countersign_protected)) {
+					goto returnError;
+				}
+
+				if (!COSE_CounterSign_SetKey2(
+						hCountersign, hkeyCountersign, nullptr)) {
+					goto returnError;
+				}
+
+				if (!COSE_Mac0_add_countersignature(
+						hMacObj, hCountersign, nullptr)) {
+					goto returnError;
+				}
+			}
+		}
+	}
+#endif
+
+#if INCLUDE_COUNTERSIGNATURE1
+	{
+		// On the sign body
+		cn_cbor *countersigns = cn_cbor_mapget_string(pMac, "countersign0");
+		if (countersigns != nullptr) {
+			countersigns = cn_cbor_mapget_string(countersigns, "signers");
+			cn_cbor *countersign = countersigns->first_child;
+
+			Safe_HCOSE_KEY hkeyCountersign =
 				BuildKey(cn_cbor_mapget_string(countersign, "key"), false);
-			if (pkeyCountersign == nullptr) {
+			if (hkeyCountersign == nullptr) {
 				goto returnError;
 			}
 
-			HCOSE_COUNTERSIGN hCountersign =
-				COSE_CounterSign_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
+			Safe_HCOSE_COUNTERSIGN1 hCountersign =
+				COSE_CounterSign1_Init(CBOR_CONTEXT_PARAM_COMMA nullptr);
 			if (hCountersign == nullptr) {
 				goto returnError;
 			}
 
-			if (!SetSendingAttributes((HCOSE)hCountersign, countersign,
-					Attributes_Countersign_protected)) {
-				COSE_CounterSign_Free(hCountersign);
+			if (!SetSendingAttributes(hCountersign, countersign,
+					Attributes_Countersign1_protected)) {
 				goto returnError;
 			}
 
-			if (!COSE_CounterSign_SetKey(hCountersign, pkeyCountersign, nullptr)) {
-				COSE_CounterSign_Free(hCountersign);
+			if (!COSE_CounterSign1_SetKey(
+					hCountersign, hkeyCountersign, nullptr)) {
 				goto returnError;
 			}
 
-			if (!COSE_Mac0_add_countersignature(hMacObj, hCountersign, nullptr)) {
-				COSE_CounterSign_Free(hCountersign);
+			if (!COSE_Mac0_add_countersignature1(
+					hMacObj, hCountersign, nullptr)) {
 				goto returnError;
 			}
-
-			COSE_CounterSign_Free(hCountersign);
 		}
 	}
 
@@ -918,17 +1114,18 @@ int BuildMac0Message(const cn_cbor *pControl)
 		goto returnError;
 	}
 
-	size_t cb = COSE_Encode((HCOSE)hMacObj, nullptr, 0, 0) + 1;
-	byte *rgb = (byte *)malloc(cb);
-	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
+	size_t cb = COSE_Encode(hMacObj.ToCOSE(), nullptr, 0, 0) + 1;
+	std::unique_ptr<byte> rgb(new byte[cb]);
+	cb = COSE_Encode(hMacObj.ToCOSE(), rgb.get(), 0, cb);
 
-	COSE_Mac0_Free(hMacObj);
-	CN_CBOR_FREE(pkey, context);
+	hMacObj = nullptr;
 
-	int f = _ValidateMac0(pControl, rgb, cb);
+	int f = _ValidateMac0(pControl, rgb.get(), cb);
+	if (f == 0) {
+		CFails++;
+	}
 
-	free(rgb);
-	return f;
+	return f == 2;
 }
 #endif
 
@@ -964,7 +1161,8 @@ void MAC_Corners()
 	if (COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, nullptr)) {
 		CFails++;
 	}
-	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, nullptr)) {
+	if (COSE_Mac_validate(
+			(HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, nullptr)) {
 		CFails++;
 	}
 	if (COSE_Mac_AddRecipient(
@@ -982,8 +1180,8 @@ void MAC_Corners()
 	}
 
 #if INCLUDE_ENCRYPT0
-	hEncrypt =
-		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncrypt = COSE_Encrypt_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 #else
 	hEncrypt = (HCOSE_ENCRYPT)COSE_CALLOC(1, sizeof(COSE), context);
 #endif
@@ -1001,7 +1199,8 @@ void MAC_Corners()
 	if (COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, nullptr)) {
 		CFails++;
 	}
-	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, nullptr)) {
+	if (COSE_Mac_validate(
+			(HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, nullptr)) {
 		CFails++;
 	}
 	if (COSE_Mac_AddRecipient(
@@ -1021,7 +1220,8 @@ void MAC_Corners()
 	//
 	//  Unsupported algorithm
 
-	hMAC = COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hMAC =
+		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hMAC == nullptr) {
 		CFails++;
 	}
@@ -1046,7 +1246,8 @@ void MAC_Corners()
 	COSE_Mac_Free(hMAC);
 	COSE_Recipient_Free(hRecipient);
 
-	hMAC = COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hMAC =
+		COSE_Mac_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hMAC == nullptr) {
 		CFails++;
 	}
@@ -1086,8 +1287,8 @@ void MAC0_Corners()
 	cn_cbor *cn = cn_cbor_int_create(5, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	cose_errback cose_error;
 
-	hEncrypt =
-		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncrypt = COSE_Encrypt_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 
 	//  Missing case - addref then release on item
 
@@ -1116,8 +1317,8 @@ void MAC0_Corners()
 		CFails++;
 	}
 
-	hEncrypt =
-		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncrypt = COSE_Encrypt_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 
 	if (COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, nullptr)) {
 		CFails++;
@@ -1146,7 +1347,8 @@ void MAC0_Corners()
 	//
 	//  Unsupported algorithm
 
-	hMAC = COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hMAC =
+		COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hMAC == nullptr) {
 		CFails++;
 	}
@@ -1162,7 +1364,8 @@ void MAC0_Corners()
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Mac0_Free(hMAC);
 
-	hMAC = COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hMAC =
+		COSE_Mac0_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hMAC == nullptr) {
 		CFails++;
 	}

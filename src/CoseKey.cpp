@@ -58,13 +58,13 @@ HCOSE_KEY COSE_KEY_FromCbor(cn_cbor *pcborKey,
 		pkey->m_allocContext = *context;
 	}
 #endif
-	
+
 	pkey->m_refCount = 1;
 	pkey->m_cborKey = pcborKey;
 
 	pkey->m_nextKey = KeysRoot;
 	KeysRoot = pkey;
-	
+
 	return (HCOSE_KEY)pkey;
 }
 
@@ -72,14 +72,14 @@ bool COSE_KEY_Free(HCOSE_KEY h)
 {
 	COSE_KEY *p = (COSE_KEY *)h;
 	if (!IsValidKeyHandle(h)) {
-		return false;	
+		return false;
 	}
 
 	if (p->m_refCount > 1) {
 		p->m_refCount--;
 		return true;
 	}
-	
+
 	if (KeysRoot == p) {
 		KeysRoot = p->m_nextKey;
 		p->m_nextKey = nullptr;;
@@ -94,14 +94,19 @@ bool COSE_KEY_Free(HCOSE_KEY h)
 			}
 		}
 	}
-	
+	if (p->m_cborKey != nullptr && p->m_cborKey->parent == nullptr) {
+		CN_CBOR_FREE(p->m_cborKey, &p->m_allocContext);
+	}
+
 	COSE_FREE(p, &p->m_allocContext);
 
 	return true;
 }
 
 #if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
-HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY * opensslKey, cn_cbor * pcborKey, CBOR_CONTEXT_COMMA cose_errback* perror)
+HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY *opensslKey,
+	cn_cbor *pcborKey,
+	CBOR_CONTEXT_COMMA cose_errback *perror)
 {
 	COSE_KEY *pkey = nullptr;
 

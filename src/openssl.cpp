@@ -443,15 +443,15 @@ bool AES_GCM_Encrypt(COSE_Enveloped *pcose,
 			COSE_FREE(pbIV, context);
 		}
 		if (cbor_iv_t != nullptr) {
-			COSE_FREE(cbor_iv_t, context);
+			CN_CBOR_FREE(cbor_iv_t, context);
 		}
 		if (rgbOut != nullptr) {
 			COSE_FREE(rgbOut, context);
 		}
 		EVP_CIPHER_CTX_free(ctx);
-		return false;		
+		return false;
 	}
-	
+
 	// Make it first so we can clean it up
 	ctx = EVP_CIPHER_CTX_new();
 	CHECK_CONDITION(nullptr != ctx, COSE_ERR_OUT_OF_MEMORY);
@@ -643,7 +643,7 @@ bool AES_CBC_MAC_Validate(COSE_MacMessage *pcose,
 	if (false) {
 	errorReturn:
 		EVP_CIPHER_CTX_free(ctx);
-		return false;		
+		return false;
 	}
 	switch (cbKey * 8) {
 		case 128:
@@ -1030,7 +1030,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 			COSE_FREE(rgbOut, context);
 		}
 		HMAC_CTX_free(ctx);
-		return false;		
+		return false;
 	}
 	ctx = HMAC_CTX_new();
 	CHECK_CONDITION(ctx != nullptr, COSE_ERR_OUT_OF_MEMORY);
@@ -1096,7 +1096,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 		CHECK_CONDITION(pKeyNew != nullptr, COSE_ERR_INVALID_PARAMETER);
 		return pKeyNew;
 	}
-	
+
 	byte rgbKey[512 + 1];
 	int cbKey;
 	const cn_cbor *p;
@@ -1197,6 +1197,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 	size_t cbSize;
 	byte *pbOut = nullptr;
 	COSE_KEY *coseKey = nullptr;
+	size_t cbX;
 
 	pgroup = EC_KEY_get0_group(pKey);
 	CHECK_CONDITION(pgroup != nullptr, COSE_ERR_INVALID_PARAMETER);
@@ -1239,6 +1240,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 			EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_COMPRESSED,
 				pbPoint, cbSize, nullptr) == cbSize,
 			COSE_ERR_CRYPTO_FAIL);
+		cbX = cbSize - 1;
 	}
 	else {
 		cbSize = EC_POINT_point2oct(
@@ -1250,13 +1252,14 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 			EC_POINT_point2oct(pgroup, pPoint, POINT_CONVERSION_UNCOMPRESSED,
 				pbPoint, cbSize, nullptr) == cbSize,
 			COSE_ERR_CRYPTO_FAIL);
+		cbX = cbSize / 2;
 	}
 
-	pbOut = (byte *) COSE_CALLOC((int)(cbSize / 2), 1, context);
+	pbOut = (byte *) COSE_CALLOC((int)(cbX), 1, context);
 	CHECK_CONDITION(pbOut != nullptr, COSE_ERR_OUT_OF_MEMORY);
-	memcpy(pbOut, pbPoint + 1, (int)(cbSize / 2));
+	memcpy(pbOut, pbPoint + 1, (int)(cbX));
 	p = cn_cbor_data_create2(
-		pbOut, (int)(cbSize / 2), 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		pbOut, (int)(cbX), 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	CHECK_CONDITION_CBOR(p != nullptr, cbor_error);
 	pbOut = nullptr;
 	CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_EC_X, p,
@@ -1274,10 +1277,10 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		p = nullptr;
 	}
 	else {
-		pbOut = (byte *) COSE_CALLOC((int)(cbSize / 2), 1, context);
+		pbOut = (byte *) COSE_CALLOC((int)(cbX), 1, context);
 		CHECK_CONDITION(pbOut != nullptr, COSE_ERR_OUT_OF_MEMORY);
-		memcpy(pbOut, pbPoint + cbSize / 2 + 1, (int)(cbSize / 2));
-		p = cn_cbor_data_create2(pbOut, (int)(cbSize / 2), 0,
+		memcpy(pbOut, pbPoint + cbSize / 2 + 1, (int)(cbX));
+		p = cn_cbor_data_create2(pbOut, (int)(cbX), 0,
 			CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != nullptr, cbor_error);
 		pbOut = nullptr; 
@@ -1308,6 +1311,9 @@ returnHere:
 	}
 	if (p != nullptr) {
 		CN_CBOR_FREE(p, context);
+	}
+	if (pkey != nullptr) {
+		CN_CBOR_FREE(pkey, context);
 	}
 	return coseKey;
 
@@ -1675,7 +1681,7 @@ bool AES_KW_Decrypt(COSE_Enveloped *pcose,
 	const byte *pbCipherText,
 	size_t cbCipherText,
 	byte *pbKeyOut,
-	int *pcbKeyOut,
+	size_t *pcbKeyOut,
 	cose_errback *perr)
 {
 	byte rgbOut[512 / 8];
