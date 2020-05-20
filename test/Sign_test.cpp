@@ -768,7 +768,7 @@ int _ValidateSign1(const cn_cbor *pControl,
 		}
 	}
 
-#if INCLUDE_COUNTERSIGNATURE1
+#if INCLUDE_COUNTERSIGNATURE
 	{
 		//  Countersign on Signed Body
 
@@ -832,6 +832,74 @@ int _ValidateSign1(const cn_cbor *pControl,
 	}
 #endif
 
+#if INCLUDE_COUNTERSIGNATURE1
+	{
+		//  Countersign on Signed Body
+
+		//  Validate counter signatures on signers
+		cn_cbor *countersignList = cn_cbor_mapget_string(pSign, "countersign0");
+		if (countersignList != nullptr) {
+			cn_cbor *countersigners =
+				cn_cbor_mapget_string(countersignList, "signers");
+			if (countersigners == nullptr) {
+				return 0;
+			}
+			size_t count = countersigners->length;
+			bool forward = true;
+
+			if (COSE_Sign1_map_get_int(hSig, COSE_Header_CounterSign1,
+					COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
+				return 0;
+			}
+
+			for (size_t counterNo = 0; counterNo < count; counterNo++) {
+				bool noSignAlg = false;
+
+				Safe_HCOSE_COUNTERSIGN1 h = COSE_Sign1_get_countersignature1(
+					hSig, nullptr);
+				if (h == nullptr) {
+					return 0;
+				}
+
+				cn_cbor *counterSigner = cn_cbor_index(countersigners,
+					static_cast<int>(
+						forward ? counterNo : count - counterNo - 1));
+
+				Safe_HCOSE_KEY hkeyCountersign = BuildKey(
+					cn_cbor_mapget_string(counterSigner, "key"), false);
+				if (hkeyCountersign == nullptr) {
+					return 0;
+				}
+
+				if (!COSE_CounterSign1_SetKey(h, hkeyCountersign, nullptr)) {
+					return 0;
+				}
+
+				if (!SetReceivingAttributes(h, counterSigner, Attributes_Countersign1_protected)) {
+					return 0;
+				}
+
+				if (COSE_Sign1_CounterSign1_validate(hSig, h, &coseError)) {
+					//  I don't think we have any forced errors yet.
+				}
+				else {
+					if (coseError.err == COSE_ERR_UNKNOWN_ALGORITHM) {
+						return 1;
+					}
+
+					if (forward && counterNo == 0 && count > 1) {
+						forward = false;
+						counterNo -= 1;
+					}
+					else {
+						return 0;
+					}
+				}
+			}
+		}
+	}
+#endif
+	
 	return returnCode;
 }
 
