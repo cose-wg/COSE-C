@@ -58,7 +58,7 @@ COSE_CounterSign1* _COSE_CounterSign1_Init_From_Object(cn_cbor* cbor,
 		if (cn2 != nullptr) {
 			CN_CBOR_FREE(cn2, context);
 		}
-		return nullptr;		
+		return nullptr;
 	}
 
 	CHECK_CONDITION(cbor->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
@@ -66,17 +66,20 @@ COSE_CounterSign1* _COSE_CounterSign1_Init_From_Object(cn_cbor* cbor,
 	newBody = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cborError);
 	CHECK_CONDITION_CBOR(newBody != NULL, cborError);
 
-	cn2 = cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA &cborError);	 // protected = bstr
+	cn2 = cn_cbor_data_create(
+		nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cborError);	// protected = bstr
 	CHECK_CONDITION_CBOR(cn2 != NULL, cborError);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
 
-	cn2 = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA &cborError);  // unprotected = map
+	cn2 = cn_cbor_map_create(
+		CBOR_CONTEXT_PARAM_COMMA & cborError);	// unprotected = map
 	CHECK_CONDITION_CBOR(cn2 != NULL, cborError);
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
 
-	cn2 = cn_cbor_clone(cbor, CBOR_CONTEXT_PARAM_COMMA &cborError);	// signature = bstr
+	cn2 = cn_cbor_clone(
+		cbor, CBOR_CONTEXT_PARAM_COMMA & cborError);  // signature = bstr
 	CHECK_CONDITION_CBOR(
 		cn_cbor_array_append(newBody, cn2, &cborError), cborError);
 	cn2 = nullptr;
@@ -86,7 +89,7 @@ COSE_CounterSign1* _COSE_CounterSign1_Init_From_Object(cn_cbor* cbor,
 			1, sizeof(COSE_CounterSign1), context);
 		CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 	}
-	
+
 	if (!_COSE_SignerInfo_Init_From_Object(
 			newBody, &pobj->m_signer, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
@@ -388,7 +391,7 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 		if (cn3 != nullptr) {
 			CN_CBOR_FREE(cn3, context);
 		}
-		return fRet;		
+		return fRet;
 	}
 
 	cn_cbor* pSignature = _COSE_arrayget_int(baseMessage, INDEX_SIGNATURE);
@@ -408,7 +411,8 @@ bool _COSE_CounterSign1_Sign(COSE* baseMessage,
 	sigValue = (byte*)COSE_CALLOC(cn->length, 1, context);
 	CHECK_CONDITION(sigValue != NULL, COSE_ERR_OUT_OF_MEMORY);
 	memcpy(sigValue, cn->v.bytes, cn->length);
-	cn3 = cn_cbor_data_create2(sigValue, cn->length, 0, CBOR_CONTEXT_PARAM_COMMA &cborerr);
+	cn3 = cn_cbor_data_create2(
+		sigValue, cn->length, 0, CBOR_CONTEXT_PARAM_COMMA & cborerr);
 	CHECK_CONDITION_CBOR(cn3 != NULL, cborerr);
 	sigValue = nullptr;
 

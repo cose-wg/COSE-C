@@ -306,7 +306,8 @@ bool _COSE_Mac_Build_AAD(COSE *pCose,
 		COSE_ERR_INVALID_PARAMETER);
 
 	if ((pcn->length == 1) && (pcn->v.bytes[0] == 0xa0)) {
-		ptmp = cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
+		ptmp =
+			cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	}
 	else {
 		ptmp = cn_cbor_data_create(
@@ -314,7 +315,8 @@ bool _COSE_Mac_Build_AAD(COSE *pCose,
 	}
 	CHECK_CONDITION(ptmp != nullptr, COSE_ERR_CBOR);
 
-	CHECK_CONDITION(cn_cbor_array_append(pAuthData, ptmp, nullptr), COSE_ERR_CBOR);
+	CHECK_CONDITION(
+		cn_cbor_array_append(pAuthData, ptmp, nullptr), COSE_ERR_CBOR);
 	ptmp = nullptr;
 
 	//  Add the external bytes
@@ -763,7 +765,8 @@ bool _COSE_Mac_validate(COSE_MacMessage *pcose,
 	}
 	else {
 		if (pbKeyNew == nullptr) {
-			pbKeyNew = static_cast<byte*>(COSE_CALLOC(cbitKey / 8, 1, context));
+			pbKeyNew =
+				static_cast<byte *>(COSE_CALLOC(cbitKey / 8, 1, context));
 			CHECK_CONDITION(pbKeyNew != nullptr, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 		}

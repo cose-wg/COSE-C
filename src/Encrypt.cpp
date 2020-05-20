@@ -183,7 +183,8 @@ void _COSE_Enveloped_Release(COSE_Enveloped *p)
 	if (p->pbContent != nullptr) {
 		COSE_FREE((void *)p->pbContent, &p->m_message.m_allocContext);
 	}
-	//	if (p->pbIV != nullptr) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
+	//	if (p->pbIV != nullptr) COSE_FREE(p->pbIV,
+	//&p->m_message.m_allocContext);
 
 	for (pRecipient1 = p->m_recipientFirst; pRecipient1 != nullptr;
 		 pRecipient1 = pRecipient2) {
@@ -345,7 +346,8 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 		//  Allocate the key if we have not already done so
 
 		if (pbKeyNew == nullptr) {
-			pbKeyNew = static_cast<byte*>(COSE_CALLOC(cbitKey / 8, 1, context));
+			pbKeyNew =
+				static_cast<byte *>(COSE_CALLOC(cbitKey / 8, 1, context));
 			CHECK_CONDITION(pbKeyNew != nullptr, COSE_ERR_OUT_OF_MEMORY);
 			pbKey = pbKeyNew;
 		}
@@ -528,7 +530,8 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback *perr)
 	COSE_Enveloped *pcose = (COSE_Enveloped *)h;
 
 	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(pcose->m_recipientFirst != nullptr, COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(
+		pcose->m_recipientFirst != nullptr, COSE_ERR_INVALID_HANDLE);
 
 	return _COSE_Enveloped_encrypt(pcose, nullptr, 0, "Encrypt", perr);
 
@@ -1041,8 +1044,8 @@ bool _COSE_Encrypt_Build_AAD(COSE *pMessage,
 	pItem = _COSE_arrayget_int(pMessage, INDEX_PROTECTED);
 	CHECK_CONDITION(pItem != nullptr, COSE_ERR_INVALID_PARAMETER);
 	if ((pItem->length == 1) && (pItem->v.bytes[0] == 0xa0)) {
-		ptmp =
-			cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		ptmp = cn_cbor_data_create(
+			nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	else {
 		ptmp = cn_cbor_data_create(pItem->v.bytes, (int)pItem->length,

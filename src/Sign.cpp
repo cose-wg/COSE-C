@@ -49,7 +49,7 @@ HCOSE_SIGN COSE_Sign_Init(COSE_INIT_FLAGS flags,
 {
 	if (false) {
 	errorReturn:
-		return nullptr;		
+		return nullptr;
 	}
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
 	COSE_SignMessage *pobj =
@@ -295,7 +295,8 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 #endif
 
 	pcborBody = _COSE_arrayget_int(&pMessage->m_message, INDEX_BODY);
-	CHECK_CONDITION((pcborBody != nullptr) && (pcborBody->type == CN_CBOR_BYTES),
+	CHECK_CONDITION(
+		(pcborBody != nullptr) && (pcborBody->type == CN_CBOR_BYTES),
 		COSE_ERR_INVALID_PARAMETER);
 
 	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
@@ -353,7 +354,8 @@ bool COSE_Sign_validate(HCOSE_SIGN hSign,
 		COSE_ERR_INVALID_PARAMETER);
 
 	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	f = _COSE_Signer_validate(
@@ -383,7 +385,6 @@ bool COSE_Sign_AddSigner(HCOSE_SIGN hSign,
 
 	pSign = (COSE_SignMessage *)hSign;
 	pSigner = (COSE_SignerInfo *)hSigner;
-
 
 #ifdef USE_CBOR_CONTEXT
 	context = &pSign->m_message.m_allocContext;

@@ -269,7 +269,8 @@ int DecryptMessage(const byte *pbEncoded,
 				return 0;
 			}
 
-			if (!SetReceivingAttributes(h, counterSigner, Attributes_Countersign1_protected)) {
+			if (!SetReceivingAttributes(
+					h, counterSigner, Attributes_Countersign1_protected)) {
 				return 0;
 			}
 
@@ -679,8 +680,6 @@ bool BuildEnvelopedMessage(const cn_cbor *pControl)
 		if (!COSE_Enveloped_AddRecipient(hEncObj, hRecip, nullptr)) {
 			goto returnError;
 		}
-
-		
 	}
 
 #if INCLUDE_COUNTERSIGNATURE
@@ -1321,8 +1320,7 @@ void Enveloped_Corners()
 	//      - nullptr pointer
 	//
 
-	CHECK_FAILURE(
-		COSE_Enveloped_SetContent(hEncryptNULL, rgb, 10, &cose_error),
+	CHECK_FAILURE(COSE_Enveloped_SetContent(hEncryptNULL, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_SetContent(hEncryptBad, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1354,13 +1352,11 @@ void Enveloped_Corners()
 	CHECK_FAILURE(COSE_Enveloped_encrypt(hEncryptBad, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 
-	CHECK_FAILURE(
-		COSE_Enveloped_decrypt(hEncryptNULL, hRecipient, &cose_error),
+	CHECK_FAILURE(COSE_Enveloped_decrypt(hEncryptNULL, hRecipient, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_decrypt(hEncryptBad, hRecipient, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(
-		COSE_Enveloped_decrypt(hEncrypt, hRecipientNULL, &cose_error),
+	CHECK_FAILURE(COSE_Enveloped_decrypt(hEncrypt, hRecipientNULL, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_decrypt(hEncrypt, hRecipientBad, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1378,8 +1374,7 @@ void Enveloped_Corners()
 		COSE_Enveloped_AddRecipient(hEncrypt, hRecipientBad, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 
-	CHECK_FAILURE_PTR(
-		COSE_Enveloped_GetRecipient(hEncryptNULL, 0, &cose_error),
+	CHECK_FAILURE_PTR(COSE_Enveloped_GetRecipient(hEncryptNULL, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE_PTR(COSE_Enveloped_GetRecipient(hEncryptBad, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1389,7 +1384,8 @@ void Enveloped_Corners()
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncryptBad, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Enveloped_SetExternal(hEncrypt, nullptr, 10, &cose_error),
+	CHECK_FAILURE(
+		COSE_Enveloped_SetExternal(hEncrypt, nullptr, 10, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	if (!COSE_Enveloped_Free(hEncrypt)) {
@@ -1532,8 +1528,8 @@ void Encrypt_Corners()
 	//
 	//  Unsupported algorithm
 
-	hEncrypt =
-		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncrypt = COSE_Encrypt_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hEncrypt == nullptr) {
 		CFails++;
 	}
@@ -1549,8 +1545,8 @@ void Encrypt_Corners()
 		COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
 	COSE_Encrypt_Free(hEncrypt);
 
-	hEncrypt =
-		COSE_Encrypt_Init(COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
+	hEncrypt = COSE_Encrypt_Init(
+		COSE_INIT_FLAGS_NONE, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	if (hEncrypt == nullptr) {
 		CFails++;
 	}
@@ -1612,8 +1608,7 @@ void Recipient_Corners()
 	CHECK_FAILURE(COSE_Recipient_SetKey(hRecip, nullptr, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(
-		COSE_Recipient_SetSenderKey(hRecipNULL, cn, 0, &cose_error),
+	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecipNULL, cn, 0, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 	CHECK_FAILURE(COSE_Recipient_SetSenderKey(hRecipBad, cn, 0, &cose_error),
@@ -1628,8 +1623,7 @@ void Recipient_Corners()
 		COSE_ERR_NONE, CFails++);
 	cn = cn_cbor_int_create(1, CBOR_CONTEXT_PARAM_COMMA nullptr);
 
-	CHECK_FAILURE(
-		COSE_Recipient_SetExternal(hRecipNULL, rgb, 10, &cose_error),
+	CHECK_FAILURE(COSE_Recipient_SetExternal(hRecipNULL, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Recipient_SetExternal(hRecipBad, rgb, 10, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
@@ -1658,13 +1652,11 @@ void Recipient_Corners()
 					  COSE_PROTECT_ONLY | COSE_UNPROTECT_ONLY, &cose_error),
 		COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(
-		COSE_Recipient_AddRecipient(hRecipNULL, hRecip, &cose_error),
+	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecipNULL, hRecip, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecipBad, hRecip, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(
-		COSE_Recipient_AddRecipient(hRecip, hRecipNULL, &cose_error),
+	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecip, hRecipNULL, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Recipient_AddRecipient(hRecip, hRecipBad, &cose_error),
 		COSE_ERR_INVALID_HANDLE, CFails++);

@@ -234,9 +234,9 @@ bool COSE_CounterSign_SetKey(HCOSE_COUNTERSIGN h,
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context* context = nullptr;
 #endif
-	
+
 	CHECK_CONDITION(pkey != nullptr, COSE_ERR_INVALID_PARAMETER);
-	coseKey = COSE_KEY_FromCbor((cn_cbor*) pkey, CBOR_CONTEXT_PARAM_COMMA perr);
+	coseKey = COSE_KEY_FromCbor((cn_cbor*)pkey, CBOR_CONTEXT_PARAM_COMMA perr);
 	CHECK_CONDITION(coseKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	fRet = COSE_CounterSign_SetKey2(h, coseKey, perr);
@@ -258,9 +258,9 @@ bool COSE_CounterSign_SetKey2(HCOSE_COUNTERSIGN hSigner,
 
 	CHECK_CONDITION(IsValidCounterSignHandle(hSigner), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_HANDLE);
-	
+
 	if (pSigner->m_signer.m_pkey != nullptr) {
-		COSE_KEY_Free((HCOSE_KEY) pSigner->m_signer.m_pkey);
+		COSE_KEY_Free((HCOSE_KEY)pSigner->m_signer.m_pkey);
 	}
 
 	pSigner->m_signer.m_pkey = pKey;
@@ -376,8 +376,8 @@ bool _COSE_CounterSign_Sign(COSE* baseMessage,
 			cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & cn_error);
 		CHECK_CONDITION_CBOR(cn_counterSign, cn_error);
 
-		for (pCountersign = baseMessage->m_counterSigners; pCountersign != nullptr;
-			 pCountersign = pCountersign->m_next) {
+		for (pCountersign = baseMessage->m_counterSigners;
+			 pCountersign != nullptr; pCountersign = pCountersign->m_next) {
 			cn_cbor* cn = COSE_get_cbor((HCOSE)pCountersign);
 			CHECK_CONDITION_CBOR(
 				cn_cbor_array_append(cn_counterSign, cn, &cn_error), cn_error);
@@ -482,7 +482,8 @@ bool COSE_Signer_CounterSign_validate(HCOSE_SIGNER hSigner,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSigner->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
@@ -552,7 +553,8 @@ bool COSE_Sign_CounterSign_validate(HCOSE_SIGN hSignMsg,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
@@ -624,7 +626,8 @@ bool COSE_Sign1_CounterSign_validate(HCOSE_SIGN1 hSignMsg,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
@@ -695,7 +698,8 @@ bool COSE_Enveloped_CounterSign_validate(HCOSE_ENVELOPED hSignMsg,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
@@ -768,7 +772,8 @@ bool COSE_Recipient_CounterSign_validate(HCOSE_RECIPIENT hSignMsg,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSignMsg->m_encrypt.m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
@@ -840,7 +845,8 @@ bool COSE_Encrypt0_CounterSign_validate(HCOSE_ENCRYPT hSignMsg,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
@@ -912,7 +918,8 @@ bool COSE_Mac0_CounterSign_validate(HCOSE_MAC0 hSignMsg,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
@@ -984,7 +991,8 @@ bool COSE_Mac_CounterSign_validate(HCOSE_MAC hSignMsg,
 
 	const cn_cbor* cnProtected =
 		_COSE_arrayget_int(&pSignMsg->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
+	CHECK_CONDITION(
+		cnProtected != nullptr && cnProtected->type == CN_CBOR_BYTES,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,

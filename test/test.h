@@ -130,27 +130,28 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 			Set(pIn);                                  \
 			return pIn;                                \
 		}                                              \
-		handleName Transfer(Safe_##handleName* hIn) \
-		{ \
-		if (h != NULL) { \
-freeFunction(h); \
-} \
-h = hIn->h; \
-hIn->h = NULL; \
-return h; \
-} \
-		handleName operator=(Safe_##handleName hIn) \
-		{ \
-		Set(hIn.h); \
-		return h; \
-		} \
+		handleName Transfer(Safe_##handleName* hIn)    \
+		{                                              \
+			if (h != NULL) {                           \
+				freeFunction(h);                       \
+			}                                          \
+			h = hIn->h;                                \
+			hIn->h = NULL;                             \
+			return h;                                  \
+		}                                              \
+		handleName operator=(Safe_##handleName hIn)    \
+		{                                              \
+			Set(hIn.h);                                \
+			return h;                                  \
+		}                                              \
 		void Clear() { h = NULL; }                     \
-		handleName Release() { \
-		handleName h2 = h; \
-		freeFunction(h); \
-		h = NULL; \
-		return h2; \
-		} \
+		handleName Release()                           \
+		{                                              \
+			handleName h2 = h;                         \
+			freeFunction(h);                           \
+			h = NULL;                                  \
+			return h2;                                 \
+		}                                              \
 	};
 
 Safe_Handle(HCOSE_ENCRYPT, COSE_Encrypt_Free);

@@ -23,7 +23,7 @@ COSE_KEY *KeysRoot = nullptr;
 
 bool IsValidKeyHandle(HCOSE_KEY h)
 {
-	COSE_KEY *p = (COSE_KEY*)h;
+	COSE_KEY *p = (COSE_KEY *)h;
 	if (KeysRoot == nullptr) {
 		return false;
 	}
@@ -31,7 +31,8 @@ bool IsValidKeyHandle(HCOSE_KEY h)
 		return false;
 	}
 
-	for (const COSE_KEY *walk = KeysRoot; walk != nullptr; walk = walk->m_nextKey) {
+	for (const COSE_KEY *walk = KeysRoot; walk != nullptr;
+		 walk = walk->m_nextKey) {
 		if (walk == p) {
 			return true;
 		}
@@ -82,7 +83,8 @@ bool COSE_KEY_Free(HCOSE_KEY h)
 
 	if (KeysRoot == p) {
 		KeysRoot = p->m_nextKey;
-		p->m_nextKey = nullptr;;
+		p->m_nextKey = nullptr;
+		;
 	}
 	else {
 		for (COSE_KEY *walk = KeysRoot; walk->m_nextKey != nullptr;

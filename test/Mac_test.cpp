@@ -844,7 +844,6 @@ int _ValidateMac0(const cn_cbor *pControl,
 		else {
 			returnCode = COSE_MIN(returnCode, 1);
 		}
-			
 	}
 
 #if INCLUDE_COUNTERSIGNATURE
@@ -946,11 +945,11 @@ int _ValidateMac0(const cn_cbor *pControl,
 				return 0;
 			}
 
-	if (!SetReceivingAttributes(
+			if (!SetReceivingAttributes(
 					h, countersigners, Attributes_Countersign1_protected)) {
 				return 0;
 			}
-			
+
 			if (COSE_Mac0_CounterSign1_validate(hMAC, h, &coseError)) {
 				//  I don't think we have any forced errors yet.
 			}

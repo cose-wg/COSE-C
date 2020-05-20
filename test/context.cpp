@@ -110,7 +110,7 @@ void MyFree(void *ptr, void *context)
 		return;
 	}
 
-	if (pItem->pad[0] == (byte) 0xab) {
+	if (pItem->pad[0] == (byte)0xab) {
 		//  already freed.
 		assert(false);
 	}
@@ -140,7 +140,8 @@ void FreeContext(cn_cbor_context *pContext)
 
 	CheckMemory(myContext);
 
-	for (pItem = (MyItem *)myContext->pFirst; pItem != nullptr; pItem = pItem2) {
+	for (pItem = (MyItem *)myContext->pFirst; pItem != nullptr;
+		 pItem = pItem2) {
 		pItem2 = pItem->pNext;
 		free(pItem);
 	}

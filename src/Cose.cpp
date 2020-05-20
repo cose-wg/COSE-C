@@ -214,13 +214,12 @@ void _COSE_Release(COSE *pcose)
 	}
 #endif
 
-	#if INCLUDE_COUNTERSIGNATURE1
+#if INCLUDE_COUNTERSIGNATURE1
 	if (pcose->m_counterSign1 != NULL) {
 		COSE_CounterSign1_Free((HCOSE_COUNTERSIGN1)pcose->m_counterSign1);
 	}
 #endif
 }
-	
 
 HCOSE COSE_Decode(const byte *rgbData,
 	size_t cbData,
@@ -235,14 +234,13 @@ HCOSE COSE_Decode(const byte *rgbData,
 	if (false) {
 	errorReturn:
 		CN_CBOR_FREE(cbor, context);
-		return nullptr;	
+		return nullptr;
 	}
 
 	CHECK_CONDITION(
 		(rgbData != nullptr) && (ptype != nullptr), COSE_ERR_INVALID_PARAMETER);
 
-	cbor = 
-		cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
+	cbor = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
 	CHECK_CONDITION_CBOR(cbor != nullptr, cbor_err);
 
 	if (cbor->type == CN_CBOR_TAG) {
@@ -275,7 +273,7 @@ HCOSE COSE_Decode(const byte *rgbData,
 #else
 			FAIL_CONDITION(COSE_ERR_UNSUPPORTED_COSE_TYPE);
 #endif
-			break;
+		break;
 
 		case COSE_sign_object:
 #if INCLUDE_SIGN
@@ -383,7 +381,8 @@ cn_cbor *_COSE_map_get_int(COSE *cose, int key, int flags, cose_errback *perr)
 		perr->err = COSE_ERR_NONE;
 	}
 
-	if ((cose->m_protectedMap != nullptr) && ((flags & COSE_PROTECT_ONLY) != 0)) {
+	if ((cose->m_protectedMap != nullptr) &&
+		((flags & COSE_PROTECT_ONLY) != 0)) {
 		p = cn_cbor_mapget_int(cose->m_protectedMap, key);
 		if (p != nullptr) {
 			return p;
@@ -420,7 +419,8 @@ cn_cbor *_COSE_map_get_str(COSE *pcose,
 		perror->err = COSE_ERR_NONE;
 	}
 
-	if ((pcose->m_protectedMap != nullptr) && ((flags & COSE_PROTECT_ONLY) != 0)) {
+	if ((pcose->m_protectedMap != nullptr) &&
+		((flags & COSE_PROTECT_ONLY) != 0)) {
 		p = cn_cbor_mapget_string(pcose->m_protectedMap, key);
 		if (p != nullptr) {
 			return p;
@@ -509,8 +509,9 @@ cn_cbor *_COSE_encode_protected(COSE *pMessage, cose_errback *perr)
 		pbProtected = (byte *)COSE_CALLOC(cbProtected, 1, context);
 		CHECK_CONDITION(pbProtected != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
-		CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected,
-							pMessage->m_protectedMap) == static_cast<ssize_t>(cbProtected),
+		CHECK_CONDITION(
+			cn_cbor_encoder_write(pbProtected, 0, cbProtected,
+				pMessage->m_protectedMap) == static_cast<ssize_t>(cbProtected),
 			COSE_ERR_CBOR);
 	}
 	else {
@@ -577,7 +578,8 @@ bool _COSE_IsInList(const COSE *const rootNode, const COSE *const thisMsg)
 		return false;
 	}
 
-	for (const COSE *walk = rootNode; walk != nullptr; walk = walk->m_handleList) {
+	for (const COSE *walk = rootNode; walk != nullptr;
+		 walk = walk->m_handleList) {
 		if (walk == thisMsg) {
 			return true;
 		}

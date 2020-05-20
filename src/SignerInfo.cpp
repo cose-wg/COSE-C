@@ -174,8 +174,8 @@ static bool BuildToBeSigned(byte **ppbToSign,
 	cn = nullptr;
 
 	if (pcborProtected->length == 1 && (pcborProtected->v.bytes[0] == 0xa0)) {
-		cn =
-			cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		cn = cn_cbor_data_create(
+			nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	else {
 		cn = cn_cbor_data_create(pcborProtected->v.bytes,
@@ -188,8 +188,8 @@ static bool BuildToBeSigned(byte **ppbToSign,
 
 	if ((pcborProtectedSign->length == 1) &&
 		(pcborProtectedSign->v.bytes[0] == 0xa0)) {
-		cn =
-			cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+		cn = cn_cbor_data_create(
+			nullptr, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 	}
 	else {
 		cn = cn_cbor_data_create(pcborProtectedSign->v.bytes,
@@ -387,19 +387,19 @@ bool COSE_Signer_SetKey(HCOSE_SIGNER h, const cn_cbor *pKey, cose_errback *perr)
 		if (cose != nullptr) {
 			COSE_KEY_Free(cose);
 		}
-		return fRet;		
+		return fRet;
 	}
 
 	CHECK_CONDITION(pKey != nullptr, COSE_ERR_INVALID_PARAMETER);
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
-	
+
 #ifdef USE_CBOR_CONTEXT
 	COSE_SignerInfo *p = (COSE_SignerInfo *)h;
 	cn_cbor_context *context = &p->m_message.m_allocContext;
 #endif
 
 	cose = COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
-	
+
 	CHECK_CONDITION(cose != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	fRet = COSE_Signer_SetKey2(h, cose, perr);

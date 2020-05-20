@@ -365,7 +365,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 	{                                     \
 		if (!(condition)) {               \
 			DO_ASSERT;                    \
-			if (perr != nullptr) {           \
+			if (perr != nullptr) {        \
 				perr->err = error;        \
 			}                             \
 			goto errorReturn;             \
@@ -375,7 +375,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 	{                                      \
 		if ((condition)) {                 \
 			DO_ASSERT;                     \
-			if (perr != nullptr) {            \
+			if (perr != nullptr) {         \
 				perr->err = error;         \
 			}                              \
 			goto errorReturn;              \
@@ -384,7 +384,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 #define FAIL_CONDITION(error)  \
 	{                          \
 		DO_ASSERT;             \
-		if (perr != nullptr) {    \
+		if (perr != nullptr) { \
 			perr->err = error; \
 		}                      \
 		goto errorReturn;      \
@@ -393,7 +393,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 	{                                            \
 		if (!(condition)) {                      \
 			DO_ASSERT;                           \
-			if (perr != nullptr) {                  \
+			if (perr != nullptr) {               \
 				perr->err = _MapFromCBOR(error); \
 			}                                    \
 			goto errorReturn;                    \

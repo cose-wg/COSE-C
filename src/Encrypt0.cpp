@@ -50,7 +50,7 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags,
 {
 	if (false) {
 	errorReturn:
-		return nullptr;		
+		return nullptr;
 	}
 
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
