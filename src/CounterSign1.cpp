@@ -583,7 +583,7 @@ bool COSE_Sign_CounterSign1_validate(HCOSE_SIGN hSignMsg,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
-		cnProtected, "CounterSignature", perr);
+		cnProtected, "CounterSignature0", perr);
 
 	return f;
 }
@@ -800,7 +800,7 @@ bool COSE_Recipient_CounterSign1_validate(HCOSE_RECIPIENT hSignMsg,
 		COSE_ERR_INVALID_PARAMETER);
 
 	bool f = _COSE_Signer_validate(&pCountersign->m_signer, cnContent,
-		cnProtected, "CounterSignature", perr);
+		cnProtected, "CounterSignature0", perr);
 
 	return f;
 }

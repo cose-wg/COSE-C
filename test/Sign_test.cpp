@@ -347,7 +347,7 @@ int _ValidateSigned(const cn_cbor *pControl,
 					return 0;
 				}
 
-				if (COSE_Signer_CounterSign1_validate(hSigner, h, &coseError)) {
+				if (COSE_Sign_CounterSign1_validate(hSig, h, &coseError)) {
 					//  I don't think we have any forced errors yet.
 				}
 				else {

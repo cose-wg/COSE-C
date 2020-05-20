@@ -406,6 +406,15 @@ bool SetAttributes(HCOSE hHandle,
 				return false;
 			}
 		}
+		else if (strcmp(pKey->v.str, "compressed") == 0) {
+			keyNew = COSE_Header_UseCompressedECDH;
+			pValueNew = cn_cbor_bool_create(
+				pValue->v.sint == 1 ? true
+									: false, CBOR_CONTEXT_PARAM_COMMA nullptr);
+			if (pValueNew == nullptr) {
+				return false;
+			}
+		}
 		else {
 			continue;
 		}

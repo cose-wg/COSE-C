@@ -269,6 +269,10 @@ int DecryptMessage(const byte *pbEncoded,
 				return 0;
 			}
 
+			if (!SetReceivingAttributes(h, counterSigner, Attributes_Countersign1_protected)) {
+				return 0;
+			}
+
 			cose_errback coseError;
 			if (COSE_Recipient_CounterSign1_validate(hRecip, h, &coseError)) {
 				//  I don't think we have any forced errors yet.
