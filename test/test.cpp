@@ -954,7 +954,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 	}
 	else {
 		HCOSE_KEY k2 = COSE_KEY_FromMbedKeypair(keypair,
-			KeyFormat == 2 ? nullptr : pKeyOut, COSE_FL_OWN,
+			KeyFormat == 2 ? nullptr : pKeyOut, COSE_KEY_FL_OWN,
 			CBOR_CONTEXT_PARAM_COMMA & coseError);
 		if (k2 == nullptr) {
 			mbedtls_ecp_keypair_free(keypair);
@@ -1546,10 +1546,10 @@ int main(int argc, char** argv)
 			else if (strcmp(argv[i], "--memory") == 0) {
 				fMemory = true;
 			}
-			else if (strcmp(argv[i], "--keyformat=native") == 0) {
+			else if (strcmp(argv[i], "--keyFormat=native") == 0) {
 				KeyFormat = 2;
 			}
-			else if (strcmp(argv[i], "--keyformat=both") == 0) {
+			else if (strcmp(argv[i], "--keyFormat=both") == 0) {
 				KeyFormat = 3;
 			}
 		}
