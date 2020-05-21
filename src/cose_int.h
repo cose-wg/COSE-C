@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #ifdef COSE_C_USE_OPENSSL
 #include <openssl/evp.h>
+#include <openssl/ec.h>
 #endif
 #ifdef COSE_C_USE_MBEDTLS
 #include <mbedtls/ecp.h>
