@@ -7,6 +7,9 @@
 #ifdef COSE_C_USE_OPENSSL
 #include <openssl/evp.h>
 #endif
+#ifdef COSE_C_USE_MBEDTLS
+#include <mbedtls/ecp.h>
+#endif
 
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
@@ -26,13 +29,16 @@ typedef struct CounterSign1 COSE_CounterSign1;
 typedef struct _COSE_KEY {
 	int m_refCount;
 	cn_cbor *m_cborKey;
-	int flags;
+	int m_flags;
 	struct _COSE_KEY *m_nextKey;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;
 #endif
 #ifdef COSE_C_USE_OPENSSL
 	EVP_PKEY *m_opensslKey;
+#endif
+#ifdef COSE_C_USE_MBEDTLS
+	mbedtls_ecp_keypair * m_mbedtls_keypair;
 #endif
 } COSE_KEY;
 
@@ -468,3 +474,14 @@ enum { COSE_Int_Alg_AES_CBC_MAC_256_64 = -22 };
 
 #define COSE_CounterSign_object 1000
 #define COSE_CounterSign1_object 1001
+
+
+#ifdef COSE_C_USE_OPENSSL
+EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr);
+#endif
+
+#ifdef COSE_C_USE_MBEDTLS
+mbedtls_ecp_keypair * ECKey_From(COSE_KEY *pKey,
+	mbedtls_ecp_keypair *keypair,
+	cose_errback *perr);
+#endif

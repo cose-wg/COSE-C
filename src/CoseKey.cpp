@@ -136,3 +136,37 @@ HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY *opensslKey,
 	return (HCOSE_KEY)pkey;
 }
 #endif
+
+#ifdef COSE_C_USE_MBEDTLS
+HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair * mbedtls_keypair,
+	cn_cbor *pcborKey,
+	int flags,
+	CBOR_CONTEXT_COMMA cose_errback *perror)
+{
+	COSE_KEY *pkey = nullptr;
+
+	pkey = (COSE_KEY *)COSE_CALLOC(1, sizeof(COSE_KEY), context);
+
+	if (pkey == nullptr) {
+		perror->err = COSE_ERR_OUT_OF_MEMORY;
+		return nullptr;
+	}
+
+#ifdef USE_CBOR_CONTEXT
+	if (context != nullptr) {
+		pkey->m_allocContext = *context;
+	}
+#endif
+
+	pkey->m_refCount = 1;
+	pkey->m_cborKey = pcborKey;
+	pkey->m_mbedtls_keypair = mbedtls_keypair;
+	pkey->m_flags = flags;
+
+	pkey->m_nextKey = KeysRoot;
+	KeysRoot = pkey;
+
+	return (HCOSE_KEY)pkey;
+}
+
+#endif

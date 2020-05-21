@@ -21,7 +21,14 @@
 #include "json.h"
 #include "test.h"
 
+
+#ifdef COSE_C_USE_OPENSSL
+#include <openssl/ec.h>
+#endif
+
 #ifdef COSE_C_USE_MBEDTLS
+#include <mbedtls/ecp.h>
+#include "mbedtls/ecdsa.h"
 #include "mbedtls/entropy.h"
 #endif
 
@@ -30,6 +37,7 @@ cn_cbor_context* context;
 #endif
 
 int CFails = 0;
+int KeyFormat = 1;
 
 typedef struct _NameMap {
 	const char* sz;
@@ -849,18 +857,117 @@ cn_cbor* BuildCborKey(const cn_cbor* pKeyIn, bool fPublicKey)
 
 HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 {
+	cose_errback coseError;
 	cn_cbor* pKeyOut = BuildCborKey(pKeyIn, fPublicKey);
 	if (pKeyOut == nullptr) {
 		return nullptr;
 	}
 
-	cose_errback coseError;
-	HCOSE_KEY key =
+	Safe_HCOSE_KEY key =
 		COSE_KEY_FromCbor(pKeyOut, CBOR_CONTEXT_PARAM_COMMA & coseError);
 	if (key == nullptr) {
 		CN_CBOR_FREE(pKeyOut, context);
 	}
-	return key;
+	if (KeyFormat == 1) {
+		return key.Release();
+	}
+
+	cn_cbor* keyType = cn_cbor_mapget_int(pKeyOut, COSE_Key_Type);
+	if (keyType == nullptr) {
+		return nullptr;
+	}
+
+#ifdef COSE_C_USE_OPENSSL
+	EVP_PKEY* opensslKey = EVP_PKEY_new();
+#endif
+#ifdef COSE_C_USE_MBEDTLS
+	mbedtls_ecp_keypair* keypair = nullptr;
+#endif
+
+	switch (keyType->v.uint) {
+		case COSE_Key_Type_EC2:
+#ifdef COSE_C_USE_OPENSSL
+		{
+			int cbR = 0;
+			EC_KEY* ecKey =
+				ECKey_From((COSE_KEY*)(HCOSE_KEY)key, &cbR, &coseError);
+			if (ecKey == nullptr) {
+				return nullptr;
+			}
+
+			if (EVP_PKEY_set1_EC_KEY(opensslKey, ecKey) == 0) {
+				EC_KEY_free(ecKey);
+				return nullptr;
+			}
+			EC_KEY_free(ecKey);
+		}
+#endif
+#ifdef COSE_C_USE_MBEDTLS
+			{
+				keypair =
+					static_cast<mbedtls_ecp_keypair*>(COSE_CALLOC(sizeof(*keypair), 1, context)
+					);
+				if (keypair == nullptr) {
+					return nullptr;
+				}
+				mbedtls_ecp_keypair_init(keypair);
+				if (!ECKey_From((COSE_KEY *) (HCOSE_KEY) key, keypair, &coseError)) {
+					mbedtls_ecp_keypair_free(keypair);
+					COSE_FREE(keypair, context);
+					return nullptr;
+				}
+			}
+#endif
+			break;
+
+		case COSE_Key_Type_OKP:
+#ifdef COSE_C_USE_OPENSSL
+
+#endif
+			break;
+
+		default:
+			break;
+	}
+
+#ifdef COSE_C_USE_OPENSSL
+	if (opensslKey == nullptr) {
+		return key.Release();
+	}
+	else {
+		HCOSE_KEY key2 =
+			COSE_KEY_FromEVP(opensslKey, KeyFormat == 2 ? nullptr : pKeyOut,
+				CBOR_CONTEXT_PARAM_COMMA & coseError);
+		if (key2 == nullptr) {
+			EVP_PKEY_free(opensslKey);
+			CN_CBOR_FREE(pKeyOut, context);
+		}
+		else if (KeyFormat == 2) {
+			CN_CBOR_FREE(pKeyOut, context);
+		}
+		return key2;
+	}
+#endif
+#ifdef COSE_C_USE_MBEDTLS
+	if (keypair == nullptr) {
+		return key.Release();
+	}
+	else {
+		HCOSE_KEY k2 = COSE_KEY_FromMbedKeypair(keypair,
+			KeyFormat == 2 ? nullptr : pKeyOut, COSE_FL_OWN,
+			CBOR_CONTEXT_PARAM_COMMA & coseError);
+		if (k2 == nullptr) {
+			mbedtls_ecp_keypair_free(keypair);
+			COSE_FREE(keypair, context);
+		}
+		else if (KeyFormat == 2) {
+			CN_CBOR_FREE(pKeyOut, context);
+		}
+		return k2;
+	}
+#endif
+
+	return nullptr;
 }
 
 bool Test_cn_cbor_array_replace()
@@ -1418,6 +1525,7 @@ void RunTestsInDirectory(const char* szDir)
 }
 #endif	// _MSCVER
 
+
 int main(int argc, char** argv)
 {
 	int i;
@@ -1437,6 +1545,12 @@ int main(int argc, char** argv)
 			}
 			else if (strcmp(argv[i], "--memory") == 0) {
 				fMemory = true;
+			}
+			else if (strcmp(argv[i], "--keyformat=native") == 0) {
+				KeyFormat = 2;
+			}
+			else if (strcmp(argv[i], "--keyformat=both") == 0) {
+				KeyFormat = 3;
 			}
 		}
 		else {
