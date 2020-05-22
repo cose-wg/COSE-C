@@ -1550,6 +1550,13 @@ int main(int argc, char** argv)
 			}
 			else if (strcmp(argv[i], "--keyFormat=native") == 0) {
 				KeyFormat = 2;
+#if defined(CMS_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER <= 0x10100000L)
+				fprintf(stderr,
+					"Native key formats not supported for OpenSSL version "
+					"{%x}\n",
+					OPENSSL_VERSION_NUMBER);
+				exit(0);
+#endif
 			}
 			else if (strcmp(argv[i], "--keyFormat=both") == 0) {
 				KeyFormat = 3;
