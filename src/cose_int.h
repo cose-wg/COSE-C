@@ -477,7 +477,7 @@ enum { COSE_Int_Alg_AES_CBC_MAC_256_64 = -22 };
 #define COSE_CounterSign1_object 1001
 
 
-#ifdef COSE_C_USE_OPENSSL
+#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr);
 #endif
 

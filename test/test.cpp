@@ -886,7 +886,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 
 	switch (keyType->v.uint) {
 		case COSE_Key_Type_EC2:
-#ifdef COSE_C_USE_OPENSSL
+#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
 		{
 			int cbR = 0;
 			EC_KEY* ecKey =
@@ -930,7 +930,8 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 			break;
 	}
 
-#ifdef COSE_C_USE_OPENSSL
+#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
+
 	if (opensslKey == nullptr) {
 		return key.Release();
 	}
@@ -940,10 +941,10 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 				CBOR_CONTEXT_PARAM_COMMA & coseError);
 		if (key2 == nullptr) {
 			EVP_PKEY_free(opensslKey);
-			CN_CBOR_FREE(pKeyOut, context);
 		}
-		else if (KeyFormat == 2) {
-			CN_CBOR_FREE(pKeyOut, context);
+		else if (KeyFormat == 3) {
+			// M00BUG - figure out how to get it back.  Might be a dup
+			// CN_CBOR_FREE(pKeyOut, context);
 		}
 		return key2;
 	}
@@ -960,8 +961,9 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 			mbedtls_ecp_keypair_free(keypair);
 			COSE_FREE(keypair, context);
 		}
-		else if (KeyFormat == 2) {
-			CN_CBOR_FREE(pKeyOut, context);
+		else if (KeyFormat == 3) {
+			//  see note above
+			// CN_CBOR_FREE(pKeyOut, context);
 		}
 		return k2;
 	}
