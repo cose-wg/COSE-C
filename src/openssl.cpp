@@ -1084,6 +1084,7 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
+
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 {
 	EC_KEY *pNewKey = nullptr;
@@ -1099,6 +1100,24 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 	if (pKey->m_opensslKey != nullptr) {
 		EC_KEY *pKeyNew = EVP_PKEY_get1_EC_KEY(pKey->m_opensslKey);
 		CHECK_CONDITION(pKeyNew != nullptr, COSE_ERR_INVALID_PARAMETER);
+		int gid = EC_GROUP_get_curve_name(EC_KEY_get0_group(pKeyNew));
+		switch (gid) {
+			case NID_X9_62_prime256v1:
+				*cbGroup = 256 / 8;
+				break;
+
+			case NID_secp384r1:
+				*cbGroup = 384 / 8;
+				break;
+
+			case NID_secp521r1:
+				*cbGroup = (521 + 7) / 8;
+				break;
+
+			default:
+				FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		}			
+
 		return pKeyNew;
 	}
 

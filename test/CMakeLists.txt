@@ -66,6 +66,10 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --dir Examples/ecdsa-examples)
 add_test(
+  NAME ecdsa-native
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMAND cose_test --dir Examples/ecdsa-examples --keyFormat=native)
+add_test(
   NAME eddsa
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --dir Examples/eddsa-examples)

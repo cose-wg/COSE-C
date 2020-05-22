@@ -148,7 +148,6 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		handleName Release()                           \
 		{                                              \
 			handleName h2 = h;                         \
-			freeFunction(h);                           \
 			h = NULL;                                  \
 			return h2;                                 \
 		}                                              \

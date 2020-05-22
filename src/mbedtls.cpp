@@ -666,10 +666,14 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-bool ECKey_From(COSE_KEY *pKey,
+mbedtls_ecp_keypair * ECKey_From(COSE_KEY *pKey,
 	mbedtls_ecp_keypair *keypair,
 	cose_errback *perr)
 {
+	if (pKey->m_mbedtls_keypair != nullptr) {
+		return pKey->m_mbedtls_keypair;
+	}
+	
 	byte rgbKey[MBEDTLS_ECP_MAX_PT_LEN];
 	int cbKey = 0;
 	int cbGroup = 0;
@@ -755,10 +759,10 @@ bool ECKey_From(COSE_KEY *pKey,
 			mbedtls_mpi_read_binary(&keypair->d, p->v.bytes, p->length) == 0,
 			COSE_ERR_CRYPTO_FAIL);
 	}
-	return true;
+	return keypair;
 
 errorReturn:
-	return false;
+	return nullptr;
 }
 
 bool ECDSA_Sign(COSE *pSigner,
@@ -777,6 +781,7 @@ bool ECDSA_Sign(COSE *pSigner,
 	mbedtls_md_type_t mdType;
 	const mbedtls_md_info_t *pmdInfo;
 	mbedtls_ecp_keypair keypair;
+	mbedtls_ecp_keypair *useKey = nullptr;
 	mbedtls_mpi r;
 	mbedtls_mpi s;
 #ifdef USE_CBOR_CONTEXT
@@ -789,11 +794,12 @@ bool ECDSA_Sign(COSE *pSigner,
 	mbedtls_mpi_init(&r);
 	mbedtls_mpi_init(&s);
 
-	if (!ECKey_From(pKey, &keypair, perr)) {
+	useKey = ECKey_From(pKey, &keypair, perr);
+	if (useKey == nullptr) {
 		goto errorReturn;
 	}
 
-	CHECK_CONDITION(keypair.d.n != 0, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(useKey->d.n != 0, COSE_ERR_INVALID_PARAMETER);
 
 	switch (cbitDigest) {
 		case 256:
@@ -816,11 +822,11 @@ bool ECDSA_Sign(COSE *pSigner,
 	CHECK_CONDITION(mbedtls_md(pmdInfo, rgbToSign, cbToSign, rgbDigest) == 0,
 		COSE_ERR_INVALID_PARAMETER);
 
-	CHECK_CONDITION(mbedtls_ecdsa_sign_det(&keypair.grp, &r, &s, &keypair.d,
+	CHECK_CONDITION(mbedtls_ecdsa_sign_det(&useKey->grp, &r, &s, &useKey->d,
 						rgbDigest, mbedtls_md_get_size(pmdInfo), mdType) == 0,
 		COSE_ERR_CRYPTO_FAIL);
 
-	cbR = (keypair.grp.nbits + 7) / 8;
+	cbR = (useKey->grp.nbits + 7) / 8;
 
 	pbSig = (byte *)COSE_CALLOC(cbR, 2, context);
 	CHECK_CONDITION(pbSig != nullptr, COSE_ERR_OUT_OF_MEMORY);
@@ -863,6 +869,7 @@ bool ECDSA_Verify(COSE *pSigner,
 	cose_errback *perr)
 {
 	mbedtls_ecp_keypair keypair;
+	mbedtls_ecp_keypair* useKey = nullptr;
 	mbedtls_mpi r;
 	mbedtls_mpi s;
 	mbedtls_md_type_t mdType;
@@ -875,7 +882,8 @@ bool ECDSA_Verify(COSE *pSigner,
 	mbedtls_mpi_init(&r);
 	mbedtls_mpi_init(&s);
 
-	if (!ECKey_From(pKey, &keypair, perr)) {
+	useKey = ECKey_From(pKey, &keypair, perr);
+	if (useKey == nullptr) {
 		goto errorReturn;
 	}
 
@@ -911,8 +919,8 @@ bool ECDSA_Verify(COSE *pSigner,
 		mbedtls_mpi_read_binary(
 			&s, pSig->v.bytes + pSig->length / 2, pSig->length / 2) == 0,
 		COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(mbedtls_ecdsa_verify(&keypair.grp, rgbDigest,
-						mbedtls_md_get_size(pmdInfo), &keypair.Q, &r, &s) == 0,
+	CHECK_CONDITION(mbedtls_ecdsa_verify(&useKey->grp, rgbDigest,
+						mbedtls_md_get_size(pmdInfo), &useKey->Q, &r, &s) == 0,
 		COSE_ERR_CRYPTO_FAIL);
 
 	result = true;
