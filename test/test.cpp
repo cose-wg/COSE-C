@@ -886,7 +886,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 
 	switch (keyType->v.uint) {
 		case COSE_Key_Type_EC2:
-#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
+#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x1010000L)
 		{
 			int cbR = 0;
 			EC_KEY* ecKey =
@@ -930,7 +930,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 			break;
 	}
 
-#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
+#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x1010000L)
 
 	if (opensslKey == nullptr) {
 		return key.Release();
@@ -1550,7 +1550,7 @@ int main(int argc, char** argv)
 			}
 			else if (strcmp(argv[i], "--keyFormat=native") == 0) {
 				KeyFormat = 2;
-#if defined(CMS_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if defined(CMS_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER < 0x1010000L)
 #pragma message("OPENSSL VERSION does not support native key ")
 
 				fprintf(stderr,
