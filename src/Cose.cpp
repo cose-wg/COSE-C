@@ -666,7 +666,7 @@ bool AreListsEmpty()
 #if INCLUDE_MAC0
 	fRet &= Mac0Root == nullptr;
 #endif
-	fRet &= KeysRoot == nullptr;
+	fRet &= COSE_KEY::KeysRoot == nullptr;
 	return fRet;
 }
 

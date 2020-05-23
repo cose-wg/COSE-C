@@ -1,6 +1,10 @@
 #pragma once
 
 #include <assert.h>
+#ifdef __cplusplus
+#include <new>
+#endif
+
 #include <cn-cbor/cn-cbor.h>
 #include <cose/cose.h>
 #include <stdbool.h>
@@ -11,6 +15,57 @@
 #ifdef COSE_C_USE_MBEDTLS
 #include <mbedtls/ecp.h>
 #endif
+
+#ifdef USE_CBOR_CONTEXT
+/**
+ * Allocate enough space for 1 `cn_cbor` structure.
+ *
+ * @param[in]  ctx  The allocation context, or nullptr for calloc.
+ * @return          A pointer to a `cn_cbor` or nullptr on failure
+ */
+#define CN_CALLOC(ctx)                                           \
+	((ctx) && (ctx)->calloc_func)                                \
+		? (ctx)->calloc_func(1, sizeof(cn_cbor), (ctx)->context) \
+		: calloc(1, sizeof(cn_cbor));
+
+/**
+ *  Allocate space required
+ *
+ * @param[in]	ctx  The allocation context, or nullptr for normal calloc.
+ * @param[in]	count	Number of items to allocate
+ * @param[in]	size	Size of item to allocate
+ * @return				A pointer to the object needed
+ */
+#define COSE_CALLOC(count, size, ctx)                           \
+	((((ctx)) && ((ctx)->calloc_func))                          \
+			? ((ctx)->calloc_func(count, size, (ctx)->context)) \
+			: calloc(count, size))
+
+/**
+ * Free a
+ * @param  free_func [description]
+ * @return           [description]
+ */
+#define COSE_FREE(ptr, ctx)                                                    \
+	((((ctx) && (ctx)->free_func)) ? ((ctx)->free_func((ptr), (ctx)->context)) \
+								   : free((ptr)))
+
+#define CBOR_CONTEXT_PARAM , context
+#define CBOR_CONTEXT_PARAM_COMMA context,
+//#define CN_CALLOC_CONTEXT() CN_CALLOC(context)
+#define CN_CBOR_FREE(p, context) cn_cbor_free(p, context)
+
+#else
+
+#define CBOR_CONTEXT_PARAM
+#define CBOR_CONTEXT_PARAM_COMMA
+#define CN_CALLOC_CONTEXT() CN_CALLOC
+#define COSE_CALLOC(count, size, ctx) calloc(count, size)
+#define CN_CBOR_FREE(p, context) cn_cbor_free(p)
+
+#define COSE_FREE(ptr, ctx) free(ptr)
+
+#endif	// USE_CBOR_CONTEXT
 
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
@@ -27,11 +82,13 @@ typedef struct CounterSign1 COSE_CounterSign1;
 #define _countof(x) (sizeof(x) / sizeof(x[0]))
 #endif
 
-typedef struct _COSE_KEY {
+#ifdef __cplusplus
+class COSE_KEY {
+   public:
 	int m_refCount;
 	cn_cbor *m_cborKey;
 	int m_flags;
-	struct _COSE_KEY *m_nextKey;
+	COSE_KEY *m_nextKey;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;
 #endif
@@ -39,9 +96,66 @@ typedef struct _COSE_KEY {
 	EVP_PKEY *m_opensslKey;
 #endif
 #ifdef COSE_C_USE_MBEDTLS
-	mbedtls_ecp_keypair * m_mbedtls_keypair;
+	mbedtls_ecp_keypair *m_mbedtls_keypair;
 #endif
-} COSE_KEY;
+
+   public:
+	static COSE_KEY *KeysRoot;
+
+   public:
+	COSE_KEY()
+	{
+		m_refCount = 1;
+		m_nextKey = KeysRoot;
+		KeysRoot = this;
+	}
+
+	~COSE_KEY();
+
+	int AddRef() { return m_refCount += 1; }
+	int Release()
+	{
+		if (m_refCount > 1) {
+			return m_refCount -= 1;
+		}
+#ifdef USE_CBOR_CONTEXT
+		COSE_KEY::~COSE_KEY();
+		COSE_FREE(this, &m_allocContext);
+#else
+		delete this;
+#endif
+		return 0;
+	}
+
+	static bool IsValidKeyHandle(HCOSE_KEY h);
+
+#ifdef USE_CBOR_CONTEXT
+	__nothrow void *operator new(size_t size,
+		const std::nothrow_t &,
+		cn_cbor_context *context)
+	{
+		COSE_KEY *p = static_cast<COSE_KEY *>(COSE_CALLOC(size, 1, context));
+		if (p == nullptr) {
+			return nullptr;
+		}
+
+		if (context != nullptr) {
+			p->m_allocContext = *context;
+		}
+		return p;
+	}
+
+	void operator delete(void *p,
+		const std::nothrow_t &,
+		cn_cbor_context *context)
+	{
+		COSE_FREE(p, context);
+	}
+#endif
+};
+#else
+typedef void *COSE_KEY;
+#endif
 
 typedef struct _COSE {
 	COSE_INIT_FLAGS m_flags;  //  Not sure what goes here yet
@@ -123,57 +237,6 @@ struct CounterSign1 {
 	COSE_CounterSign1 *m_next;
 };
 
-#ifdef USE_CBOR_CONTEXT
-/**
- * Allocate enough space for 1 `cn_cbor` structure.
- *
- * @param[in]  ctx  The allocation context, or nullptr for calloc.
- * @return          A pointer to a `cn_cbor` or nullptr on failure
- */
-#define CN_CALLOC(ctx)                                           \
-	((ctx) && (ctx)->calloc_func)                                \
-		? (ctx)->calloc_func(1, sizeof(cn_cbor), (ctx)->context) \
-		: calloc(1, sizeof(cn_cbor));
-
-/**
- *  Allocate space required
- *
- * @param[in]	ctx  The allocation context, or nullptr for normal calloc.
- * @param[in]	count	Number of items to allocate
- * @param[in]	size	Size of item to allocate
- * @return				A pointer to the object needed
- */
-#define COSE_CALLOC(count, size, ctx)                           \
-	((((ctx)) && ((ctx)->calloc_func))                          \
-			? ((ctx)->calloc_func(count, size, (ctx)->context)) \
-			: calloc(count, size))
-
-/**
- * Free a
- * @param  free_func [description]
- * @return           [description]
- */
-#define COSE_FREE(ptr, ctx)                                                    \
-	((((ctx) && (ctx)->free_func)) ? ((ctx)->free_func((ptr), (ctx)->context)) \
-								   : free((ptr)))
-
-#define CBOR_CONTEXT_PARAM , context
-#define CBOR_CONTEXT_PARAM_COMMA context,
-//#define CN_CALLOC_CONTEXT() CN_CALLOC(context)
-#define CN_CBOR_FREE(p, context) cn_cbor_free(p, context)
-
-#else
-
-#define CBOR_CONTEXT_PARAM
-#define CBOR_CONTEXT_PARAM_COMMA
-#define CN_CALLOC_CONTEXT() CN_CALLOC
-#define COSE_CALLOC(count, size, ctx) calloc(count, size)
-#define CN_CBOR_FREE(p, context) cn_cbor_free(p)
-
-#define COSE_FREE(ptr, ctx) free(ptr)
-
-#endif	// USE_CBOR_CONTEXT
-
 cose_error _MapFromCBOR(cn_cbor_errback err);
 
 /*
@@ -194,7 +257,6 @@ bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
 bool IsValidCounterSign1Handle(HCOSE_COUNTERSIGN1 h);
 bool IsValidMacHandle(HCOSE_MAC h);
 bool IsValidMac0Handle(HCOSE_MAC0 h);
-bool IsValidKeyHandle(HCOSE_KEY h);
 
 bool _COSE_Init(COSE_INIT_FLAGS flags,
 	COSE *pcose,
@@ -476,13 +538,12 @@ enum { COSE_Int_Alg_AES_CBC_MAC_256_64 = -22 };
 #define COSE_CounterSign_object 1000
 #define COSE_CounterSign1_object 1001
 
-
 #if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr);
 #endif
 
 #ifdef COSE_C_USE_MBEDTLS
-mbedtls_ecp_keypair * ECKey_From(COSE_KEY *pKey,
+mbedtls_ecp_keypair *ECKey_From(COSE_KEY *pKey,
 	mbedtls_ecp_keypair *keypair,
 	cose_errback *perr);
 #endif

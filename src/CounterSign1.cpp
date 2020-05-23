@@ -294,7 +294,7 @@ bool COSE_CounterSign1_SetKey(HCOSE_COUNTERSIGN1 hSigner,
 
 	CHECK_CONDITION(
 		IsValidCounterSign1Handle(hSigner), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(COSE_KEY::IsValidKeyHandle(hKey), COSE_ERR_INVALID_HANDLE);
 
 	if (pSigner->m_signer.m_pkey != nullptr) {
 		COSE_KEY_Free((HCOSE_KEY)pSigner->m_signer.m_pkey);

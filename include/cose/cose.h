@@ -222,9 +222,9 @@ typedef enum {
  * Functions dealing with keys
  */
 
-const int COSE_KEY_FL_OWN = 0x1;	// Cede ownership of the key to the libraray
-									// Only neede for MBEDTLS as OpenSSL does reference counts
-	
+const int COSE_KEY_FL_OWN =
+	0x1;  // Cede ownership of the key to the libraray
+		  // Only neede for MBEDTLS as OpenSSL does reference counts
 
 HCOSE_KEY COSE_KEY_FromCbor(cn_cbor* pcborKey,
 	CBOR_CONTEXT_COMMA cose_errback* perror);
@@ -235,8 +235,8 @@ HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY* opensslKey,
 	CBOR_CONTEXT_COMMA cose_errback* perror);
 #endif
 #ifdef COSE_C_USE_MBEDTLS
-HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair *,
-	cn_cbor *  pcborKey,
+HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair*,
+	cn_cbor* pcborKey,
 	int flags,
 	CBOR_CONTEXT_COMMA cose_errback* perror);
 #endif
