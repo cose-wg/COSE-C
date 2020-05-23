@@ -1630,7 +1630,8 @@ bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
 	}
 
 	CHECK_CONDITION(IsValidRecipientHandle(h), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(IsValidKeyHandle(hKey), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(
+		COSE_KEY::IsValidKeyHandle(hKey), COSE_ERR_INVALID_PARAMETER);
 
 	p = (COSE_RecipientInfo *)h;
 	COSE_KEY *pKey = (COSE_KEY *)hKey;

@@ -1084,7 +1084,6 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 {
 	EC_KEY *pNewKey = nullptr;
@@ -1116,7 +1115,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 
 			default:
 				FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-		}			
+		}
 
 		return pKeyNew;
 	}

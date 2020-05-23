@@ -362,7 +362,7 @@ bool COSE_Signer_SetKey2(HCOSE_SIGNER h, HCOSE_KEY pKey, cose_errback *perr)
 	}
 
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(IsValidKeyHandle(pKey), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(COSE_KEY::IsValidKeyHandle(pKey), COSE_ERR_INVALID_HANDLE);
 
 	p = (COSE_SignerInfo *)h;
 	if (p->m_pkey != nullptr) {

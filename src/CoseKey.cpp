@@ -5,12 +5,12 @@
 #include "cose_int.h"
 #include "cose_crypto.h"
 
-COSE_KEY *KeysRoot = nullptr;
+COSE_KEY *COSE_KEY::KeysRoot = nullptr;
 
 /*! \private
- * @brief Test if a HCOSE_ENVELOPED handle is valid
+ * @brief Test if a HCOSE_KEY handle is valid
  *
- *  Internal function to test if a enveloped message handle is valid.
+ *  Internal function to test if a key handle is valid.
  *  This will start returning invalid results and cause the code to
  *  crash if handles are not released before the memory that underlies them
  *  is deallocated.  This is an issue of a block allocator is used since
@@ -21,9 +21,9 @@ COSE_KEY *KeysRoot = nullptr;
  *  @returns result of check
  */
 
-bool IsValidKeyHandle(HCOSE_KEY h)
+bool COSE_KEY::IsValidKeyHandle(HCOSE_KEY h)
 {
-	COSE_KEY *p = (COSE_KEY *)h;
+	COSE_KEY *p = reinterpret_cast<COSE_KEY *>(h);
 	if (KeysRoot == nullptr) {
 		return false;
 	}
@@ -45,8 +45,7 @@ HCOSE_KEY COSE_KEY_FromCbor(cn_cbor *pcborKey,
 {
 	COSE_KEY *pkey = nullptr;
 
-	pkey = (COSE_KEY *)COSE_CALLOC(1, sizeof(COSE_KEY), context);
-
+	pkey = new (std::nothrow, context) COSE_KEY();
 	if (pkey == nullptr) {
 		if (perror != nullptr) {
 			perror->err = COSE_ERR_OUT_OF_MEMORY;
@@ -54,54 +53,45 @@ HCOSE_KEY COSE_KEY_FromCbor(cn_cbor *pcborKey,
 		return nullptr;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-	if (context != nullptr) {
-		pkey->m_allocContext = *context;
-	}
-#endif
-
-	pkey->m_refCount = 1;
 	pkey->m_cborKey = pcborKey;
 
-	pkey->m_nextKey = KeysRoot;
-	KeysRoot = pkey;
-
-	return (HCOSE_KEY)pkey;
+	return reinterpret_cast<HCOSE_KEY>(pkey);
 }
 
-bool COSE_KEY_Free(HCOSE_KEY h)
+COSE_KEY::~COSE_KEY()
+
 {
-	COSE_KEY *p = (COSE_KEY *)h;
-	if (!IsValidKeyHandle(h)) {
-		return false;
+	if (m_cborKey != nullptr) {
+		CN_CBOR_FREE(m_cborKey, &m_allocContext);
 	}
 
-	if (p->m_refCount > 1) {
-		p->m_refCount--;
-		return true;
-	}
-
-	if (KeysRoot == p) {
-		KeysRoot = p->m_nextKey;
-		p->m_nextKey = nullptr;
+	if (KeysRoot == this) {
+		KeysRoot = this->m_nextKey;
+		this->m_nextKey = nullptr;
 		;
 	}
 	else {
 		for (COSE_KEY *walk = KeysRoot; walk->m_nextKey != nullptr;
 			 walk = walk->m_nextKey) {
-			if (walk->m_nextKey == p) {
-				walk->m_nextKey = p->m_nextKey;
-				p->m_nextKey = nullptr;
+			if (walk->m_nextKey == this) {
+				walk->m_nextKey = this->m_nextKey;
+				this->m_nextKey = nullptr;
 				break;
 			}
 		}
 	}
-	if (p->m_cborKey != nullptr && p->m_cborKey->parent == nullptr) {
-		CN_CBOR_FREE(p->m_cborKey, &p->m_allocContext);
+	if (m_cborKey != nullptr && m_cborKey->parent == nullptr) {
+		CN_CBOR_FREE(m_cborKey, &m_allocContext);
 	}
+}
 
-	COSE_FREE(p, &p->m_allocContext);
-
+bool COSE_KEY_Free(HCOSE_KEY h)
+{
+	COSE_KEY *key = reinterpret_cast<COSE_KEY *>(h);
+	if (!COSE_KEY::IsValidKeyHandle(h)) {
+		return false;
+	}
+	key->Release();
 	return true;
 }
 
@@ -110,63 +100,36 @@ HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY *opensslKey,
 	cn_cbor *pcborKey,
 	CBOR_CONTEXT_COMMA cose_errback *perror)
 {
-	COSE_KEY *pkey = nullptr;
-
-	pkey = (COSE_KEY *)COSE_CALLOC(1, sizeof(COSE_KEY), context);
-
+	COSE_KEY *pkey = new (std::nothrow, context) COSE_KEY();
 	if (pkey == nullptr) {
 		perror->err = COSE_ERR_OUT_OF_MEMORY;
 		return nullptr;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-	if (context != nullptr) {
-		pkey->m_allocContext = *context;
-	}
-#endif
-
-	pkey->m_refCount = 1;
-	pkey->m_cborKey = pcborKey;
 	pkey->m_opensslKey = opensslKey;
+	pkey->m_cborKey = pcborKey;
 	EVP_PKEY_up_ref(opensslKey);
 
-	pkey->m_nextKey = KeysRoot;
-	KeysRoot = pkey;
-
-	return (HCOSE_KEY)pkey;
+	return reinterpret_cast<HCOSE_KEY>(pkey);
 }
 #endif
 
 #ifdef COSE_C_USE_MBEDTLS
-HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair * mbedtls_keypair,
+HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair *mbedtls_keypair,
 	cn_cbor *pcborKey,
 	int flags,
 	CBOR_CONTEXT_COMMA cose_errback *perror)
 {
-	COSE_KEY *pkey = nullptr;
-
-	pkey = (COSE_KEY *)COSE_CALLOC(1, sizeof(COSE_KEY), context);
-
+	COSE_KEY *pkey = new (std::nothrow, context) COSE_KEY();
 	if (pkey == nullptr) {
 		perror->err = COSE_ERR_OUT_OF_MEMORY;
 		return nullptr;
 	}
 
-#ifdef USE_CBOR_CONTEXT
-	if (context != nullptr) {
-		pkey->m_allocContext = *context;
-	}
-#endif
-
-	pkey->m_refCount = 1;
-	pkey->m_cborKey = pcborKey;
 	pkey->m_mbedtls_keypair = mbedtls_keypair;
 	pkey->m_flags = flags;
 
-	pkey->m_nextKey = KeysRoot;
-	KeysRoot = pkey;
-
-	return (HCOSE_KEY)pkey;
+	return reinterpret_cast<HCOSE_KEY>(pkey);
 }
 
 #endif

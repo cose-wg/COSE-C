@@ -21,7 +21,6 @@
 #include "json.h"
 #include "test.h"
 
-
 #ifdef COSE_C_USE_OPENSSL
 #include <openssl/ec.h>
 #endif
@@ -904,14 +903,14 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 #endif
 #ifdef COSE_C_USE_MBEDTLS
 			{
-				keypair =
-					static_cast<mbedtls_ecp_keypair*>(COSE_CALLOC(sizeof(*keypair), 1, context)
-					);
+				keypair = static_cast<mbedtls_ecp_keypair*>(
+					COSE_CALLOC(sizeof(*keypair), 1, context));
 				if (keypair == nullptr) {
 					return nullptr;
 				}
 				mbedtls_ecp_keypair_init(keypair);
-				if (!ECKey_From((COSE_KEY *) (HCOSE_KEY) key, keypair, &coseError)) {
+				if (!ECKey_From(
+						(COSE_KEY*)(HCOSE_KEY)key, keypair, &coseError)) {
 					mbedtls_ecp_keypair_free(keypair);
 					COSE_FREE(keypair, context);
 					return nullptr;
@@ -1526,7 +1525,6 @@ void RunTestsInDirectory(const char* szDir)
 	exit(cFailTotal);
 }
 #endif	// _MSCVER
-
 
 int main(int argc, char** argv)
 {
