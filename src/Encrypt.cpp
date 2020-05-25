@@ -1,4 +1,4 @@
-/** \file Encrypt.c
+/** \file Encrypt.cpp
  * Contains implementation of the functions related to HCOSE_ENVELOPED handle
  * objects.
  */

@@ -1,3 +1,4 @@
+#include "CoseKey.hpp"
 #include <stdlib.h>
 
 #include "cose/cose.h"

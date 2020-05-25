@@ -1,14 +1,18 @@
+#include "cose/cose.h"
+
+#if INCLUDE_COUNTERSIGNATURE1
+
+#include "CoseKey.hpp"
+
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
 #endif
 
-#include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
 #include "cose_crypto.h"
 
-#if INCLUDE_COUNTERSIGNATURE1
 
 COSE* Countersign1Root = nullptr;
 

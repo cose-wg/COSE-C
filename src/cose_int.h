@@ -1,9 +1,8 @@
 #pragma once
 
 #include <assert.h>
-#include <cn-cbor/cn-cbor.h>
-#include <cose/cose.h>
 #include <stdbool.h>
+
 #ifdef COSE_C_USE_OPENSSL
 #include <openssl/evp.h>
 #include <openssl/ec.h>
@@ -11,6 +10,10 @@
 #ifdef COSE_C_USE_MBEDTLS
 #include <mbedtls/ecp.h>
 #endif
+
+#include <cn-cbor/cn-cbor.h>
+#include <cose/cose.h>
+#include "CoseKey.hpp"
 
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
@@ -26,22 +29,6 @@ typedef struct CounterSign1 COSE_CounterSign1;
 #ifndef _countof
 #define _countof(x) (sizeof(x) / sizeof(x[0]))
 #endif
-
-typedef struct _COSE_KEY {
-	int m_refCount;
-	cn_cbor *m_cborKey;
-	int m_flags;
-	struct _COSE_KEY *m_nextKey;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context m_allocContext;
-#endif
-#ifdef COSE_C_USE_OPENSSL
-	EVP_PKEY *m_opensslKey;
-#endif
-#ifdef COSE_C_USE_MBEDTLS
-	mbedtls_ecp_keypair * m_mbedtls_keypair;
-#endif
-} COSE_KEY;
 
 typedef struct _COSE {
 	COSE_INIT_FLAGS m_flags;  //  Not sure what goes here yet

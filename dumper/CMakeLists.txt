@@ -1,12 +1,13 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/dumper)
 
-add_executable(cose_dumper dumper.c)
+add_executable(cose_dumper dumper.cpp)
 target_link_libraries(cose_dumper PRIVATE cn-cbor::cn-cbor cose-c::cose-c)
 if(MSVC)
   target_link_libraries(cose_dumper PRIVATE ws2_32)
 endif()
 
 target_include_directories(cose_dumper PRIVATE ../src)
+target_compile_options(cose_dumper PRIVATE "-fpermissive")
 
 if(COSE_C_USE_MBEDTLS)
   # mbedtls

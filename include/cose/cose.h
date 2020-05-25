@@ -28,7 +28,7 @@ typedef struct _cose_mac* HCOSE_MAC;
 typedef struct _cose_mac0* HCOSE_MAC0;
 typedef struct _cose_counterSignature* HCOSE_COUNTERSIGN;
 typedef struct _cose_counterSignature1* HCOSE_COUNTERSIGN1;
-typedef struct _cose_key* HCOSE_KEY;
+typedef struct COSE_KEY* HCOSE_KEY;
 
 /**
  * All of the different kinds of errors

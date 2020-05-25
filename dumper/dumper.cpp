@@ -18,180 +18,194 @@
 #define strcat_s(a, b, c) strcat(a, c)
 #endif
 
-typedef struct _FOO {
-	char* fieldName;
+class FOO {
+   public:
+	const char* fieldName;
 	int type;
 	int value;
-	struct _FOO* children;
+	FOO* children;
 	int count;
 	int group;
-} FOO;
+};
 
 FOO Recipients;
 extern FOO Signer[];
 
 #ifdef USE_CBOR_CONTEXT
-void* context = NULL;
+void* context = nullptr;
 #endif
 
 FOO AlgorithmMap[38] = {
-	{"HSS-LMS", CN_CBOR_INT, -46, NULL, 0, 0},
-	{"ECHD-SS+A256KW", CN_CBOR_INT, -34, NULL, 0, 0},
-	{"ECHD-SS+A192KW", CN_CBOR_INT, -33, NULL, 0, 0},
-	{"ECHD-SS+A128KW", CN_CBOR_INT, -32, NULL, 0, 0},
-	{"ECHD-ES+A256KW", CN_CBOR_INT, -31, NULL, 0, 0},
-	{"ECHD-ES+A192KW", CN_CBOR_INT, -30, NULL, 0, 0},
-	{"ECHD-ES+A128KW", CN_CBOR_INT, -29, NULL, 0, 0},
-	{"ECDH-SS + HKDF-512", CN_CBOR_INT, -28, NULL, 0, 0},
-	{"ECDH-SS + HKDF-256", CN_CBOR_INT, -27, NULL, 0, 0},
-	{"ECDH-ES + HKDF-512", CN_CBOR_INT, -26, NULL, 0, 0},
-	{"ECDH-ES + HKDF-256", CN_CBOR_INT, -25, NULL, 0, 0},
+	{"HSS-LMS", CN_CBOR_INT, -46, nullptr, 0, 0},
+	{"ECHD-SS+A256KW", CN_CBOR_INT, -34, nullptr, 0, 0},
+	{"ECHD-SS+A192KW", CN_CBOR_INT, -33, nullptr, 0, 0},
+	{"ECHD-SS+A128KW", CN_CBOR_INT, -32, nullptr, 0, 0},
+	{"ECHD-ES+A256KW", CN_CBOR_INT, -31, nullptr, 0, 0},
+	{"ECHD-ES+A192KW", CN_CBOR_INT, -30, nullptr, 0, 0},
+	{"ECHD-ES+A128KW", CN_CBOR_INT, -29, nullptr, 0, 0},
+	{"ECDH-SS + HKDF-512", CN_CBOR_INT, -28, nullptr, 0, 0},
+	{"ECDH-SS + HKDF-256", CN_CBOR_INT, -27, nullptr, 0, 0},
+	{"ECDH-ES + HKDF-512", CN_CBOR_INT, -26, nullptr, 0, 0},
+	{"ECDH-ES + HKDF-256", CN_CBOR_INT, -25, nullptr, 0, 0},
 
-	{"ECDSA 512", CN_CBOR_INT, -9, NULL, 0, 0},
-	{"ECDSA 384", CN_CBOR_INT, -8, NULL, 0, 0},
-	{"ECDSA 256", CN_CBOR_INT, -7, NULL, 0, 0},
+	{"ECDSA 512", CN_CBOR_INT, -9, nullptr, 0, 0},
+	{"ECDSA 384", CN_CBOR_INT, -8, nullptr, 0, 0},
+	{"ECDSA 256", CN_CBOR_INT, -7, nullptr, 0, 0},
 
-	{"direct", CN_CBOR_INT, -6, NULL, 0, 0},
+	{"direct", CN_CBOR_INT, -6, nullptr, 0, 0},
 
-	{"A256KW", CN_CBOR_INT, -5, NULL, 0, 0},
-	{"A192KW", CN_CBOR_INT, -4, NULL, 0, 0},
-	{"A128KW", CN_CBOR_INT, -3, NULL, 0, 0},
+	{"A256KW", CN_CBOR_INT, -5, nullptr, 0, 0},
+	{"A192KW", CN_CBOR_INT, -4, nullptr, 0, 0},
+	{"A128KW", CN_CBOR_INT, -3, nullptr, 0, 0},
 
-	{"AES-GCM 128", CN_CBOR_UINT, 1, NULL, 0, 0},
-	{"AES-GCM 192", CN_CBOR_UINT, 2, NULL, 0, 0},
-	{"AES-GCM 256", CN_CBOR_UINT, 3, NULL, 0, 0},
+	{"AES-GCM 128", CN_CBOR_UINT, 1, nullptr, 0, 0},
+	{"AES-GCM 192", CN_CBOR_UINT, 2, nullptr, 0, 0},
+	{"AES-GCM 256", CN_CBOR_UINT, 3, nullptr, 0, 0},
 
-	{"HMAC 256//64", CN_CBOR_UINT, 4, NULL, 0, 0},
-	{"HMAC 256//256", CN_CBOR_UINT, 5, NULL, 0, 0},
-	{"HMAC 384//384", CN_CBOR_UINT, 6, NULL, 0, 0},
-	{"HMAC 512//512", CN_CBOR_UINT, 8, NULL, 0, 0},
+	{"HMAC 256//64", CN_CBOR_UINT, 4, nullptr, 0, 0},
+	{"HMAC 256//256", CN_CBOR_UINT, 5, nullptr, 0, 0},
+	{"HMAC 384//384", CN_CBOR_UINT, 6, nullptr, 0, 0},
+	{"HMAC 512//512", CN_CBOR_UINT, 8, nullptr, 0, 0},
 
-	{"AES-CCM-16-64-128", CN_CBOR_UINT, 10, NULL, 0, 0},
-	{"AES-CCM-16-64-256", CN_CBOR_UINT, 11, NULL, 0, 0},
-	{"AES-CCM-16-128-128", CN_CBOR_UINT, 12, NULL, 0, 0},
-	{"AES-CCM-16-128-256", CN_CBOR_UINT, 13, NULL, 0, 0},
-	{"AES-CBC-MAC-128//64", CN_CBOR_UINT, 14, NULL, 0, 0},
-	{"AES-CBC-MAC-256//64", CN_CBOR_UINT, 15, NULL, 0, 0},
+	{"AES-CCM-16-64-128", CN_CBOR_UINT, 10, nullptr, 0, 0},
+	{"AES-CCM-16-64-256", CN_CBOR_UINT, 11, nullptr, 0, 0},
+	{"AES-CCM-16-128-128", CN_CBOR_UINT, 12, nullptr, 0, 0},
+	{"AES-CCM-16-128-256", CN_CBOR_UINT, 13, nullptr, 0, 0},
+	{"AES-CBC-MAC-128//64", CN_CBOR_UINT, 14, nullptr, 0, 0},
+	{"AES-CBC-MAC-256//64", CN_CBOR_UINT, 15, nullptr, 0, 0},
 
-	{"ChaCha20//Poly1305", CN_CBOR_UINT, 24, NULL, 0, 0},
+	{"ChaCha20//Poly1305", CN_CBOR_UINT, 24, nullptr, 0, 0},
 
-	{"AES-CBC-MAC-128/128", CN_CBOR_UINT, 25, NULL, 0, 0},
-	{"AES-CBC-MAC-256/128", CN_CBOR_UINT, 26, NULL, 0, 0},
-	{"AES-CCM-64-64-128", CN_CBOR_UINT, 30, NULL, 0, 0},
-	{"AES-CCM-64-64-256", CN_CBOR_UINT, 31, NULL, 0, 0},
-	{"AES-CCM-64-128-128", CN_CBOR_UINT, 32, NULL, 0, 0},
-	{"AES-CCM-64-128-256", CN_CBOR_UINT, 33, NULL, 0, 0},
+	{"AES-CBC-MAC-128/128", CN_CBOR_UINT, 25, nullptr, 0, 0},
+	{"AES-CBC-MAC-256/128", CN_CBOR_UINT, 26, nullptr, 0, 0},
+	{"AES-CCM-64-64-128", CN_CBOR_UINT, 30, nullptr, 0, 0},
+	{"AES-CCM-64-64-256", CN_CBOR_UINT, 31, nullptr, 0, 0},
+	{"AES-CCM-64-128-128", CN_CBOR_UINT, 32, nullptr, 0, 0},
+	{"AES-CCM-64-128-256", CN_CBOR_UINT, 33, nullptr, 0, 0},
 };
 
-FOO KeyMap[9] = {{"kty", CN_CBOR_UINT, 1, NULL, 0, 0},
-	{"kid", CN_CBOR_UINT, 2, NULL, 0, 0},
+FOO KeyMap[9] = {{"kty", CN_CBOR_UINT, 1, nullptr, 0, 0},
+	{"kid", CN_CBOR_UINT, 2, nullptr, 0, 0},
 	{"alg", CN_CBOR_UINT, 3, AlgorithmMap, _countof(AlgorithmMap), 0},
-	{"key_ops", CN_CBOR_UINT, 4, NULL, 0, 0},
-	{"crv", CN_CBOR_INT, -1, NULL, 0, 2}, {"x", CN_CBOR_INT, -2, NULL, 0, 2},
-	{"y", CN_CBOR_INT, -3, NULL, 0, 2}, {"d", CN_CBOR_INT, -4, NULL, 0, 2},
-	{"k", CN_CBOR_INT, -1, NULL, 0, 4}};
+	{"key_ops", CN_CBOR_UINT, 4, nullptr, 0, 0},
+	{"crv", CN_CBOR_INT, -1, nullptr, 0, 2},
+	{"x", CN_CBOR_INT, -2, nullptr, 0, 2},
+	{"y", CN_CBOR_INT, -3, nullptr, 0, 2},
+	{"d", CN_CBOR_INT, -4, nullptr, 0, 2},
+	{"k", CN_CBOR_INT, -1, nullptr, 0, 4}};
 
-FOO Key = {NULL, CN_CBOR_MAP, 0, KeyMap, _countof(KeyMap), 0};
+FOO Key = {nullptr, CN_CBOR_MAP, 0, KeyMap, _countof(KeyMap), 0};
 
-FOO KeySet = {NULL, CN_CBOR_ARRAY, 0, &Key, 1, 0};
+FOO KeySet = {nullptr, CN_CBOR_ARRAY, 0, &Key, 1, 0};
 
 FOO HeaderMap[27] = {
 	{"alg", CN_CBOR_UINT, 1, AlgorithmMap, _countof(AlgorithmMap), 0},
-	{"crit", CN_CBOR_UINT, 2, NULL, 0, 0},
-	{"content type", CN_CBOR_UINT, 3, NULL, 0, 0},
-	{"kid", CN_CBOR_UINT, 4, NULL, 0, 0}, {"iv", CN_CBOR_UINT, 5, NULL, 0, 0},
-	{"partial iv", CN_CBOR_UINT, 6, NULL, 0, 0},
+	{"crit", CN_CBOR_UINT, 2, nullptr, 0, 0},
+	{"content type", CN_CBOR_UINT, 3, nullptr, 0, 0},
+	{"kid", CN_CBOR_UINT, 4, nullptr, 0, 0},
+	{"iv", CN_CBOR_UINT, 5, nullptr, 0, 0},
+	{"partial iv", CN_CBOR_UINT, 6, nullptr, 0, 0},
 	{"countersign", CN_CBOR_UINT, 7, Signer, 5, 0},
-	{"op time", CN_CBOR_INT, 8, NULL, 0, 0},
+	{"op time", CN_CBOR_INT, 8, nullptr, 0, 0},
 	{"ephemeral", CN_CBOR_INT, -1, KeyMap, _countof(KeyMap), 50},
-	{"salt", CN_CBOR_INT, -20, NULL, 0, 50},
-	{"U identity", CN_CBOR_INT, -21, NULL, 0, 50},
-	{"U nonce", CN_CBOR_INT, -22, NULL, 0, 50},
-	{"U other", CN_CBOR_INT, -23, NULL, 0, 50},
-	{"V identity", CN_CBOR_INT, -24, NULL, 0, 50},
-	{"V nonce", CN_CBOR_INT, -25, NULL, 0, 50},
-	{"V other", CN_CBOR_INT, -26, NULL, 0, 50},
-	{"static key", CN_CBOR_INT, -2, NULL, 0, 50},
-	{"static kid", CN_CBOR_INT, -3, NULL, 0, 50},
-	{"salt", CN_CBOR_INT, -20, NULL, 0, 52},
-	{"U identity", CN_CBOR_INT, -21, NULL, 0, 52},
-	{"U nonce", CN_CBOR_INT, -22, NULL, 0, 52},
-	{"U other", CN_CBOR_INT, -23, NULL, 0, 52},
-	{"V identity", CN_CBOR_INT, -24, NULL, 0, 52},
-	{"V nonce", CN_CBOR_INT, -25, NULL, 0, 52},
-	{"V other", CN_CBOR_INT, -26, NULL, 0, 52},
-	{"static key", CN_CBOR_INT, -2, NULL, 0, 52},
-	{"static kid", CN_CBOR_INT, -3, NULL, 0, 52}};
+	{"salt", CN_CBOR_INT, -20, nullptr, 0, 50},
+	{"U identity", CN_CBOR_INT, -21, nullptr, 0, 50},
+	{"U nonce", CN_CBOR_INT, -22, nullptr, 0, 50},
+	{"U other", CN_CBOR_INT, -23, nullptr, 0, 50},
+	{"V identity", CN_CBOR_INT, -24, nullptr, 0, 50},
+	{"V nonce", CN_CBOR_INT, -25, nullptr, 0, 50},
+	{"V other", CN_CBOR_INT, -26, nullptr, 0, 50},
+	{"static key", CN_CBOR_INT, -2, nullptr, 0, 50},
+	{"static kid", CN_CBOR_INT, -3, nullptr, 0, 50},
+	{"salt", CN_CBOR_INT, -20, nullptr, 0, 52},
+	{"U identity", CN_CBOR_INT, -21, nullptr, 0, 52},
+	{"U nonce", CN_CBOR_INT, -22, nullptr, 0, 52},
+	{"U other", CN_CBOR_INT, -23, nullptr, 0, 52},
+	{"V identity", CN_CBOR_INT, -24, nullptr, 0, 52},
+	{"V nonce", CN_CBOR_INT, -25, nullptr, 0, 52},
+	{"V other", CN_CBOR_INT, -26, nullptr, 0, 52},
+	{"static key", CN_CBOR_INT, -2, nullptr, 0, 52},
+	{"static kid", CN_CBOR_INT, -3, nullptr, 0, 52}};
 
 FOO RecurseHeaderMap = {
-	NULL, CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0};
+	nullptr, CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0};
+
+FOO& createRecipients();
 
 FOO EncryptedBody[4] = {
 	{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},
 	{"unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0},
-	{"ciphertext", CN_CBOR_BYTES, 0, NULL, 0, 0},
-	{"recipients", CN_CBOR_ARRAY, 0, &Recipients, 1, 0}};
+	{"ciphertext", CN_CBOR_BYTES, 0, nullptr, 0, 0},
+{"recipients", CN_CBOR_ARRAY, 0, &createRecipients(), 1, 0}};
 
-FOO Recipients = {
-	NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0};
+FOO &createRecipients(){
+FOO tmp_recipients = {
+nullptr, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0};
+Recipients = tmp_recipients;
+return Recipients;
+}
 
 FOO MacBody[5] = {{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},
 	{"unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0},
-	{"payload", CN_CBOR_BYTES, 0, NULL, 0, 0},
-	{"tag", CN_CBOR_BYTES, 0, NULL, 0, 0},
+	{"payload", CN_CBOR_BYTES, 0, nullptr, 0, 0},
+	{"tag", CN_CBOR_BYTES, 0, nullptr, 0, 0},
 	{"recipients", CN_CBOR_ARRAY, 0, &Recipients, 1, 0}};
 
 FOO Signer[5] = {
 	{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},
 	{"unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0},
-	{"signature", CN_CBOR_BYTES, 0, NULL, 0, 0},
+	{"signature", CN_CBOR_BYTES, 0, nullptr, 0, 0},
 };
 
-FOO Signers = {NULL, CN_CBOR_ARRAY, 0, Signer, _countof(Signer), 0};
+FOO Signers = {nullptr, CN_CBOR_ARRAY, 0, Signer, _countof(Signer), 0};
 
 FOO SignBody[5] = {{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},
 	{"unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0},
-	{"payload", CN_CBOR_BYTES, 0, NULL, 0, 0},
+	{"payload", CN_CBOR_BYTES, 0, nullptr, 0, 0},
 	{"signatures", CN_CBOR_ARRAY, 0, &Signers, 1, 0}};
 
 FOO Sign0Body[4] = {{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},
 	{"unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0},
-	{"payload", CN_CBOR_BYTES, 0, NULL, 0, 0},
-	{"signature", CN_CBOR_BYTES, 0, NULL, 0, 0}};
+	{"payload", CN_CBOR_BYTES, 0, nullptr, 0, 0},
+	{"signature", CN_CBOR_BYTES, 0, nullptr, 0, 0}};
 
 FOO EnvelopedMessage = {
-	NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0};
-FOO SignedMessage = {NULL, CN_CBOR_ARRAY, 0, SignBody, _countof(SignBody), 0};
-FOO Sign0Message = {NULL, CN_CBOR_ARRAY, 0, Sign0Body, _countof(Sign0Body), 0};
+	nullptr, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0};
+FOO SignedMessage = {
+	nullptr, CN_CBOR_ARRAY, 0, SignBody, _countof(SignBody), 0};
+FOO Sign0Message = {
+	nullptr, CN_CBOR_ARRAY, 0, Sign0Body, _countof(Sign0Body), 0};
 
-FOO MacMessage = {NULL, CN_CBOR_ARRAY, 0, MacBody, _countof(MacBody), 0};
+FOO MacMessage = {nullptr, CN_CBOR_ARRAY, 0, MacBody, _countof(MacBody), 0};
 
 FOO EncryptedMessage = {
-	NULL, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody) - 1, 0};
+	nullptr, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody) - 1, 0};
 
-FOO EncryptedMessageWithTag = {NULL, CN_CBOR_TAG, 997, &EncryptedMessage, 1, 0};
+FOO EncryptedMessageWithTag = {
+	nullptr, CN_CBOR_TAG, 997, &EncryptedMessage, 1, 0};
 
-FOO EnvelopedMessageWithTag = {NULL, CN_CBOR_TAG, 998, &EnvelopedMessage, 1, 0};
+FOO EnvelopedMessageWithTag = {
+	nullptr, CN_CBOR_TAG, 998, &EnvelopedMessage, 1, 0};
 
-FOO SignedMessageWithTag = {NULL, CN_CBOR_TAG, 999, &SignedMessage, 1, 0};
+FOO SignedMessageWithTag = {nullptr, CN_CBOR_TAG, 999, &SignedMessage, 1, 0};
 
-FOO Sign0MessageWithTag = {NULL, CN_CBOR_TAG, 997, &Sign0Message, 1, 0};
+FOO Sign0MessageWithTag = {nullptr, CN_CBOR_TAG, 997, &Sign0Message, 1, 0};
 
-FOO MacMessageWithTag = {NULL, CN_CBOR_TAG, 996, &MacMessage, 1, 0};
+FOO MacMessageWithTag = {nullptr, CN_CBOR_TAG, 996, &MacMessage, 1, 0};
 
 FOO Mac0Body[4] = {{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},
 	{"unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0},
-	{"payload", CN_CBOR_BYTES, 0, NULL, 0, 0},
-	{"tag", CN_CBOR_BYTES, 0, NULL, 0, 0}};
+	{"payload", CN_CBOR_BYTES, 0, nullptr, 0, 0},
+	{"tag", CN_CBOR_BYTES, 0, nullptr, 0, 0}};
 
-FOO Mac0Message = {NULL, CN_CBOR_ARRAY, 0, Mac0Body, _countof(Mac0Body), 0};
+FOO Mac0Message = {nullptr, CN_CBOR_ARRAY, 0, Mac0Body, _countof(Mac0Body), 0};
 
-FOO Mac0MessageWithTag = {NULL, CN_CBOR_TAG, 995, &Mac0Message, 1, 0};
+FOO Mac0MessageWithTag = {nullptr, CN_CBOR_TAG, 995, &Mac0Message, 1, 0};
 
 size_t WrapLineAt = 0;
 char OutputBuffer[4 * 4096];
 
-void WrapPrintF(FILE* fp, char* format, ...)
+void WrapPrintF(FILE* fp, const char* format, ...)
 {
 	va_list args;
 	char buffer[10000];
@@ -263,7 +277,8 @@ void DumpBytes(FILE* fp, const cn_cbor* cbor)
 			WrapPrintF(fp, "%c", cbor->v.bytes[i]);
 		}
 		WrapPrintF(fp, "'");
-	} else {
+	}
+	else {
 		WrapPrintF(fp, "h'");
 		for (int i = 0; i < cbor->length; i++) {
 			WrapPrintF(fp, "%02x", cbor->v.bytes[i]);
@@ -286,11 +301,11 @@ void DumpTree(const cn_cbor* cbor,
 	const FOO* pFoo2;
 	int group;
 
-	if (pFOO != NULL) {
+	if (pFOO != nullptr) {
 		switch (pFOO->type) {
 			case CN_CBOR_TAG:
 				if (cbor->type != CN_CBOR_TAG) {
-					pFOO = NULL;
+					pFOO = nullptr;
 				}
 				break;
 			default:
@@ -298,7 +313,7 @@ void DumpTree(const cn_cbor* cbor,
 		}
 	}
 
-	if (fField && (pFOO != NULL) && (pFOO->fieldName != NULL)) {
+	if (fField && (pFOO != nullptr) && (pFOO->fieldName != nullptr)) {
 		if (fInComment) {
 			WrapPrintF(out, "\\ %s \\ ", pFOO->fieldName);
 		}
@@ -312,8 +327,8 @@ void DumpTree(const cn_cbor* cbor,
 			WrapPrintF(out, "%u(\n", cbor->v.uint);
 			Indent(out, depth + 1);
 			DumpTree(cbor->last_child, out,
-				pFOO != NULL ? pFOO->children : NULL, depth + 1, true, true,
-				fInComment);
+				pFOO != nullptr ? pFOO->children : nullptr, depth + 1, true,
+				true, fInComment);
 			WrapPrintF(out, "\n");
 			Indent(out, depth);
 			WrapPrintF(out, ")");
@@ -326,14 +341,14 @@ void DumpTree(const cn_cbor* cbor,
 				if (i != 0) {
 					WrapPrintF(out, ", ");
 				}
-				if (pFOO == NULL) {
-					pFoo2 = NULL;
+				if (pFOO == nullptr) {
+					pFoo2 = nullptr;
 				}
 				else if (pFOO->count == 1) {
 					pFoo2 = pFOO->children;
 				}
 				else if (i >= pFOO->count) {
-					pFoo2 = NULL;
+					pFoo2 = nullptr;
 				}
 				else {
 					pFoo2 = &pFOO->children[i];
@@ -366,8 +381,8 @@ void DumpTree(const cn_cbor* cbor,
 			cbor2 = cbor->first_child;
 			//  Dump each element
 			for (i = 0; i < cbor->length; i += 2, cbor2 = cbor2->next) {
-				pFoo2 = NULL;
-				if (pFOO != NULL) {
+				pFoo2 = nullptr;
+				if (pFOO != nullptr) {
 					//  Locate the right entry in foo
 					for (i2 = 0, pFoo2 = pFOO->children; i2 < pFOO->count;
 						 pFoo2++, i2 += 1) {
@@ -405,7 +420,7 @@ void DumpTree(const cn_cbor* cbor,
 						}
 					}
 					if (i2 == pFOO->count) {
-						pFoo2 = NULL;
+						pFoo2 = nullptr;
 					}
 				}
 				if (i != 0) {
@@ -427,10 +442,10 @@ void DumpTree(const cn_cbor* cbor,
 
 		case CN_CBOR_BYTES:
 			DumpBytes(out, cbor);
-			if ((pFOO != NULL) && (pFOO->children != NULL)) {
+			if ((pFOO != nullptr) && (pFOO->children != nullptr)) {
 				const cn_cbor* cbor3 = cn_cbor_decode(
-					cbor->v.bytes, cbor->length CBOR_CONTEXT_PARAM, NULL);
-				if (cbor3 != NULL) {
+					cbor->v.bytes, cbor->length CBOR_CONTEXT_PARAM, nullptr);
+				if (cbor3 != nullptr) {
 					WrapPrintF(out, fInComment ? " \\ " : " / ");
 					DumpTree(cbor3, out, pFOO->children, depth + 1, true, true,
 						true);
@@ -441,12 +456,12 @@ void DumpTree(const cn_cbor* cbor,
 
 		case CN_CBOR_INT:
 			WrapPrintF(out, "%d", cbor->v.sint);
-			if (fValue && pFOO != NULL) {
+			if (fValue && pFOO != nullptr) {
 				for (i = 0, pFoo2 = pFOO->children; i < pFOO->count;
 					 i++, pFoo2++) {
 					if ((pFoo2->type == CN_CBOR_INT) &&
 						(pFoo2->value == cbor->v.sint)) {
-						if (pFoo2->fieldName != NULL) {
+						if (pFoo2->fieldName != nullptr) {
 							if (fInComment) {
 								WrapPrintF(out, " \\ %s \\", pFoo2->fieldName);
 							}
@@ -462,12 +477,12 @@ void DumpTree(const cn_cbor* cbor,
 
 		case CN_CBOR_UINT:
 			WrapPrintF(out, "%u", cbor->v.uint);
-			if (fValue && (pFOO != NULL)) {
+			if (fValue && (pFOO != nullptr)) {
 				for (i = 0, pFoo2 = pFOO->children; i < pFOO->count;
 					 i++, pFoo2++) {
 					if ((pFoo2->type == CN_CBOR_UINT) &&
 						(pFoo2->value == (int)cbor->v.uint)) {
-						if (pFoo2->fieldName != NULL) {
+						if (pFoo2->fieldName != nullptr) {
 							if (fInComment) {
 								WrapPrintF(out, " \\ %s \\", pFoo2->fieldName);
 							}
@@ -508,26 +523,29 @@ void DumpTree(const cn_cbor* cbor,
 
 int main(int argc, char** argv)
 {
-	FILE* in = NULL;
-	FILE* out = NULL;
-	byte* pb = NULL;
+	FILE* in = nullptr;
+	FILE* out = nullptr;
+	byte* pb = nullptr;
 	size_t cb = 0;
 	byte rgb[2048];
 	size_t cbIn;
 	int forXML = false;
-	FOO* root = NULL;
+	FOO* root = nullptr;
 
 	for (int i = 1; i < argc; i++) {
 		if ((argv[i][0] == '-') || (argv[i][0] == '/')) {
 			if (strcmp(&argv[i][1], "someoption") == 0) {
-			} else if (strcmp(&argv[i][1], "xml=yes") == 0) {
+			}
+			else if (strcmp(&argv[i][1], "xml=yes") == 0) {
 				forXML = true;
-			} else if (strcmp(&argv[i][1], "xml=no") == 0) {
+			}
+			else if (strcmp(&argv[i][1], "xml=no") == 0) {
 				forXML = false;
 			}
 			else if (strncmp(&argv[i][1], "wrap=", 5) == 0) {
 				WrapLineAt = atoi(&argv[i][6]);
-			} else if (strncmp(&argv[i][1], "type=", 5) == 0) {
+			}
+			else if (strncmp(&argv[i][1], "type=", 5) == 0) {
 				if (strcmp(&argv[i][1], "type=encrypt") == 0) {
 					root = &EncryptedMessage;
 				}
@@ -552,24 +570,28 @@ int main(int argc, char** argv)
 				else {
 					PrintUsage();
 				}
-			} else {
+			}
+			else {
 				PrintUsage();
 				exit(1);
 			}
-		} else {
-			if (in == NULL) {
+		}
+		else {
+			if (in == nullptr) {
 				in = fopen(argv[i], "rb");
-				if (in == NULL) {
+				if (in == nullptr) {
 					fprintf(stderr, "Unable to open file '%s'\n", argv[i]);
 					exit(1);
 				}
-			} else if (out == NULL) {
+			}
+			else if (out == nullptr) {
 				out = fopen(argv[i], "wt");
-				if (out == NULL) {
+				if (out == nullptr) {
 					fprintf(stderr, "Unable to open file '%s'\n", argv[i]);
 					exit(1);
 				}
-			} else {
+			}
+			else {
 				PrintUsage();
 				exit(1);
 			}
@@ -578,16 +600,16 @@ int main(int argc, char** argv)
 
 	//  Set defaults
 
-	if (in == NULL) {
+	if (in == nullptr) {
 #ifdef _WIN32
 		in = stdin;
 		_setmode(_fileno(stdin), _O_BINARY);
 #else
-		in = stdin;	 //  fdreopen(_fileno(stdin), NULL, O_RDONLY |
+		in = stdin;	 //  fdreopen(_fileno(stdin), nullptr, O_RDONLY |
 					 //  OPEN_O_BINARY);
 #endif
 	}
-	if (out == NULL) {
+	if (out == nullptr) {
 		out = stdout;
 	}
 
@@ -601,8 +623,8 @@ int main(int argc, char** argv)
 			break;
 		}
 
-		pb = realloc(pb, cb + cbIn);
-		if (pb == NULL) {
+		pb = static_cast<byte*>(realloc(pb, cb + cbIn));
+		if (pb == nullptr) {
 			fprintf(stderr, "Error allocating memory\n");
 			exit(1);
 		}
@@ -612,13 +634,14 @@ int main(int argc, char** argv)
 
 	//  Parse it
 
-	cn_cbor* cbor = cn_cbor_decode(pb, cb CBOR_CONTEXT_PARAM, NULL);
-	if (cbor == NULL) {
+	cn_cbor* cbor = static_cast<cn_cbor*>(
+		cn_cbor_decode(pb, cb CBOR_CONTEXT_PARAM, nullptr));
+	if (cbor == nullptr) {
 		fprintf(stderr, "Error parsing CBOR");
 		exit(1);
 	}
 
-	if (root == NULL) {
+	if (root == nullptr) {
 		if (cbor->type == CN_CBOR_TAG) {
 			switch (cbor->v.sint) {
 				case 98:

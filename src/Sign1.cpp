@@ -3,14 +3,14 @@
  * objects.
  */
 
-#include <stdlib.h>
-
 #include "cose/cose.h"
-#include "cose_int.h"
-#include "cose/cose_configure.h"
-#include "cose_crypto.h"
 
 #if INCLUDE_SIGN1
+
+#include <stdlib.h>
+#include "cose_int.h"
+#include "cose_crypto.h"
+#include "CoseKey.hpp"
 
 bool _COSE_Signer1_sign(COSE_Sign1Message *pSigner,
 	COSE_KEY *pKey,

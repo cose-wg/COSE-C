@@ -1,4 +1,4 @@
-/** \file MacMessage0.c
+/** \file MacMessage0.cpp
  * Contains implementation of the functions related to HCOSE_MAC0 handle
  * objects.
  */
