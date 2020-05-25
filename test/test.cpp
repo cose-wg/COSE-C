@@ -1039,7 +1039,7 @@ static void RunMemoryTest(const char* szFileName)
 	int iFail;
 	const cn_cbor* pControl = ParseJson(szFileName);
 
-	if (pControl == NULL) {
+	if (pControl == nullptr) {
 		CFails += 1;
 		return;
 	}
@@ -1049,7 +1049,7 @@ static void RunMemoryTest(const char* szFileName)
 
 	const cn_cbor* pInput = cn_cbor_mapget_string(pControl, "input");
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
+	if ((pInput == nullptr) || (pInput->type != CN_CBOR_MAP)) {
 		fprintf(stderr, "No or bad input section");
 		exit(1);
 	}
@@ -1060,7 +1060,7 @@ static void RunMemoryTest(const char* szFileName)
 
 	for (iFail = 0; (!fValidateDone || !fBuildDone) && (iFail < 100000);
 		 iFail++) {
-		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+		if (cn_cbor_mapget_string(pInput, "mac") != nullptr) {
 #if INCLUDE_MAC
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1104,7 +1104,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "mac0") != nullptr) {
 #if INCLUDE_MAC0
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1148,7 +1148,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "encrypted") != nullptr) {
 #if INCLUDE_ENCRYPT0
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1192,7 +1192,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "enveloped") != nullptr) {
 #if INCLUDE_ENCRYPT
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1236,7 +1236,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "sign") != nullptr) {
 #if INCLUDE_SIGN
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1280,7 +1280,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "sign0") != nullptr) {
 #if INCLUDE_SIGN1
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1326,7 +1326,7 @@ static void RunMemoryTest(const char* szFileName)
 		}
 		CFails = 0;
 	}
-	context = NULL;
+	context = nullptr;
 #else
 	return;
 #endif
@@ -1374,7 +1374,7 @@ bool ProcessFile(const cn_cbor* pControl,
 #endif
 #ifdef USE_CBOR_CONTEXT
 	FreeContext(context);
-	context = NULL;
+	context = nullptr;
 #endif
 	return true;
 }
@@ -1490,7 +1490,7 @@ void RunTestsInDirectory(const char* szDir)
 	int ich;
 	int cFailTotal = 0;
 
-	if (dirp == NULL) {
+	if (dirp == nullptr) {
 		fprintf(stderr, "Cannot open directory '%s'\n", szDir);
 		exit(1);
 	}
@@ -1502,7 +1502,7 @@ void RunTestsInDirectory(const char* szDir)
 	strcat(rgchFullName, "/");
 	ich = strlen(rgchFullName);
 
-	while ((dp = readdir(dirp)) != NULL) {
+	while ((dp = readdir(dirp)) != nullptr) {
 		int cch = strlen(dp->d_name);
 		if (cch < 4)
 			continue;

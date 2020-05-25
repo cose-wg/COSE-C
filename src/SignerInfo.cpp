@@ -333,7 +333,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pSigner->m_message.m_counterSign1 != NULL) {
+	if (pSigner->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pSigner->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;

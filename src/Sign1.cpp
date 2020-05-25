@@ -286,7 +286,7 @@ bool COSE_Sign1_Sign2(HCOSE_SIGN1 h, HCOSE_KEY hKey, cose_errback *perr)
 	}
 #endif
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pMessage->m_message.m_counterSign1 != NULL) {
+	if (pMessage->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
@@ -343,7 +343,7 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 	}
 
 	CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
-	CHECK_CONDITION(pKey != NULL, COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(pKey != nullptr, COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
 	COSE_Sign1Message *pSign = (COSE_Sign1Message *)hSign;
@@ -353,7 +353,7 @@ bool COSE_Sign1_validate(HCOSE_SIGN1 hSign,
 
 	HCOSE_KEY hcose =
 		COSE_KEY_FromCbor((cn_cbor *)pKey, CBOR_CONTEXT_PARAM_COMMA perr);
-	CHECK_CONDITION(pKey != NULL, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(pKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	bool f = COSE_Sign1_validate2(hSign, hcose, perr);
 

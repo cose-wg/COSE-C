@@ -627,7 +627,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pcose->m_message.m_counterSign1 != NULL) {
+	if (pcose->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;

@@ -322,7 +322,7 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pMessage->m_message.m_counterSign1 != NULL) {
+	if (pMessage->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
