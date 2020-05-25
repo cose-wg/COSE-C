@@ -30,9 +30,7 @@ int _ValidateMAC(const cn_cbor *pControl,
 	Safe_HCOSE_MAC hMAC;
 	int type;
 	int iRecipient;
-	bool fFail = false;
 	bool fFailBody = false;
-	bool fAlgNoSupport = false;
 	int returnCode = 2;
 	cose_errback error;
 
@@ -74,7 +72,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 	pRecipients = pRecipients->first_child;
 	for (; pRecipients != nullptr;
 		 iRecipient--, pRecipients = pRecipients->next) {
-		fAlgNoSupport = false;
 		Safe_HCOSE_KEY hkey =
 			BuildKey(cn_cbor_mapget_string(pRecipients, "key"), false);
 		if (hkey == nullptr) {
@@ -159,7 +156,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 				}
 
 				for (int counterNo = 0; counterNo < count; counterNo++) {
-					bool noSignSupport = false;
 					Safe_HCOSE_COUNTERSIGN h =
 						COSE_Recipient_get_countersignature(
 							hRecip, counterNo, nullptr);
@@ -225,8 +221,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 					return 0;
 				}
 
-				bool noSupportSign = false;
-
 				Safe_HCOSE_COUNTERSIGN1 h(
 					COSE_Recipient_get_countersignature1(hRecip, nullptr));
 				if (h.IsNull()) {
@@ -284,8 +278,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 			}
 
 			for (int counterNo = 0; counterNo < count; counterNo++) {
-				bool noSignSupport = false;
-
 				Safe_HCOSE_COUNTERSIGN h =
 					COSE_Mac_get_countersignature(hMAC, counterNo, nullptr);
 				if (h == nullptr) {
@@ -349,7 +341,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 				return 0;
 			}
 
-			bool noSupportSign = false;
 			Safe_HCOSE_COUNTERSIGN1 h =
 				COSE_Mac_get_countersignature1(hMAC, nullptr);
 			if (h.IsNull()) {
@@ -366,7 +357,6 @@ int _ValidateMAC(const cn_cbor *pControl,
 
 			if (!COSE_CounterSign1_SetKey(h, hkeyCountersign, nullptr)) {
 				return 0;
-				return false;
 			}
 
 			if (!SetReceivingAttributes(
@@ -543,8 +533,6 @@ bool BuildMacMessage(const cn_cbor *pControl)
 						COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
 					goto returnError;
 				}
-
-				bool noSupportSign = false;
 
 				Safe_HCOSE_COUNTERSIGN1 h(
 					COSE_Recipient_get_countersignature1(hRecip, nullptr));
@@ -777,9 +765,7 @@ int _ValidateMac0(const cn_cbor *pControl,
 	const cn_cbor *pMac = nullptr;
 	const cn_cbor *pRecipients = nullptr;
 	int type;
-	bool fFail = false;
 	bool fFailBody = false;
-	bool fUnsuportedAlg = false;
 	int returnCode = 2;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");

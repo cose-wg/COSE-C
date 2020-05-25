@@ -184,8 +184,6 @@ int DecryptMessage(const byte *pbEncoded,
 			}
 
 			for (int counterNo = 0; counterNo < count; counterNo++) {
-				bool noSupportSign = false;
-
 				Safe_HCOSE_COUNTERSIGN h = COSE_Recipient_get_countersignature(
 					hRecip, counterNo, nullptr);
 				if (h.IsNull()) {
@@ -376,7 +374,6 @@ int DecryptMessage(const byte *pbEncoded,
 				return 0;
 			}
 
-			bool noSupportSign = false;
 			Safe_HCOSE_COUNTERSIGN1 h =
 				COSE_Enveloped_get_countersignature1(hEnc, nullptr);
 			if (h.IsNull()) {
@@ -429,7 +426,6 @@ int _ValidateEnveloped(const cn_cbor *pControl,
 {
 	const cn_cbor *pInput = cn_cbor_mapget_string(pControl, "input");
 	bool fFailBody = false;
-	int passCount = 0;
 	int returnValue = 2;
 
 	const cn_cbor *pFail = cn_cbor_mapget_string(pControl, "fail");
@@ -1003,9 +999,6 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 			}
 
 			for (int counterNo = 0; counterNo < count; counterNo++) {
-				bool noSupportSign = false;
-				bool failThis = false;
-
 				Safe_HCOSE_COUNTERSIGN h = COSE_Encrypt0_get_countersignature(
 					hEnc, counterNo, nullptr);
 				if (h == nullptr) {
@@ -1066,7 +1059,6 @@ int _ValidateEncrypt(const cn_cbor *pControl,
 				return 0;
 			}
 
-			bool noSupportSign = false;
 			Safe_HCOSE_COUNTERSIGN1 h =
 				COSE_Encrypt0_get_countersignature1(hEnc, nullptr);
 			if (h.IsNull()) {

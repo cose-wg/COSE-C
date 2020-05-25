@@ -74,19 +74,18 @@ bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	size_t cbAuthData,
 	cose_errback *perr)
 {
-	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte *rgbOut = nullptr;
-	size_t NSize = 15 - (LSize / 8);
+	const size_t NSize = 15 - (LSize / 8);
 	int outl = 0;
 	byte rgbIV[15] = {0};
 	const cn_cbor *pIV = nullptr;
-	const EVP_CIPHER *cipher;
+	const EVP_CIPHER *cipher = nullptr;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 
-	ctx = EVP_CIPHER_CTX_new();
+	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 	CHECK_CONDITION(ctx != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	//  Setup the IV/Nonce and put it into the message

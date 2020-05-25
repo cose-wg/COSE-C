@@ -38,10 +38,11 @@ cn_cbor_context* context;
 int CFails = 0;
 int KeyFormat = 1;
 
-typedef struct _NameMap {
+class NameMap {
+   public:
 	const char* sz;
 	int i;
-} NameMap;
+};
 
 NameMap RgAlgorithmNames[48] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
@@ -515,7 +516,6 @@ bool SetAttributes(HCOSE hHandle,
 
 bool SetSendingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 {
-	bool f = false;
 	const HCOSE hMsg = static_cast<HCOSE>(pMsg);
 
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "protected"),
@@ -534,9 +534,6 @@ bool SetSendingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != nullptr) {
 		cn_cbor* pcn = pExternal;
-		if (pcn == nullptr) {
-			return false;
-		}
 		switch (base) {
 #if INCLUDE_ENCRYPT0
 			case Attributes_Encrypt_protected:
@@ -617,7 +614,6 @@ bool SetSendingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 
 bool SetReceivingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 {
-	bool f = false;
 	HCOSE hMsg = static_cast<HCOSE>(pMsg);
 
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unsent"),
@@ -628,9 +624,6 @@ bool SetReceivingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != nullptr) {
 		cn_cbor* pcn = pExternal;
-		if (pcn == nullptr) {
-			return false;
-		}
 		switch (base) {
 #if INCLUDE_ENCRYPT0
 			case Attributes_Encrypt_protected:
@@ -1584,10 +1577,6 @@ int main(int argc, char** argv)
 		RunMemoryTest(szWhere);
 	}
 	else if (szWhere != nullptr) {
-		if (szWhere == nullptr) {
-			fprintf(stderr, "Must specify a file name\n");
-			exit(1);
-		}
 		if (fDir) {
 			RunTestsInDirectory(szWhere);
 		}
