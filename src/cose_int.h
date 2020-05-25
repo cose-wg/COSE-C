@@ -156,6 +156,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 			goto errorReturn;             \
 		}                                 \
 	}
+
 #define CHECK_CONDITION0(condition, error) \
 	{                                      \
 		if ((condition)) {                 \
@@ -166,6 +167,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 			goto errorReturn;              \
 		}                                  \
 	}
+
 #define FAIL_CONDITION(error)  \
 	{                          \
 		DO_ASSERT;             \
@@ -174,6 +176,7 @@ bool _COSE_CounterSign1_Sign(COSE *baseMessage,
 		}                      \
 		goto errorReturn;      \
 	}
+
 #define CHECK_CONDITION_CBOR(condition, error)   \
 	{                                            \
 		if (!(condition)) {                      \

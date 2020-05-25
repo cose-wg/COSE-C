@@ -7,8 +7,8 @@ class COSE_RecipientInfo;
 
 class COSE_Enveloped {
    public:
-    // The message object
-	COSE m_message{}; 
+	// The message object
+	COSE m_message{};
 	const byte *pbContent{nullptr};
 	size_t cbContent{0};
 	COSE_RecipientInfo *m_recipientFirst{nullptr};
