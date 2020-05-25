@@ -4,13 +4,6 @@
  */
 
 #include "cose/cose.h"
-#include "cose_int.h"
-
-#if INCLUDE_ENCRYPT || INCLUDE_MAC
-COSE *EnvelopedRoot = nullptr;
-#endif
-
-#if INCLUDE_ENCRYPT
 
 #include <stdlib.h>
 #ifdef __MBED__
@@ -24,7 +17,14 @@ COSE *EnvelopedRoot = nullptr;
 
 #include "cose_crypto.h"
 #include "Recipient.hpp"
-#include "enveloped.hpp"
+#include "Enveloped.hpp"
+#include "cose_int.h"
+
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
+COSE *EnvelopedRoot = nullptr;
+#endif
+
+#if INCLUDE_ENCRYPT
 
 /*! \private
  * @brief Test if a HCOSE_ENVELOPED handle is valid

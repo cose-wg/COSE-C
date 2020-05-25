@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enveloped.hpp"
+#include "Enveloped.hpp"
 
 // forward declaration
 class COSE_KEY;

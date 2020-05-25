@@ -41,7 +41,7 @@ set(cose_sources
     Cose.hpp
     Cose.cpp
     utils.hpp
-    enveloped.hpp
+    Enveloped.hpp
     CoseKey.hpp
     CoseKey.cpp
     CounterSign.hpp
