@@ -75,7 +75,6 @@ HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *cbor,
 {
 	COSE_Mac0Message *pobj = pIn;
 	cn_cbor *pRecipients = nullptr;
-	// cn_cbor * tmp;
 	cose_errback error = {COSE_ERR_NONE};
 	if (perr == nullptr) {
 		perr = &error;
@@ -114,7 +113,7 @@ HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *cbor,
 bool COSE_Mac0_Free(HCOSE_MAC0 h)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context;
+	cn_cbor_context *context{nullptr};
 #endif
 	COSE_Mac0Message *p = (COSE_Mac0Message *)h;
 

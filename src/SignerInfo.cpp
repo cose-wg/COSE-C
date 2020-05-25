@@ -355,7 +355,7 @@ errorReturn:
 #if INCLUDE_SIGN
 bool COSE_Signer_SetKey2(HCOSE_SIGNER h, HCOSE_KEY pKey, cose_errback *perr)
 {
-	COSE_SignerInfo *p;
+	COSE_SignerInfo *p{nullptr};
 
 	if (false) {
 	errorReturn:

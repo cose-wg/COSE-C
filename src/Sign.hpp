@@ -7,7 +7,8 @@ class COSE_SignerInfo;
 
 class COSE_SignMessage {
    public:
-	COSE m_message{};  // The message object
+	// The message object
+	COSE m_message{};
 	COSE_SignerInfo *m_signerFirst{nullptr};
 };
 

@@ -72,7 +72,6 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *cbor,
 {
 	COSE_MacMessage *pobj = pIn;
 	cn_cbor *pRecipients = nullptr;
-	// cn_cbor * tmp;
 	cose_errback error = {COSE_ERR_NONE};
 	if (perr == nullptr) {
 		perr = &error;
