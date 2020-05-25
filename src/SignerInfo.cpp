@@ -7,8 +7,6 @@
 
 #if INCLUDE_SIGN || INCLUDE_COUNTERSIGNATURE
 
-#if INCLUDE_SIGN
-
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
@@ -18,6 +16,7 @@
 #include "cose_crypto.h"
 #include "SignerInfo.hpp"
 
+#if INCLUDE_SIGN
 COSE *SignerRoot = nullptr;
 
 bool IsValidSignerHandle(HCOSE_SIGNER h)
