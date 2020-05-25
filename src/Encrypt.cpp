@@ -24,6 +24,7 @@ COSE *EnvelopedRoot = nullptr;
 
 #include "cose_crypto.h"
 #include "Recipient.hpp"
+#include "enveloped.hpp"
 
 /*! \private
  * @brief Test if a HCOSE_ENVELOPED handle is valid

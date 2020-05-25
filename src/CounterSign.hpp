@@ -2,7 +2,8 @@
 
 #include "SignerInfo.hpp"
 
-struct COSE_CounterSign {
+class COSE_CounterSign {
+   public:
 	COSE_SignerInfo m_signer{};
 	COSE_CounterSign *m_next{nullptr};
 };

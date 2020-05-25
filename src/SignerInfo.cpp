@@ -15,7 +15,6 @@
 #endif
 
 #include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
 #include "SignerInfo.hpp"
 
