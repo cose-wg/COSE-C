@@ -2,10 +2,6 @@
  * Contains implementation of the functions related to HCOSE_MAC handle objects.
  */
 
-#include "cose/cose.h"
-
-#if INCLUDE_MAC
-
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
@@ -14,9 +10,12 @@
 #include <cassert>
 #include <string.h>
 
+#include "cose/cose.h"
 #include "cose_int.h"
 #include "cose_crypto.h"
 #include "Recipient.hpp"
+
+#if INCLUDE_MAC
 
 COSE *MacRoot = nullptr;
 
