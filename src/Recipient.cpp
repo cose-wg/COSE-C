@@ -9,6 +9,7 @@
 #include "cose_int.h"
 #include "cose/cose_configure.h"
 #include "cose_crypto.h"
+#include "Recipient.hpp"
 
 #if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
 static bool BuildContextBytes(COSE *pcose,

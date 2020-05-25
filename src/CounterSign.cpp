@@ -10,6 +10,11 @@
 #include "cose_int.h"
 #include "cose_crypto.h"
 
+#include "CounterSign.hpp"
+#include "Sign.hpp"
+#include "Sign1.hpp"
+#include "Recipient.hpp"
+
 COSE* CountersignRoot = nullptr;
 
 bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h)

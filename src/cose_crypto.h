@@ -3,7 +3,8 @@
 #include <cose/cose.h>
 #include <stdbool.h>
 #include "cose_int.h"
-
+#include "enveloped.hpp"
+#include "MacMessage.hpp"
 /**
  * Perform an AES-CCM Decryption operation
  *

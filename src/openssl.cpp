@@ -22,6 +22,8 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
+#include "Recipient.hpp"
+
 static bool FUseCompressed = true;
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000)

@@ -7,6 +7,9 @@
 #include "cose/cose_configure.h"
 #include "cose_int.h"
 #include "cose_crypto.h"
+#include "CounterSign.hpp"
+#include "Sign.hpp"
+#include "Sign1.hpp"
 
 bool IsValidCOSEHandle(HCOSE h)
 {
@@ -47,7 +50,7 @@ bool _COSE_Init(COSE_INIT_FLAGS flags,
 	pcose->m_cborRoot = pcose->m_cbor =
 		cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & errState);
 	CHECK_CONDITION_CBOR(pcose->m_cbor != nullptr, errState);
-	pcose->m_ownMsg = 1;
+	pcose->m_ownMsg = true;
 
 	pcose->m_msgType = msgType;
 

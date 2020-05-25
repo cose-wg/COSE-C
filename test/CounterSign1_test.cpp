@@ -14,6 +14,8 @@
 #include "test.h"
 #include "cose_int.h"
 
+#include "CounterSign1.hpp"
+
 void CounterSign1_Corners()
 {
 	HCOSE_COUNTERSIGN1 hCounterSign = nullptr;

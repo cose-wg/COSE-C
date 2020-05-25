@@ -7,7 +7,7 @@ class COSE_KEY {
 	int m_refCount;
 	cn_cbor *m_cborKey;
 	int m_flags;
-COSE_KEY *m_nextKey;
+	COSE_KEY *m_nextKey;
 
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;

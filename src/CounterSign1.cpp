@@ -10,9 +10,11 @@
 #endif
 
 #include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
-
+#include "CounterSign1.hpp"
+#include "Sign.hpp"
+#include "Sign1.hpp"
+#include "Recipient.hpp"
 
 COSE* Countersign1Root = nullptr;
 

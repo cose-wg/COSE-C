@@ -1,5 +1,3 @@
-//  encrypt.c
-
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
@@ -13,6 +11,7 @@
 
 #include "test.h"
 #include "cose_int.h"
+#include "CounterSign.hpp"
 
 void CounterSign_Corners()
 {

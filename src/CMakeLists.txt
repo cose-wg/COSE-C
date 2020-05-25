@@ -38,14 +38,21 @@ set(cose_sources
     ${CMAKE_BINARY_DIR}/include/cose/cose_configure.h
     cose_crypto.h
     cose_int.h
+    Cose.hpp
     Cose.cpp
     utils.hpp
+    enveloped.hpp
+    CoseKey.hpp
     CoseKey.cpp
+    CounterSign.hpp
     CounterSign.cpp
+    CounterSign1.hpp
     CounterSign1.cpp
     MacMessage.cpp
     MacMessage0.cpp
+    Sign.hpp
     Sign.cpp
+    Sign1.hpp
     Sign1.cpp
     cbor.cpp
     Encrypt.cpp

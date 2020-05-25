@@ -10,6 +10,8 @@
 #include <stdlib.h>
 
 #include "cose_int.h"
+#include "Sign.hpp"
+#include "SignerInfo.hpp"
 
 COSE *SignRoot = nullptr;
 

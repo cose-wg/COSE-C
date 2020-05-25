@@ -11,6 +11,7 @@
 #include "cose_int.h"
 #include "cose_crypto.h"
 #include "CoseKey.hpp"
+#include "Sign1.hpp"
 
 bool _COSE_Signer1_sign(COSE_Sign1Message *pSigner,
 	COSE_KEY *pKey,

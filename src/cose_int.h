@@ -14,14 +14,7 @@
 #include <cn-cbor/cn-cbor.h>
 #include <cose/cose.h>
 #include "CoseKey.hpp"
-
-// These definitions are here because they aren't required for the public
-// interface, and they were quite confusing in cn-cbor.h
-
-struct CounterSign;
-typedef struct CounterSign COSE_CounterSign;
-struct CounterSign1;
-typedef struct CounterSign1 COSE_CounterSign1;
+#include "Cose.hpp"
 
 #define UNUSED(x) ((void)(x))
 #define COSE_MIN(A, B) ((A) < (B) ? (A) : (B))
@@ -29,86 +22,6 @@ typedef struct CounterSign1 COSE_CounterSign1;
 #ifndef _countof
 #define _countof(x) (sizeof(x) / sizeof(x[0]))
 #endif
-
-typedef struct _COSE {
-	COSE_INIT_FLAGS m_flags;  //  Not sure what goes here yet
-	int m_ownMsg;			  //  Do I own the pointer @ m_cbor?
-	int m_ownUnprotectedMap;  //  Do I own the pointer @ m_unportectedMap?
-	int m_msgType;			  //  What message type is this?
-	int m_refCount;			  //  Allocator Reference Counting.
-	cn_cbor *m_cbor;
-	cn_cbor *m_cborRoot;
-	cn_cbor *m_protectedMap;
-	cn_cbor *m_unprotectMap;
-	cn_cbor *m_dontSendMap;
-	const byte *m_pbExternal;
-	size_t m_cbExternal;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context m_allocContext;
-#endif
-	struct _COSE *m_handleList;
-#if INCLUDE_COUNTERSIGNATURE
-	COSE_CounterSign
-		*m_counterSigners;	// Linked list of all counter signatures
-#endif
-#if INCLUDE_COUNTERSIGNATURE1
-	COSE_CounterSign1 *m_counterSign1;
-#endif
-} COSE;
-
-struct _SignerInfo;
-typedef struct _SignerInfo COSE_SignerInfo;
-
-typedef struct {
-	COSE m_message;	 // The message object
-	COSE_SignerInfo *m_signerFirst;
-} COSE_SignMessage;
-
-typedef struct {
-	COSE m_message;	 // The message object
-} COSE_Sign1Message;
-
-struct _SignerInfo {
-	COSE m_message;
-	COSE_KEY *m_pkey;
-	COSE_SignerInfo *m_signerNext;
-};
-
-struct _RecipientInfo;
-typedef struct _RecipientInfo COSE_RecipientInfo;
-
-typedef struct {
-	COSE m_message;	 // The message object
-	const byte *pbContent;
-	size_t cbContent;
-	COSE_RecipientInfo *m_recipientFirst;
-} COSE_Enveloped;
-
-typedef COSE_Enveloped COSE_Encrypt;
-
-struct _RecipientInfo {
-	COSE_Enveloped m_encrypt;
-	COSE_RecipientInfo *m_recipientNext;
-	COSE_KEY *m_pkey;
-	COSE_KEY *m_pkeyStatic;
-};
-
-typedef struct {
-	COSE m_message;	 // The message object
-	COSE_RecipientInfo *m_recipientFirst;
-} COSE_MacMessage;
-
-typedef COSE_MacMessage COSE_Mac0Message;
-
-struct CounterSign {
-	COSE_SignerInfo m_signer;
-	COSE_CounterSign *m_next;
-};
-
-struct CounterSign1 {
-	COSE_SignerInfo m_signer;
-	COSE_CounterSign1 *m_next;
-};
 
 #ifdef USE_CBOR_CONTEXT
 /**
@@ -149,7 +62,7 @@ struct CounterSign1 {
 //#define CN_CALLOC_CONTEXT() CN_CALLOC(context)
 #define CN_CBOR_FREE(p, context) cn_cbor_free(p, context)
 
-#else
+#else // USE_CBOR_CONTEXT
 
 #define CBOR_CONTEXT_PARAM
 #define CBOR_CONTEXT_PARAM_COMMA
@@ -183,15 +96,6 @@ bool IsValidMacHandle(HCOSE_MAC h);
 bool IsValidMac0Handle(HCOSE_MAC0 h);
 bool IsValidKeyHandle(HCOSE_KEY h);
 
-bool _COSE_Init(COSE_INIT_FLAGS flags,
-	COSE *pcose,
-	int msgType,
-	CBOR_CONTEXT_COMMA cose_errback *perr);
-bool _COSE_Init_From_Object(COSE *pobj,
-	cn_cbor *pcbor,
-	CBOR_CONTEXT_COMMA cose_errback *perr);
-void _COSE_Release(COSE *pcose);
-
 cn_cbor *_COSE_map_get_string(COSE *cose,
 	const char *key,
 	int flags,
@@ -207,119 +111,6 @@ bool _COSE_SetExternal(COSE *pcose,
 	const byte *pbExternalData,
 	size_t cbExternalData,
 	cose_errback *perr);
-
-HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor *,
-	COSE_Enveloped *pIn,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
-void _COSE_Enveloped_Release(COSE_Enveloped *p);
-bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
-	COSE_RecipientInfo *pRecip,
-	const byte *pbKeyIn,
-	size_t cbKeyIn,
-	const char *szContext,
-	cose_errback *perr);
-bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
-	const byte *pbKeyIn,
-	size_t cbKeyIn,
-	const char *szContext,
-	cose_errback *perr);
-bool _COSE_Enveloped_SetContent(COSE_Enveloped *cose,
-	const byte *rgbContent,
-	size_t cbContent,
-	cose_errback *errp);
-
-HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor *,
-	COSE_Encrypt *pIn,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
-void _COSE_Encrypt_Release(COSE_Encrypt *p);
-bool _COSE_Encrypt_SetContent(COSE_Encrypt *cose,
-	const byte *rgbContent,
-	size_t cbContent,
-	cose_errback *errp);
-bool _COSE_Encrypt_Build_AAD(COSE *pMessage,
-	byte **ppbAAD,
-	size_t *pcbAAD,
-	const char *szContext,
-	cose_errback *perr);
-
-COSE_RecipientInfo *_COSE_Recipient_Init_From_Object(cn_cbor *,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
-void _COSE_Recipient_Free(COSE_RecipientInfo *);
-bool _COSE_Recipient_decrypt(COSE_RecipientInfo *pRecip,
-	COSE_RecipientInfo *pRecipUse,
-	int algIn,
-	size_t cbitKey,
-	byte *pbKey,
-	cose_errback *errp);
-bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
-	const byte *pbContent,
-	size_t cbContent,
-	cose_errback *perr);
-byte *_COSE_RecipientInfo_generateKey(COSE_RecipientInfo *pRecipient,
-	int algIn,
-	size_t cbitKeySize,
-	cose_errback *perr);
-
-//  Signed items
-HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *,
-	COSE_SignMessage *pIn,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
-void _COSE_Sign_Release(COSE_SignMessage *p);
-
-//  Signer items
-
-bool _COSE_SignerInfo_Init(COSE_INIT_FLAGS flags,
-	COSE_SignerInfo *pcose,
-	int msgType,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
-bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
-	const cn_cbor *pcborBody,
-	const cn_cbor *pcborProtected,
-	const char *const contextString,
-	cose_errback *perr);
-COSE_SignerInfo *_COSE_SignerInfo_Init_From_Object(cn_cbor *cbor,
-	COSE_SignerInfo *pIn,
-	CBOR_CONTEXT_COMMA cose_errback *perr);
-bool _COSE_SignerInfo_Release(COSE_SignerInfo *pSigner);
-bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
-	const cn_cbor *pbContent,
-	const cn_cbor *pbProtected,
-	const char *const szContext,
-	cose_errback *perr);
-
-// Sign1 items
-HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor *cbor,
-	COSE_Sign1Message *pIn,
-	CBOR_CONTEXT_COMMA cose_errback *perr);
-void _COSE_Sign1_Release(COSE_Sign1Message *p);
-
-//  Mac-ed items
-HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *,
-	COSE_MacMessage *pIn,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
-bool _COSE_Mac_Release(COSE_MacMessage *p);
-bool _COSE_Mac_Build_AAD(COSE *pCose,
-	const char *szContext,
-	byte **ppbAuthData,
-	size_t *pcbAuthData,
-	CBOR_CONTEXT_COMMA cose_errback *perr);
-bool _COSE_Mac_compute(COSE_MacMessage *pcose,
-	const byte *pbKeyIn,
-	size_t cbKeyIn,
-	const char *szContext,
-	cose_errback *perr);
-bool _COSE_Mac_validate(COSE_MacMessage *pcose,
-	COSE_RecipientInfo *pRecip,
-	const byte *pbKeyIn,
-	size_t cbKeyIn,
-	const char *szContext,
-	cose_errback *perr);
-
-//  MAC0 Items
-HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *,
-	COSE_Mac0Message *pIn,
-	CBOR_CONTEXT_COMMA cose_errback *errp);
-bool _COSE_Mac0_Release(COSE_Mac0Message *p);
 
 //  Counter Sign Items
 HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE *pMessage,
@@ -463,13 +254,12 @@ enum { COSE_Int_Alg_AES_CBC_MAC_256_64 = -22 };
 #define COSE_CounterSign_object 1000
 #define COSE_CounterSign1_object 1001
 
-
 #if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr);
 #endif
 
 #ifdef COSE_C_USE_MBEDTLS
-mbedtls_ecp_keypair * ECKey_From(COSE_KEY *pKey,
+mbedtls_ecp_keypair *ECKey_From(COSE_KEY *pKey,
 	mbedtls_ecp_keypair *keypair,
 	cose_errback *perr);
 #endif

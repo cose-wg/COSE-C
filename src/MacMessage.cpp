@@ -16,6 +16,7 @@
 
 #include "cose_int.h"
 #include "cose_crypto.h"
+#include "Recipient.hpp"
 
 COSE *MacRoot = nullptr;
 
