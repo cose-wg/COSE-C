@@ -1,7 +1,9 @@
-/** \file Encrypt.c
+/** \file Encrypt.cpp
  * Contains implementation of the functions related to HCOSE_ENVELOPED handle
  * objects.
  */
+
+#include "cose/cose.h"
 
 #include <stdlib.h>
 #ifdef __MBED__
@@ -11,18 +13,19 @@
 #include <memory.h>
 #endif
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 
-#include "cose/cose.h"
-#include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
+#include "Recipient.hpp"
+#include "Enveloped.hpp"
+#include "cose_int.h"
 
 #if INCLUDE_ENCRYPT || INCLUDE_MAC
 COSE *EnvelopedRoot = nullptr;
 #endif
 
 #if INCLUDE_ENCRYPT
+
 /*! \private
  * @brief Test if a HCOSE_ENVELOPED handle is valid
  *
@@ -834,7 +837,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pcose->m_message.m_counterSign1 != NULL) {
+	if (pcose->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;

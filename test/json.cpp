@@ -21,26 +21,26 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 {
 	char ch;
 	int ib2;
-	cn_cbor *parent = NULL;
-	cn_cbor *root = NULL;
+	cn_cbor *parent = nullptr;
+	cn_cbor *root = nullptr;
 
 	for (; ib < cch; ib++) {
-		cn_cbor *node = NULL;
+		cn_cbor *node = nullptr;
 		ch = rgch[ib];
 		switch (ch) {
 			case '{':
-				node = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA NULL);
+				node = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA nullptr);
 				break;
 
 			case '[':
-				node = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA NULL);
+				node = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA nullptr);
 				break;
 
 			case '}':
 			case ']':
-				if (parent == NULL) {
+				if (parent == nullptr) {
 					fprintf(stderr, "Parse failure @ '%s'\n", &rgch[ib]);
-					return NULL;
+					return nullptr;
 				}
 				parent = parent->parent;
 				break;
@@ -60,7 +60,7 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				}
 				rgch[ib2] = 0;
 				node = cn_cbor_string_create(
-					&rgch[ib + 1], CBOR_CONTEXT_PARAM_COMMA NULL);
+					&rgch[ib + 1], CBOR_CONTEXT_PARAM_COMMA nullptr);
 				// rgch[ib2] = '"';
 				ib = ib2;
 				break;
@@ -69,8 +69,8 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				if (strncmp(&rgch[ib], "true", 4) != 0) {
 					goto error;
 				}
-				node =
-					cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+				node = cn_cbor_data_create(
+					nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
 				node->type = CN_CBOR_TRUE;
 				ib += 3;
 				break;
@@ -79,8 +79,8 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				if (strncmp(&rgch[ib], "false", 5) != 0) {
 					goto error;
 				}
-				node =
-					cn_cbor_data_create(NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL);
+				node = cn_cbor_data_create(
+					nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
 				node->type = CN_CBOR_FALSE;
 				ib += 4;
 				break;
@@ -97,7 +97,7 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 			case '9':
 			case '-':
 				node = cn_cbor_int_create(
-					atol(&rgch[ib]), CBOR_CONTEXT_PARAM_COMMA NULL);
+					atol(&rgch[ib]), CBOR_CONTEXT_PARAM_COMMA nullptr);
 				if (rgch[ib] == '-') {
 					ib++;
 				}
@@ -110,12 +110,12 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 			default:
 			error:
 				fprintf(stderr, "Parse failure @ '%s'\n", &rgch[ib]);
-				return NULL;
+				return nullptr;
 		}
 
-		if ((node != NULL) && (parent != NULL)) {
+		if ((node != nullptr) && (parent != nullptr)) {
 			node->parent = parent;
-			if (parent->last_child != NULL) {
+			if (parent->last_child != nullptr) {
 				parent->last_child->next = node;
 				parent->last_child = node;
 			}
@@ -129,9 +129,9 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				parent = node;
 			}
 		}
-		if (parent == NULL) {
+		if (parent == nullptr) {
 			parent = node;
-			if (root == NULL) {
+			if (root == nullptr) {
 				root = node;
 			}
 		}
@@ -146,10 +146,10 @@ const cn_cbor *ParseJson(const char *fileName)
 	char *rgch;
 	FILE *fp = fopen(fileName, "r");
 
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		fprintf(stderr, "Cannot open file '%s'\n", fileName);
 
-		return NULL;
+		return nullptr;
 	}
 
 	rgch = (char *)malloc(8 * 1024);
@@ -166,7 +166,7 @@ static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
 	'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
 	'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1',
 	'2', '3', '4', '5', '6', '7', '8', '9', '-', '_'};
-static unsigned char *decoding_table = NULL;
+static unsigned char *decoding_table = nullptr;
 static int mod_table[] = {0, 2, 1};
 
 char *base64_encode(const unsigned char *data,
@@ -176,8 +176,8 @@ char *base64_encode(const unsigned char *data,
 	*output_length = 4 * ((input_length + 2) / 3);
 
 	char *encoded_data = (char *)malloc(*output_length);
-	if (encoded_data == NULL) {
-		return NULL;
+	if (encoded_data == nullptr) {
+		return nullptr;
 	}
 
 	for (size_t i = 0, j = 0; i < input_length;) {
@@ -204,9 +204,9 @@ unsigned char *base64_decode(const char *data,
 	size_t input_length,
 	size_t *output_length)
 {
-	char *p = NULL;
+	char *p = nullptr;
 
-	if (decoding_table == NULL) {
+	if (decoding_table == nullptr) {
 		build_decoding_table();
 	}
 
@@ -228,11 +228,11 @@ unsigned char *base64_decode(const char *data,
 	}
 
 	unsigned char *decoded_data = (unsigned char *)malloc(*output_length);
-	if (decoded_data == NULL) {
-		if (p != NULL) {
+	if (decoded_data == nullptr) {
+		if (p != nullptr) {
 			free(p);
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	for (unsigned int i = 0, j = 0; i < input_length;) {
@@ -282,14 +282,14 @@ unsigned char *hex_decode(const char *data,
 	size_t *output_length)
 {
 	if (input_length % 2 != 0) {
-		return NULL;
+		return nullptr;
 	}
 
 	*output_length = input_length / 2;
 
 	unsigned char *decoded_data = (unsigned char *)malloc(*output_length);
-	if (decoded_data == NULL) {
-		return NULL;
+	if (decoded_data == nullptr) {
+		return nullptr;
 	}
 
 	for (unsigned int i = 0, j = 0; i < input_length; i++) {
@@ -305,7 +305,7 @@ unsigned char *hex_decode(const char *data,
 			c = data[i] - 'a' + 10;
 		}
 		else {
-			return NULL;
+			return nullptr;
 		}
 
 		if ((i & 0x1) == 0) {

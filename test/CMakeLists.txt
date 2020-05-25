@@ -1,6 +1,15 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${dist_dir}/test)
 
-add_executable(cose_test test.cpp json.cpp Encrypt_test.cpp Sign_test.cpp context.cpp Mac_test.cpp CounterSign_test.cpp CounterSign1_test.cpp)
+add_executable(
+  cose_test
+  test.cpp
+  json.cpp
+  Encrypt_test.cpp
+  Sign_test.cpp
+  context.cpp
+  Mac_test.cpp
+  CounterSign_test.cpp
+  CounterSign1_test.cpp)
 
 target_link_libraries(cose_test PRIVATE cose-c::cose-c cn-cbor::cn-cbor)
 
@@ -25,7 +34,7 @@ endif()
 target_include_directories(cose_test PRIVATE ../src)
 
 if(CLANG_TIDY_EXE)
-  set_target_properties(cose_test PROPERTIES C_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  set_target_properties(cose_test PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
 endif()
 
 enable_testing()

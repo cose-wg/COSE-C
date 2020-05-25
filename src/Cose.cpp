@@ -7,6 +7,9 @@
 #include "cose/cose_configure.h"
 #include "cose_int.h"
 #include "cose_crypto.h"
+#include "CounterSign.hpp"
+#include "Sign.hpp"
+#include "Sign1.hpp"
 
 bool IsValidCOSEHandle(HCOSE h)
 {
@@ -47,7 +50,7 @@ bool _COSE_Init(COSE_INIT_FLAGS flags,
 	pcose->m_cborRoot = pcose->m_cbor =
 		cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA & errState);
 	CHECK_CONDITION_CBOR(pcose->m_cbor != nullptr, errState);
-	pcose->m_ownMsg = 1;
+	pcose->m_ownMsg = true;
 
 	pcose->m_msgType = msgType;
 
@@ -126,7 +129,7 @@ bool _COSE_Init_From_Object(COSE *pobj,
 		}
 	}
 
-	if (pobj->m_unprotectMap != NULL) {
+	if (pobj->m_unprotectMap != nullptr) {
 		CN_CBOR_FREE(pobj->m_unprotectMap, context);
 	}
 	pobj->m_unprotectMap = _COSE_arrayget_int(pobj, INDEX_UNPROTECTED);
@@ -166,11 +169,11 @@ bool _COSE_Init_From_Object(COSE *pobj,
 #if INCLUDE_COUNTERSIGNATURE1
 	cn_cbor *pCounter1 =
 		cn_cbor_mapget_int(pobj->m_unprotectMap, COSE_Header_CounterSign1);
-	if (pCounter1 != NULL) {
+	if (pCounter1 != nullptr) {
 		CHECK_CONDITION(
 			pCounter1->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 		COSE_CounterSign1 *cs = _COSE_CounterSign1_Init_From_Object(
-			pCounter1, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+			pCounter1, nullptr, CBOR_CONTEXT_PARAM_COMMA perr);
 		pobj->m_counterSign1 = cs;
 	}
 #endif
@@ -215,7 +218,7 @@ void _COSE_Release(COSE *pcose)
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pcose->m_counterSign1 != NULL) {
+	if (pcose->m_counterSign1 != nullptr) {
 		COSE_CounterSign1_Free((HCOSE_COUNTERSIGN1)pcose->m_counterSign1);
 	}
 #endif
@@ -643,7 +646,7 @@ bool AreListsEmpty()
 	fRet &= CountersignRoot == nullptr;
 #endif
 #if INCLUDE_COUNTERSIGNATURE1
-	fRet &= Countersign1Root == NULL;
+	fRet &= Countersign1Root == nullptr;
 #endif
 #if INCLUDE_SIGN
 	fRet &= SignerRoot == nullptr && SignRoot == nullptr;

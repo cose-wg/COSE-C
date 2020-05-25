@@ -98,7 +98,7 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 #define CHECK_FAILURE_PTR(functionCall, errorReturn, onFailure) \
 	{                                                           \
 		void* bReturn = functionCall;                           \
-		if (bReturn == NULL) {                                  \
+		if (bReturn == nullptr) {                               \
 			if (cose_error.err != errorReturn)                  \
 				onFailure;                                      \
 		}                                                       \
@@ -111,18 +111,18 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		handleName h;                                  \
                                                        \
 	   public:                                         \
-		Safe_##handleName() { h = NULL; }              \
+		Safe_##handleName() { h = nullptr; }           \
 		Safe_##handleName(handleName hIn) { h = hIn; } \
 		~Safe_##handleName() { freeFunction(h); }      \
 		handleName Set(handleName hIn)                 \
 		{                                              \
-			if (h != NULL) {                           \
+			if (h != nullptr) {                        \
 				freeFunction(h);                       \
 			}                                          \
 			h = hIn;                                   \
 			return hIn;                                \
 		}                                              \
-		bool IsNull() { return h == NULL; }            \
+		bool IsNull() { return h == nullptr; }         \
 		HCOSE ToCOSE() { return (HCOSE)h; }            \
 		operator handleName() { return h; }            \
 		handleName operator=(handleName pIn)           \
@@ -132,11 +132,11 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 		}                                              \
 		handleName Transfer(Safe_##handleName* hIn)    \
 		{                                              \
-			if (h != NULL) {                           \
+			if (h != nullptr) {                        \
 				freeFunction(h);                       \
 			}                                          \
 			h = hIn->h;                                \
-			hIn->h = NULL;                             \
+			hIn->h = nullptr;                          \
 			return h;                                  \
 		}                                              \
 		handleName operator=(Safe_##handleName hIn)    \
@@ -144,11 +144,11 @@ int IsAlgorithmSupported(const cn_cbor* alg);
 			Set(hIn.h);                                \
 			return h;                                  \
 		}                                              \
-		void Clear() { h = NULL; }                     \
+		void Clear() { h = nullptr; }                  \
 		handleName Release()                           \
 		{                                              \
 			handleName h2 = h;                         \
-			h = NULL;                                  \
+			h = nullptr;                               \
 			return h2;                                 \
 		}                                              \
 	};
@@ -169,20 +169,20 @@ class Safe_CN_CBOR {
 	cn_cbor* p;
 
    public:
-	Safe_CN_CBOR() { p = NULL; }
+	Safe_CN_CBOR() { p = nullptr; }
 	Safe_CN_CBOR(cn_cbor* pIn) { p = pIn; }
 	~Safe_CN_CBOR() { CN_CBOR_FREE(p, context); };
 	cn_cbor* Set(cn_cbor* pIn)
 	{
-		if (p != NULL) {
+		if (p != nullptr) {
 			CN_CBOR_FREE(p, context);
 		}
 		p = pIn;
 		return pIn;
 	}
-	inline bool IsNull() { return p == NULL; }
+	inline bool IsNull() { return p == nullptr; }
 	inline operator cn_cbor*() { return p; }
-	inline void Clear() { p = NULL; }
+	inline void Clear() { p = nullptr; }
 	inline cn_cbor* operator=(cn_cbor* pIn)
 	{
 		Set(pIn);

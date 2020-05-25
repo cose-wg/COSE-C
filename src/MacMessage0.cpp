@@ -1,22 +1,23 @@
-/** \file MacMessage0.c
+/** \file MacMessage0.cpp
  * Contains implementation of the functions related to HCOSE_MAC0 handle
  * objects.
  */
+
+#include "cose/cose.h"
+
+#if INCLUDE_MAC0
 
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
 #endif
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 #include <string.h>
 
-#include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
 #include "cose_crypto.h"
-
-#if INCLUDE_MAC0
 
 COSE *Mac0Root = nullptr;
 
@@ -74,7 +75,6 @@ HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *cbor,
 {
 	COSE_Mac0Message *pobj = pIn;
 	cn_cbor *pRecipients = nullptr;
-	// cn_cbor * tmp;
 	cose_errback error = {COSE_ERR_NONE};
 	if (perr == nullptr) {
 		perr = &error;
@@ -113,7 +113,7 @@ HCOSE_MAC0 _COSE_Mac0_Init_From_Object(cn_cbor *cbor,
 bool COSE_Mac0_Free(HCOSE_MAC0 h)
 {
 #ifdef USE_CBOR_CONTEXT
-	cn_cbor_context *context;
+	cn_cbor_context *context{nullptr};
 #endif
 	COSE_Mac0Message *p = (COSE_Mac0Message *)h;
 

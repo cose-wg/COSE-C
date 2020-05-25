@@ -1,15 +1,17 @@
-/** \file Sign.c
+/** \file Sign.cpp
  * Contains implementation of the functions related to HCOSE_SIGN handle
  * objects.
  */
 
-#include <stdlib.h>
-
 #include "cose/cose.h"
-#include "cose_int.h"
-#include "cose/cose_configure.h"
 
 #if INCLUDE_SIGN
+
+#include <stdlib.h>
+
+#include "cose_int.h"
+#include "Sign.hpp"
+#include "SignerInfo.hpp"
 
 COSE *SignRoot = nullptr;
 
@@ -322,7 +324,7 @@ bool COSE_Sign_Sign(HCOSE_SIGN h, cose_errback *perr)
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pMessage->m_message.m_counterSign1 != NULL) {
+	if (pMessage->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;

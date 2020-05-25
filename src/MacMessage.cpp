@@ -1,4 +1,4 @@
-/** \file MacMessage.c
+/** \file MacMessage.cpp
  * Contains implementation of the functions related to HCOSE_MAC handle objects.
  */
 
@@ -7,13 +7,13 @@
 #include <memory.h>
 #endif
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 #include <string.h>
 
 #include "cose/cose.h"
 #include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
+#include "Recipient.hpp"
 
 #if INCLUDE_MAC
 
@@ -72,7 +72,6 @@ HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *cbor,
 {
 	COSE_MacMessage *pobj = pIn;
 	cn_cbor *pRecipients = nullptr;
-	// cn_cbor * tmp;
 	cose_errback error = {COSE_ERR_NONE};
 	if (perr == nullptr) {
 		perr = &error;
@@ -627,7 +626,7 @@ bool _COSE_Mac_compute(COSE_MacMessage *pcose,
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pcose->m_message.m_counterSign1 != NULL) {
+	if (pcose->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
@@ -966,13 +965,12 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose,
 	int iRecipient,
 	cose_errback *perr)
 {
-	int i;
 	COSE_RecipientInfo *p;
 
 	CHECK_CONDITION(IsValidMacHandle(cose), COSE_ERR_INVALID_PARAMETER);
 
 	p = ((COSE_MacMessage *)cose)->m_recipientFirst;
-	for (i = 0; i < iRecipient; i++) {
+	for (int i = 0; i < iRecipient; i++) {
 		CHECK_CONDITION(p != nullptr, COSE_ERR_NO_RECIPIENT_FOUND);
 		p = p->m_recipientNext;
 	}

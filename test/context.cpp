@@ -3,7 +3,7 @@
 #endif
 #include <stdio.h>
 #include <memory.h>
-#include <assert.h>
+#include <cassert>
 
 #include <cn-cbor/cn-cbor.h>
 #include <cose/cose.h>

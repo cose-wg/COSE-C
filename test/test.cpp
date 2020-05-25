@@ -9,7 +9,7 @@
 #include <cose/cose.h>
 #include <cose/cose_configure.h>
 #include <cn-cbor/cn-cbor.h>
-#include <assert.h>
+#include <cassert>
 #include <cose_int.h>
 
 #ifndef _MSC_VER
@@ -20,7 +20,6 @@
 
 #include "json.h"
 #include "test.h"
-
 
 #ifdef COSE_C_USE_OPENSSL
 #include <openssl/ec.h>
@@ -39,10 +38,11 @@ cn_cbor_context* context;
 int CFails = 0;
 int KeyFormat = 1;
 
-typedef struct _NameMap {
+class NameMap {
+   public:
 	const char* sz;
 	int i;
-} NameMap;
+};
 
 NameMap RgAlgorithmNames[48] = {
 	{"HS256", COSE_Algorithm_HMAC_256_256},
@@ -516,7 +516,6 @@ bool SetAttributes(HCOSE hHandle,
 
 bool SetSendingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 {
-	bool f = false;
 	const HCOSE hMsg = static_cast<HCOSE>(pMsg);
 
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "protected"),
@@ -535,9 +534,6 @@ bool SetSendingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != nullptr) {
 		cn_cbor* pcn = pExternal;
-		if (pcn == nullptr) {
-			return false;
-		}
 		switch (base) {
 #if INCLUDE_ENCRYPT0
 			case Attributes_Encrypt_protected:
@@ -618,7 +614,6 @@ bool SetSendingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 
 bool SetReceivingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 {
-	bool f = false;
 	HCOSE hMsg = static_cast<HCOSE>(pMsg);
 
 	if (!SetAttributes(hMsg, cn_cbor_mapget_string(pIn, "unsent"),
@@ -629,9 +624,6 @@ bool SetReceivingAttributes(void* pMsg, const cn_cbor* pIn, int base)
 	cn_cbor* pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != nullptr) {
 		cn_cbor* pcn = pExternal;
-		if (pcn == nullptr) {
-			return false;
-		}
 		switch (base) {
 #if INCLUDE_ENCRYPT0
 			case Attributes_Encrypt_protected:
@@ -904,14 +896,14 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 #endif
 #ifdef COSE_C_USE_MBEDTLS
 			{
-				keypair =
-					static_cast<mbedtls_ecp_keypair*>(COSE_CALLOC(sizeof(*keypair), 1, context)
-					);
+				keypair = static_cast<mbedtls_ecp_keypair*>(
+					COSE_CALLOC(sizeof(*keypair), 1, context));
 				if (keypair == nullptr) {
 					return nullptr;
 				}
 				mbedtls_ecp_keypair_init(keypair);
-				if (!ECKey_From((COSE_KEY *) (HCOSE_KEY) key, keypair, &coseError)) {
+				if (!ECKey_From(
+						(COSE_KEY*)(HCOSE_KEY)key, keypair, &coseError)) {
 					mbedtls_ecp_keypair_free(keypair);
 					COSE_FREE(keypair, context);
 					return nullptr;
@@ -1039,7 +1031,7 @@ static void RunMemoryTest(const char* szFileName)
 	int iFail;
 	const cn_cbor* pControl = ParseJson(szFileName);
 
-	if (pControl == NULL) {
+	if (pControl == nullptr) {
 		CFails += 1;
 		return;
 	}
@@ -1049,7 +1041,7 @@ static void RunMemoryTest(const char* szFileName)
 
 	const cn_cbor* pInput = cn_cbor_mapget_string(pControl, "input");
 
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
+	if ((pInput == nullptr) || (pInput->type != CN_CBOR_MAP)) {
 		fprintf(stderr, "No or bad input section");
 		exit(1);
 	}
@@ -1060,7 +1052,7 @@ static void RunMemoryTest(const char* szFileName)
 
 	for (iFail = 0; (!fValidateDone || !fBuildDone) && (iFail < 100000);
 		 iFail++) {
-		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+		if (cn_cbor_mapget_string(pInput, "mac") != nullptr) {
 #if INCLUDE_MAC
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1104,7 +1096,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "mac0") != nullptr) {
 #if INCLUDE_MAC0
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1148,7 +1140,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "encrypted") != nullptr) {
 #if INCLUDE_ENCRYPT0
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1192,7 +1184,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "enveloped") != nullptr) {
 #if INCLUDE_ENCRYPT
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1236,7 +1228,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "sign") != nullptr) {
 #if INCLUDE_SIGN
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1280,7 +1272,7 @@ static void RunMemoryTest(const char* szFileName)
 			fBuildDone = true;
 #endif
 		}
-		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+		else if (cn_cbor_mapget_string(pInput, "sign0") != nullptr) {
 #if INCLUDE_SIGN1
 			if (!fValidateDone) {
 				context = CreateContext(iFail);
@@ -1326,7 +1318,7 @@ static void RunMemoryTest(const char* szFileName)
 		}
 		CFails = 0;
 	}
-	context = NULL;
+	context = nullptr;
 #else
 	return;
 #endif
@@ -1374,7 +1366,7 @@ bool ProcessFile(const cn_cbor* pControl,
 #endif
 #ifdef USE_CBOR_CONTEXT
 	FreeContext(context);
-	context = NULL;
+	context = nullptr;
 #endif
 	return true;
 }
@@ -1490,7 +1482,7 @@ void RunTestsInDirectory(const char* szDir)
 	int ich;
 	int cFailTotal = 0;
 
-	if (dirp == NULL) {
+	if (dirp == nullptr) {
 		fprintf(stderr, "Cannot open directory '%s'\n", szDir);
 		exit(1);
 	}
@@ -1502,7 +1494,7 @@ void RunTestsInDirectory(const char* szDir)
 	strcat(rgchFullName, "/");
 	ich = strlen(rgchFullName);
 
-	while ((dp = readdir(dirp)) != NULL) {
+	while ((dp = readdir(dirp)) != nullptr) {
 		int cch = strlen(dp->d_name);
 		if (cch < 4)
 			continue;
@@ -1526,7 +1518,6 @@ void RunTestsInDirectory(const char* szDir)
 	exit(cFailTotal);
 }
 #endif	// _MSCVER
-
 
 int main(int argc, char** argv)
 {
@@ -1586,10 +1577,6 @@ int main(int argc, char** argv)
 		RunMemoryTest(szWhere);
 	}
 	else if (szWhere != nullptr) {
-		if (szWhere == nullptr) {
-			fprintf(stderr, "Must specify a file name\n");
-			exit(1);
-		}
 		if (fDir) {
 			RunTestsInDirectory(szWhere);
 		}

@@ -3,7 +3,7 @@
 #include "cose_int.h"
 #include "cose_crypto.h"
 
-#include <assert.h>
+#include <cassert>
 #ifdef __MBED__
 #include <string.h>
 #else
@@ -22,23 +22,25 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
+#include "Recipient.hpp"
+
 static bool FUseCompressed = true;
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000)
 
 HMAC_CTX *HMAC_CTX_new()
 {
-	HMAC_CTX *foo = (HMAC_CTX *)malloc(sizeof(HMAC_CTX));
-	if (foo != nullptr) {
-		HMAC_CTX_init(foo);
+	HMAC_CTX *ctx = (HMAC_CTX *)malloc(sizeof(HMAC_CTX));
+	if (ctx != nullptr) {
+		HMAC_CTX_init(ctx);
 	}
-	return foo;
+	return ctx;
 }
 
-void HMAC_CTX_free(HMAC_CTX *foo)
+void HMAC_CTX_free(HMAC_CTX *ctx)
 {
-	if (foo != nullptr)
-		free(foo);
+	if (ctx != nullptr)
+		free(ctx);
 }
 
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
@@ -72,19 +74,18 @@ bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	size_t cbAuthData,
 	cose_errback *perr)
 {
-	EVP_CIPHER_CTX *ctx;
 	int cbOut;
 	byte *rgbOut = nullptr;
-	size_t NSize = 15 - (LSize / 8);
+	const size_t NSize = 15 - (LSize / 8);
 	int outl = 0;
 	byte rgbIV[15] = {0};
 	const cn_cbor *pIV = nullptr;
-	const EVP_CIPHER *cipher;
+	const EVP_CIPHER *cipher = nullptr;
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 
-	ctx = EVP_CIPHER_CTX_new();
+	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 	CHECK_CONDITION(ctx != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	//  Setup the IV/Nonce and put it into the message
@@ -834,11 +835,10 @@ bool HKDF_Extract(COSE *pcose,
 	byte rgbSalt[EVP_MAX_MD_SIZE] = {0};
 	int cbSalt;
 	cn_cbor *cnSalt;
-	HMAC_CTX *ctx;
 	const EVP_MD *pmd = nullptr;
 	unsigned int cbDigest;
 
-	ctx = HMAC_CTX_new();
+	HMAC_CTX *ctx = HMAC_CTX_new();
 	CHECK_CONDITION(nullptr != ctx, COSE_ERR_OUT_OF_MEMORY);
 
 	if (0) {
@@ -894,7 +894,6 @@ bool HKDF_Expand(COSE *pcose,
 	size_t cbOutput,
 	cose_errback *perr)
 {
-	HMAC_CTX *ctx;
 	const EVP_MD *pmd = nullptr;
 	size_t ib;
 	unsigned int cbDigest = 0;
@@ -903,7 +902,7 @@ bool HKDF_Expand(COSE *pcose,
 
 	UNUSED(pcose);
 
-	ctx = HMAC_CTX_new();
+	HMAC_CTX *ctx = HMAC_CTX_new();
 	CHECK_CONDITION(ctx != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	if (0) {
@@ -953,7 +952,6 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	size_t cbAuthData,
 	cose_errback *perr)
 {
-	HMAC_CTX *ctx;
 	const EVP_MD *pmd = nullptr;
 	byte *rgbOut = nullptr;
 	unsigned int cbOut;
@@ -962,10 +960,10 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 
-	ctx = HMAC_CTX_new();
+	HMAC_CTX *ctx = HMAC_CTX_new();
 	CHECK_CONDITION(nullptr != ctx, COSE_ERR_OUT_OF_MEMORY);
 
-	if (0) {
+	if (false) {
 	errorReturn:
 		COSE_FREE(rgbOut, context);
 		if (cbor != nullptr) {
@@ -1084,7 +1082,6 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 {
 	EC_KEY *pNewKey = nullptr;
@@ -1116,7 +1113,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 
 			default:
 				FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-		}			
+		}
 
 		return pKeyNew;
 	}

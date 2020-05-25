@@ -1,19 +1,20 @@
-/** \file SignerInfo.c
+/** \file SignerInfo.cpp
  * Contains implementation of the functions related to HCOSE_SIGNER handle
  * objects.
  */
+
+#include "cose/cose.h"
+
+#if INCLUDE_SIGN || INCLUDE_COUNTERSIGNATURE
 
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
 #endif
 
-#include "cose/cose.h"
 #include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
-
-#if INCLUDE_SIGN || INCLUDE_COUNTERSIGNATURE
+#include "SignerInfo.hpp"
 
 #if INCLUDE_SIGN
 COSE *SignerRoot = nullptr;
@@ -331,7 +332,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo *pSigner,
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pSigner->m_message.m_counterSign1 != NULL) {
+	if (pSigner->m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(
 				&pSigner->m_message, CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;
@@ -354,7 +355,7 @@ errorReturn:
 #if INCLUDE_SIGN
 bool COSE_Signer_SetKey2(HCOSE_SIGNER h, HCOSE_KEY pKey, cose_errback *perr)
 {
-	COSE_SignerInfo *p;
+	COSE_SignerInfo *p{nullptr};
 
 	if (false) {
 	errorReturn:

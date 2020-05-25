@@ -28,7 +28,7 @@ typedef struct _cose_mac* HCOSE_MAC;
 typedef struct _cose_mac0* HCOSE_MAC0;
 typedef struct _cose_counterSignature* HCOSE_COUNTERSIGN;
 typedef struct _cose_counterSignature1* HCOSE_COUNTERSIGN1;
-typedef struct _cose_key* HCOSE_KEY;
+typedef class COSE_KEY* HCOSE_KEY;
 
 /**
  * All of the different kinds of errors
@@ -222,9 +222,9 @@ typedef enum {
  * Functions dealing with keys
  */
 
-const int COSE_KEY_FL_OWN = 0x1;	// Cede ownership of the key to the libraray
-									// Only neede for MBEDTLS as OpenSSL does reference counts
-	
+// Cede ownership of the key to the library
+// Only needed for MBEDTLS as OpenSSL does reference counts
+const int COSE_KEY_FL_OWN = 0x1;
 
 HCOSE_KEY COSE_KEY_FromCbor(cn_cbor* pcborKey,
 	CBOR_CONTEXT_COMMA cose_errback* perror);
@@ -235,8 +235,8 @@ HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY* opensslKey,
 	CBOR_CONTEXT_COMMA cose_errback* perror);
 #endif
 #ifdef COSE_C_USE_MBEDTLS
-HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair *,
-	cn_cbor *  pcborKey,
+HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair*,
+	cn_cbor* pcborKey,
 	int flags,
 	CBOR_CONTEXT_COMMA cose_errback* perror);
 #endif

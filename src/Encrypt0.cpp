@@ -1,28 +1,25 @@
-/** \file Encrypt0.c
+/** \file Encrypt0.cpp
  * Contains implementation of the functions related to HCOSE_ENCRYPT handle
  * objects.
  */
 
 #include <stdlib.h>
-#ifdef __MBED__
-#include <string.h>
-#else
+#ifndef __MBED__
 #include <memory.h>
 #endif
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 
 #include "cose/cose.h"
 #include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
 
 #if INCLUDE_ENCRYPT0 || INCLUDE_MAC0
-
 COSE *EncryptRoot = nullptr;
 #endif
 
 #if INCLUDE_ENCRYPT0
+
 /*! \private
  * @brief Test if a HCOSE_ENCRYPT handle is valid
  *

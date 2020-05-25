@@ -133,8 +133,6 @@ int _ValidateSigned(const cn_cbor *pControl,
 				}
 
 				for (size_t counterNo = 0; counterNo < count; counterNo++) {
-					bool noSignAlg = false;
-
 					Safe_HCOSE_COUNTERSIGN h = COSE_Signer_get_countersignature(
 						hSigner, static_cast<int>(counterNo), nullptr);
 					if (h == nullptr) {
@@ -321,8 +319,6 @@ int _ValidateSigned(const cn_cbor *pControl,
 						COSE_UNPROTECT_ONLY, nullptr) == nullptr) {
 					return 0;
 				}
-
-				bool noSupportSign = false;
 
 				Safe_HCOSE_COUNTERSIGN1 h(
 					COSE_Sign_get_countersignature1(hSig, nullptr));
@@ -712,7 +708,6 @@ int _ValidateSign1(const cn_cbor *pControl,
 {
 	const cn_cbor *pInput = cn_cbor_mapget_string(pControl, "input");
 	int type;
-	bool fFail = false;
 	bool fFailBody = false;
 	int returnCode = 2;
 
@@ -789,8 +784,6 @@ int _ValidateSign1(const cn_cbor *pControl,
 			}
 
 			for (size_t counterNo = 0; counterNo < count; counterNo++) {
-				bool noSignAlg = false;
-
 				Safe_HCOSE_COUNTERSIGN h = COSE_Sign1_get_countersignature(
 					hSig, static_cast<int>(counterNo), nullptr);
 				if (h == nullptr) {
@@ -853,8 +846,6 @@ int _ValidateSign1(const cn_cbor *pControl,
 			}
 
 			for (size_t counterNo = 0; counterNo < count; counterNo++) {
-				bool noSignAlg = false;
-
 				Safe_HCOSE_COUNTERSIGN1 h =
 					COSE_Sign1_get_countersignature1(hSig, nullptr);
 				if (h == nullptr) {

@@ -9,6 +9,7 @@
 #include "cose_int.h"
 #include "cose/cose_configure.h"
 #include "cose_crypto.h"
+#include "Recipient.hpp"
 
 #if INCLUDE_ENCRYPT || INCLUDE_ENCRYPT0 || INCLUDE_MAC || INCLUDE_MAC0
 static bool BuildContextBytes(COSE *pcose,
@@ -201,7 +202,7 @@ static bool HKDF_X(COSE *pCose,
 	size_t cbDigest;
 	byte *pbSecret = nullptr;
 	size_t cbSecret = 0;
-	COSE_KEY *pkeyMessage = NULL;
+	COSE_KEY *pkeyMessage = nullptr;
 
 	if (!BuildContextBytes(pCose, algResult, cbitKey, &pbContext, &cbContext,
 			CBOR_CONTEXT_PARAM_COMMA perr)) {
@@ -1222,7 +1223,7 @@ bool _COSE_Recipient_encrypt(COSE_RecipientInfo *pRecipient,
 #endif
 
 #if INCLUDE_COUNTERSIGNATURE1
-	if (pRecipient->m_encrypt.m_message.m_counterSign1 != NULL) {
+	if (pRecipient->m_encrypt.m_message.m_counterSign1 != nullptr) {
 		if (!_COSE_CounterSign1_Sign(&pRecipient->m_encrypt.m_message,
 				CBOR_CONTEXT_PARAM_COMMA perr)) {
 			goto errorReturn;

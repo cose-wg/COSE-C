@@ -38,14 +38,21 @@ set(cose_sources
     ${CMAKE_BINARY_DIR}/include/cose/cose_configure.h
     cose_crypto.h
     cose_int.h
+    Cose.hpp
     Cose.cpp
     utils.hpp
+    Enveloped.hpp
+    CoseKey.hpp
     CoseKey.cpp
+    CounterSign.hpp
     CounterSign.cpp
+    CounterSign1.hpp
     CounterSign1.cpp
     MacMessage.cpp
     MacMessage0.cpp
+    Sign.hpp
     Sign.cpp
+    Sign1.hpp
     Sign1.cpp
     cbor.cpp
     Encrypt.cpp
@@ -75,7 +82,7 @@ if(MSVC)
 endif()
 
 if(CLANG_TIDY_EXE)
-  set_target_properties(${PROJECT_NAME} PROPERTIES C_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
 endif()
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
