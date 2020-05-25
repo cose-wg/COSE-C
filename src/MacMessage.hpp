@@ -7,7 +7,7 @@ class COSE_RecipientInfo;
 
 class COSE_MacMessage {
    public:
-	COSE m_message{};	 // The message object
+	COSE m_message{};  // The message object
 	COSE_RecipientInfo *m_recipientFirst{nullptr};
 };
 

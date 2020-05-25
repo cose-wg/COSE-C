@@ -9,11 +9,13 @@ class COSE_CounterSign1;
 
 class COSE {
    public:
-	COSE_INIT_FLAGS m_flags{COSE_INIT_FLAGS_NONE};   //  Not sure what goes here yet
-	bool m_ownMsg{false};			   //  Do I own the pointer @ m_cbor?
-	bool m_ownUnprotectedMap{false};  //  Do I own the pointer @ m_unportectedMap?
-	int m_msgType{};			   //  What message type is this?
-	int m_refCount{};			   //  Allocator Reference Counting.
+	COSE_INIT_FLAGS m_flags{
+		COSE_INIT_FLAGS_NONE};	//  Not sure what goes here yet
+	bool m_ownMsg{false};		//  Do I own the pointer @ m_cbor?
+	bool m_ownUnprotectedMap{
+		false};		   //  Do I own the pointer @ m_unportectedMap?
+	int m_msgType{};   //  What message type is this?
+	int m_refCount{};  //  Allocator Reference Counting.
 	cn_cbor *m_cbor{nullptr};
 	cn_cbor *m_cborRoot{nullptr};
 	cn_cbor *m_protectedMap{nullptr};
@@ -26,8 +28,8 @@ class COSE {
 #endif
 	COSE *m_handleList{nullptr};
 #if INCLUDE_COUNTERSIGNATURE
-	COSE_CounterSign
-		*m_counterSigners{nullptr};	// Linked list of all counter signatures
+	COSE_CounterSign *m_counterSigners{
+		nullptr};  // Linked list of all counter signatures
 #endif
 #if INCLUDE_COUNTERSIGNATURE1
 	COSE_CounterSign1 *m_counterSign1{nullptr};

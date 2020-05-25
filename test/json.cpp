@@ -69,8 +69,8 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				if (strncmp(&rgch[ib], "true", 4) != 0) {
 					goto error;
 				}
-				node =
-					cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
+				node = cn_cbor_data_create(
+					nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
 				node->type = CN_CBOR_TRUE;
 				ib += 3;
 				break;
@@ -79,8 +79,8 @@ const cn_cbor *ParseString(char *rgch, int ib, int cch)
 				if (strncmp(&rgch[ib], "false", 5) != 0) {
 					goto error;
 				}
-				node =
-					cn_cbor_data_create(nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
+				node = cn_cbor_data_create(
+					nullptr, 0, CBOR_CONTEXT_PARAM_COMMA nullptr);
 				node->type = CN_CBOR_FALSE;
 				ib += 4;
 				break;

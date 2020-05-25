@@ -839,7 +839,7 @@ bool HKDF_Extract(COSE *pcose,
 	const EVP_MD *pmd = nullptr;
 	unsigned int cbDigest;
 
-	HMAC_CTX * ctx = HMAC_CTX_new();
+	HMAC_CTX *ctx = HMAC_CTX_new();
 	CHECK_CONDITION(nullptr != ctx, COSE_ERR_OUT_OF_MEMORY);
 
 	if (0) {
@@ -903,7 +903,7 @@ bool HKDF_Expand(COSE *pcose,
 
 	UNUSED(pcose);
 
-	HMAC_CTX * ctx = HMAC_CTX_new();
+	HMAC_CTX *ctx = HMAC_CTX_new();
 	CHECK_CONDITION(ctx != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	if (0) {
@@ -961,7 +961,7 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 
-	HMAC_CTX * ctx = HMAC_CTX_new();
+	HMAC_CTX *ctx = HMAC_CTX_new();
 	CHECK_CONDITION(nullptr != ctx, COSE_ERR_OUT_OF_MEMORY);
 
 	if (false) {
@@ -1083,7 +1083,6 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 {
 	EC_KEY *pNewKey = nullptr;
@@ -1115,7 +1114,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 
 			default:
 				FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-		}			
+		}
 
 		return pKeyNew;
 	}

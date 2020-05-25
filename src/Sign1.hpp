@@ -4,7 +4,7 @@
 
 class COSE_Sign1Message {
    public:
-	COSE m_message{};	 // The message object
+	COSE m_message{};  // The message object
 };
 
 HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor *cbor,

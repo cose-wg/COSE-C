@@ -136,13 +136,14 @@ FOO EncryptedBody[4] = {
 	{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},
 	{"unprotected", CN_CBOR_MAP, 0, HeaderMap, _countof(HeaderMap), 0},
 	{"ciphertext", CN_CBOR_BYTES, 0, nullptr, 0, 0},
-{"recipients", CN_CBOR_ARRAY, 0, &createRecipients(), 1, 0}};
+	{"recipients", CN_CBOR_ARRAY, 0, &createRecipients(), 1, 0}};
 
-FOO &createRecipients(){
-FOO tmp_recipients = {
-nullptr, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0};
-Recipients = tmp_recipients;
-return Recipients;
+FOO& createRecipients()
+{
+	FOO tmp_recipients = {
+		nullptr, CN_CBOR_ARRAY, 0, EncryptedBody, _countof(EncryptedBody), 0};
+	Recipients = tmp_recipients;
+	return Recipients;
 }
 
 FOO MacBody[5] = {{"protected", CN_CBOR_BYTES, 0, &RecurseHeaderMap, 1, 0},

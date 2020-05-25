@@ -139,7 +139,7 @@ HCOSE_KEY COSE_KEY_FromEVP(EVP_PKEY *opensslKey,
 #endif
 
 #ifdef COSE_C_USE_MBEDTLS
-HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair * mbedtls_keypair,
+HCOSE_KEY COSE_KEY_FromMbedKeypair(mbedtls_ecp_keypair *mbedtls_keypair,
 	cn_cbor *pcborKey,
 	int flags,
 	CBOR_CONTEXT_COMMA cose_errback *perror)

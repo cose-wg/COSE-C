@@ -62,7 +62,7 @@
 //#define CN_CALLOC_CONTEXT() CN_CALLOC(context)
 #define CN_CBOR_FREE(p, context) cn_cbor_free(p, context)
 
-#else // USE_CBOR_CONTEXT
+#else  // USE_CBOR_CONTEXT
 
 #define CBOR_CONTEXT_PARAM
 #define CBOR_CONTEXT_PARAM_COMMA

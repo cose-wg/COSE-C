@@ -972,7 +972,7 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose,
 	CHECK_CONDITION(IsValidMacHandle(cose), COSE_ERR_INVALID_PARAMETER);
 
 	p = ((COSE_MacMessage *)cose)->m_recipientFirst;
-for (int i = 0; i < iRecipient; i++) {
+	for (int i = 0; i < iRecipient; i++) {
 		CHECK_CONDITION(p != nullptr, COSE_ERR_NO_RECIPIENT_FOUND);
 		p = p->m_recipientNext;
 	}

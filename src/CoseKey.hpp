@@ -18,6 +18,6 @@ class COSE_KEY {
 #endif
 
 #ifdef COSE_C_USE_MBEDTLS
-	mbedtls_ecp_keypair *m_mbedtls_keypair {nullptr};
+	mbedtls_ecp_keypair *m_mbedtls_keypair{nullptr};
 #endif
 };
