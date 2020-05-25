@@ -30,17 +30,17 @@ static bool FUseCompressed = true;
 
 HMAC_CTX *HMAC_CTX_new()
 {
-	HMAC_CTX *foo = (HMAC_CTX *)malloc(sizeof(HMAC_CTX));
-	if (foo != nullptr) {
-		HMAC_CTX_init(foo);
+	HMAC_CTX *ctx = (HMAC_CTX *)malloc(sizeof(HMAC_CTX));
+	if (ctx != nullptr) {
+		HMAC_CTX_init(ctx);
 	}
-	return foo;
+	return ctx;
 }
 
-void HMAC_CTX_free(HMAC_CTX *foo)
+void HMAC_CTX_free(HMAC_CTX *ctx)
 {
-	if (foo != nullptr)
-		free(foo);
+	if (ctx != nullptr)
+		free(ctx);
 }
 
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
@@ -836,11 +836,10 @@ bool HKDF_Extract(COSE *pcose,
 	byte rgbSalt[EVP_MAX_MD_SIZE] = {0};
 	int cbSalt;
 	cn_cbor *cnSalt;
-	HMAC_CTX *ctx;
 	const EVP_MD *pmd = nullptr;
 	unsigned int cbDigest;
 
-	ctx = HMAC_CTX_new();
+	HMAC_CTX * ctx = HMAC_CTX_new();
 	CHECK_CONDITION(nullptr != ctx, COSE_ERR_OUT_OF_MEMORY);
 
 	if (0) {
@@ -896,7 +895,6 @@ bool HKDF_Expand(COSE *pcose,
 	size_t cbOutput,
 	cose_errback *perr)
 {
-	HMAC_CTX *ctx;
 	const EVP_MD *pmd = nullptr;
 	size_t ib;
 	unsigned int cbDigest = 0;
@@ -905,7 +903,7 @@ bool HKDF_Expand(COSE *pcose,
 
 	UNUSED(pcose);
 
-	ctx = HMAC_CTX_new();
+	HMAC_CTX * ctx = HMAC_CTX_new();
 	CHECK_CONDITION(ctx != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	if (0) {
@@ -955,7 +953,6 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	size_t cbAuthData,
 	cose_errback *perr)
 {
-	HMAC_CTX *ctx;
 	const EVP_MD *pmd = nullptr;
 	byte *rgbOut = nullptr;
 	unsigned int cbOut;
@@ -964,10 +961,10 @@ bool HMAC_Create(COSE_MacMessage *pcose,
 	cn_cbor_context *context = &pcose->m_message.m_allocContext;
 #endif
 
-	ctx = HMAC_CTX_new();
+	HMAC_CTX * ctx = HMAC_CTX_new();
 	CHECK_CONDITION(nullptr != ctx, COSE_ERR_OUT_OF_MEMORY);
 
-	if (0) {
+	if (false) {
 	errorReturn:
 		COSE_FREE(rgbOut, context);
 		if (cbor != nullptr) {
