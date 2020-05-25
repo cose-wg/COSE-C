@@ -7,10 +7,10 @@ class COSE_KEY;
 
 class COSE_RecipientInfo {
    public:
-	COSE_Enveloped m_encrypt;
-	COSE_RecipientInfo *m_recipientNext;
-	COSE_KEY *m_pkey;
-	COSE_KEY *m_pkeyStatic;
+	COSE_Enveloped m_encrypt{};
+	COSE_RecipientInfo *m_recipientNext{nullptr};
+	COSE_KEY *m_pkey{nullptr};
+	COSE_KEY *m_pkeyStatic{nullptr};
 };
 
 COSE_RecipientInfo *_COSE_Recipient_Init_From_Object(cn_cbor *,

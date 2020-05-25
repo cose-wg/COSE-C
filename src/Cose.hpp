@@ -9,28 +9,28 @@ class COSE_CounterSign1;
 
 class COSE {
    public:
-	COSE_INIT_FLAGS m_flags;   //  Not sure what goes here yet
-	bool m_ownMsg;			   //  Do I own the pointer @ m_cbor?
-	bool m_ownUnprotectedMap;  //  Do I own the pointer @ m_unportectedMap?
-	int m_msgType;			   //  What message type is this?
-	int m_refCount;			   //  Allocator Reference Counting.
-	cn_cbor *m_cbor;
-	cn_cbor *m_cborRoot;
-	cn_cbor *m_protectedMap;
-	cn_cbor *m_unprotectMap;
-	cn_cbor *m_dontSendMap;
-	const byte *m_pbExternal;
-	size_t m_cbExternal;
+	COSE_INIT_FLAGS m_flags{COSE_INIT_FLAGS_NONE};   //  Not sure what goes here yet
+	bool m_ownMsg{false};			   //  Do I own the pointer @ m_cbor?
+	bool m_ownUnprotectedMap{false};  //  Do I own the pointer @ m_unportectedMap?
+	int m_msgType{};			   //  What message type is this?
+	int m_refCount{};			   //  Allocator Reference Counting.
+	cn_cbor *m_cbor{nullptr};
+	cn_cbor *m_cborRoot{nullptr};
+	cn_cbor *m_protectedMap{nullptr};
+	cn_cbor *m_unprotectMap{nullptr};
+	cn_cbor *m_dontSendMap{nullptr};
+	const byte *m_pbExternal{nullptr};
+	size_t m_cbExternal{0};
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;
 #endif
-	COSE *m_handleList;
+	COSE *m_handleList{nullptr};
 #if INCLUDE_COUNTERSIGNATURE
 	COSE_CounterSign
-		*m_counterSigners;	// Linked list of all counter signatures
+		*m_counterSigners{nullptr};	// Linked list of all counter signatures
 #endif
 #if INCLUDE_COUNTERSIGNATURE1
-	COSE_CounterSign1 *m_counterSign1;
+	COSE_CounterSign1 *m_counterSign1{nullptr};
 #endif
 };
 

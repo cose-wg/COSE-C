@@ -7,9 +7,9 @@ class COSE_KEY;
 
 class COSE_SignerInfo {
    public:
-	COSE m_message;
-	COSE_KEY *m_pkey;
-	COSE_SignerInfo *m_signerNext;
+	COSE m_message{};
+	COSE_KEY *m_pkey{nullptr};
+	COSE_SignerInfo *m_signerNext{nullptr};
 };
 
 bool _COSE_SignerInfo_Init(COSE_INIT_FLAGS flags,

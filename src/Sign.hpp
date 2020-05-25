@@ -7,8 +7,8 @@ class COSE_SignerInfo;
 
 class COSE_SignMessage {
    public:
-	COSE m_message;	 // The message object
-	COSE_SignerInfo *m_signerFirst;
+	COSE m_message{};  // The message object
+	COSE_SignerInfo *m_signerFirst{nullptr};
 };
 
 HCOSE_SIGN _COSE_Sign_Init_From_Object(cn_cbor *,

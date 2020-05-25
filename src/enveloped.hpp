@@ -7,10 +7,10 @@ class COSE_RecipientInfo;
 
 class COSE_Enveloped {
    public:
-	COSE m_message;	 // The message object
-	const byte *pbContent;
-	size_t cbContent;
-	COSE_RecipientInfo *m_recipientFirst;
+	COSE m_message{};	 // The message object
+	const byte *pbContent{nullptr};
+	size_t cbContent{0};
+	COSE_RecipientInfo *m_recipientFirst{nullptr};
 };
 
 typedef COSE_Enveloped COSE_Encrypt;
