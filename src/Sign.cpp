@@ -1,15 +1,15 @@
-/** \file Sign.c
+/** \file Sign.cpp
  * Contains implementation of the functions related to HCOSE_SIGN handle
  * objects.
  */
 
-#include <stdlib.h>
-
 #include "cose/cose.h"
-#include "cose_int.h"
-#include "cose/cose_configure.h"
 
 #if INCLUDE_SIGN
+
+#include <stdlib.h>
+
+#include "cose_int.h"
 
 COSE *SignRoot = nullptr;
 

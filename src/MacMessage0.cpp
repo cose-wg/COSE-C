@@ -3,20 +3,21 @@
  * objects.
  */
 
+#include "cose/cose.h"
+
+#if INCLUDE_MAC0
+
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
 #endif
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 #include <string.h>
 
-#include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
 #include "cose_crypto.h"
-
-#if INCLUDE_MAC0
 
 COSE *Mac0Root = nullptr;
 

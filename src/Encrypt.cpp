@@ -3,6 +3,15 @@
  * objects.
  */
 
+#include "cose/cose.h"
+#include "cose_int.h"
+
+#if INCLUDE_ENCRYPT || INCLUDE_MAC
+COSE *EnvelopedRoot = nullptr;
+#endif
+
+#if INCLUDE_ENCRYPT
+
 #include <stdlib.h>
 #ifdef __MBED__
 #include <stddef.h>
@@ -11,18 +20,10 @@
 #include <memory.h>
 #endif
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 
-#include "cose/cose.h"
-#include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
 
-#if INCLUDE_ENCRYPT || INCLUDE_MAC
-COSE *EnvelopedRoot = nullptr;
-#endif
-
-#if INCLUDE_ENCRYPT
 /*! \private
  * @brief Test if a HCOSE_ENVELOPED handle is valid
  *

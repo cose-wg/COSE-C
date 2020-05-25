@@ -1,6 +1,6 @@
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 #include <stdbool.h>
 
 #ifdef COSE_C_USE_OPENSSL

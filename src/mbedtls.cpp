@@ -3,7 +3,7 @@
 #include "cose_int.h"
 #include "cose_crypto.h"
 
-#include <assert.h>
+#include <cassert>
 #ifndef __MBED__
 #include <memory.h>
 #endif

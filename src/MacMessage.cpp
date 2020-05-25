@@ -1,21 +1,21 @@
-/** \file MacMessage.c
+/** \file MacMessage.cpp
  * Contains implementation of the functions related to HCOSE_MAC handle objects.
  */
+
+#include "cose/cose.h"
+
+#if INCLUDE_MAC
 
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
 #endif
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 #include <string.h>
 
-#include "cose/cose.h"
 #include "cose_int.h"
-#include "cose/cose_configure.h"
 #include "cose_crypto.h"
-
-#if INCLUDE_MAC
 
 COSE *MacRoot = nullptr;
 
@@ -966,13 +966,12 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose,
 	int iRecipient,
 	cose_errback *perr)
 {
-	int i;
 	COSE_RecipientInfo *p;
 
 	CHECK_CONDITION(IsValidMacHandle(cose), COSE_ERR_INVALID_PARAMETER);
 
 	p = ((COSE_MacMessage *)cose)->m_recipientFirst;
-	for (i = 0; i < iRecipient; i++) {
+for (int i = 0; i < iRecipient; i++) {
 		CHECK_CONDITION(p != nullptr, COSE_ERR_NO_RECIPIENT_FOUND);
 		p = p->m_recipientNext;
 	}

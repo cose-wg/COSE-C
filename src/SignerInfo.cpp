@@ -1,21 +1,23 @@
-/** \file SignerInfo.c
+/** \file SignerInfo.cpp
  * Contains implementation of the functions related to HCOSE_SIGNER handle
  * objects.
  */
+
+#include "cose/cose.h"
+
+#if INCLUDE_SIGN || INCLUDE_COUNTERSIGNATURE
+
+#if INCLUDE_SIGN
 
 #include <stdlib.h>
 #ifndef __MBED__
 #include <memory.h>
 #endif
 
-#include "cose/cose.h"
 #include "cose_int.h"
 #include "cose/cose_configure.h"
 #include "cose_crypto.h"
 
-#if INCLUDE_SIGN || INCLUDE_COUNTERSIGNATURE
-
-#if INCLUDE_SIGN
 COSE *SignerRoot = nullptr;
 
 bool IsValidSignerHandle(HCOSE_SIGNER h)
