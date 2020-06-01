@@ -331,6 +331,7 @@ message(STATUS "COSE_C_USE_MEMORY_SANITIZER:.....${COSE_C_USE_MEMORY_SANITIZER}"
 message(STATUS "COSE_C_USE_LEAK_SANITIZER:.......${COSE_C_USE_LEAK_SANITIZER}")
 message(STATUS "COSE_C_USE_UNDEFINED_SANITIZER:..${COSE_C_USE_UNDEFINED_SANITIZER}")
 message(STATUS "COSE_C_VALGRIND_MEMORY_CHECK:....${COSE_C_VALGRIND_MEMORY_CHECK}")
+message(STATUS "OpenSSL ...${OPENSSL_LIBRARIES}")
 message(STATUS "project_cn_cbor_SOURCE_DIR:......${project_cn_cbor_SOURCE_DIR}")
 message(STATUS "project_cn_cbor_BINARY_DIR:......${project_cn_cbor_BINARY_DIR}")
 message(STATUS "project_mbedtls_SOURCE_DIR:......${project_mbedtls_SOURCE_DIR}")

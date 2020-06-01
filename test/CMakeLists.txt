@@ -110,6 +110,10 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --dir Examples/ecdh-wrap-examples)
 add_test(
+  NAME ecdh-x25519
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMAND cose_test --dir Examples/X25519-tests)
+add_test(
   NAME sign
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND cose_test --dir Examples/sign-tests)

@@ -322,7 +322,7 @@ struct {
 	int kty;
 	int operation;
 	int keyNew;
-} RgStringKeys[10] = {{"kty", 0, OPERATION_IGNORE, COSE_Key_Type},
+} RgStringKeys[12] = {{"kty", 0, OPERATION_IGNORE, COSE_Key_Type},
 	{"kid", 0, OPERATION_NONE, COSE_Key_ID},
 	{"crv", 2, OPERATION_STRING, COSE_Key_EC2_Curve},
 	{"x", 2, OPERATION_BASE64, COSE_Key_EC2_X},
@@ -330,7 +330,10 @@ struct {
 	{"k", 4, OPERATION_BASE64, -1},
 	{"crv", COSE_Key_Type_OKP, OPERATION_STRING, COSE_Key_OPK_Curve},
 	{"x_hex", COSE_Key_Type_OKP, OPERATION_HEX, COSE_Key_OPK_X},
-	{"d_hex", COSE_Key_Type_OKP, OPERATION_HEX, -4}};
+	{"x", COSE_Key_Type_OKP, OPERATION_BASE64, COSE_Key_OPK_X},
+	{"d_hex", COSE_Key_Type_OKP, OPERATION_HEX, -4},
+	{"d", COSE_Key_Type_OKP, OPERATION_BASE64, -4}
+};
 
 bool SetAttributes(HCOSE hHandle,
 	const cn_cbor* pAttributes,
