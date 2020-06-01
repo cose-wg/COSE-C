@@ -1351,6 +1351,7 @@ cn_cbor *EC_ToCBOR(const EC_KEY * pKey, CBOR_CONTEXT_COMMA cose_errback * perr)
 	size_t cbSize;
 	byte *pbOut = nullptr;
 	size_t cbX;
+	const EC_POINT *pPoint = nullptr;
 
 	const EC_GROUP* pgroup = EC_KEY_get0_group(pKey);
 	CHECK_CONDITION(pgroup != nullptr, COSE_ERR_INVALID_PARAMETER);
@@ -1380,7 +1381,7 @@ cn_cbor *EC_ToCBOR(const EC_KEY * pKey, CBOR_CONTEXT_COMMA cose_errback * perr)
 		cbor_error);
 	p = nullptr;
 
-	const EC_POINT* pPoint = EC_KEY_get0_public_key(pKey);
+	pPoint = EC_KEY_get0_public_key(pKey);
 	CHECK_CONDITION(pPoint != nullptr, COSE_ERR_INVALID_PARAMETER);
 
 	if (FUseCompressed) {
