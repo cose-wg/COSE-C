@@ -1658,7 +1658,11 @@ bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
 		case COSE_UNPROTECT_ONLY:
 			if (pKey->m_cborKey == nullptr) {
 #ifdef COSE_C_USE_OPENSSL
-				pKey->m_cborKey = EVP_ToCBOR(pKey->m_opensslKey, &pKey->m_allocContext, perr);
+				pKey->m_cborKey = EVP_ToCBOR(pKey->m_opensslKey,
+#ifdef USE_CBOR_CONTEXT
+					&pKey->m_allocContext,
+#endif
+					perr);
 				if (pKey->m_cborKey == nullptr) {
 					return false;
 				}
