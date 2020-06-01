@@ -1188,7 +1188,8 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			break;
 
 		default:
-			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+			p = nullptr;
+			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 	p = nullptr;
 
