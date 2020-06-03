@@ -22,44 +22,60 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
-static bool FUseCompressed = true;
+/*******************************************/
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000)
+#define Safe_OPENSSL(handleName, freeFunction)          \
+	class Safe_##handleName {                           \
+		handleName *h;                                  \
+                                                        \
+	   public:                                          \
+		Safe_##handleName() { h = nullptr; }            \
+		Safe_##handleName(handleName *hIn) { h = hIn; } \
+		~Safe_##handleName() { freeFunction(h); }       \
+		handleName *Set(handleName *hIn)                \
+		{                                               \
+			if (h != nullptr) {                         \
+				freeFunction(h);                        \
+			}                                           \
+			h = hIn;                                    \
+			if (hIn != nullptr) {                       \
+				handleName##_up_ref(hIn);               \
+			}                                           \
+			return hIn;                                 \
+		}                                               \
+		bool IsNull() { return h == NULL; }             \
+		operator handleName *() { return h; }           \
+		handleName *operator=(handleName *pIn)          \
+		{                                               \
+			Set(pIn);                                   \
+			return pIn;                                 \
+		}                                               \
+		handleName *Transfer(Safe_##handleName *hIn)    \
+		{                                               \
+			if (h != nullptr) {                         \
+				freeFunction(h);                        \
+			}                                           \
+			h = hIn->h;                                 \
+			hIn->h = nullptr;                           \
+			return h;                                   \
+		}                                               \
+		handleName *operator=(Safe_##handleName hIn)    \
+		{                                               \
+			Set(hIn.h);                                 \
+			return h;                                   \
+		}                                               \
+		handleName *Release()                           \
+		{                                               \
+			handleName *h2 = h;                         \
+			h = nullptr;                                \
+			return h2;                                  \
+		}                                               \
+	};
 
-HMAC_CTX *HMAC_CTX_new()
-{
-	HMAC_CTX *foo = (HMAC_CTX *)malloc(sizeof(HMAC_CTX));
-	if (foo != nullptr) {
-		HMAC_CTX_init(foo);
-	}
-	return foo;
-}
+Safe_OPENSSL(EC_KEY, EC_KEY_free);
+Safe_OPENSSL(EVP_PKEY, EVP_PKEY_free);
 
-void HMAC_CTX_free(HMAC_CTX *foo)
-{
-	if (foo != nullptr)
-		free(foo);
-}
-
-void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
-{
-	if (pr != nullptr)
-		*pr = sig->r;
-	if (ps != nullptr)
-		*ps = sig->s;
-}
-
-int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
-{
-	if (r == nullptr || s == nullptr)
-		return 0;
-	BN_clear_free(sig->r);
-	BN_clear_free(sig->s);
-	sig->r = r;
-	sig->s = s;
-	return 1;
-}
-#endif
+/**********************************************/
 
 bool AES_CCM_Decrypt(COSE_Enveloped *pcose,
 	int TSize,
@@ -1068,10 +1084,12 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 	CHECK_CONDITION(cn != nullptr, COSE_ERR_CBOR);
 
 	if (cn->length > cbOut) {
-		return false;
+		f = false;
 	}
-	for (unsigned int i = 0; i < (unsigned int)TSize / 8; i++) {
-		f |= (cn->v.bytes[i] != rgbOut[i]);
+	else {
+		for (unsigned int i = 0; i < (unsigned int)TSize / 8; i++) {
+			f |= (cn->v.bytes[i] != rgbOut[i]);
+		}
 	}
 
 	COSE_FREE(rgbOut, context);
@@ -1084,21 +1102,96 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-
-EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
+EVP_PKEY *EVP_FromKey(COSE_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 {
-	EC_KEY *pNewKey = nullptr;
+	if (pKey->m_opensslKey != nullptr) {
+		return pKey->m_opensslKey;
+	}
 
 	if (false) {
 	errorReturn:
-		if (pNewKey != nullptr) {
-			EC_KEY_free(pNewKey);
+		return nullptr;
+	}
+
+	cn_cbor *keyType = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_Type);
+	CHECK_CONDITION(keyType != NULL && keyType->type == CN_CBOR_UINT,
+		COSE_ERR_INVALID_PARAMETER);
+
+	switch (keyType->v.uint) {
+		case COSE_Key_Type_EC2: {
+			int cbSize;
+			Safe_EC_KEY ecKey = ECKey_From(pKey, &cbSize, perr);
+			CHECK_CONDITION(ecKey != nullptr, perr->err);
+			Safe_EVP_PKEY evpKey = EVP_PKEY_new();
+			CHECK_CONDITION(evpKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
+			CHECK_CONDITION(
+				EVP_PKEY_set1_EC_KEY(evpKey, ecKey) == 1, COSE_ERR_CRYPTO_FAIL);
+			pKey->m_opensslKey = evpKey;
+			EVP_PKEY_up_ref(pKey->m_opensslKey);
+			return evpKey.Release();
 		}
+
+		case COSE_Key_Type_OKP: {
+			int type;
+			cn_cbor *p =
+				cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_OPK_Curve);
+			CHECK_CONDITION(p != nullptr, COSE_ERR_INVALID_PARAMETER);
+
+			switch (p->v.uint) {
+				case COSE_Curve_Ed25519:
+					type = EVP_PKEY_ED25519;
+					break;
+
+				case COSE_Curve_Ed448:
+					type = EVP_PKEY_ED448;
+					break;
+
+				case COSE_Curve_X25519:
+					type = EVP_PKEY_X25519;
+					break;
+
+				case COSE_Curve_X448:
+					type = EVP_PKEY_X448;
+					break;
+
+				default:
+					FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+			}
+
+			Safe_EVP_PKEY evpKey;
+
+			p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_d);
+			if (p != nullptr) {
+				evpKey = EVP_PKEY_new_raw_private_key(
+					type, nullptr, p->v.bytes, p->length);
+				CHECK_CONDITION(evpKey != nullptr, COSE_ERR_CRYPTO_FAIL);
+			}
+			else {
+				p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_OPK_X);
+				CHECK_CONDITION(p != nullptr, COSE_ERR_INVALID_PARAMETER);
+				evpKey = EVP_PKEY_new_raw_public_key(
+					type, nullptr, p->v.bytes, p->length);
+			}
+
+			pKey->m_opensslKey = evpKey;
+			EVP_PKEY_up_ref(pKey->m_opensslKey);
+			return evpKey.Release();
+		}
+
+		default:
+			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+}
+
+EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
+{
+	if (false) {
+	errorReturn:
 		return nullptr;
 	}
 
 	if (pKey->m_opensslKey != nullptr) {
-		EC_KEY *pKeyNew = EVP_PKEY_get1_EC_KEY(pKey->m_opensslKey);
+		Safe_EC_KEY pKeyNew = EVP_PKEY_get1_EC_KEY(pKey->m_opensslKey);
 		CHECK_CONDITION(pKeyNew != nullptr, COSE_ERR_INVALID_PARAMETER);
 		int gid = EC_GROUP_get_curve_name(EC_KEY_get0_group(pKeyNew));
 		switch (gid) {
@@ -1116,9 +1209,9 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 
 			default:
 				FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-		}			
+		}
 
-		return pKeyNew;
+		return pKeyNew.Release();
 	}
 
 	byte rgbKey[512 + 1];
@@ -1127,7 +1220,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 	int nidGroup = -1;
 	EC_POINT *pPoint = nullptr;
 
-	pNewKey = EC_KEY_new();
+	Safe_EC_KEY pNewKey = EC_KEY_new();
 	CHECK_CONDITION(pNewKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
 	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_Curve);
@@ -1165,7 +1258,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 	memcpy(rgbKey + 1, p->v.str, p->length);
 
 	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_Y);
-	CHECK_CONDITION((p != nullptr), COSE_ERR_INVALID_PARAMETER);
+	CHECK_CONDITION(p != nullptr, COSE_ERR_INVALID_PARAMETER);
 	if (p->type == CN_CBOR_BYTES) {
 		rgbKey[0] = POINT_CONVERSION_UNCOMPRESSED;
 		cbKey = (*cbGroup * 2) + 1;
@@ -1181,8 +1274,9 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 		cbKey = (*cbGroup) + 1;
 		rgbKey[0] = POINT_CONVERSION_COMPRESSED;
 	}
-	else
+	else {
 		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
 
 	pPoint = EC_POINT_new(ecgroup);
 	CHECK_CONDITION(pPoint != nullptr, COSE_ERR_CRYPTO_FAIL);
@@ -1194,9 +1288,7 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 
 	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_EC_d);
 	if (p != nullptr) {
-		BIGNUM *pbn;
-
-		pbn = BN_bin2bn(p->v.bytes, (int)p->length, nullptr);
+		BIGNUM *pbn = BN_bin2bn(p->v.bytes, (int)p->length, nullptr);
 		CHECK_CONDITION(pbn != nullptr, COSE_ERR_CRYPTO_FAIL);
 		CHECK_CONDITION(
 			EC_KEY_set_private_key(pNewKey, pbn) == 1, COSE_ERR_CRYPTO_FAIL);
@@ -1208,24 +1300,24 @@ EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr)
 	CHECK_CONDITION(EVP_PKEY_set1_EC_KEY(pKey->m_opensslKey, pNewKey) == 1,
 		COSE_ERR_CRYPTO_FAIL);
 
-	return pNewKey;
+	return pNewKey.Release();
 }
 
-COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
+cn_cbor *EC_ToCBOR(const EC_KEY *pKey,
+	bool fUseCompressed,
+	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
 	cn_cbor *pkey = nullptr;
-	const EC_GROUP *pgroup;
 	int cose_group;
 	cn_cbor *p = nullptr;
 	cn_cbor_errback cbor_error;
-	const EC_POINT *pPoint;
 	byte *pbPoint = nullptr;
 	size_t cbSize;
 	byte *pbOut = nullptr;
-	COSE_KEY *coseKey = nullptr;
 	size_t cbX;
+	const EC_POINT *pPoint = nullptr;
 
-	pgroup = EC_KEY_get0_group(pKey);
+	const EC_GROUP *pgroup = EC_KEY_get0_group(pKey);
 	CHECK_CONDITION(pgroup != nullptr, COSE_ERR_INVALID_PARAMETER);
 
 	switch (EC_GROUP_get_curve_name(pgroup)) {
@@ -1256,7 +1348,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 	pPoint = EC_KEY_get0_public_key(pKey);
 	CHECK_CONDITION(pPoint != nullptr, COSE_ERR_INVALID_PARAMETER);
 
-	if (FUseCompressed) {
+	if (fUseCompressed) {
 		cbSize = EC_POINT_point2oct(
 			pgroup, pPoint, POINT_CONVERSION_COMPRESSED, nullptr, 0, nullptr);
 		CHECK_CONDITION(cbSize > 0, COSE_ERR_CRYPTO_FAIL);
@@ -1293,7 +1385,7 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		cbor_error);
 	p = nullptr;
 
-	if (FUseCompressed) {
+	if (fUseCompressed) {
 		p = cn_cbor_bool_create(
 			pbPoint[0] & 1, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
 		CHECK_CONDITION_CBOR(p != nullptr, cbor_error);
@@ -1324,11 +1416,6 @@ COSE_KEY *EC_FromKey(const EC_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr)
 		cbor_error);
 	p = nullptr;
 
-	coseKey =
-		(COSE_KEY *)COSE_KEY_FromCbor(pkey, CBOR_CONTEXT_PARAM_COMMA perr);
-	CHECK_CONDITION(coseKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
-	pkey = nullptr;
-
 returnHere:
 	if (pbPoint != nullptr) {
 		COSE_FREE(pbPoint, context);
@@ -1339,10 +1426,7 @@ returnHere:
 	if (p != nullptr) {
 		CN_CBOR_FREE(p, context);
 	}
-	if (pkey != nullptr) {
-		CN_CBOR_FREE(pkey, context);
-	}
-	return coseKey;
+	return pkey;
 
 errorReturn:
 	CN_CBOR_FREE(pkey, context);
@@ -1350,20 +1434,110 @@ errorReturn:
 	goto returnHere;
 }
 
-/*
-bool ECDSA_Sign(const cn_cbor * pKey)
+cn_cbor *EVP_ToCBOR(EVP_PKEY *pKey,
+	bool fCompressPoints,
+	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
-	byte * digest = nullptr;
-	int digestLen = 0;
-	ECDSA_SIG * sig;
+	cn_cbor_errback cborErr;
+	int type = EVP_PKEY_base_id(pKey);
 
-	EC_KEY * eckey = ECKey_From(pKey);
+	switch (type) {
+		case EVP_PKEY_EC:
+			return EC_ToCBOR(EVP_PKEY_get1_EC_KEY(pKey), fCompressPoints,
+				CBOR_CONTEXT_PARAM_COMMA perr);
 
-	sig = ECDSA_do_sign(digest, digestLen, eckey);
+		case EVP_PKEY_X25519:
+		case EVP_PKEY_X448: {
+			cn_cbor *pkey = nullptr;
+			cn_cbor *temp = nullptr;
+			unsigned char *pbKey = nullptr;
+			if (false) {
+			errorReturn:
+				if (pkey != nullptr) {
+					CN_CBOR_FREE(pkey, context);
+				}
+				if (temp != nullptr) {
+					CN_CBOR_FREE(temp, context);
+				}
+				if (pbKey != nullptr) {
+					COSE_FREE(pbKey, context);
+				}
+				return nullptr;
+			}
+			pkey = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cborErr);
+			CHECK_CONDITION_CBOR(pkey != nullptr, cborErr);
+			temp = cn_cbor_int_create(
+				COSE_Key_Type_OKP, CBOR_CONTEXT_PARAM_COMMA & cborErr);
+			CHECK_CONDITION_CBOR(temp != nullptr, cborErr);
+			CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_Type, temp,
+									 CBOR_CONTEXT_PARAM_COMMA & cborErr),
+				cborErr);
+			temp = nullptr;
+			temp = cn_cbor_int_create(
+				type == EVP_PKEY_X25519 ? COSE_Curve_X25519 : COSE_Curve_X448,
+				CBOR_CONTEXT_PARAM_COMMA & cborErr);
+			CHECK_CONDITION_CBOR(temp != nullptr, cborErr);
+			CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_OPK_Curve,
+									 temp, CBOR_CONTEXT_PARAM_COMMA & cborErr),
+				cborErr);
+			temp = nullptr;
+			size_t cbKey;
+			CHECK_CONDITION(
+				EVP_PKEY_get_raw_public_key(pKey, nullptr, &cbKey) == 1,
+				COSE_ERR_CRYPTO_FAIL);
+			pbKey = (unsigned char *)COSE_CALLOC(cbKey, 1, context);
+			CHECK_CONDITION(pbKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
+			CHECK_CONDITION(
+				EVP_PKEY_get_raw_public_key(pKey, pbKey, &cbKey) == 1,
+				COSE_ERR_CRYPTO_FAIL);
+			temp = cn_cbor_data_create2(
+				pbKey, cbKey, 0, CBOR_CONTEXT_PARAM_COMMA & cborErr);
+			CHECK_CONDITION(temp != nullptr, COSE_ERR_OUT_OF_MEMORY);
+			pbKey = nullptr;
+			CHECK_CONDITION_CBOR(cn_cbor_mapput_int(pkey, COSE_Key_OPK_X, temp,
+									 CBOR_CONTEXT_PARAM_COMMA & cborErr),
+				cborErr);
+			temp = nullptr;
+			return pkey;
+		} break;
 
-	return true;
+		default:
+			perr->err = COSE_ERR_INVALID_PARAMETER;
+			return nullptr;
+	}
 }
-*/
+
+#if false
+
+COSE_KEY *EC_FromKey(EC_KEY *pKey, bool fUseCompressed, CBOR_CONTEXT_COMMA cose_errback *perr)
+{
+	COSE_KEY *coseKey = nullptr;
+	cn_cbor *pkey =
+		EC_ToCBOR(pKey, fUseCompressed, CBOR_CONTEXT_PARAM_COMMA perr);
+	if (pkey == nullptr) {
+		return nullptr;
+	}
+
+	Safe_EVP_PKEY evpKey = EVP_PKEY_new();
+	CHECK_CONDITION(evpKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
+	
+	CHECK_CONDITION(EVP_PKEY_set1_EC_KEY(evpKey, pKey) == 1, COSE_ERR_CRYPTO_FAIL);	
+
+	coseKey =
+		(COSE_KEY *)COSE_KEY_FromEVP(evpKey, pkey, CBOR_CONTEXT_PARAM_COMMA perr);
+	CHECK_CONDITION(coseKey != nullptr, COSE_ERR_OUT_OF_MEMORY);
+	pkey = nullptr;
+
+returnHere:
+	if (pkey != nullptr) {
+		CN_CBOR_FREE(pkey, context);
+	}
+	return coseKey;
+
+errorReturn:
+	goto returnHere;
+}
+#endif
 
 bool ECDSA_Sign(COSE *pSigner,
 	int index,
@@ -1550,7 +1724,7 @@ bool EdDSA_Sign(COSE *pSigner,
 	cn_cbor_errback cbor_error;
 	EVP_PKEY_CTX *keyCtx = nullptr;
 	EVP_MD_CTX *mdCtx = nullptr;
-	EVP_PKEY *pkey = nullptr;
+	Safe_EVP_PKEY pkey;
 	byte *pbSig = nullptr;
 	int cbSig;
 
@@ -1562,9 +1736,6 @@ bool EdDSA_Sign(COSE *pSigner,
 		}
 		if (keyCtx != nullptr) {
 			EVP_PKEY_CTX_free(keyCtx);
-		}
-		if (pkey != nullptr) {
-			EVP_PKEY_free(pkey);
 		}
 		if (pbSig != nullptr) {
 			COSE_FREE(pbSig, context);
@@ -1589,11 +1760,10 @@ bool EdDSA_Sign(COSE *pSigner,
 			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
-	p = cn_cbor_mapget_int(pKeyIn->m_cborKey, COSE_Key_EC_d);
-	CHECK_CONDITION(p != nullptr, COSE_ERR_INVALID_PARAMETER);
-
-	pkey = EVP_PKEY_new_raw_private_key(type, nullptr, p->v.bytes, p->length);
-	CHECK_CONDITION(pkey != nullptr, COSE_ERR_CRYPTO_FAIL);
+	pkey = EVP_FromKey(pKeyIn, CBOR_CONTEXT_PARAM_COMMA perr);
+	if (pkey == nullptr) {
+		goto errorReturn;
+	}
 
 	keyCtx = EVP_PKEY_CTX_new_id(type, nullptr);
 	CHECK_CONDITION(keyCtx != nullptr, COSE_ERR_OUT_OF_MEMORY);
@@ -1629,9 +1799,6 @@ bool EdDSA_Sign(COSE *pSigner,
 	if (keyCtx != nullptr) {
 		EVP_PKEY_CTX_free(keyCtx);
 	}
-	if (pkey != nullptr) {
-		EVP_PKEY_free(pkey);
-	}
 	if (pbSig != nullptr) {
 		COSE_FREE(pbSig, context);
 	}
@@ -1646,14 +1813,18 @@ bool EdDSA_Verify(COSE *pSigner,
 	size_t cbToSign,
 	cose_errback *perr)
 {
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = &pSigner->m_allocContext;
+#endif
 	cn_cbor *pSig;
-	EVP_PKEY *pkey = nullptr;
+	Safe_EVP_PKEY pkey = nullptr;
+	EVP_MD_CTX *pmdCtx = nullptr;
 
 	cn_cbor *p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_OPK_Curve);
 	if (p == nullptr) {
 	errorReturn:
-		if (pkey != nullptr) {
-			EVP_PKEY_free(pkey);
+		if (pmdCtx != nullptr) {
+			EVP_MD_CTX_free(pmdCtx);
 		}
 		return false;
 	}
@@ -1673,16 +1844,15 @@ bool EdDSA_Verify(COSE *pSigner,
 			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
 	}
 
-	p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_OPK_X);
-	CHECK_CONDITION(p != nullptr, COSE_ERR_INVALID_PARAMETER);
-
-	pkey = EVP_PKEY_new_raw_public_key(type, nullptr, p->v.bytes, p->length);
-	CHECK_CONDITION(pkey != nullptr, COSE_ERR_CBOR);
+	pkey = EVP_FromKey(pKey, CBOR_CONTEXT_PARAM_COMMA perr);
+	if (pkey == nullptr) {
+		goto errorReturn;
+	}
 
 	pSig = _COSE_arrayget_int(pSigner, index);
 	CHECK_CONDITION(pSig != nullptr, COSE_ERR_INVALID_PARAMETER);
 
-	EVP_MD_CTX *pmdCtx = EVP_MD_CTX_new();
+	pmdCtx = EVP_MD_CTX_new();
 	EVP_PKEY_CTX *keyCtx = EVP_PKEY_CTX_new_id(type, nullptr);
 
 	CHECK_CONDITION(
@@ -1695,9 +1865,6 @@ bool EdDSA_Verify(COSE *pSigner,
 
 	if (pmdCtx != nullptr) {
 		EVP_MD_CTX_free(pmdCtx);
-	}
-	if (pkey != nullptr) {
-		EVP_PKEY_free(pkey);
 	}
 
 	return true;
@@ -1799,71 +1966,112 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 	size_t *pcbSecret,
 	CBOR_CONTEXT_COMMA cose_errback *perr)
 {
-	EC_KEY *peckeyPrivate = nullptr;
-	EC_KEY *peckeyPublic = nullptr;
-	int cbGroup;
-	int cbsecret;
-	byte *pbsecret = nullptr;
-	bool fRet = false;
+	EVP_PKEY *evpPublic = nullptr;
+	EVP_PKEY *evpPrivate = nullptr;
+	EVP_PKEY_CTX *ctx = nullptr;
 
-	peckeyPublic = ECKey_From(pKeyPublic, &cbGroup, perr);
-	if (peckeyPublic == nullptr) {
+	if (false) {
+	errorReturn:
+		if (ctx != nullptr) {
+			EVP_PKEY_CTX_free(ctx);
+		}
+		if (evpPublic != nullptr) {
+			EVP_PKEY_free(evpPublic);
+		}
+		return false;
+	}
+
+	evpPublic = EVP_FromKey(pKeyPublic, CBOR_CONTEXT_PARAM_COMMA perr);
+	if (evpPublic == nullptr) {
 		goto errorReturn;
 	}
 
+	bool fCompressPoints = true;
+
 	if (*ppKeyPrivate == nullptr) {
-		{
-			cn_cbor *pCompress = _COSE_map_get_int(
-				pRecipient, COSE_Header_UseCompressedECDH, COSE_BOTH, perr);
-			if (pCompress == nullptr) {
-				FUseCompressed = false;
-			}
-			else {
-				FUseCompressed = (pCompress->type == CN_CBOR_TRUE);
-			}
+		// Generate an ephemeral key for the key agreement.
+
+		int type = EVP_PKEY_base_id(evpPublic);
+		cn_cbor *pCompress = _COSE_map_get_int(
+			pRecipient, COSE_Header_UseCompressedECDH, COSE_DONT_SEND, perr);
+		if (pCompress == nullptr) {
+			fCompressPoints = true;
 		}
-		peckeyPrivate = EC_KEY_new();
-		EC_KEY_set_group(peckeyPrivate, EC_KEY_get0_group(peckeyPublic));
-		CHECK_CONDITION(
-			EC_KEY_generate_key(peckeyPrivate) == 1, COSE_ERR_CRYPTO_FAIL);
-		*ppKeyPrivate =
-			EC_FromKey(peckeyPrivate, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (*ppKeyPrivate == nullptr) {
+		else {
+			fCompressPoints = (pCompress->type == CN_CBOR_TRUE);
+		}
+
+		switch (type) {
+			case EVP_PKEY_EC: {
+				EC_KEY *peckeyPrivate = EC_KEY_new();
+				EC_KEY *peckeyPublic = EVP_PKEY_get0_EC_KEY(evpPublic);
+				EC_KEY_set_group(
+					peckeyPrivate, EC_KEY_get0_group(peckeyPublic));
+				CHECK_CONDITION(EC_KEY_generate_key(peckeyPrivate) == 1,
+					COSE_ERR_CRYPTO_FAIL);
+				evpPrivate = EVP_PKEY_new();
+				EVP_PKEY_set1_EC_KEY(evpPrivate, peckeyPrivate);
+			} break;
+
+			case EVP_PKEY_X25519:
+			case EVP_PKEY_X448: {
+				EVP_PKEY_CTX *ctx2 = EVP_PKEY_CTX_new_id(type, nullptr);
+				CHECK_CONDITION(ctx2 != nullptr, COSE_ERR_OUT_OF_MEMORY);
+				// CHECK_CONDITION(
+				//	EVP_PKEY_paramgen_init(ctx2) == 1, COSE_ERR_CRYPTO_FAIL);
+				CHECK_CONDITION(
+					EVP_PKEY_keygen_init(ctx2) == 1, COSE_ERR_CRYPTO_FAIL);
+				CHECK_CONDITION(
+					EVP_PKEY_keygen(ctx2, &evpPrivate), COSE_ERR_CRYPTO_FAIL);
+			} break;
+
+			default:
+				FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+		}
+
+		cn_cbor *pcborPrivate = EVP_ToCBOR(
+			evpPrivate, fCompressPoints, CBOR_CONTEXT_PARAM_COMMA perr);
+		if (pcborPrivate == nullptr) {
 			goto errorReturn;
 		}
+		COSE_KEY *pPrivateKey = (COSE_KEY *)COSE_KEY_FromEVP(
+			evpPrivate, pcborPrivate, CBOR_CONTEXT_PARAM_COMMA perr);
+		if (pPrivateKey == nullptr) {
+			CN_CBOR_FREE(pcborPrivate, context);
+			goto errorReturn;
+		}
+		*ppKeyPrivate = pPrivateKey;
 	}
 	else {
-		peckeyPrivate = ECKey_From(*ppKeyPrivate, &cbGroup, perr);
-		if (peckeyPrivate == nullptr) {
+		//  Use the passed in sender key
+		evpPrivate = EVP_FromKey(*ppKeyPrivate, CBOR_CONTEXT_PARAM_COMMA perr);
+		if (evpPrivate == nullptr) {
 			goto errorReturn;
 		}
 	}
 
-	pbsecret = (byte *)COSE_CALLOC(cbGroup, 1, context);
-	CHECK_CONDITION(pbsecret != nullptr, COSE_ERR_OUT_OF_MEMORY);
+	ctx = EVP_PKEY_CTX_new(evpPrivate, nullptr);
+	CHECK_CONDITION(ctx != nullptr, COSE_ERR_OUT_OF_MEMORY);
 
-	cbsecret = ECDH_compute_key(pbsecret, cbGroup,
-		EC_KEY_get0_public_key(peckeyPublic), peckeyPrivate, nullptr);
-	CHECK_CONDITION(cbsecret > 0, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(EVP_PKEY_derive_init(ctx) > 0, COSE_ERR_CRYPTO_FAIL);
+	CHECK_CONDITION(
+		EVP_PKEY_derive_set_peer(ctx, evpPublic) > 0, COSE_ERR_CRYPTO_FAIL);
+	size_t skeylen;
+	CHECK_CONDITION(
+		EVP_PKEY_derive(ctx, nullptr, &skeylen) > 0, COSE_ERR_CRYPTO_FAIL);
+	byte *skey = static_cast<byte *>(COSE_CALLOC(skeylen, 1, context));
+	CHECK_CONDITION(skey != nullptr, COSE_ERR_OUT_OF_MEMORY);
+	CHECK_CONDITION(
+		EVP_PKEY_derive(ctx, skey, &skeylen) > 0, COSE_ERR_CRYPTO_FAIL);
 
-	*ppbSecret = pbsecret;
-	*pcbSecret = cbsecret;
-	pbsecret = nullptr;
-
-	fRet = true;
-
-errorReturn:
-	if (pbsecret != nullptr) {
-		COSE_FREE(pbsecret, context);
-	}
-	if (peckeyPublic != nullptr) {
-		EC_KEY_free(peckeyPublic);
-	}
-	if (peckeyPrivate != nullptr) {
-		EC_KEY_free(peckeyPrivate);
+	if (ctx != nullptr) {
+		EVP_PKEY_CTX_free(ctx);
 	}
 
-	return fRet;
+	*ppbSecret = skey;
+	*pcbSecret = skeylen;
+
+	return true;
 }
 
 #endif	// COSE_C_USE_OPENSSL

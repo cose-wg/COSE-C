@@ -211,20 +211,22 @@ static bool HKDF_X(COSE *pCose,
 	if (fECDH) {
 #ifdef USE_ECDH
 
-		if (pKeyPrivate != nullptr) {
+		if (pKeyPrivate != nullptr && pKeyPrivate->m_cborKey != nullptr) {
 			cn = cn_cbor_mapget_int(pKeyPrivate->m_cborKey, COSE_Key_Type);
 			CHECK_CONDITION((cn != nullptr) && (cn->type == CN_CBOR_UINT),
 				COSE_ERR_INVALID_PARAMETER);
-			CHECK_CONDITION(
-				cn->v.uint == COSE_Key_Type_EC2, COSE_ERR_INVALID_PARAMETER);
+			CHECK_CONDITION(cn->v.uint == COSE_Key_Type_EC2 ||
+								cn->v.uint == COSE_Key_Type_OKP,
+				COSE_ERR_INVALID_PARAMETER);
 		}
 
-		if (pKeyPublic != nullptr) {
+		if (pKeyPublic != nullptr && pKeyPublic->m_cborKey != nullptr) {
 			cn = cn_cbor_mapget_int(pKeyPublic->m_cborKey, COSE_Key_Type);
 			CHECK_CONDITION((cn != nullptr) && (cn->type == CN_CBOR_UINT),
 				COSE_ERR_INVALID_PARAMETER);
-			CHECK_CONDITION(
-				cn->v.uint == COSE_Key_Type_EC2, COSE_ERR_INVALID_PARAMETER);
+			CHECK_CONDITION(cn->v.uint == COSE_Key_Type_EC2 ||
+								cn->v.uint == COSE_Key_Type_OKP,
+				COSE_ERR_INVALID_PARAMETER);
 		}
 
 		if (fSend) {
@@ -1643,7 +1645,7 @@ bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
 		case 0:
 			break;
 
-		case 1:
+		case COSE_PROTECT_ONLY:
 			cn = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_ID);
 			CHECK_CONDITION(cn != nullptr, COSE_ERR_INVALID_PARAMETER);
 			cn2 = cn_cbor_clone(cn, CBOR_CONTEXT_PARAM_COMMA & cbor_err);
@@ -1655,7 +1657,21 @@ bool COSE_Recipient_SetSenderKey2(HCOSE_RECIPIENT h,
 			cn2 = nullptr;
 			break;
 
-		case 2:
+		case COSE_UNPROTECT_ONLY:
+			if (pKey->m_cborKey == nullptr) {
+#ifdef COSE_C_USE_OPENSSL
+				pKey->m_cborKey = EVP_ToCBOR(pKey->m_opensslKey, true,
+#ifdef USE_CBOR_CONTEXT
+					&pKey->m_allocContext,
+#endif
+					perr);
+				if (pKey->m_cborKey == nullptr) {
+					return false;
+				}
+#else
+				return false;
+#endif
+			}
 			cn2 = cn_cbor_map_create(CBOR_CONTEXT_PARAM_COMMA & cbor_err);
 			CHECK_CONDITION_CBOR(cn2 != nullptr, cbor_err);
 			cn = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_Type);

@@ -21,7 +21,6 @@
 #include "json.h"
 #include "test.h"
 
-
 #ifdef COSE_C_USE_OPENSSL
 #include <openssl/ec.h>
 #endif
@@ -322,7 +321,7 @@ struct {
 	int kty;
 	int operation;
 	int keyNew;
-} RgStringKeys[10] = {{"kty", 0, OPERATION_IGNORE, COSE_Key_Type},
+} RgStringKeys[12] = {{"kty", 0, OPERATION_IGNORE, COSE_Key_Type},
 	{"kid", 0, OPERATION_NONE, COSE_Key_ID},
 	{"crv", 2, OPERATION_STRING, COSE_Key_EC2_Curve},
 	{"x", 2, OPERATION_BASE64, COSE_Key_EC2_X},
@@ -330,7 +329,9 @@ struct {
 	{"k", 4, OPERATION_BASE64, -1},
 	{"crv", COSE_Key_Type_OKP, OPERATION_STRING, COSE_Key_OPK_Curve},
 	{"x_hex", COSE_Key_Type_OKP, OPERATION_HEX, COSE_Key_OPK_X},
-	{"d_hex", COSE_Key_Type_OKP, OPERATION_HEX, -4}};
+	{"x", COSE_Key_Type_OKP, OPERATION_BASE64, COSE_Key_OPK_X},
+	{"d_hex", COSE_Key_Type_OKP, OPERATION_HEX, -4},
+	{"d", COSE_Key_Type_OKP, OPERATION_BASE64, -4}};
 
 bool SetAttributes(HCOSE hHandle,
 	const cn_cbor* pAttributes,
@@ -867,6 +868,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 		COSE_KEY_FromCbor(pKeyOut, CBOR_CONTEXT_PARAM_COMMA & coseError);
 	if (key == nullptr) {
 		CN_CBOR_FREE(pKeyOut, context);
+		return nullptr;
 	}
 	if (KeyFormat == 1) {
 		return key.Release();
@@ -878,7 +880,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 	}
 
 #ifdef COSE_C_USE_OPENSSL
-	EVP_PKEY* opensslKey = EVP_PKEY_new();
+	EVP_PKEY* opensslKey = nullptr;
 #endif
 #ifdef COSE_C_USE_MBEDTLS
 	mbedtls_ecp_keypair* keypair = nullptr;
@@ -886,32 +888,22 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 
 	switch (keyType->v.uint) {
 		case COSE_Key_Type_EC2:
-#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
+#if defined(COSE_C_USE_OPENSSL)
 		{
-			int cbR = 0;
-			EC_KEY* ecKey =
-				ECKey_From((COSE_KEY*)(HCOSE_KEY)key, &cbR, &coseError);
-			if (ecKey == nullptr) {
-				return nullptr;
-			}
-
-			if (EVP_PKEY_set1_EC_KEY(opensslKey, ecKey) == 0) {
-				EC_KEY_free(ecKey);
-				return nullptr;
-			}
-			EC_KEY_free(ecKey);
+			opensslKey = EVP_FromKey((COSE_KEY*)(HCOSE_KEY)key,
+				CBOR_CONTEXT_PARAM_COMMA & coseError);
 		}
 #endif
 #ifdef COSE_C_USE_MBEDTLS
 			{
-				keypair =
-					static_cast<mbedtls_ecp_keypair*>(COSE_CALLOC(sizeof(*keypair), 1, context)
-					);
+				keypair = static_cast<mbedtls_ecp_keypair*>(
+					COSE_CALLOC(sizeof(*keypair), 1, context));
 				if (keypair == nullptr) {
 					return nullptr;
 				}
 				mbedtls_ecp_keypair_init(keypair);
-				if (!ECKey_From((COSE_KEY *) (HCOSE_KEY) key, keypair, &coseError)) {
+				if (!ECKey_From(
+						(COSE_KEY*)(HCOSE_KEY)key, keypair, &coseError)) {
 					mbedtls_ecp_keypair_free(keypair);
 					COSE_FREE(keypair, context);
 					return nullptr;
@@ -922,7 +914,8 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 
 		case COSE_Key_Type_OKP:
 #ifdef COSE_C_USE_OPENSSL
-
+			opensslKey = EVP_FromKey((COSE_KEY*)(HCOSE_KEY)key,
+				CBOR_CONTEXT_PARAM_COMMA & coseError);
 #endif
 			break;
 
@@ -930,7 +923,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 			break;
 	}
 
-#if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
+#if defined(COSE_C_USE_OPENSSL)
 
 	if (opensslKey == nullptr) {
 		return key.Release();
@@ -1526,7 +1519,6 @@ void RunTestsInDirectory(const char* szDir)
 	exit(cFailTotal);
 }
 #endif	// _MSCVER
-
 
 int main(int argc, char** argv)
 {

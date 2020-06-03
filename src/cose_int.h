@@ -39,7 +39,7 @@ typedef struct _COSE_KEY {
 	EVP_PKEY *m_opensslKey;
 #endif
 #ifdef COSE_C_USE_MBEDTLS
-	mbedtls_ecp_keypair * m_mbedtls_keypair;
+	mbedtls_ecp_keypair *m_mbedtls_keypair;
 #endif
 } COSE_KEY;
 
@@ -476,13 +476,16 @@ enum { COSE_Int_Alg_AES_CBC_MAC_256_64 = -22 };
 #define COSE_CounterSign_object 1000
 #define COSE_CounterSign1_object 1001
 
-
 #if defined(COSE_C_USE_OPENSSL) && (OPENSSL_VERSION_NUMBER > 0x10100000L)
 EC_KEY *ECKey_From(COSE_KEY *pKey, int *cbGroup, cose_errback *perr);
+cn_cbor *EVP_ToCBOR(EVP_PKEY *pKey,
+	bool fCompressPoints,
+	CBOR_CONTEXT_COMMA cose_errback *perr);
+EVP_PKEY *EVP_FromKey(COSE_KEY *pKey, CBOR_CONTEXT_COMMA cose_errback *perr);
 #endif
 
 #ifdef COSE_C_USE_MBEDTLS
-mbedtls_ecp_keypair * ECKey_From(COSE_KEY *pKey,
+mbedtls_ecp_keypair *ECKey_From(COSE_KEY *pKey,
 	mbedtls_ecp_keypair *keypair,
 	cose_errback *perr);
 #endif

@@ -533,6 +533,11 @@ bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback *perr)
 	CHECK_CONDITION(
 		pcose->m_recipientFirst != nullptr, COSE_ERR_INVALID_HANDLE);
 
+	cose_errback coseError;
+	if (perr == nullptr) {
+		perr = &coseError;
+	}
+
 	return _COSE_Enveloped_encrypt(pcose, nullptr, 0, "Encrypt", perr);
 
 errorReturn:

@@ -666,14 +666,14 @@ bool HMAC_Validate(COSE_MacMessage *pcose,
 #define COSE_Key_EC_Y -3
 #define COSE_Key_EC_d -4
 
-mbedtls_ecp_keypair * ECKey_From(COSE_KEY *pKey,
+mbedtls_ecp_keypair *ECKey_From(COSE_KEY *pKey,
 	mbedtls_ecp_keypair *keypair,
 	cose_errback *perr)
 {
 	if (pKey->m_mbedtls_keypair != nullptr) {
 		return pKey->m_mbedtls_keypair;
 	}
-	
+
 	byte rgbKey[MBEDTLS_ECP_MAX_PT_LEN];
 	int cbKey = 0;
 	int cbGroup = 0;
@@ -869,7 +869,7 @@ bool ECDSA_Verify(COSE *pSigner,
 	cose_errback *perr)
 {
 	mbedtls_ecp_keypair keypair;
-	mbedtls_ecp_keypair* useKey = nullptr;
+	mbedtls_ecp_keypair *useKey = nullptr;
 	mbedtls_mpi r;
 	mbedtls_mpi s;
 	mbedtls_md_type_t mdType;
@@ -1188,7 +1188,8 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 			break;
 
 		default:
-			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+			p = nullptr;
+			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 	p = nullptr;
 
