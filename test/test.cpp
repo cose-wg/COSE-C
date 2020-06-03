@@ -893,7 +893,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 #if defined(COSE_C_USE_OPENSSL)
 		{
 			opensslKey =
-				EVP_FromKey((COSE_KEY*)(HCOSE_KEY)key, context, &coseError);
+				EVP_FromKey((COSE_KEY*)(HCOSE_KEY)key, CBOR_CONTEXT_PARAM_COMMA &coseError);
 		}
 #endif
 #ifdef COSE_C_USE_MBEDTLS
@@ -916,7 +916,7 @@ HCOSE_KEY BuildKey(const cn_cbor* pKeyIn, bool fPublicKey)
 
 		case COSE_Key_Type_OKP:
 #ifdef COSE_C_USE_OPENSSL
-			opensslKey = EVP_FromKey((COSE_KEY*) (HCOSE_KEY) key, context, &coseError);
+			opensslKey = EVP_FromKey((COSE_KEY*) (HCOSE_KEY) key, CBOR_CONTEXT_PARAM_COMMA &coseError);
 #endif
 			break;
 
