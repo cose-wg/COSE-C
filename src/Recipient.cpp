@@ -215,16 +215,18 @@ static bool HKDF_X(COSE *pCose,
 			cn = cn_cbor_mapget_int(pKeyPrivate->m_cborKey, COSE_Key_Type);
 			CHECK_CONDITION((cn != nullptr) && (cn->type == CN_CBOR_UINT),
 				COSE_ERR_INVALID_PARAMETER);
-			CHECK_CONDITION(
-				cn->v.uint == COSE_Key_Type_EC2 || cn->v.uint == COSE_Key_Type_OKP, COSE_ERR_INVALID_PARAMETER);
+			CHECK_CONDITION(cn->v.uint == COSE_Key_Type_EC2 ||
+								cn->v.uint == COSE_Key_Type_OKP,
+				COSE_ERR_INVALID_PARAMETER);
 		}
 
 		if (pKeyPublic != nullptr && pKeyPublic->m_cborKey != nullptr) {
 			cn = cn_cbor_mapget_int(pKeyPublic->m_cborKey, COSE_Key_Type);
 			CHECK_CONDITION((cn != nullptr) && (cn->type == CN_CBOR_UINT),
 				COSE_ERR_INVALID_PARAMETER);
-			CHECK_CONDITION(
-				cn->v.uint == COSE_Key_Type_EC2 || cn->v.uint == COSE_Key_Type_OKP, COSE_ERR_INVALID_PARAMETER);
+			CHECK_CONDITION(cn->v.uint == COSE_Key_Type_EC2 ||
+								cn->v.uint == COSE_Key_Type_OKP,
+				COSE_ERR_INVALID_PARAMETER);
 		}
 
 		if (fSend) {
