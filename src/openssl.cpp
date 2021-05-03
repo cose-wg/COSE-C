@@ -430,7 +430,7 @@ bool AES_GCM_Decrypt(COSE_Enveloped *pcose,
 	EVP_CIPHER_CTX_free(ctx);
 
 	pcose->pbContent = rgbOut;
-	pcose->cbContent = cbOut;
+	pcose->cbContent = (int)cbCrypto - TSize;
 
 	return true;
 }
