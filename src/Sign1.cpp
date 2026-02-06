@@ -572,6 +572,14 @@ bool _COSE_Signer1_sign(COSE_Sign1Message *pSigner,
 			break;
 #endif
 
+#ifdef USE_MLDSA
+		case COSE_Algorithm_MLDSA_65:
+		case COSE_Algorithm_MLDSA_87:
+			f = MLDSA_Sign(&pSigner->m_message, INDEX_SIGNATURE + 1, pKey,
+				pbToSign, cbToSign, perr);
+			break;
+#endif
+
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
@@ -652,6 +660,16 @@ bool _COSE_Signer1_validate(COSE_Sign1Message *pSign,
 #ifdef USE_EDDSA
 		case COSE_Algorithm_EdDSA:
 			if (!EdDSA_Verify(&pSign->m_message, INDEX_SIGNATURE + 1, pKey,
+					pbToSign, cbToSign, perr)) {
+				goto errorReturn;
+			}
+			break;
+#endif
+
+#ifdef USE_MLDSA
+		case COSE_Algorithm_MLDSA_65:
+		case COSE_Algorithm_MLDSA_87:
+			if (!MLDSA_Verify(&pSign->m_message, INDEX_SIGNATURE + 1, pKey,
 					pbToSign, cbToSign, perr)) {
 				goto errorReturn;
 			}

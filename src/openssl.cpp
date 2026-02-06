@@ -1871,6 +1871,166 @@ bool EdDSA_Verify(COSE *pSigner,
 }
 #endif
 
+#ifdef USE_MLDSA
+bool MLDSA_Sign(COSE *pSigner,
+	int index,
+	COSE_KEY *pKeyIn,
+	const byte *rgbToSign,
+	size_t cbToSign,
+	cose_errback *perr)
+{
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = &pSigner->m_allocContext;
+#endif
+	cn_cbor *p;
+	cn_cbor_errback cbor_error;
+	EVP_PKEY_CTX *keyCtx = nullptr;
+	EVP_MD_CTX *mdCtx = nullptr;
+	Safe_EVP_PKEY pkey;
+	byte *pbSig = nullptr;
+	int cbSig;
+
+	p = cn_cbor_mapget_int(pKeyIn->m_cborKey, COSE_Key_Algorithm);
+	if (p == nullptr) {
+	errorReturn:
+		if (mdCtx != nullptr) {
+			EVP_MD_CTX_free(mdCtx);
+		}
+		if (keyCtx != nullptr) {
+			EVP_PKEY_CTX_free(keyCtx);
+		}
+		if (pbSig != nullptr) {
+			COSE_FREE(pbSig, context);
+		}
+		return false;
+	}
+
+	int type;
+
+	switch (p->v.uint) {
+		case COSE_Algorithm_MLDSA_65:
+			type = EVP_PKEY_ML_DSA_65;
+			break;
+
+		case COSE_Algorithm_MLDSA_87:
+			type = EVP_PKEY_ML_DSA_87;
+			break;
+
+		default:
+			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+
+	pkey = EVP_FromKey(pKeyIn, CBOR_CONTEXT_PARAM_COMMA perr);
+	if (pkey == nullptr) {
+		goto errorReturn;
+	}
+
+	keyCtx = EVP_PKEY_CTX_new_id(type, nullptr);
+	CHECK_CONDITION(keyCtx != nullptr, COSE_ERR_OUT_OF_MEMORY);
+
+	mdCtx = EVP_MD_CTX_new();
+	CHECK_CONDITION(mdCtx != nullptr, COSE_ERR_OUT_OF_MEMORY);
+
+	CHECK_CONDITION(
+		EVP_DigestSignInit(mdCtx, &keyCtx, nullptr, nullptr, pkey) == 1,
+		COSE_ERR_CRYPTO_FAIL);
+	keyCtx = nullptr;
+
+	pbSig = (byte *)COSE_CALLOC(cbSig, 1, context);
+	CHECK_CONDITION(pbSig != nullptr, COSE_ERR_OUT_OF_MEMORY);
+
+	size_t cb2 = cbSig;
+	CHECK_CONDITION(
+		EVP_DigestSign(mdCtx, pbSig, &cb2, rgbToSign, cbToSign) == 1,
+		COSE_ERR_CRYPTO_FAIL);
+
+	p = cn_cbor_data_create2(
+		pbSig, (int)cb2, 0, CBOR_CONTEXT_PARAM_COMMA & cbor_error);
+	CHECK_CONDITION(p != nullptr, COSE_ERR_OUT_OF_MEMORY);
+	pbSig = nullptr;
+
+	CHECK_CONDITION(_COSE_array_replace(
+						pSigner, p, index, CBOR_CONTEXT_PARAM_COMMA nullptr),
+		COSE_ERR_CBOR);
+
+	if (mdCtx != nullptr) {
+		EVP_MD_CTX_free(mdCtx);
+	}
+	if (keyCtx != nullptr) {
+		EVP_PKEY_CTX_free(keyCtx);
+	}
+	if (pbSig != nullptr) {
+		COSE_FREE(pbSig, context);
+	}
+
+	return true;
+}
+
+bool MLDSA_Verify(COSE *pSigner,
+	int index,
+	COSE_KEY *pKey,
+	const byte *rgbToSign,
+	size_t cbToSign,
+	cose_errback *perr)
+{
+#ifdef USE_CBOR_CONTEXT
+	cn_cbor_context *context = &pSigner->m_allocContext;
+#endif
+	cn_cbor *pSig;
+	Safe_EVP_PKEY pkey = nullptr;
+	EVP_MD_CTX *pmdCtx = nullptr;
+
+	cn_cbor *p = cn_cbor_mapget_int(pKey->m_cborKey, COSE_Key_Algorithm);
+	if (p == nullptr) {
+	errorReturn:
+		if (pmdCtx != nullptr) {
+			EVP_MD_CTX_free(pmdCtx);
+		}
+		return false;
+	}
+
+	int type;
+
+	switch (p->v.uint) {
+		case COSE_Algorithm_MLDSA_65:
+			type = EVP_PKEY_ML_DSA_65;
+			break;
+
+		case COSE_Algorithm_MLDSA_87:
+			type = EVP_PKEY_ML_DSA_87;
+			break;
+
+		default:
+			FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+	}
+
+	pkey = EVP_FromKey(pKey, CBOR_CONTEXT_PARAM_COMMA perr);
+	if (pkey == nullptr) {
+		goto errorReturn;
+	}
+
+	pSig = _COSE_arrayget_int(pSigner, index);
+	CHECK_CONDITION(pSig != nullptr, COSE_ERR_INVALID_PARAMETER);
+
+	pmdCtx = EVP_MD_CTX_new();
+	EVP_PKEY_CTX *keyCtx = EVP_PKEY_CTX_new_id(type, nullptr);
+
+	CHECK_CONDITION(
+		EVP_DigestVerifyInit(pmdCtx, &keyCtx, nullptr, nullptr, pkey) == 1,
+		COSE_ERR_CRYPTO_FAIL);
+
+	CHECK_CONDITION(EVP_DigestVerify(pmdCtx, pSig->v.bytes, pSig->length,
+						rgbToSign, cbToSign) == 1,
+		COSE_ERR_CRYPTO_FAIL);
+
+	if (pmdCtx != nullptr) {
+		EVP_MD_CTX_free(pmdCtx);
+	}
+
+	return true;
+}
+#endif
+
 bool AES_KW_Decrypt(COSE_Enveloped *pcose,
 	const byte *pbKeyIn,
 	size_t cbitKey,
@@ -2004,7 +2164,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		switch (type) {
 			case EVP_PKEY_EC: {
 				EC_KEY *peckeyPrivate = EC_KEY_new();
-				EC_KEY *peckeyPublic = EVP_PKEY_get0_EC_KEY(evpPublic);
+				const EC_KEY *peckeyPublic = EVP_PKEY_get0_EC_KEY(evpPublic);
 				EC_KEY_set_group(
 					peckeyPrivate, EC_KEY_get0_group(peckeyPublic));
 				CHECK_CONDITION(EC_KEY_generate_key(peckeyPrivate) == 1,

@@ -534,6 +534,16 @@ bool _COSE_Signer_validate(COSE_SignerInfo *pSigner,
 			break;
 #endif
 
+#ifdef USE_MLDSA
+		case COSE_Algorithm_MLDSA_65:
+		case COSE_Algorithm_MLDSA_87:
+			if (!MLDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE,
+					pSigner->m_pkey, pbToBeSigned, cbToBeSigned, perr)) {
+				goto errorReturn;
+			}
+			break;
+#endif
+
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 			break;

@@ -194,6 +194,19 @@ bool EdDSA_Verify(COSE* pSigner,
 	size_t cbToSign,
 	cose_errback* perr);
 
+bool MLDSA_Sign(COSE* pSigner,
+	int index,
+	COSE_KEY* pKey,
+	const byte* rgbToSign,
+	size_t cbToSign,
+	cose_errback* perr);
+bool MLDSA_Verify(COSE* pSigner,
+	int index,
+	COSE_KEY* pKey,
+	const byte* rgbToSign,
+	size_t cbToSign,
+	cose_errback* perr);
+
 /**
  *  Generate random bytes in a buffer
  *

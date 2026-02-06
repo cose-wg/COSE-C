@@ -275,6 +275,10 @@ int IsAlgorithmSupported(const cn_cbor* alg)
 #ifdef USE_EDDSA
 		case COSE_Algorithm_EdDSA:
 #endif
+#ifdef USE_MLDSA
+		case COSE_Algorithm_MLDSA_65:
+		case COSE_Algorithm_MLDSA_87:
+#endif
 		case COSE_Algorithm_Direct:
 		case -999:	// Unsupported algorithm for testing.
 			return true;

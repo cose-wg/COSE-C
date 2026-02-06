@@ -160,7 +160,10 @@ typedef enum {
 
 	COSE_Algorithm_ECDSA_SHA_256 = -7,
 	COSE_Algorithm_ECDSA_SHA_384 = -35,
-	COSE_Algorithm_ECDSA_SHA_512 = -36
+	COSE_Algorithm_ECDSA_SHA_512 = -36,
+
+	COSE_Algorithm_MLDSA_65 = -49,
+	COSE_Algorithm_MLDSA_87 = -50
 } COSE_Algorithms;
 
 typedef enum {
@@ -198,14 +201,17 @@ typedef enum {
 	COSE_Key_Type_OKP = 1,
 	COSE_Key_Type_EC2 = 2,
 	COSE_Key_Type_OCTET = 4,
+	COSE_Key_Type_AKP = 7,
 	COSE_Key_Type = 1,
 	COSE_Key_ID = 2,
+	COSE_Key_Algorithm = 3,
 	COSE_Parameter_KID = 4,
 	COSE_Key_EC2_Curve = -1,
 	COSE_Key_EC2_X = -2,
 	COSE_Key_EC2_Y = -3,
 	COSE_Key_OPK_Curve = -1,
-	COSE_Key_OPK_X = -2
+	COSE_Key_OPK_X = -2,
+	COSE_Key_AKP_Pub = -1
 } COSE_Constants;
 
 typedef enum {
