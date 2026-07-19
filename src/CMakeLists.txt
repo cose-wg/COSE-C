@@ -52,6 +52,7 @@ set(cose_sources
     Encrypt0.cpp
     Recipient.cpp
     SignerInfo.cpp
+    ascon.cpp
     ${cose_crypto})
 
 target_sources(${PROJECT_NAME} PRIVATE ${cose_sources})
@@ -69,6 +70,10 @@ else()
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
   target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENSSL_LIBRARIES})
 endif()
+
+message(STATUS "Ascon: ${ASCON_LIB_NAME}")
+#target_link_libraries(${PROJECT_NAME} PRIVATE ${ASCON_LIB_NAME})
+target_sources(${PROJECT_NAME} PRIVATE $<TARGET_OBJECTS:${ASCON_LIB_NAME}>)
 
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)

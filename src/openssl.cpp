@@ -2004,7 +2004,7 @@ bool ECDH_ComputeSecret(COSE *pRecipient,
 		switch (type) {
 			case EVP_PKEY_EC: {
 				EC_KEY *peckeyPrivate = EC_KEY_new();
-				EC_KEY *peckeyPublic = EVP_PKEY_get0_EC_KEY(evpPublic);
+				const EC_KEY *peckeyPublic = EVP_PKEY_get0_EC_KEY(evpPublic);
 				EC_KEY_set_group(
 					peckeyPrivate, EC_KEY_get0_group(peckeyPublic));
 				CHECK_CONDITION(EC_KEY_generate_key(peckeyPrivate) == 1,

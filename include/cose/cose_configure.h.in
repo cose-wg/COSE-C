@@ -41,6 +41,10 @@
 #define USE_AES_GCM
 #endif
 
+#define USE_ASCON_AEAD_128
+#define USE_ASCON_AEAD_128_64
+#define USE_ASCON_AEAD_128_32
+
 //
 //  Define which AES CCM algorithms are being used
 //

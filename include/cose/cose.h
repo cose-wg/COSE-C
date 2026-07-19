@@ -129,6 +129,10 @@ typedef enum {
 	COSE_Algorithm_AES_CCM_64_128_128 = 32,
 	COSE_Algorithm_AES_CCM_64_128_256 = 33,
 
+    COSE_Algorithm_Ascon_AEAD128 = 35,
+	COSE_Algorithm_Ascon_AEAD128_64 = 36,
+	COSE_Algorithm_Ascon_AEAD128_32 = 37,
+
 	COSE_Algorithm_ECDH_ES_HKDF_256 = -25,
 	COSE_Algorithm_ECDH_ES_HKDF_512 = -26,
 	COSE_Algorithm_ECDH_SS_HKDF_256 = -27,
@@ -272,7 +276,7 @@ bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED cose,
 	const byte* rgbContent,
 	size_t cbContent,
 	cose_errback* errp);
-byte* COSE_Enveloped_GetContent(HCOSE_ENVELOPED cose,
+const byte* COSE_Enveloped_GetContent(HCOSE_ENVELOPED cose,
 	size_t* pcbContent,
 	cose_errback* errp);
 bool COSE_Enveloped_SetExternal(HCOSE_ENVELOPED hcose,
