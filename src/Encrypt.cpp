@@ -328,6 +328,18 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 			break;
 #endif
 
+#ifdef USE_ASCON_AEAD_128
+        case COSE_Algorithm_Ascon_AEAD128:
+#endif
+#ifdef USE_ASCON_AEAD_128_64
+        case COSE_Algorithm_Ascon_AEAD128_64:
+#endif
+#ifdef USE_ASCON_AEAD_128_32
+        case COSE_Algorithm_Ascon_AEAD128_32:
+            cbitKey = 128;
+            break;
+#endif
+
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 			break;
@@ -505,6 +517,31 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped *pcose,
 			break;
 #endif
 
+#ifdef USE_ASCON_AEAD_128
+        case COSE_Algorithm_Ascon_AEAD128:
+            if (!Ascon_AEAD128_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes,
+                                 cn->length, pbAuthData, cbAuthData, 128, perr)) {
+                goto error;
+            }
+            break;
+#endif
+#ifdef USE_ASCON_AEAD_128_64
+		case COSE_Algorithm_Ascon_AEAD128_64:
+			if (!Ascon_AEAD128_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes,
+								 cn->length, pbAuthData, cbAuthData, 64, perr)) {
+				goto error;
+								 }
+			break;
+#endif
+#ifdef USE_ASCON_AEAD_128_32
+		case COSE_Algorithm_Ascon_AEAD128_32:
+			if (!Ascon_AEAD128_Decrypt(pcose, pbKey, cbitKey / 8, cn->v.bytes,
+								 cn->length, pbAuthData, cbAuthData, 32, perr)) {
+				goto error;
+								 }
+			break;
+#endif
+
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 			break;
@@ -652,6 +689,18 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 #ifdef USE_AES_GCM_256
 		case COSE_Algorithm_AES_GCM_256:
 			cbitKey = 256;
+			break;
+#endif
+
+#ifdef USE_ASCON_AEAD_128
+        case COSE_Algorithm_Ascon_AEAD128:
+#endif
+#ifdef USE_ASCON_AEAD_128_64
+		case COSE_Algorithm_Ascon_AEAD128_64:
+#endif
+#ifdef USE_ASCON_AEAD_128_32
+		case COSE_Algorithm_Ascon_AEAD128_32:
+			cbitKey = 128;
 			break;
 #endif
 
@@ -816,6 +865,30 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped *pcose,
 			break;
 #endif
 
+#ifdef USE_ASCON_AEAD_128
+        case COSE_Algorithm_Ascon_AEAD128:
+            if (!Ascon_AEAD128_Encrypt(
+                    pcose, pbKey, cbKey, pbAuthData, cbAuthData, 128, perr)) {
+                goto errorReturn;
+            }
+            break;
+#endif
+#ifdef USE_ASCON_AEAD_128_64
+		case COSE_Algorithm_Ascon_AEAD128_64:
+			if (!Ascon_AEAD128_Encrypt(
+					pcose, pbKey, cbKey, pbAuthData, cbAuthData, 64, perr)) {
+				goto errorReturn;
+					}
+			break;
+#endif
+#ifdef USE_ASCON_AEAD_128_32
+		case COSE_Algorithm_Ascon_AEAD128_32:
+			if (!Ascon_AEAD128_Encrypt(
+					pcose, pbKey, cbKey, pbAuthData, cbAuthData, 32, perr)) {
+				goto errorReturn;
+					}
+			break;
+#endif
 		default:
 			FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
@@ -867,6 +940,21 @@ bool COSE_Enveloped_SetContent(HCOSE_ENVELOPED h,
 
 errorReturn:
 	return false;
+}
+
+const byte* COSE_Enveloped_GetContent(HCOSE_ENVELOPED h,
+	size_t* pcbContent,
+	cose_errback* errp) {
+	COSE_Enveloped *cose = (COSE_Enveloped *)h;
+	if (!IsValidEnvelopedHandle(h) || (pcbContent == nullptr)) {
+		if (errp != nullptr) {
+			errp->err = COSE_ERR_INVALID_PARAMETER;
+		}
+		return nullptr;
+	}
+
+	*pcbContent = cose->cbContent;
+	return cose->pbContent;
 }
 
 /*!
